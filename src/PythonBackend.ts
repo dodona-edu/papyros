@@ -37,4 +37,8 @@ export class PythonBackend implements Backend {
           return e.toString()
         });
     }
+
+    async shutdown(){
+        return Promise.resolve();
+    }
 }

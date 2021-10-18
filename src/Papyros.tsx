@@ -1,4 +1,3 @@
-import { ChangeEvent } from "react";
 import { Backend } from "./Backend";
 import { getBackend } from "./BackendManager";
 import { CODE_TA_ID, INPUT_TA_ID, LANGUAGE_SELECT_ID, OUTPUT_TA_ID, RUN_BTN_ID } from "./Constants";
@@ -31,7 +30,10 @@ export async function Papyros(){
     }
 
     async function initLanguageSelect(){
-        languageSelect.addEventListener("change", (e: Event) => initBackend((e.target as HTMLInputElement).value));
+        languageSelect.addEventListener("change", async (e: Event) => {
+            await backend.shutdown();
+            initBackend((e.target as HTMLInputElement).value)
+        });
     }
 
     function initTextAreas(){
