@@ -1,7 +1,7 @@
-import { INPUT_TA_ID, OUTPUT_TA_ID } from "./Constants";
-
 export const INITIALIZATION_CODE = 
-`from js import document, console
+`
+from pyodide import to_js
+from js import console, onPrint, onInput
 import sys
 
 __dodona_pyodide_globals = {}
@@ -10,11 +10,9 @@ class _NoInputError(Exception):
     pass
 
 class _OutputWriter:
-    def __init__(self, element_id="${OUTPUT_TA_ID}"):
-        self.output = document.getElementById(element_id)
 
     def write(self, s):
-        self.output.value += s
+        onPrint(s)
 
     def flush(self):
         pass # Given data is always immediately written
@@ -30,18 +28,17 @@ def __dodona_print(*objects, sep=' ', end='\\n', file=sys.stdout, flush=False):
     else:
         __dodona_pyodide_globals["print"](*objects, sep=sep, end=end, file=file, flush=flush)
 
-def __dodona_input(prompt=""):
-    print(prompt, end="")
-    input_element = document.getElementById("${INPUT_TA_ID}")
-    user_input = input_element.value.split("\\n")
-    console.log("Found input: " + input_element.value)
-
+def __dodona_input(console_prompt=""):
+    print(console_prompt, end="")
+    from js import user_input
+    console.log("Found input: " + user_input)
+    onInput(console_prompt)
     if not user_input:
-        message = f"No input found for prompt {prompt}" if prompt else ""
-        raise _NoInputError(message)
+        raise _NoInputError(f"No input provided for prompt {console_prompt}.")
     else:
-        print(user_input[0])
-        input_element.value = "\\n".join(user_input[1:])
+        user_input = user_input.split("\\n")
+        print(user_input[0]) # emulate the input being typed in the console
+        #input_element.value = "\\n".join(user_input[1:])
         return user_input[0]
 
 
