@@ -7,6 +7,7 @@ export async function Papyros(){
 
     // textareas
     const codeArea = document.getElementById(CODE_TA_ID) as HTMLInputElement;
+    let lineNr = 0;
     const inputArea = document.getElementById(INPUT_TA_ID) as HTMLInputElement;
     const outputArea = document.getElementById(OUTPUT_TA_ID) as HTMLInputElement;
 
@@ -45,10 +46,19 @@ export async function Papyros(){
             outputArea.value += e.data;
         } else if(e.type === "input"){
             console.log("Asked input in main thread for: ", e.data);
+            const lines = inputArea.value.split("\n");
+            if(lines.length > lineNr && lines[lineNr]){
+                backend.send({"type": "input", "data": inputArea.value});
+                lineNr += 1;
+            } else {
+                //alert("Not enough input supplied!");
+            }
+
         }
     }
 
     async function runCode(){
+        lineNr = 0;
         outputArea.value = "";
         try {
             terminateButton.hidden = false;

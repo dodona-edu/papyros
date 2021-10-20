@@ -34,6 +34,15 @@ export class PythonBackend implements Backend {
         return this;
     }
 
+    translate(code: string): string {
+      const inputRegex = /(:?^|\s+)input\(/g;
+      const outputRegex = "$1await input(";
+      if(code){
+        code = code.replace(inputRegex, outputRegex );
+      }
+      return code;
+    }
+
     async runCode(code: string, input: string, onMessage: (e: any) => void){
         return new Promise((onSuccess, onError) => {
           this.pyodideWorker.onerror = onError;
@@ -47,7 +56,8 @@ export class PythonBackend implements Backend {
               }
             };
           this.pyodideWorker.postMessage({
-            python: code,
+            type: "script",
+            python: this.translate(code),
             user_input: input,
           });
         });
@@ -63,5 +73,10 @@ export class PythonBackend implements Backend {
         this.pyodideWorker.terminate();
         this.pyodideWorker = new Worker(WORKER_PATH);
         await this.launch();
+    }
+
+    send(data: any){
+      console.log("Posting data in send: ", data);
+      this.pyodideWorker.postMessage(data);
     }
 }

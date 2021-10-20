@@ -4,7 +4,7 @@
 // `pyodide.js`, and all its associated `.asm.js`, `.data`, `.json`,
 // and `.wasm` files as well:
 importScripts("https://cdn.jsdelivr.net/pyodide/v0.18.1/full/pyodide.js");
-
+var attempts = 0;
 async function loadPyodideAndPackages() {
   self.pyodide = await loadPyodide({
     indexURL: "https://cdn.jsdelivr.net/pyodide/v0.18.1/full/",
@@ -17,28 +17,53 @@ function onPrint(e){
   self.postMessage({"type": "print", "data": e});
 }
 
-function onInput(e){
+async function getInput(e){
+  console.log("Performing get input");
+  if(self.input){
+    console.log("Found input: " + self.input);
+    return Promise.resolve(self.input);
+  } else {
+    console.log("Waiting 1000 ms");
+    return await new Promise(resolve => setTimeout(resolve, 1000)).then(() => {
+      attempts += 1;
+      console.log("Waited 1000 ms, trying again with attempt: " + attempts);
+      self.postMessage({"type": "input", "data": e});
+      return getInput(e);
+    });
+  }
+}
+
+async function onInput(e){
+  self.input = "";
   console.log("Requesting input: ", e);
   self.postMessage({"type": "input", "data": e});
+  return await getInput(e);
 }
 
 self.onmessage = async (event) => {
-  // make sure loading is done
-  await pyodideReadyPromise;
-  // Don't bother yet with this line, suppose our API is built in such a way:
-  const { python, ...context } = event.data;
-  // The worker copies the context in its own "memory" (an object mapping name to values)
-  for (const key of Object.keys(context)) {
-    self[key] = context[key];
+  console.log("Worker received message: ", event.data);
+  const type = event.data.type;
+  if(type === "input"){
+    self.input = event.data.data;
+  } else {
+    // make sure loading is done
+    await pyodideReadyPromise;
+    // Don't bother yet with this line, suppose our API is built in such a way:
+    const { python, ...context } = event.data;
+    // The worker copies the context in its own "memory" (an object mapping name to values)
+    for (const key of Object.keys(context)) {
+      self[key] = context[key];
+    }
+    // Now is the easy part, the one that is similar to working in the main thread:
+    try {
+      await self.pyodide.loadPackagesFromImports(python);
+      let results = await self.pyodide.runPythonAsync(python);
+      console.log("ran code: " + python + " and received: ", results);
+      self.postMessage({ "type": "success", "data": results });
+    } catch (error) {
+      console.log("error in webworker:", error)
+      self.postMessage({ "type": "error", data: error.message });
+    }
   }
-  // Now is the easy part, the one that is similar to working in the main thread:
-  try {
-    await self.pyodide.loadPackagesFromImports(python);
-    let results = await self.pyodide.runPythonAsync(python);
-    console.log("ran code: " + python + " and received: ", results);
-    self.postMessage({ "type": "success", "data": results });
-  } catch (error) {
-    console.log("error in webworker:", error)
-    self.postMessage({ "type": "error", data: error.message });
-  }
+
 };

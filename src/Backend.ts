@@ -18,4 +18,6 @@ export interface Backend {
     shutdown: () => Promise<void>;
 
     terminateExecution: () => Promise<void>;
+
+    send: (data: any) => void;
 };

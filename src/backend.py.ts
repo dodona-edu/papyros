@@ -28,18 +28,19 @@ def __dodona_print(*objects, sep=' ', end='\\n', file=sys.stdout, flush=False):
     else:
         __dodona_pyodide_globals["print"](*objects, sep=sep, end=end, file=file, flush=flush)
 
-def __dodona_input(console_prompt=""):
+async def __dodona_input(console_prompt=""):
     print(console_prompt, end="")
-    from js import user_input
-    console.log("Found input: " + user_input)
-    onInput(console_prompt)
-    if not user_input:
-        raise _NoInputError(f"No input provided for prompt {console_prompt}.")
-    else:
-        user_input = user_input.split("\\n")
-        print(user_input[0]) # emulate the input being typed in the console
-        #input_element.value = "\\n".join(user_input[1:])
-        return user_input[0]
+
+    #from js import user_input
+    #console.log("Found input: " + user_input)
+    return await onInput(console_prompt)
+    #if not user_input:
+    #    raise _NoInputError(f"No input provided for prompt {console_prompt}.")
+    #else:
+    #    user_input = user_input.split("\\n")
+    #    print(user_input[0]) # emulate the input being typed in the console
+    #    #input_element.value = "\\n".join(user_input[1:])
+    #    return user_input[0]
 
 
 print = __dodona_print

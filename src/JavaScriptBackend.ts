@@ -19,4 +19,8 @@ export class JavaScriptBackend implements Backend {
     async terminateExecution(){
         return Promise.resolve();
     }
+
+    send(data: any){
+      
+    }
 }
