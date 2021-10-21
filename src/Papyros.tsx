@@ -48,7 +48,7 @@ export async function Papyros(){
             console.log("Asked input in main thread for: ", e.data);
             const lines = inputArea.value.split("\n");
             if(lines.length > lineNr && lines[lineNr]){
-                backend.send({"type": "input", "data": inputArea.value});
+                backend.send({"type": "input", "data": lines[lineNr]});
                 lineNr += 1;
             } else {
                 //alert("Not enough input supplied!");
