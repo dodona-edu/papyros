@@ -1,5 +1,6 @@
 import { Backend } from "./Backend";
 import { INITIALIZATION_CODE } from "./backend.py";
+import { PapyrosEvent } from "./PapyrosEvent";
 
 interface LoadPyodideArgs {
     indexURL: string;
@@ -58,7 +59,6 @@ export class PythonBackend implements Backend {
           this.pyodideWorker.postMessage({
             type: "script",
             python: this.translate(code),
-            user_input: input,
           });
         });
         /*return this.pyodide.loadPackagesFromImports(code)
@@ -75,7 +75,7 @@ export class PythonBackend implements Backend {
         await this.launch();
     }
 
-    send(data: any){
+    send(data: PapyrosEvent){
       console.log("Posting data in send: ", data);
       this.pyodideWorker.postMessage(data);
     }

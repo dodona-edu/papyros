@@ -1,8 +1,9 @@
 import { Backend } from "./Backend";
 import { getBackend } from "./BackendManager";
-import { CODE_TA_ID, INPUT_TA_ID, LANGUAGE_SELECT_ID, OUTPUT_TA_ID, RUN_BTN_ID, TERMINATE_BTN_ID } from "./Constants";
+import { CODE_TA_ID, DEFAULT_PROGRAMMING_LANGUAGE, INPUT_TA_ID, LANGUAGE_SELECT_ID, OUTPUT_TA_ID, RUN_BTN_ID, TERMINATE_BTN_ID } from "./Constants";
+import { PapyrosEvent } from "./PapyrosEvent";
 
-export async function Papyros(){
+export function Papyros(){
     let backend: Backend;
 
     // textareas
@@ -13,16 +14,18 @@ export async function Papyros(){
 
     const languageSelect = document.getElementById(LANGUAGE_SELECT_ID) as HTMLSelectElement;
 
+    const runButton = document.getElementById(RUN_BTN_ID) as HTMLButtonElement;
     const terminateButton = document.getElementById(TERMINATE_BTN_ID) as HTMLButtonElement;
-    function init(){
-        const language = new URLSearchParams(window.location.search).get("language") || "python";
+
+    function init(): void {
+        const language = new URLSearchParams(window.location.search).get("language") || DEFAULT_PROGRAMMING_LANGUAGE;
         initBackend(language).then(b => backend = b);
         initTextAreas();
         initButtons();
         initLanguageSelect();
     }
 
-    async function initBackend(language?: string): Promise<Backend> {
+    function initBackend(language?: string): Promise<Backend> {
         if(language){
             languageSelect.value = language;
         }
@@ -30,19 +33,23 @@ export async function Papyros(){
         return backend.launch().catch(() => backend);
     }
 
-    async function initLanguageSelect(){
-        languageSelect.addEventListener("change", async () => {
-            await backend.shutdown();
-            initBackend();
-        });
+    function initLanguageSelect(): void {
+        languageSelect.addEventListener("change",
+         () =>  backend.shutdown().finally(() => initBackend())
+        );
     }
 
-    function initTextAreas(){
+    function initTextAreas(): void {
 
     }
 
-    function onMessage(e: any){
-        if(e.type === "print"){
+    function onError(e: PapyrosEvent): void {
+        // todo prettify errors
+        outputArea.value += e.data;
+    }
+
+    function onMessage(e: PapyrosEvent): void {
+        if(e.type === "output"){
             outputArea.value += e.data;
         } else if(e.type === "input"){
             console.log("Asked input in main thread for: ", e.data);
@@ -53,31 +60,31 @@ export async function Papyros(){
             } else {
                 //alert("Not enough input supplied!");
             }
-
+        } else if(e.type === "error"){
+            onError(e);
         }
     }
 
-    async function runCode(){
+    function runCode(): Promise<void> {
+        runButton.disabled = true;
         lineNr = 0;
         outputArea.value = "";
-        try {
-            terminateButton.hidden = false;
-            await backend.runCode(codeArea.value, inputArea.value, onMessage);
-        } catch(e: any){
-            outputArea.value += e.toString();
-        } finally {
-            terminateButton.hidden = true;
-        }
+        terminateButton.hidden = false;
+        return backend.runCode(codeArea.value, inputArea.value, onMessage)
+            .catch(onError)
+            .finally(() => {
+                terminateButton.hidden = true;
+                runButton.disabled = false;
+            });
     }
 
-    async function terminate(){
-        await backend.terminateExecution();
-        terminateButton.hidden = true;
+    function terminate(): Promise<void> {
+        return backend.terminateExecution().finally(() => terminateButton.hidden = true);
     }
 
-    function initButtons(){
-        document.getElementById(RUN_BTN_ID)?.addEventListener("click", () => runCode());
-        terminateButton?.addEventListener("click", () => terminate());
+    function initButtons(): void {
+        runButton.addEventListener("click", () => runCode());
+        terminateButton.addEventListener("click", () => terminate());
     }
 
     init();

@@ -1,3 +1,5 @@
+import { PapyrosEvent } from "./PapyrosEvent";
+
 export interface Backend {
     /**
      * Initialize the backend, setting up any globals required
@@ -19,5 +21,5 @@ export interface Backend {
 
     terminateExecution: () => Promise<void>;
 
-    send: (data: any) => void;
+    send: (data: PapyrosEvent) => void;
 };

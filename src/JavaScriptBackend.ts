@@ -1,4 +1,5 @@
 import { Backend } from "./Backend";
+import { PapyrosEvent } from "./PapyrosEvent";
 
 export class JavaScriptBackend implements Backend {
 
@@ -20,7 +21,7 @@ export class JavaScriptBackend implements Backend {
         return Promise.resolve();
     }
 
-    send(data: any){
+    send(data: PapyrosEvent){
       
     }
 }
