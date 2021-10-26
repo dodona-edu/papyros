@@ -57,13 +57,13 @@ workerContext.onmessage = async (event) => {
     }
     // Now is the easy part, the one that is similar to working in the main thread:
     try {
-      await context.pyodide.loadPackagesFromImports(python);
-      let results = await context.pyodide.runPythonAsync(python);
+      await workerContext.pyodide.loadPackagesFromImports(python);
+      let results = await workerContext.pyodide.runPythonAsync(python);
       console.log("ran code: " + python + " and received: ", results);
-      context.postMessage({ "type": "success", "data": results });
+      workerContext.postMessage({ "type": "success", "data": results });
     } catch (error) {
       console.log("error in webworker:", error)
-      context.postMessage({ "type": "error", data: error.message });
+      workerContext.postMessage({ "type": "error", data: error.message });
     }
   }
 
