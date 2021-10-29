@@ -15,7 +15,7 @@ let pyodideReadyPromise = loadPyodideAndPackages();
 
 function onPrint(e){
   console.log("Printing: ", e);
-  workerContext.postMessage({"type": "print", "data": e});
+  workerContext.postMessage({"type": "output", "data": e});
 }
 
 async function getInput(e){
@@ -46,7 +46,7 @@ workerContext.onmessage = async (event) => {
   const type = event.data.type;
   if(type === "input"){
     workerContext.input = event.data.data;
-  } else {
+  } else if(type === "script") {
     // make sure loading is done
     await pyodideReadyPromise;
     // Don't bother yet with this line, suppose our API is built in such a way:

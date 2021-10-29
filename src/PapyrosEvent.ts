@@ -1,4 +1,4 @@
 export interface PapyrosEvent {
-    type: "input"|"output"|"succes"|"error";
+    type: "input"|"output"|"script"|"succes"|"error";
     data: string;
 }
