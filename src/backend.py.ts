@@ -1,33 +1,37 @@
 export const INITIALIZATION_CODE = 
 `
 from pyodide import to_js
-from js import console, onPrint, onInput
+from js import console
 import sys
-
+console.log(print)
 __dodona_pyodide_globals = {}
 
-class _NoInputError(Exception):
-    pass
+def __capture_stdout(cb):
+    console.log("Rerouting print")
+    class _OutputWriter:
 
-class _OutputWriter:
+        def write(self, s):
+            console.log("Writing : " + s)
+            cb(to_js({"type": "output", "data":s}))
+            console.log("Called cb")
 
-    def write(self, s):
-        onPrint(s)
+        def flush(self):
+            pass # Given data is always immediately written
 
-    def flush(self):
-        pass # Given data is always immediately written
+    global print
+    __original_print = print
+    __writer = _OutputWriter()
 
-__dodona_pyodide_globals["input"] = input
-__dodona_pyodide_globals["print"] = print
-__dodona_pyodide_globals["file"] = _OutputWriter() 
+    def __dodona_print(*objects, sep=' ', end='\\n', file=sys.stdout, flush=False):
+        console.log(f"Called my print with {objects}")
+        if file == sys.stdout:
+            __original_print(*objects, sep=sep, end=end, file=__writer, flush=flush)
+        else:
+            __original_print(*objects, sep=sep, end=end, file=file, flush=flush)
 
-def __dodona_print(*objects, sep=' ', end='\\n', file=sys.stdout, flush=False):
-    console.log(f"Called my print with {objects}")
-    if file == sys.stdout:
-        __dodona_pyodide_globals["print"](*objects, sep=sep, end=end, file=__dodona_pyodide_globals["file"], flush=flush)
-    else:
-        __dodona_pyodide_globals["print"](*objects, sep=sep, end=end, file=file, flush=flush)
-
+    print = __dodona_print
+`;
+/*
 async def __dodona_input(console_prompt=""):
     print(console_prompt, end="")
 
@@ -41,8 +45,6 @@ async def __dodona_input(console_prompt=""):
     #    print(user_input[0]) # emulate the input being typed in the console
     #    #input_element.value = "\\n".join(user_input[1:])
     #    return user_input[0]
+`;*/
 
-
-print = __dodona_print
-input = __dodona_input`;
      

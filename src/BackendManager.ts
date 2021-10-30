@@ -1,7 +1,7 @@
-import { wrap } from 'comlink';
+import { Remote, wrap } from 'comlink';
 import { Backend } from "./Backend";
 
-export function getBackend(language: string): Backend {
+export function getBackend(language: string): Remote<Backend> {
     language = language.toLowerCase();
     let worker;
     switch(language){

@@ -15,7 +15,7 @@ export class PythonBackend implements Backend {
       //this.pyodide = {} as Pyodide;
     }
 
-    async launch(){
+    async launch(onData: (e: any) => void){
         /*this.pyodide = await window.loadPyodide({
             indexURL : "https://cdn.jsdelivr.net/pyodide/v0.18.1/full/",
             fullStdLib: true // default
@@ -33,17 +33,17 @@ export class PythonBackend implements Backend {
       return code;
     }
 
-    async runCode(code: string, onMessage: (e: any) => void){
+    async runCode(code: string){
         return new Promise((onSuccess, onError) => {
           this.pyodideWorker.onerror = onError;
           this.pyodideWorker.onmessage = (e) => {
               const event = e.data;
               console.log("Received message in runCode", event);
-              if(event.type === "success"){
+              /*if(event.type === "success"){
                 onSuccess(event.data)
               } else {
                 onMessage(event);
-              }
+              }*/
             };
           this.pyodideWorker.postMessage({
             type: "script",
@@ -60,8 +60,6 @@ export class PythonBackend implements Backend {
 
     async terminateExecution(){
         this.pyodideWorker.terminate();
-        this.pyodideWorker = new Worker(WORKER_PATH);
-        await this.launch();
     }
 
     send(data: PapyrosEvent){

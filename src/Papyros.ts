@@ -1,11 +1,11 @@
-import { proxy } from "comlink";
+import { proxy, releaseProxy, Remote } from "comlink";
 import { Backend } from "./Backend";
 import { getBackend } from "./BackendManager";
 import { CODE_TA_ID, DEFAULT_PROGRAMMING_LANGUAGE, INPUT_TA_ID, LANGUAGE_SELECT_ID, OUTPUT_TA_ID, RUN_BTN_ID, TERMINATE_BTN_ID } from "./Constants";
 import { PapyrosEvent } from "./PapyrosEvent";
 
 export function Papyros(){
-    let backend: Backend;
+    let backend: Remote<Backend>;
 
     // textareas
     const codeArea = document.getElementById(CODE_TA_ID) as HTMLInputElement;
@@ -20,19 +20,19 @@ export function Papyros(){
 
     function init(): void {
         const language = new URLSearchParams(window.location.search).get("language") || DEFAULT_PROGRAMMING_LANGUAGE;
-        initBackend(language).then(b => backend = b);
+        initBackend(language);
         initTextAreas();
         initButtons();
         initLanguageSelect();
     }
 
-    function initBackend(language?: string): Promise<Backend> {
+    function initBackend(language?: string): Promise<void> {
         if(language){
             languageSelect.value = language;
         }
         backend = getBackend(languageSelect.value);
         console.log("Got backend: ", backend);
-        return backend.launch().then(() => backend).catch(() => backend);
+        return backend.launch(proxy(e => onMessage(e)));
     }
 
     function initLanguageSelect(): void {
@@ -52,6 +52,7 @@ export function Papyros(){
     }
 
     function onMessage(e: PapyrosEvent): void {
+        console.log("received event in onMessage", e);
         if(e.type === "output"){
             outputArea.value += e.data;
         } else if(e.type === "input"){
@@ -74,16 +75,19 @@ export function Papyros(){
         outputArea.value = "";
         terminateButton.hidden = false;
         console.log("Running code in Papyros, sending to backend");
-        return backend.runCode(codeArea.value, proxy(onMessage))
+        return backend.runCode(codeArea.value)
             .catch(onError)
             .finally(() => {
-                terminateButton.hidden = true;
+                terminateButton.hidden = false;
                 runButton.disabled = false;
             });
     }
 
     function terminate(): Promise<void> {
-        return backend.terminateExecution().finally(() => terminateButton.hidden = true);
+        backend.terminateExecution();
+        backend[releaseProxy]();
+        terminateButton.hidden = true;
+        return initBackend();
     }
 
     function initButtons(): void {

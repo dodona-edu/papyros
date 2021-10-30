@@ -3,11 +3,11 @@ import { PapyrosEvent } from "./PapyrosEvent";
 
 export class JavaScriptBackend implements Backend {
 
-    async launch() {
+    async launch(onData: (e: any) => void) {
         return Promise.resolve();
     }
 
-    async runCode(code: string, onData: (e: any) => void){
+    async runCode(code: string){
         // Code is run in the browser of the user
         // eslint-disable-next-line
         return Promise.resolve(eval(code));
@@ -17,8 +17,8 @@ export class JavaScriptBackend implements Backend {
         return Promise.resolve();
     }
 
-    async terminateExecution(){
-        return Promise.resolve();
+    terminateExecution(){
+
     }
 
     send(data: PapyrosEvent){
