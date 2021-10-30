@@ -1,3 +1,4 @@
+import { proxy } from "comlink";
 import { Backend } from "./Backend";
 import { getBackend } from "./BackendManager";
 import { CODE_TA_ID, DEFAULT_PROGRAMMING_LANGUAGE, INPUT_TA_ID, LANGUAGE_SELECT_ID, OUTPUT_TA_ID, RUN_BTN_ID, TERMINATE_BTN_ID } from "./Constants";
@@ -30,6 +31,7 @@ export function Papyros(){
             languageSelect.value = language;
         }
         backend = getBackend(languageSelect.value);
+        console.log("Got backend: ", backend);
         return backend.launch().then(() => backend).catch(() => backend);
     }
 
@@ -44,6 +46,7 @@ export function Papyros(){
     }
 
     function onError(e: PapyrosEvent): void {
+        console.log("Got error in Papyros: ", e);
         // todo prettify errors
         outputArea.value += e.data;
     }
@@ -70,7 +73,8 @@ export function Papyros(){
         lineNr = 0;
         outputArea.value = "";
         terminateButton.hidden = false;
-        return backend.runCode(codeArea.value, onMessage)
+        console.log("Running code in Papyros, sending to backend");
+        return backend.runCode(codeArea.value, proxy(onMessage))
             .catch(onError)
             .finally(() => {
                 terminateButton.hidden = true;

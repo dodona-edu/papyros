@@ -32,7 +32,7 @@ class PythonWorker implements Backend {
     }
 
     async runCode(code: string, onData: (e: PapyrosEvent) => void){
-
+        console.log("running code in python worker: " + code);
     }
 
     async terminateExecution(){
@@ -44,9 +44,8 @@ class PythonWorker implements Backend {
     }
 
     send(e: PapyrosEvent){
-
+        console.log("got data in send: ", e);
     }
 }
 
-export type IPythonWorker = PythonWorker;
-expose(PythonWorker);
+expose(new PythonWorker());
