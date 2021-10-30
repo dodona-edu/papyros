@@ -1,9 +1,17 @@
+import { wrap } from 'comlink';
 import { Backend } from "./Backend";
 import { JavaScriptBackend } from "./JavaScriptBackend";
 import { PythonBackend } from "./PythonBackend";
 
+const worker = new Worker('./workers/python', {
+    name: 'PythonWorker',
+    type: 'module',
+  });
+const workerApi = wrap<import('./workers/python').IPythonWorker>(worker);
+
 const BACKEND_LANGUAGE_MAP: Map<string, Backend> = new Map([
-    ["python", new PythonBackend()],
+    //["python", () => new PythonBackend()],
+    ["python", workerApi],
     ["javascript", new JavaScriptBackend()]
 ]);
 

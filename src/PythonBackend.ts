@@ -2,27 +2,17 @@ import { Backend } from "./Backend";
 import { INITIALIZATION_CODE } from "./backend.py";
 import { PapyrosEvent } from "./PapyrosEvent";
 
-interface LoadPyodideArgs {
-    indexURL: string;
-    fullStdLib: boolean;
-}
-interface Pyodide {
-    runPythonAsync: (code: string) => Promise<any>;
-    loadPackagesFromImports: (code: string) => Promise<any>;
-}
-declare global {
-    interface Window { loadPyodide: (args: LoadPyodideArgs) => Promise<Pyodide> }
-}
-
-window.loadPyodide = window.loadPyodide || {};
 const WORKER_PATH = "./PyodideWebWorker.js";
 export class PythonBackend implements Backend {
     pyodideWorker: Worker;
+    sharedBuffer: Int32Array;
     //pyodide: Pyodide;
 
     constructor(){
-        this.pyodideWorker = new Worker(WORKER_PATH);
-        //this.pyodide = {} as Pyodide;
+      const shared = new SharedArrayBuffer(4);
+      this.sharedBuffer = new Int32Array(shared);
+      this.pyodideWorker = new Worker(WORKER_PATH);
+      //this.pyodide = {} as Pyodide;
     }
 
     async launch(){
@@ -31,8 +21,7 @@ export class PythonBackend implements Backend {
             fullStdLib: true // default
           });
           */
-        await this.runCode(INITIALIZATION_CODE, "", (e) => {});
-        return this;
+        await this.runCode(INITIALIZATION_CODE, (e) => {});
     }
 
     translate(code: string): string {
@@ -44,7 +33,7 @@ export class PythonBackend implements Backend {
       return code;
     }
 
-    async runCode(code: string, input: string, onMessage: (e: any) => void){
+    async runCode(code: string, onMessage: (e: any) => void){
         return new Promise((onSuccess, onError) => {
           this.pyodideWorker.onerror = onError;
           this.pyodideWorker.onmessage = (e) => {

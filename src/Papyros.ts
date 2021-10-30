@@ -30,7 +30,7 @@ export function Papyros(){
             languageSelect.value = language;
         }
         backend = getBackend(languageSelect.value);
-        return backend.launch().catch(() => backend);
+        return backend.launch().then(() => backend).catch(() => backend);
     }
 
     function initLanguageSelect(): void {
@@ -70,7 +70,7 @@ export function Papyros(){
         lineNr = 0;
         outputArea.value = "";
         terminateButton.hidden = false;
-        return backend.runCode(codeArea.value, inputArea.value, onMessage)
+        return backend.runCode(codeArea.value, onMessage)
             .catch(onError)
             .finally(() => {
                 terminateButton.hidden = true;
