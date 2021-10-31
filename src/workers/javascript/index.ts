@@ -1,37 +1,17 @@
 import { expose } from 'comlink';
 import { Backend } from '../../Backend';
-import { INITIALIZATION_CODE } from '../../backend.py';
 import { PapyrosEvent } from '../../PapyrosEvent';
 
-interface LoadPyodideArgs {
-    indexURL: string;
-    fullStdLib: boolean;
-  }
-interface Pyodide {
-    runPythonAsync: (code: string) => Promise<any>;
-    loadPackagesFromImports: (code: string) => Promise<any>;
-    globals: Map<string, any>;
-}
-declare function importScripts(...urls: string[]): void;
-declare function loadPyodide(args: LoadPyodideArgs): Promise<Pyodide>;
 
-importScripts("https://cdn.jsdelivr.net/pyodide/v0.18.1/full/pyodide.js"); 
+class JavaScriptWorker implements Backend {
 
-
-class PythonWorker implements Backend {
-    pyodide: Pyodide;
     onEvent: (e: PapyrosEvent) => void;
 
     constructor(){
-        this.pyodide = {} as Pyodide;
-        this.onEvent = (_e) => {};
+        this.onEvent = () => {};
     }
 
     async launch(onEvent: (e: PapyrosEvent) => void, inputTextArray?: Uint8Array, inputMetaData?: Int32Array){
-        this.pyodide = await loadPyodide({
-            indexURL: "https://cdn.jsdelivr.net/pyodide/v0.18.1/full/",
-            fullStdLib: true
-        });
         const textDecoder = new TextDecoder();
         const inputCallback = (e: PapyrosEvent) => {
             if(e.type !== "input"){
@@ -56,24 +36,43 @@ class PythonWorker implements Backend {
                   return textDecoder.decode(bytes);
             }
         }
-
         this.onEvent = (e => {
-            console.log("Handling event in this.onEvent PY", e);
+            console.log("Handling event in this.onEvent JS", e);
             onEvent(e);
             if(e.type === "input"){
                 return inputCallback(e);
             }
         });
-        await this.runCode(INITIALIZATION_CODE);
-        this.pyodide.globals.get("__override_builtins")((data: Map<string, any>) => this.onEvent(Object.fromEntries(data) as PapyrosEvent));
+    }
+
+    getFunctionToRun(code: string){
+        const promptFn = `
+        function prompt(text="", defaultText=""){
+            console.log("Prompted user with text:" + text);
+            return onEvent({"type": "input", "data": text});
+        }
+        
+        `
+        const newContext = {
+            "onEvent": this.onEvent.bind(this)
+        };
+        const newBody = [];
+        for(const k in newContext){
+            newBody.push(`const ${k} = ctx['${k}'];`);
+        }
+        newBody.push(promptFn);
+        newBody.push(code);
+        const fnBody = newBody.join('\n');
+        // eslint-disable-next-line no-new-func
+        return new Function("ctx", fnBody)(newContext);
     }
 
     async runCode(code: string){
         console.log("Running code in worker: ", code);
         let result: PapyrosEvent;
         try {
-            await this.pyodide.loadPackagesFromImports(code);
-            result = {type: "success", data: await this.pyodide.runPythonAsync(code)};
+            // eslint-disable-next-line
+            result = {type: "success", data: this.getFunctionToRun(code)};
             console.log("ran code: " + code + " and received: ", result);
         } catch (error: any) {
             console.log("error in webworker:", error);
@@ -87,4 +86,4 @@ class PythonWorker implements Backend {
     }
 }
 
-expose(new PythonWorker());
+expose(new JavaScriptWorker());

@@ -3,8 +3,10 @@ export const INITIALIZATION_CODE =
 from pyodide import to_js
 from js import console
 import sys
-console.log(print)
-__dodona_pyodide_globals = {}
+
+def __override_builtins(cb):
+    __capture_stdout(cb)
+    __override_stdin(cb)
 
 def __capture_stdout(cb):
     console.log("Rerouting print")
@@ -30,6 +32,17 @@ def __capture_stdout(cb):
             __original_print(*objects, sep=sep, end=end, file=file, flush=flush)
 
     print = __dodona_print
+
+def __override_stdin(cb):
+    global input
+    def __dodona_input(prompt=""):
+        console.log("Called print with prompt: " + prompt)
+        print(prompt, end="")
+        user_value = cb(to_js({"type": "input", "data":prompt}))
+        print(user_value)
+        return user_value
+
+    input = __dodona_input
 `;
 /*
 async def __dodona_input(console_prompt=""):

@@ -1,5 +1,7 @@
-import { Remote, wrap } from 'comlink';
+import { releaseProxy, Remote, wrap } from 'comlink';
 import { Backend } from "./Backend";
+
+const BACKEND_MAP: Map<Remote<Backend>, Worker> = new Map();
 
 export function getBackend(language: string): Remote<Backend> {
     language = language.toLowerCase();
@@ -12,17 +14,32 @@ export function getBackend(language: string): Remote<Backend> {
             });
             break;
         }
-        /*
+        
         case "javascript": {
             worker = new Worker("./workers/javascript", {
                 type: 'module',
             });
             break;
         }
-        */
+        
         default: {
             throw new Error(`${language} is not yet supported.`);
         }
     }
-    return wrap<Backend>(worker);
+    const backend =  wrap<Backend>(worker);
+    BACKEND_MAP.set(backend, worker);
+    return backend;
+}
+
+export async function stopBackend(backend: Remote<Backend>){
+    console.log("Called stop backend");
+    if(BACKEND_MAP.has(backend)){
+        const toStop = BACKEND_MAP.get(backend)!;
+        console.log("terminating worker");
+        toStop.terminate();
+        backend[releaseProxy]();
+        BACKEND_MAP.delete(backend);
+    } else {
+        throw new Error(`Unknown backend supplied for language ${backend.toString()}`);
+    }
 }
