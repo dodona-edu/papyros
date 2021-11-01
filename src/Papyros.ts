@@ -78,7 +78,6 @@ export function Papyros(){
             inputTextArray.set(encoded);
             Atomics.store(inputMetaData, 1, encoded.length);
             Atomics.store(inputMetaData, 0, 1);
-            //backend.send({"type": "input", "data": lines[lineNr]});
             lineNr += 1;
             awaitingInput = false;
             return true;

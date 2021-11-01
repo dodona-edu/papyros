@@ -81,10 +81,6 @@ class PythonWorker implements Backend {
         }
         this.onEvent(result);
     }
-
-    send(e: PapyrosEvent){
-        console.log("got data in send: ", e);
-    }
 }
 
 expose(new PythonWorker());

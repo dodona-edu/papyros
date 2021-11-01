@@ -13,6 +13,4 @@ export interface Backend {
      * @return {Promise<any>} The (often useless) result of the code
      */
     runCode: (code: string) => Promise<any>;
-
-    send: (data: PapyrosEvent) => void;
 };
