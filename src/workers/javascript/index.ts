@@ -18,22 +18,29 @@ class JavaScriptWorker implements Backend {
                 console.log("Invalid event passed to inputCallback", e);
                 return "__INVALID_MESSAGE";
             }
-            console.log("Handling inputEvent", e);
-            if(inputTextArray && inputMetaData){
+            if(!inputTextArray || !inputMetaData){
+                const request = new XMLHttpRequest();
+                request.open('GET', '/input', false);  // `false` makes the request synchronous
+                request.send(null);
+                if (request.status === 200) {
+                    console.log(request.responseText);
+                }
+                return request.responseText;
+            } else {
                 while (true) {
                     if (Atomics.wait(inputMetaData, 0, 0, 100) === "timed-out") {
                         //console.log("waiting on input");
-                      //if (interruptBuffer[0] === 2) {
-                      //  return null;
-                      //}
+                    //if (interruptBuffer[0] === 2) {
+                    //  return null;
+                    //}
                     } else {
-                      break
+                        break;
                     }
-                  }
-                  Atomics.store(inputMetaData, 0, 0);
-                  const size = Atomics.exchange(inputMetaData, 1, 0);
-                  const bytes = inputTextArray.slice(0, size);
-                  return textDecoder.decode(bytes);
+                }
+                Atomics.store(inputMetaData, 0, 0);
+                const size = Atomics.exchange(inputMetaData, 1, 0);
+                const bytes = inputTextArray.slice(0, size);
+                return textDecoder.decode(bytes);
             }
         }
         this.onEvent = (e => {
@@ -53,8 +60,8 @@ class JavaScriptWorker implements Backend {
         ]);
         const overrideBuiltins = `
 function prompt(text="", defaultText=""){
-    console.log("Prompted user with text:" + text);
-    return onEvent({"type": "input", "data": text});
+    console.log(text);
+    return __onEvent({"type": "input", "data": text});
 }
 function __stringify(args, addNewline=false){
     let asString = "";

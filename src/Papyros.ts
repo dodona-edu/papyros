@@ -29,6 +29,24 @@ export function Papyros(){
     let awaitingInput = false;
     const encoder = new TextEncoder();
 
+    if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.addEventListener("message", e => onInput(e.data as PapyrosEvent));
+        navigator.serviceWorker
+        .register("./inputServiceWorker.js", { scope: "" })
+        .then(reg =>  {
+          console.log("Service Worker Registered", reg);
+
+        });
+        /*navigator.serviceWorker.getRegistrations().then((registrations) => {
+            for(let registration of registrations) {
+                console.log("Unregistering: ", registration);
+                //registration.unregister()
+            }
+        }).then(() => {
+ 
+        });*/
+    }
+
 
     function init(): void {
         const language = new URLSearchParams(window.location.search).get("language") || DEFAULT_PROGRAMMING_LANGUAGE;
@@ -44,7 +62,6 @@ export function Papyros(){
             languageSelect.value = language;
         }
         backend = getBackend(languageSelect.value);
-        console.log("Got backend: ", backend);
         return backend.launch(proxy(e => onMessage(e)), inputTextArray, inputMetaData)
                 .then(() => {runButton.disabled = false});
     }
@@ -59,6 +76,7 @@ export function Papyros(){
         inputArea.onkeydown = (e) => {
             console.log("Key down in inputArea", e);
             if(awaitingInput && e.key.toLowerCase() === "enter"){
+                console.log("Pressed enter! Sending input to user");
                 sendInput();
             }
         }
@@ -70,19 +88,35 @@ export function Papyros(){
         outputArea.value += e.data;
     }
 
-    function sendInput(){
+    async function sendInput(){
+        console.log("Handling send Input in Papyros");
         const lines = inputArea.value.split("\n");
         if(lines.length > lineNr && lines[lineNr]){
             console.log("Sending input to user: " + lines[lineNr]);
-            const encoded = encoder.encode(lines[lineNr]);
-            inputTextArray.set(encoded);
-            Atomics.store(inputMetaData, 1, encoded.length);
-            Atomics.store(inputMetaData, 0, 1);
+            const line = lines[lineNr];
+            if(true){
+               await fetch("/input", {method: "POST", body: JSON.stringify({"input": line})});
+            } else {
+                const encoded = encoder.encode(lines[lineNr]);
+                inputTextArray.set(encoded);
+                Atomics.store(inputMetaData, 1, encoded.length);
+                Atomics.store(inputMetaData, 0, 1);
+            }
             lineNr += 1;
             awaitingInput = false;
             return true;
         } else {
+            console.log("Had no input to send, still waiting!");
             return false;
+        }
+    }
+
+    async function onInput(e: PapyrosEvent): Promise<void> {
+        console.log("Received onInput event in Papyros: ", e);
+        if(!await sendInput()){
+            // todo render something based on the event
+            awaitingInput = true;
+            console.log("User needs to enter input before code can continue");
         }
     }
 
@@ -91,11 +125,7 @@ export function Papyros(){
         if(e.type === "output"){
             outputArea.value += e.data;
         } else if(e.type === "input"){
-            console.log("Asked input in main thread for: ", e.data);
-            if(!sendInput()){
-                console.log("User needs to enter something before python can continue!");
-                awaitingInput = true;
-            }
+            onInput(e);
         } else if(e.type === "error"){
             onError(e);
         }
@@ -122,6 +152,10 @@ export function Papyros(){
     }
 
     function initButtons(): void {
+        /*runButton.addEventListener("click", () => {
+            //sendInput();
+            fetch("/input").then(r => console.log("Got result from GET /input", r));
+        });*/
         runButton.addEventListener("click", () => runCode());
         terminateButton.addEventListener("click", () => terminate());
     }

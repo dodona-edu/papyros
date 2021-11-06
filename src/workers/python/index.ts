@@ -38,7 +38,6 @@ class PythonWorker implements Backend {
                 console.log("Invalid event passed to inputCallback", e);
                 return "__INVALID_MESSAGE";
             }
-            console.log("Handling inputEvent", e);
             if(inputTextArray && inputMetaData){
                 while (true) {
                     if (Atomics.wait(inputMetaData, 0, 0, 100) === "timed-out") {
