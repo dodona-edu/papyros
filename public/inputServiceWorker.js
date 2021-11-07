@@ -29,7 +29,6 @@ self.addEventListener('fetch', function(event) {
         if(event.request.method === "GET"){
             console.log("Handling GET request");
             promiseChain = waitForInput();
-
         } else if(event.request.method === "POST"){
             console.log("Handling POST request");
             console.log(event.request);

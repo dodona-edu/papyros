@@ -3,54 +3,7 @@ import { Backend } from '../../Backend';
 import { PapyrosEvent } from '../../PapyrosEvent';
 
 
-class JavaScriptWorker implements Backend {
-
-    onEvent: (e: PapyrosEvent) => void;
-
-    constructor(){
-        this.onEvent = () => {};
-    }
-
-    async launch(onEvent: (e: PapyrosEvent) => void, inputTextArray?: Uint8Array, inputMetaData?: Int32Array){
-        const textDecoder = new TextDecoder();
-        const inputCallback = (e: PapyrosEvent) => {
-            if(e.type !== "input"){
-                console.log("Invalid event passed to inputCallback", e);
-                return "__INVALID_MESSAGE";
-            }
-            if(!inputTextArray || !inputMetaData){
-                const request = new XMLHttpRequest();
-                request.open('GET', '/input', false);  // `false` makes the request synchronous
-                request.send(null);
-                if (request.status === 200) {
-                    console.log(request.responseText);
-                }
-                return request.responseText;
-            } else {
-                while (true) {
-                    if (Atomics.wait(inputMetaData, 0, 0, 100) === "timed-out") {
-                        //console.log("waiting on input");
-                    //if (interruptBuffer[0] === 2) {
-                    //  return null;
-                    //}
-                    } else {
-                        break;
-                    }
-                }
-                Atomics.store(inputMetaData, 0, 0);
-                const size = Atomics.exchange(inputMetaData, 1, 0);
-                const bytes = inputTextArray.slice(0, size);
-                return textDecoder.decode(bytes);
-            }
-        }
-        this.onEvent = (e => {
-            //console.log("Handling event in this.onEvent JS", e);
-            onEvent(e);
-            if(e.type === "input"){
-                return inputCallback(e);
-            }
-        });
-    }
+class JavaScriptWorker extends Backend {
 
     getFunctionToRun(code: string){
         const toRestore = new Map([
@@ -60,8 +13,10 @@ class JavaScriptWorker implements Backend {
         ]);
         const overrideBuiltins = `
 function prompt(text="", defaultText=""){
-    console.log(text);
-    return __onEvent({"type": "input", "data": text});
+    __onEvent({"type": "output", "data": text});
+    const promptedValue = __onEvent({"type": "input", "data": text});
+    __onEvent({"type": "output", "data": promptedValue + "\\n"});
+    return promptedValue;
 }
 function __stringify(args, addNewline=false){
     let asString = "";
@@ -69,7 +24,13 @@ function __stringify(args, addNewline=false){
         if(args.length === 1){
             asString = JSON.stringify(args[0]);
         } else {
-            asString = args.map(s => JSON.stringify(s)).join(" ");
+            asString = args.map(s => {
+                if(typeof s === 'string' || s instanceof String){
+                    return s; // prevent spurious quotes
+                } else {
+                    return JSON.stringify(s);
+                }
+            }).join(" ");
         }
     } else {
         asString = JSON.stringify(args);
@@ -107,12 +68,11 @@ ${restoreBuiltins.join('\n')}
 }
         `);
         const fnBody = newBody.join('\n');
-        console.log(fnBody);
         // eslint-disable-next-line no-new-func
         return new Function("ctx", fnBody)(newContext);
     }
 
-    async runCode(code: string){
+    runCode(code: string){
         //console.log("Running code in worker: ", code);
         let result: PapyrosEvent;
         try {

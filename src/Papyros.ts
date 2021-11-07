@@ -1,5 +1,5 @@
 import { proxy, Remote } from "comlink";
-import { Backend } from "./Backend";
+import { Backend} from "./Backend";
 import { getBackend, stopBackend } from "./BackendManager";
 import { CODE_TA_ID, DEFAULT_PROGRAMMING_LANGUAGE, INPUT_TA_ID, LANGUAGE_SELECT_ID, OUTPUT_TA_ID, RUN_BTN_ID, TERMINATE_BTN_ID } from "./Constants";
 import { PapyrosEvent } from "./PapyrosEvent";
@@ -20,31 +20,22 @@ export function Papyros(){
     const runButton = document.getElementById(RUN_BTN_ID) as HTMLButtonElement;
     const terminateButton = document.getElementById(TERMINATE_BTN_ID) as HTMLButtonElement;
 
-    // shared memory
-    console.assert(typeof SharedArrayBuffer !== "undefined");
-    let inputTextArray = new Uint8Array(new SharedArrayBuffer(Uint8Array.BYTES_PER_ELEMENT * 1024));
-    // 2 Int32s: index 0 indicates whether data is written, index 1 denotes length of the string
-    let inputMetaData = new Int32Array(new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * 2));
-    //let interruptBuffer = new Int32Array(new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT));
+    // Input handling
     let awaitingInput = false;
     const encoder = new TextEncoder();
 
-    if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.addEventListener("message", e => onInput(e.data as PapyrosEvent));
-        navigator.serviceWorker
-        .register("./inputServiceWorker.js", { scope: "" })
-        .then(reg =>  {
-          console.log("Service Worker Registered", reg);
-
-        });
-        /*navigator.serviceWorker.getRegistrations().then((registrations) => {
-            for(let registration of registrations) {
-                console.log("Unregistering: ", registration);
-                //registration.unregister()
-            }
-        }).then(() => {
- 
-        });*/
+    // shared memory
+    let inputTextArray: Uint8Array | undefined = undefined;
+        // 2 Int32s: index 0 indicates whether data is written, index 1 denotes length of the string
+    let inputMetaData: Int32Array | undefined = undefined;
+    if(typeof SharedArrayBuffer !== "undefined" && false){
+        inputTextArray = new Uint8Array(new SharedArrayBuffer(Uint8Array.BYTES_PER_ELEMENT * 1024));
+        inputMetaData = new Int32Array(new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * 2));
+        //let interruptBuffer = new Int32Array(new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT));
+    } else if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("./inputServiceWorker.js", { scope: "" });
+    } else {
+        document.getElementById("papyros")!.innerHTML = "Your browser is unsupported. Please use a modern version of Chrome, Safari, Firefox, ...";
     }
 
 
@@ -94,7 +85,7 @@ export function Papyros(){
         if(lines.length > lineNr && lines[lineNr]){
             console.log("Sending input to user: " + lines[lineNr]);
             const line = lines[lineNr];
-            if(true){
+            if(!inputMetaData || !inputTextArray){
                await fetch("/input", {method: "POST", body: JSON.stringify({"input": line})});
             } else {
                 const encoded = encoder.encode(lines[lineNr]);
