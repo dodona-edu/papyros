@@ -1,6 +1,6 @@
 # Papyros
 
-Scratchpad for multiple programming languages in the browser. \
+Scratchpad for multiple programming languages in the browser. 
 
 Python support is powered by Pyodide. \
 JavaScript is supported natively in the browser.\
