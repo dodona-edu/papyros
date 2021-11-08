@@ -1,7 +1,7 @@
 import { PapyrosEvent } from "./PapyrosEvent";
 
 function getInputCallback(inputTextArray?: Uint8Array, inputMetaData?: Int32Array){
-    //if(!inputTextArray || !inputMetaData){
+    if(!inputTextArray || !inputMetaData){
         return () => {
             const request = new XMLHttpRequest();
             do {
@@ -10,7 +10,7 @@ function getInputCallback(inputTextArray?: Uint8Array, inputMetaData?: Int32Arra
             } while(request.status >= 400);
             return request.responseText;
         }
-    /*} else {
+    } else {
         const textDecoder = new TextDecoder();
         return () => {
             while (true) {
@@ -28,7 +28,7 @@ function getInputCallback(inputTextArray?: Uint8Array, inputMetaData?: Int32Arra
             const bytes = inputTextArray.slice(0, size);
             return textDecoder.decode(bytes);
         }
-    }*/
+    }
 }
 
 export abstract class Backend {

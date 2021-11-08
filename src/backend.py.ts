@@ -44,20 +44,5 @@ def __override_stdin(cb):
 
     input = __dodona_input
 `;
-/*
-async def __dodona_input(console_prompt=""):
-    print(console_prompt, end="")
-
-    #from js import user_input
-    #console.log("Found input: " + user_input)
-    return await onInput(console_prompt)
-    #if not user_input:
-    #    raise _NoInputError(f"No input provided for prompt {console_prompt}.")
-    #else:
-    #    user_input = user_input.split("\\n")
-    #    print(user_input[0]) # emulate the input being typed in the console
-    #    #input_element.value = "\\n".join(user_input[1:])
-    #    return user_input[0]
-`;*/
 
      

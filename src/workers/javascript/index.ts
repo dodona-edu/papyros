@@ -80,7 +80,6 @@ ${restoreBuiltins.join('\n')}
             result = {type: "success", data: this.getFunctionToRun(code)};
             console.log("ran code: " + code + " and received: ", result);
         } catch (error: any) {
-            console.log("error in webworker:", error);
             result = {type: "error", data: error};
         }
         this.onEvent(result);
