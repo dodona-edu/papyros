@@ -32,10 +32,8 @@ export function getBackend(language: string): Remote<Backend> {
 }
 
 export async function stopBackend(backend: Remote<Backend>){
-    console.log("Called stop backend");
     if(BACKEND_MAP.has(backend)){
         const toStop = BACKEND_MAP.get(backend)!;
-        console.log("terminating worker");
         toStop.terminate();
         backend[releaseProxy]();
         BACKEND_MAP.delete(backend);

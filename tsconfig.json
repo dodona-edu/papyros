@@ -18,7 +18,6 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "noEmit": true,
-    "jsx": "react-jsx",
     "isolatedModules": true,
     "downlevelIteration": true
   },
