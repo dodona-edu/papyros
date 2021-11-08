@@ -1,5 +1,6 @@
-# papyros
-Python scratchpad in the browser, powered by Pyodide
+# Papyros
 
-Depends on SharedArrayBuffer/Atomics, making Safari unsupported until they re-enable this feature. Extension to webpack.config.js appends header to support this feature.
-TypeScript worker support based on https://blog.johnnyreilly.com/2020/02/21/web-workers-comlink-typescript-and-react/
+Scratchpad for multiple programming languages in the browser.
+Python support is powered by Pyodide.
+JavaScript is supported natively in the browser.
+Other languages are currently out of scope, but the application is designed to be able to be extended.
