@@ -35,7 +35,11 @@ export function Papyros(){
     } else if ("serviceWorker" in navigator) {
         navigator.serviceWorker.register("./inputServiceWorker.js", { scope: "" });
     } else {
-        document.getElementById("papyros")!.innerHTML = "Your browser is unsupported. Please use a modern version of Chrome, Safari, Firefox, ...";
+        console.log(typeof SharedArrayBuffer);
+        console.log(navigator);
+        console.log(navigator.serviceWorker);
+        console.log("Your browser is unsupported. Please use a modern version of Chrome, Safari, Firefox, ...");
+        //document.getElementById("papyros")!.innerHTML = "Your browser is unsupported. Please use a modern version of Chrome, Safari, Firefox, ...";
     }
 
 
