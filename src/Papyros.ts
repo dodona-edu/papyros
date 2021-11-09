@@ -30,18 +30,13 @@ export function Papyros(){
     let inputMetaData: Int32Array | undefined = undefined;
     const fetchInputUrl = `${document.location.pathname}input`
     if(typeof SharedArrayBuffer !== "undefined"){
-        //inputTextArray = new Uint8Array(new SharedArrayBuffer(Uint8Array.BYTES_PER_ELEMENT * 1024));
-        //inputMetaData = new Int32Array(new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * 2));
+        inputTextArray = new Uint8Array(new SharedArrayBuffer(Uint8Array.BYTES_PER_ELEMENT * 1024));
+        inputMetaData = new Int32Array(new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * 2));
         //let interruptBuffer = new Int32Array(new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT));
-        navigator.serviceWorker.register("./inputServiceWorker.js", { scope: "" });
     } else if ("serviceWorker" in navigator) {
         navigator.serviceWorker.register("./inputServiceWorker.js", { scope: "" });
     } else {
-        console.log(typeof SharedArrayBuffer);
-        console.log(navigator);
-        console.log(navigator.serviceWorker);
-        console.log("Your browser is unsupported. Please use a modern version of Chrome, Safari, Firefox, ...");
-        //document.getElementById("papyros")!.innerHTML = "Your browser is unsupported. Please use a modern version of Chrome, Safari, Firefox, ...";
+        document.getElementById("papyros")!.innerHTML = "Your browser is unsupported. Please use a modern version of Chrome, Safari, Firefox, ...";
     }
 
 
