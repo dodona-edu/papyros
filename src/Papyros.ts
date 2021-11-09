@@ -28,10 +28,12 @@ export function Papyros(){
     let inputTextArray: Uint8Array | undefined = undefined;
         // 2 Int32s: index 0 indicates whether data is written, index 1 denotes length of the string
     let inputMetaData: Int32Array | undefined = undefined;
+    const fetchInputUrl = `${document.location.pathname}input`
     if(typeof SharedArrayBuffer !== "undefined"){
-        inputTextArray = new Uint8Array(new SharedArrayBuffer(Uint8Array.BYTES_PER_ELEMENT * 1024));
-        inputMetaData = new Int32Array(new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * 2));
+        //inputTextArray = new Uint8Array(new SharedArrayBuffer(Uint8Array.BYTES_PER_ELEMENT * 1024));
+        //inputMetaData = new Int32Array(new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * 2));
         //let interruptBuffer = new Int32Array(new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT));
+        navigator.serviceWorker.register("./inputServiceWorker.js", { scope: "" });
     } else if ("serviceWorker" in navigator) {
         navigator.serviceWorker.register("./inputServiceWorker.js", { scope: "" });
     } else {
@@ -90,7 +92,7 @@ export function Papyros(){
             console.log("Sending input to user: " + lines[lineNr]);
             const line = lines[lineNr];
             if(!inputMetaData || !inputTextArray){
-               await fetch("/input", {method: "POST", body: JSON.stringify({"input": line})});
+               await fetch(fetchInputUrl, {method: "POST", body: JSON.stringify({"input": line})});
             } else {
                 const encoded = encoder.encode(lines[lineNr]);
                 inputTextArray.set(encoded);

@@ -22,7 +22,7 @@ async function waitForInput(){
 
 self.addEventListener('fetch', function(event) {
     console.log("Fetch event occurred in service worker for url: " + event.request.url);
-    if(event.request.url.includes("input")){
+    if(event.request.url.endsWith("input")){
         console.log("Got fetch for input!", event);
         console.log("Current input is: ", self.input);
         let promiseChain;
