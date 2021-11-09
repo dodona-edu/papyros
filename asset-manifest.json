@@ -1,26 +1,26 @@
 {
   "files": {
-    "main.css": "/static/css/main.41e0d5b2.chunk.css",
-    "main.js": "/static/js/main.cf415dcf.chunk.js",
-    "main.js.map": "/static/js/main.cf415dcf.chunk.js.map",
-    "runtime-main.js": "/static/js/runtime-main.28bb42db.js",
-    "runtime-main.js.map": "/static/js/runtime-main.28bb42db.js.map",
-    "static/css/2.f1d0da30.chunk.css": "/static/css/2.f1d0da30.chunk.css",
-    "static/js/2.07cffc96.chunk.js": "/static/js/2.07cffc96.chunk.js",
-    "static/js/2.07cffc96.chunk.js.map": "/static/js/2.07cffc96.chunk.js.map",
-    "index.html": "/index.html",
-    "static/css/2.f1d0da30.chunk.css.map": "/static/css/2.f1d0da30.chunk.css.map",
-    "static/css/main.41e0d5b2.chunk.css.map": "/static/css/main.41e0d5b2.chunk.css.map",
-    "static/js/0.21c1dffa.chunk.worker.js": "/static/js/0.21c1dffa.chunk.worker.js",
-    "static/js/0.21c1dffa.chunk.worker.js.map": "/static/js/0.21c1dffa.chunk.worker.js.map",
-    "static/js/1.c5b7bd50.chunk.worker.js": "/static/js/1.c5b7bd50.chunk.worker.js",
-    "static/js/1.c5b7bd50.chunk.worker.js.map": "/static/js/1.c5b7bd50.chunk.worker.js.map"
+    "main.css": "/papyros/static/css/main.41e0d5b2.chunk.css",
+    "main.js": "/papyros/static/js/main.b41ff577.chunk.js",
+    "main.js.map": "/papyros/static/js/main.b41ff577.chunk.js.map",
+    "runtime-main.js": "/papyros/static/js/runtime-main.dceb4d74.js",
+    "runtime-main.js.map": "/papyros/static/js/runtime-main.dceb4d74.js.map",
+    "static/css/2.f1d0da30.chunk.css": "/papyros/static/css/2.f1d0da30.chunk.css",
+    "static/js/2.07cffc96.chunk.js": "/papyros/static/js/2.07cffc96.chunk.js",
+    "static/js/2.07cffc96.chunk.js.map": "/papyros/static/js/2.07cffc96.chunk.js.map",
+    "index.html": "/papyros/index.html",
+    "static/css/2.f1d0da30.chunk.css.map": "/papyros/static/css/2.f1d0da30.chunk.css.map",
+    "static/css/main.41e0d5b2.chunk.css.map": "/papyros/static/css/main.41e0d5b2.chunk.css.map",
+    "static/js/0.6f14e62c.chunk.worker.js": "/papyros/static/js/0.6f14e62c.chunk.worker.js",
+    "static/js/0.6f14e62c.chunk.worker.js.map": "/papyros/static/js/0.6f14e62c.chunk.worker.js.map",
+    "static/js/1.7654d91c.chunk.worker.js": "/papyros/static/js/1.7654d91c.chunk.worker.js",
+    "static/js/1.7654d91c.chunk.worker.js.map": "/papyros/static/js/1.7654d91c.chunk.worker.js.map"
   },
   "entrypoints": [
-    "static/js/runtime-main.28bb42db.js",
+    "static/js/runtime-main.dceb4d74.js",
     "static/css/2.f1d0da30.chunk.css",
     "static/js/2.07cffc96.chunk.js",
     "static/css/main.41e0d5b2.chunk.css",
-    "static/js/main.cf415dcf.chunk.js"
+    "static/js/main.b41ff577.chunk.js"
   ]
 }
