@@ -2,6 +2,7 @@
   "name": "papyros",
   "version": "0.1.0",
   "private": true,
+  "homepage": "http://docs.dodona.be/papyros/",
   "devDependencies": {
     "@babel/core": "7.12.3",
     "@pmmmwh/react-refresh-webpack-plugin": "0.4.3",
