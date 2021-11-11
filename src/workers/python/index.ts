@@ -1,7 +1,7 @@
 import { expose } from 'comlink';
 import { Backend } from '../../Backend';
-import { INITIALIZATION_CODE } from '../../backend.py';
 import { PapyrosEvent } from '../../PapyrosEvent';
+import { INITIALIZATION_CODE } from './init.py';
 
 interface LoadPyodideArgs {
     indexURL: string;
@@ -20,10 +20,12 @@ importScripts("https://cdn.jsdelivr.net/pyodide/v0.18.1/full/pyodide.js");
 
 class PythonWorker extends Backend {
     pyodide: Pyodide;
+    initialized: boolean; 
 
     constructor(){
         super();
         this.pyodide = {} as Pyodide;
+        this.initialized = false;
     }
 
     launch(onEvent: (e: PapyrosEvent) => void, inputTextArray?: Uint8Array, inputMetaData?: Int32Array) : Promise<void> {
@@ -38,21 +40,19 @@ class PythonWorker extends Backend {
             })
             .then(() => {
                 this.pyodide.globals.get("__override_builtins")((data: Map<string, any>) => this.onEvent(Object.fromEntries(data) as PapyrosEvent));
+                this.initialized = true;
             });
     }
 
-    async runCode(code: string){
-        console.log("Running code in worker: ", code);
-        let result: PapyrosEvent;
-        try {
-            await this.pyodide.loadPackagesFromImports(code);
-            result = {type: "success", data: await this.pyodide.runPythonAsync(code)};
-            console.log("ran code: " + code + " and received: ", result);
-        } catch (error: any) {
-            console.log("error in webworker:", error);
-            result = {type: "error", data: error};
-        }
-        this.onEvent(result);
+    _runCodeInternal(code: string){
+        return this.pyodide.loadPackagesFromImports(code)
+                .then(() => {
+                    if(this.initialized){
+                        return this.pyodide.globals.get("__run_code")(code);
+                    } else {
+                        return this.pyodide.runPythonAsync(code);
+                    }
+                });
     }
 }
 

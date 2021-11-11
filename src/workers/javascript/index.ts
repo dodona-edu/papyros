@@ -1,11 +1,10 @@
 import { expose } from 'comlink';
 import { Backend } from '../../Backend';
-import { PapyrosEvent } from '../../PapyrosEvent';
 
 
 class JavaScriptWorker extends Backend {
 
-    getFunctionToRun(code: string){
+    _runCodeInternal(code: string){
         const toRestore = new Map([
             ["prompt", "__prompt"],
             ["console.log", "__papyros_log"],
@@ -69,20 +68,7 @@ ${restoreBuiltins.join('\n')}
         `);
         const fnBody = newBody.join('\n');
         // eslint-disable-next-line no-new-func
-        return new Function("ctx", fnBody)(newContext);
-    }
-
-    runCode(code: string){
-        //console.log("Running code in worker: ", code);
-        let result: PapyrosEvent;
-        try {
-            // eslint-disable-next-line
-            result = {type: "success", data: this.getFunctionToRun(code)};
-            console.log("ran code: " + code + " and received: ", result);
-        } catch (error: any) {
-            result = {type: "error", data: error};
-        }
-        this.onEvent(result);
+        return Promise.resolve(new Function("ctx", fnBody)(newContext));
     }
 }
 

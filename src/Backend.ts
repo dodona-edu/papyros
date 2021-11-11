@@ -1,13 +1,15 @@
+import { INPUT_RELATIVE_URL } from "./Constants";
 import { PapyrosEvent } from "./PapyrosEvent";
+import { LogType, papyrosLog } from "./util/Logging";
 
 function getInputCallback(inputTextArray?: Uint8Array, inputMetaData?: Int32Array){
     if(!inputTextArray || !inputMetaData){
         return () => {
             const request = new XMLHttpRequest();
             do {
-                request.open('GET', '/input', false);  // `false` makes the request synchronous
+                request.open('GET', INPUT_RELATIVE_URL, false);  // `false` makes the request synchronous
                 request.send(null);
-            } while(request.status >= 400);
+            } while(request.status >= 400); // todo better error handling
             return request.responseText;
         }
     } else {
@@ -15,7 +17,7 @@ function getInputCallback(inputTextArray?: Uint8Array, inputMetaData?: Int32Arra
         return () => {
             while (true) {
                 if (Atomics.wait(inputMetaData, 0, 0, 100) === "timed-out") {
-                    //console.log("waiting on input");
+                    //papyrosLog.log("waiting on input");
                 //if (interruptBuffer[0] === 2) {
                 //  return null;
                 //}
@@ -52,9 +54,23 @@ export abstract class Backend {
         }
         return Promise.resolve();
     }
+
+    abstract _runCodeInternal(code: string): Promise<any>;
     /**
      * Validate and run arbitrary code
      * @param {string} code The code to run
      */
-    abstract runCode(code: string): void;
+    runCode(code: string): Promise<void> {
+        papyrosLog(LogType.Debug, "Running code in worker: ", code);
+        return this._runCodeInternal(code)
+            .then(data => {
+                papyrosLog(LogType.Important, "ran code: " + code + " and received: ", data);
+                return this.onEvent({type: "success", data: data});
+            })
+            .catch(error => {
+                const errorString = "toString" in error ? error.toString() : JSON.stringify(error);
+                papyrosLog(LogType.Error, "Error during execution: ", error, errorString);
+                return this.onEvent({type: "error", data: errorString});
+            });
+    }
 };
