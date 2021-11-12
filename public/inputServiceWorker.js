@@ -1,44 +1,58 @@
-// Listen to fetch 
-console.log("Loading service worker");
-self.input = "";
+/* eslint-disable no-restricted-globals */
+const workerData = {
+    "input": ""
+};
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 async function waitForInput(){
-    if(self.input){
-        console.log("Input present, responding with: " + self.input);
-        const ret =  Promise.resolve(new Response(self.input));
-        self.input = "";
+    if(workerData.input){
+        const ret =  Promise.resolve(new Response(workerData.input));
+        workerData.input = "";
         return ret;
     } else {
-        console.log("Sleeping while waiting for input");
         await sleep(1000);
-        console.log("Sleeping done");
         return waitForInput();
     }
 }
 
-self.addEventListener('fetch', function(event) {
-    console.log("Fetch event occurred in service worker for url: " + event.request.url);
-    if(event.request.url.endsWith("input")){
-        console.log("Got fetch for input!", event);
-        console.log("Current input is: ", self.input);
-        let promiseChain;
-        if(event.request.method === "GET"){
-            console.log("Handling GET request");
-            promiseChain = waitForInput();
-        } else if(event.request.method === "POST"){
-            console.log("Handling POST request");
-            console.log(event.request);
-            promiseChain = event.request.json().then(resp => {
-                self.input = resp.input;
-                return new Response("input stored: " + self.input);
-            })
-        }
-        event.respondWith(promiseChain);
+addEventListener('fetch', function(event) {
+    const url = event.request.url.toLowerCase();
+    console.log("Fetch event to url: ", url);
+    let promiseChain;
+    if(url.includes(location.hostname.toLowerCase())){
+        if(url.includes("input")){
+            if(event.request.method === "GET"){
+                promiseChain = waitForInput();
+            } else if(event.request.method === "POST"){
+                promiseChain = event.request.json().then(resp => {
+                    workerData.input = resp.input;
+                    return new Response("input stored: " + workerData.input);
+                })
+            }
+        } else {
+            promiseChain = fetch(event.request)
+                .then((response) => {
+                // Add new headers to be able to use SharedArrayBuffers if the browser supports them
+                // See also https://stackoverflow.com/questions/64650119/react-error-sharedarraybuffer-is-not-defined-in-firefox
+                const newHeaders = new Headers(response.headers);
+                newHeaders.set("Cross-Origin-Embedder-Policy", "require-corp");
+                newHeaders.set("Cross-Origin-Opener-Policy", "same-origin");
+        
+                const moddedResponse = new Response(response.body, {
+                    status: response.status || 200,
+                    statusText: response.statusText,
+                    headers: newHeaders,
+                });
+        
+                return moddedResponse;
+
+                })
+            }
     } else {
-        return fetch(event);
+        promiseChain = fetch(event.request);
     }
+    event.respondWith(promiseChain);
 });
