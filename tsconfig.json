@@ -17,9 +17,10 @@
     "module": "esnext",
     "moduleResolution": "node",
     "resolveJsonModule": true,
-    "noEmit": true,
+    "noEmit": false,
     "isolatedModules": true,
-    "downlevelIteration": true
+    "downlevelIteration": true,
+	"sourceMap": true
   },
   "include": [
     "src"

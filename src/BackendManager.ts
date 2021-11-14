@@ -1,3 +1,4 @@
+/* eslint-disable import/no-webpack-loader-syntax */
 import { releaseProxy, Remote, wrap } from 'comlink';
 import { Backend } from "./Backend";
 
@@ -11,16 +12,12 @@ export function getBackend(language: string): Remote<Backend> {
     switch(language){
         // Requires switch to have actual string constants and make webpack bundle the workers
         case "python": {
-            worker = new Worker("./workers/python", {
-                type: 'module',
-            });
+            worker = new Worker(new URL('./workers/python/PythonWorker.worker.ts', import.meta.url));
             break;
         }
         
         case "javascript": {
-            worker = new Worker("./workers/javascript", {
-                type: 'module',
-            });
+            worker = new Worker(new URL('./workers/javascript/JavaScriptWorker.worker.ts', import.meta.url));
             break;
         }
         
