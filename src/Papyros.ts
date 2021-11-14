@@ -119,7 +119,7 @@ export function Papyros(inputTextArray?: Uint8Array, inputMetaData?: Int32Array)
         terminateButton.hidden = false;
         papyrosLog(LogType.Debug, "Running code in Papyros, sending to backend");
         try {
-            backend.runCode(codeArea.value);
+            await backend.runCode(codeArea.value);
         } catch(error: any){
             onError(error);
         } finally {
