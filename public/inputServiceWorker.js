@@ -1,4 +1,5 @@
 /* eslint-disable no-restricted-globals */
+const papyrosHost = location.hostname.toLowerCase();
 const workerData = {
     "input": ""
 };
@@ -8,31 +9,29 @@ function sleep(ms) {
 }
 
 async function waitForInput(){
-    if(workerData.input){
-        const ret =  Promise.resolve(new Response(workerData.input));
-        workerData.input = "";
-        return ret;
-    } else {
+    while(!workerData.input){
         await sleep(1000);
-        return waitForInput();
     }
+    const ret =  Promise.resolve(new Response(workerData.input));
+    workerData.input = "";
+    return ret;
 }
 
 addEventListener('fetch', function(event) {
     const url = event.request.url.toLowerCase();
     console.log("Fetch event to url: ", url);
     let promiseChain;
-    if(url.includes(location.hostname.toLowerCase())){
-        if(url.includes("input")){
-            if(event.request.method === "GET"){
+    if(url.includes(papyrosHost)){ // requests to our own domain
+        if(url.includes("input")){ // Special requests targeted at getting input from the user
+            if(event.request.method === "GET"){ // Request from the worker to receive input
                 promiseChain = waitForInput();
-            } else if(event.request.method === "POST"){
+            } else if(event.request.method === "POST"){ // Request from Papyros to send input
                 promiseChain = event.request.json().then(resp => {
                     workerData.input = resp.input;
                     return new Response("input stored: " + workerData.input);
                 })
             }
-        } else {
+        } else { // Requests to general Papyros pages
             promiseChain = fetch(event.request)
                 .then((response) => {
                 // Add new headers to be able to use SharedArrayBuffers if the browser supports them
@@ -51,7 +50,7 @@ addEventListener('fetch', function(event) {
 
                 })
             }
-    } else {
+    } else { // requests to other domains are unaltered
         promiseChain = fetch(event.request);
     }
     event.respondWith(promiseChain);

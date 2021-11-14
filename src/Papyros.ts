@@ -34,19 +34,22 @@ export function Papyros(inputTextArray?: Uint8Array, inputMetaData?: Int32Array)
         initLanguageSelect();
     }
 
-    function initBackend(language?: string): Promise<void> {
+    async function initBackend(language?: string) {
         runButton.disabled = true;
         if(language){
             languageSelect.value = language;
         }
         backend = getBackend(languageSelect.value);
-        return backend.launch(proxy(e => onMessage(e)), inputTextArray, inputMetaData)
-                .then(() => {runButton.disabled = false});
+        await backend.launch(proxy(e => onMessage(e)), inputTextArray, inputMetaData);
+        runButton.disabled = false;
     }
 
     function initLanguageSelect(): void {
         languageSelect.addEventListener("change",
-         () =>  stopBackend(backend).finally(() => initBackend())
+         () =>  {
+             stopBackend(backend);
+             return initBackend();
+         }
         );
     }
 
@@ -109,24 +112,27 @@ export function Papyros(inputTextArray?: Uint8Array, inputMetaData?: Int32Array)
         }
     }
 
-    function runCode(): Promise<void> {
+    async function runCode() {
         runButton.disabled = true;
         lineNr = 0;
         outputArea.value = "";
         terminateButton.hidden = false;
         papyrosLog(LogType.Debug, "Running code in Papyros, sending to backend");
-        return backend.runCode(codeArea.value)
-            .catch(onError)
-            .finally(() => {
-                terminateButton.hidden = true;
-                runButton.disabled = false;
-            });
+        try {
+            backend.runCode(codeArea.value);
+        } catch(error: any){
+            onError(error);
+        } finally {
+            terminateButton.hidden = true;
+            runButton.disabled = false;
+        }
     }
 
     function terminate(): Promise<void> {
         papyrosLog(LogType.Debug, "Called terminate, stopping backend!");
         terminateButton.hidden = true;
-        return stopBackend(backend).then(() => initBackend());
+        stopBackend(backend);
+        return initBackend();
     }
 
     function initButtons(): void {

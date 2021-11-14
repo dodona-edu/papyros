@@ -41,5 +41,3 @@ def __override_stdin(cb):
 def __run_code(code):
     return exec(code, dict(globals()))
 `;
-
-     

@@ -28,31 +28,25 @@ class PythonWorker extends Backend {
         this.initialized = false;
     }
 
-    launch(onEvent: (e: PapyrosEvent) => void, inputTextArray?: Uint8Array, inputMetaData?: Int32Array) : Promise<void> {
-        return super.launch(onEvent, inputTextArray, inputMetaData)
-            .then(() => loadPyodide({
-                indexURL: "https://cdn.jsdelivr.net/pyodide/v0.18.1/full/",
-                fullStdLib: true
-            }))
-            .then(pyodide => {
-                this.pyodide = pyodide;
-                return this.runCode(INITIALIZATION_CODE);
-            })
-            .then(() => {
-                this.pyodide.globals.get("__override_builtins")((data: Map<string, any>) => this.onEvent(Object.fromEntries(data) as PapyrosEvent));
-                this.initialized = true;
-            });
+    override async launch(onEvent: (e: PapyrosEvent) => void, inputTextArray?: Uint8Array, inputMetaData?: Int32Array) : Promise<void> {
+        await super.launch(onEvent, inputTextArray, inputMetaData);
+        const pyodide = await loadPyodide({
+            indexURL: "https://cdn.jsdelivr.net/pyodide/v0.18.1/full/",
+            fullStdLib: true
+        });
+        this.pyodide = pyodide;
+        await this.runCode(INITIALIZATION_CODE);
+        this.pyodide.globals.get("__override_builtins")((data: Map<string, any>) => this.onEvent(Object.fromEntries(data) as PapyrosEvent));
+        this.initialized = true;
     }
 
-    _runCodeInternal(code: string){
-        return this.pyodide.loadPackagesFromImports(code)
-                .then(() => {
-                    if(this.initialized){
-                        return this.pyodide.globals.get("__run_code")(code);
-                    } else {
-                        return this.pyodide.runPythonAsync(code);
-                    }
-                });
+    override async _runCodeInternal(code: string){
+        await this.pyodide.loadPackagesFromImports(code);
+        if (this.initialized) {
+            return this.pyodide.globals.get("__run_code")(code);
+        } else {
+            return this.pyodide.runPythonAsync(code);
+        }
     }
 }
 

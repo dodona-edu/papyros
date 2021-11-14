@@ -4,7 +4,7 @@ import { Backend } from '../../Backend';
 
 class JavaScriptWorker extends Backend {
 
-    _runCodeInternal(code: string){
+    override _runCodeInternal(code: string){
         const toRestore = new Map([
             ["prompt", "__prompt"],
             ["console.log", "__papyros_log"],
