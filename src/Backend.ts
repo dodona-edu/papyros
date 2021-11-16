@@ -1,21 +1,14 @@
+import { INPUT_RELATIVE_URL } from "./Constants";
 import { PapyrosEvent } from "./PapyrosEvent";
+import { LogType, papyrosLog } from "./util/Logging";
 
 function getInputCallback(inputTextArray?: Uint8Array, inputMetaData?: Int32Array){
-    if(!inputTextArray || !inputMetaData){
-        return () => {
-            const request = new XMLHttpRequest();
-            do {
-                request.open('GET', '/input', false);  // `false` makes the request synchronous
-                request.send(null);
-            } while(request.status >= 400);
-            return request.responseText;
-        }
-    } else {
+    if(inputTextArray && inputMetaData){
         const textDecoder = new TextDecoder();
         return () => {
             while (true) {
                 if (Atomics.wait(inputMetaData, 0, 0, 100) === "timed-out") {
-                    //console.log("waiting on input");
+                    //papyrosLog.log("waiting on input");
                 //if (interruptBuffer[0] === 2) {
                 //  return null;
                 //}
@@ -27,6 +20,15 @@ function getInputCallback(inputTextArray?: Uint8Array, inputMetaData?: Int32Arra
             const size = Atomics.exchange(inputMetaData, 1, 0);
             const bytes = inputTextArray.slice(0, size);
             return textDecoder.decode(bytes);
+        }
+    } else {
+        return () => {
+            const request = new XMLHttpRequest();
+            do {
+                request.open('GET', INPUT_RELATIVE_URL, false);  // `false` makes the request synchronous
+                request.send(null);
+            } while(request.status >= 400); // todo better error handling
+            return request.responseText;
         }
     }
 }
@@ -52,9 +54,22 @@ export abstract class Backend {
         }
         return Promise.resolve();
     }
+
+    abstract _runCodeInternal(code: string): Promise<any>;
     /**
      * Validate and run arbitrary code
      * @param {string} code The code to run
      */
-    abstract runCode(code: string): void;
+    async runCode(code: string){
+        papyrosLog(LogType.Debug, "Running code in worker: ", code);
+        try {
+            const data = await this._runCodeInternal(code);
+            papyrosLog(LogType.Important, "ran code: " + code + " and received: ", data);
+            return this.onEvent({type: "success", data: data});
+        } catch (error: any){
+            const errorString = "toString" in error ? error.toString() : JSON.stringify(error);
+            papyrosLog(LogType.Error, "Error during execution: ", error, errorString);
+            return this.onEvent({type: "error", data: errorString});
+        }
+    }
 };

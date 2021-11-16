@@ -1,10 +1,11 @@
 import { proxy, Remote } from "comlink";
 import { Backend} from "./Backend";
 import { getBackend, stopBackend } from "./BackendManager";
-import { CODE_TA_ID, DEFAULT_PROGRAMMING_LANGUAGE, INPUT_TA_ID, LANGUAGE_SELECT_ID, OUTPUT_TA_ID, RUN_BTN_ID, TERMINATE_BTN_ID } from "./Constants";
+import { CODE_TA_ID, DEFAULT_PROGRAMMING_LANGUAGE, INPUT_RELATIVE_URL, INPUT_TA_ID, LANGUAGE_SELECT_ID, OUTPUT_TA_ID, RUN_BTN_ID, TERMINATE_BTN_ID } from "./Constants";
 import { PapyrosEvent } from "./PapyrosEvent";
+import { LogType, papyrosLog } from "./util/Logging";
 
-export function Papyros(){
+export function Papyros(inputTextArray?: Uint8Array, inputMetaData?: Int32Array){
     let backend: Remote<Backend>;
 
     // textareas
@@ -24,21 +25,6 @@ export function Papyros(){
     let awaitingInput = false;
     const encoder = new TextEncoder();
 
-    // shared memory
-    let inputTextArray: Uint8Array | undefined = undefined;
-        // 2 Int32s: index 0 indicates whether data is written, index 1 denotes length of the string
-    let inputMetaData: Int32Array | undefined = undefined;
-    const fetchInputUrl = `${document.location.pathname}input`
-    if(typeof SharedArrayBuffer !== "undefined"){
-        inputTextArray = new Uint8Array(new SharedArrayBuffer(Uint8Array.BYTES_PER_ELEMENT * 1024));
-        inputMetaData = new Int32Array(new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * 2));
-        //let interruptBuffer = new Int32Array(new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT));
-    } else if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.register("./inputServiceWorker.js", { scope: "" });
-    } else {
-        document.getElementById("papyros")!.innerHTML = "Your browser is unsupported. Please use a modern version of Chrome, Safari, Firefox, ...";
-    }
-
 
     function init(): void {
         const language = new URLSearchParams(window.location.search).get("language") || DEFAULT_PROGRAMMING_LANGUAGE;
@@ -48,46 +34,49 @@ export function Papyros(){
         initLanguageSelect();
     }
 
-    function initBackend(language?: string): Promise<void> {
+    async function initBackend(language?: string) {
         runButton.disabled = true;
         if(language){
             languageSelect.value = language;
         }
         backend = getBackend(languageSelect.value);
-        return backend.launch(proxy(e => onMessage(e)), inputTextArray, inputMetaData)
-                .then(() => {runButton.disabled = false});
+        await backend.launch(proxy(e => onMessage(e)), inputTextArray, inputMetaData);
+        runButton.disabled = false;
     }
 
     function initLanguageSelect(): void {
         languageSelect.addEventListener("change",
-         () =>  stopBackend(backend).finally(() => initBackend())
+         () =>  {
+             stopBackend(backend);
+             return initBackend();
+         }
         );
     }
 
     function initTextAreas(): void {
         inputArea.onkeydown = (e) => {
-            console.log("Key down in inputArea", e);
+            papyrosLog(LogType.Debug, "Key down in inputArea", e);
             if(awaitingInput && e.key.toLowerCase() === "enter"){
-                console.log("Pressed enter! Sending input to user");
+                papyrosLog(LogType.Debug, "Pressed enter! Sending input to user");
                 sendInput();
             }
         }
     }
 
     function onError(e: PapyrosEvent): void {
-        console.log("Got error in Papyros: ", e);
+        papyrosLog(LogType.Debug, "Got error in Papyros: ", e);
         // todo prettify errors
         outputArea.value += e.data;
     }
 
     async function sendInput(){
-        console.log("Handling send Input in Papyros");
+        papyrosLog(LogType.Debug, "Handling send Input in Papyros");
         const lines = inputArea.value.split("\n");
         if(lines.length > lineNr && lines[lineNr]){
-            console.log("Sending input to user: " + lines[lineNr]);
+            papyrosLog(LogType.Debug, "Sending input to user: " + lines[lineNr]);
             const line = lines[lineNr];
             if(!inputMetaData || !inputTextArray){
-               await fetch(fetchInputUrl, {method: "POST", body: JSON.stringify({"input": line})});
+               await fetch(INPUT_RELATIVE_URL, {method: "POST", body: JSON.stringify({"input": line})});
             } else {
                 const encoded = encoder.encode(lines[lineNr]);
                 inputTextArray.set(encoded);
@@ -98,22 +87,22 @@ export function Papyros(){
             awaitingInput = false;
             return true;
         } else {
-            console.log("Had no input to send, still waiting!");
+            papyrosLog(LogType.Debug, "Had no input to send, still waiting!");
             return false;
         }
     }
 
     async function onInput(e: PapyrosEvent): Promise<void> {
-        console.log("Received onInput event in Papyros: ", e);
+        papyrosLog(LogType.Debug, "Received onInput event in Papyros: ", e);
         if(!await sendInput()){
             // todo render something based on the event
             awaitingInput = true;
-            console.log("User needs to enter input before code can continue");
+            papyrosLog(LogType.Debug, "User needs to enter input before code can continue");
         }
     }
 
     function onMessage(e: PapyrosEvent): void {
-        console.log("received event in onMessage", e);
+        papyrosLog(LogType.Debug, "received event in onMessage", e);
         if(e.type === "output"){
             outputArea.value += e.data;
         } else if(e.type === "input"){
@@ -123,31 +112,30 @@ export function Papyros(){
         }
     }
 
-    function runCode(): Promise<void> {
+    async function runCode() {
         runButton.disabled = true;
         lineNr = 0;
         outputArea.value = "";
         terminateButton.hidden = false;
-        console.log("Running code in Papyros, sending to backend");
-        return backend.runCode(codeArea.value)
-            .catch(onError)
-            .finally(() => {
-                terminateButton.hidden = true;
-                runButton.disabled = false;
-            });
+        papyrosLog(LogType.Debug, "Running code in Papyros, sending to backend");
+        try {
+            await backend.runCode(codeArea.value);
+        } catch(error: any){
+            onError(error);
+        } finally {
+            terminateButton.hidden = true;
+            runButton.disabled = false;
+        }
     }
 
     function terminate(): Promise<void> {
-        console.log("Called terminate, stopping backend!");
+        papyrosLog(LogType.Debug, "Called terminate, stopping backend!");
         terminateButton.hidden = true;
-        return stopBackend(backend).then(() => initBackend());
+        stopBackend(backend);
+        return initBackend();
     }
 
     function initButtons(): void {
-        /*runButton.addEventListener("click", () => {
-            //sendInput();
-            fetch("/input").then(r => console.log("Got result from GET /input", r));
-        });*/
         runButton.addEventListener("click", () => runCode());
         terminateButton.addEventListener("click", () => terminate());
     }
