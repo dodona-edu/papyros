@@ -1,10 +1,9 @@
-import { expose } from 'comlink';
-import { Backend } from '../../Backend';
+import { expose } from "comlink";
+import { Backend } from "../../Backend";
 
 
 class JavaScriptWorker extends Backend {
-
-    override _runCodeInternal(code: string){
+    override _runCodeInternal(code: string): Promise<any> {
         const toRestore = new Map([
             ["prompt", "__prompt"],
             ["console.log", "__papyros_log"],
@@ -45,28 +44,30 @@ console.log = (...args) => {
 console.error = (...args) => {
     __onEvent({"type": "error", "data": __stringify(args, true)});
 }
-        `
+        `;
         const newContext = {
             "__onEvent": this.onEvent.bind(this)
         };
         const restoreBuiltins = [];
         const newBody = [];
-        for(const k in newContext){
-            newBody.push(`const ${k} = ctx['${k}'];`);
+        for (const k in newContext) {
+            if (Object.prototype.hasOwnProperty.call(newContext, k)) {
+                newBody.push(`const ${k} = ctx['${k}'];`);
+            }
         }
-        for(let [fn, backup] of toRestore.entries()){
+        for (const [fn, backup] of toRestore.entries()) {
             newBody.push(`${backup} = ${fn}`);
-            restoreBuiltins.push(`${fn} = ${backup}`)
+            restoreBuiltins.push(`${fn} = ${backup}`);
         }
         newBody.push(overrideBuiltins);
         newBody.push(`
 try {
 ${code}
 } finally {
-${restoreBuiltins.join('\n')}
+${restoreBuiltins.join("\n")}
 }
         `);
-        const fnBody = newBody.join('\n');
+        const fnBody = newBody.join("\n");
         // eslint-disable-next-line no-new-func
         return Promise.resolve(new Function("ctx", fnBody)(newContext));
     }

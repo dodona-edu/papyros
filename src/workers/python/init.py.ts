@@ -1,5 +1,5 @@
-export const INITIALIZATION_CODE = 
-`
+export const INITIALIZATION_CODE =
+    `
 from pyodide import to_js
 import sys
 
