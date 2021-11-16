@@ -1,10 +1,12 @@
 name: Deploy on GitHub Pages
 on:
-  push:
-    branches:
-      - development
+  workflow_dispatch:
+  pull_request:
+    types:
+      - labeled
 jobs:
   build-and-deploy:
+    if: ${{ github.event.action == 'labeled' && github.event.label.name == 'deploy' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
