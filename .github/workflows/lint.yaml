@@ -2,11 +2,6 @@ name: Lint
 
 on:
   push:
-    branches:
-      - main
-    tags:
-      - '*'
-  pull_request:
 
 jobs:
   javascript:
@@ -24,4 +19,4 @@ jobs:
         yarn install
     - name: Lint
       run: |
-        yarn lint --quiet
+        yarn lint
