@@ -8,6 +8,9 @@ jobs:
   build-and-deploy:
     if: ${{ github.event.action == 'labeled' && github.event.label.name == 'deploy' }}
     runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://docs.dodona.be/papyros/
     steps:
       - name: Checkout
         uses: actions/checkout@v2.3.1
