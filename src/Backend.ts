@@ -56,7 +56,6 @@ export abstract class Backend {
         inputTextArray?: Uint8Array, inputMetaData?: Int32Array): Promise<void> {
         const inputCallback = getInputCallback(inputTextArray, inputMetaData);
         this.onEvent = (e: PapyrosEvent) => {
-            console.log("Got event, adding runId: ", this.runId);
             e.runId = this.runId;
             onEvent(e);
             if (e.type === "input") {
