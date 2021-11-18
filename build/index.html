@@ -30,29 +30,43 @@
     integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU"
     crossorigin="anonymous"
   />
+  <!-- Wait with running the script until the elements are loaded as they are needed immediately -->
   <script src="./bundle.js" defer></script>
 
   <title>Papyros</title>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div class="App" id="papyros">
-      <div class="row">
+    <div class="bg-blue-500 text-white text-lg">
+      Papyros
+    </div>
+    <div id="papyros">
+      <div class="row h-64">
         <div class="col">
-          <h1>Enter your code here</h1>
-          <textarea id="code-area" style="height: 126px !important;"></textarea>
-          <textarea id="code-input-area" style="height: 126px !important;"></textarea>
+          <h1>Enter your code here:</h1>
+          <textarea id="code-area" class="border-2 h-36"></textarea>
+          <h1>Provide input for the code here:</h1>
+          <textarea id="code-input-area" class="border-2 h-auto"></textarea>
         </div>
         <div class="col">
-          <h1>Code results</h1>
-          <textarea id="code-output-area" readonly="" style="height: 126px !important;"></textarea>
+          <h1>Code output:</h1>
+          <textarea id="code-output-area" readonly class="border-2 h-full"></textarea>
         </div>
       </div>
-      <button id="run-code-btn" type="button" class="mr-1 btn btn-primary">Run</button>
-      <button id="terminate-btn" type="button" class="mr-1 btn btn-danger" hidden>Terminate</button>
+      <div class="flex flex-row">
+        <button id="run-code-btn" type="button" class="mr-1 btn btn-primary">Run</button>
+        <button id="terminate-btn" type="button" class="mr-1 btn btn-danger" hidden>Terminate</button>
+        <div>
+          <svg id="state-spinner" class="animate-spin mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" display="none">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="red" stroke-width="4"></circle>
+            <path class="opacity-75" fill="red" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <p id="application-state-p">Loading</p>
+        </div>
+      </div>
 
       <label for="language-select">Programming language</label>
-      <select id="language-select">
+      <select id="language-select" class="border-2">
         <option value="python">Python</option>
         <option value="javascript">JavaScript</option>
       </select>

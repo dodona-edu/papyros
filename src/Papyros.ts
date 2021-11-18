@@ -1,11 +1,9 @@
 import { proxy, Remote } from "comlink";
 import { Backend } from "./Backend";
 import { getBackend, stopBackend } from "./BackendManager";
-import {
-    CODE_TA_ID, DEFAULT_PROGRAMMING_LANGUAGE, INPUT_RELATIVE_URL,
+import { APPLICATION_STATE_P_ID, CODE_TA_ID, DEFAULT_PROGRAMMING_LANGUAGE, INPUT_RELATIVE_URL,
     INPUT_TA_ID, LANGUAGE_SELECT_ID, OUTPUT_TA_ID,
-    RUN_BTN_ID, TERMINATE_BTN_ID
-} from "./Constants";
+    RUN_BTN_ID, STATE_SPINNER_ID, TERMINATE_BTN_ID } from "./Constants";
 import { PapyrosEvent } from "./PapyrosEvent";
 import { LogType, papyrosLog } from "./util/Logging";
 
@@ -19,6 +17,8 @@ export function papyros(inputTextArray?: Uint8Array, inputMetaData?: Int32Array)
     const inputArea = document.getElementById(INPUT_TA_ID) as HTMLInputElement;
     const outputArea = document.getElementById(OUTPUT_TA_ID) as HTMLInputElement;
 
+    const stateSpinner = document.getElementById(STATE_SPINNER_ID) as HTMLElement;
+    const stateP = document.getElementById(APPLICATION_STATE_P_ID) as HTMLTextAreaElement;
     // selects
     const languageSelect = document.getElementById(LANGUAGE_SELECT_ID) as HTMLSelectElement;
 
@@ -45,9 +45,13 @@ export function papyros(inputTextArray?: Uint8Array, inputMetaData?: Int32Array)
         if (language) {
             languageSelect.value = language;
         }
+        stateSpinner.style.display = "";
+        stateP.innerText = `Loading backend for ${languageSelect.value}`;
         backend = getBackend(languageSelect.value);
         await backend.launch(proxy(e => onMessage(e)), inputTextArray, inputMetaData);
         runButton.disabled = false;
+        stateP.innerText = "";
+        stateSpinner.style.display = "none";
     }
 
     function initLanguageSelect(): void {
@@ -107,7 +111,12 @@ export function papyros(inputTextArray?: Uint8Array, inputMetaData?: Int32Array)
         if (!await sendInput()) {
             // todo render something based on the event
             awaitingInput = true;
+            stateSpinner.style.display = "";
+            stateP.innerText = "Awaiting input for: " + e.data;
             papyrosLog(LogType.Debug, "User needs to enter input before code can continue");
+        } else {
+            stateSpinner.style.display = "none";
+            stateP.innerText = "";
         }
     }
 
@@ -133,11 +142,17 @@ export function papyros(inputTextArray?: Uint8Array, inputMetaData?: Int32Array)
         outputArea.value = "";
         terminateButton.hidden = false;
         papyrosLog(LogType.Debug, "Running code in Papyros, sending to backend");
+        const start = new Date().getTime();
         try {
+            stateSpinner.style.display = "";
+            stateP.innerText = "Running";
             await backend.runCode(codeArea.value, runId);
         } catch (error: any) {
             onError(error);
         } finally {
+            const end = new Date().getTime();
+            stateSpinner.style.display = "none";
+            stateP.innerText = `Time taken to run: ${end - start} ms`;
             terminateButton.hidden = true;
             runButton.disabled = false;
         }
@@ -146,6 +161,7 @@ export function papyros(inputTextArray?: Uint8Array, inputMetaData?: Int32Array)
     function terminate(): Promise<void> {
         papyrosLog(LogType.Debug, "Called terminate, stopping backend!");
         runId += 1; // ignore messages coming from last run
+        stateP.innerText = "Terminating backend";
         terminateButton.hidden = true;
         stopBackend(backend);
         return initBackend();
