@@ -37,10 +37,12 @@ function getInputCallback(inputTextArray?: Uint8Array, inputMetaData?: Int32Arra
 
 export abstract class Backend {
     onEvent: (e: PapyrosEvent) => void;
+    runId: string;
 
     constructor() {
         // eslint-disable-next-line @typescript-eslint/no-empty-function
         this.onEvent = () => { };
+        this.runId = "";
     }
 
     /**
@@ -54,6 +56,8 @@ export abstract class Backend {
         inputTextArray?: Uint8Array, inputMetaData?: Int32Array): Promise<void> {
         const inputCallback = getInputCallback(inputTextArray, inputMetaData);
         this.onEvent = (e: PapyrosEvent) => {
+            console.log("Got event, adding runId: ", this.runId);
+            e.runId = this.runId;
             onEvent(e);
             if (e.type === "input") {
                 return inputCallback();
@@ -67,18 +71,20 @@ export abstract class Backend {
     /**
      * Validate and run arbitrary code
      * @param {string} code The code to run
+     * @param {string} runId The uuid for this execution
      * @return {Promise<void>} Promise of execution
      */
-    async runCode(code: string): Promise<void> {
+    async runCode(code: string, runId: string): Promise<void> {
+        this.runId = runId;
         papyrosLog(LogType.Debug, "Running code in worker: ", code);
         try {
             const data = await this._runCodeInternal(code);
             papyrosLog(LogType.Important, "ran code: " + code + " and received: ", data);
-            return this.onEvent({ type: "success", data: data });
+            return this.onEvent({ type: "success", data: data, runId: runId });
         } catch (error: any) {
             const errorString = "toString" in error ? error.toString() : JSON.stringify(error);
             papyrosLog(LogType.Error, "Error during execution: ", error, errorString);
-            return this.onEvent({ type: "error", data: errorString });
+            return this.onEvent({ type: "error", data: errorString, runId: runId });
         }
     }
 }
