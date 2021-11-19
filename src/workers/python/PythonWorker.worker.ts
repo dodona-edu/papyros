@@ -1,7 +1,6 @@
 import { expose } from "comlink";
 import { Backend } from "../../Backend";
 import { PapyrosEvent } from "../../PapyrosEvent";
-import { LogType, papyrosLog } from "../../util/Logging";
 import { INITIALIZATION_CODE } from "./init.py";
 
 interface Pyodide {
@@ -41,7 +40,7 @@ class PythonWorker extends Backend {
         const eventCallback = (data: any): void => {
             const jsEvent: PapyrosEvent = "toJs" in data ? data.toJs() : Object.fromEntries(data);
             this.onEvent(jsEvent);
-        }
+        };
         this.pyodide.globals.get("__override_builtins")(eventCallback);
         this.globals = new Map((this.pyodide.globals as any).toJs());
         this.initialized = true;
