@@ -56,19 +56,19 @@
       <div class="flex flex-row">
         <button id="run-code-btn" type="button" class="mr-1 btn btn-primary">Run</button>
         <button id="terminate-btn" type="button" class="mr-1 btn btn-danger" hidden>Terminate</button>
-        <div>
+        <div class="flex flex-row items-center">
           <svg id="state-spinner" class="animate-spin mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" display="none">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="red" stroke-width="4"></circle>
             <path class="opacity-75" fill="red" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
-          <p id="application-state-p">Loading</p>
+          <div id="application-state-text">Loading</div>
         </div>
       </div>
 
       <label for="language-select">Programming language</label>
       <select id="language-select" class="border-2">
-        <option value="python">Python</option>
-        <option value="javascript">JavaScript</option>
+        <option value="Python">Python</option>
+        <option value="JavaScript">JavaScript</option>
       </select>
     </div>
 
