@@ -1,5 +1,4 @@
 import { proxy, Remote } from "comlink";
-import { v4 as uuidv4 } from "uuid";
 import { Backend } from "./Backend";
 import { getBackend, stopBackend } from "./BackendManager";
 import {
@@ -11,7 +10,7 @@ import { PapyrosEvent } from "./PapyrosEvent";
 import { LogType, papyrosLog } from "./util/Logging";
 
 export function papyros(inputTextArray?: Uint8Array, inputMetaData?: Int32Array): void {
-    let runId = "";
+    let runId = 0;
     let backend: Remote<Backend>;
 
     // textareas
@@ -128,7 +127,7 @@ export function papyros(inputTextArray?: Uint8Array, inputMetaData?: Int32Array)
     }
 
     async function runCode(): Promise<void> {
-        runId = uuidv4();
+        runId += 1;
         runButton.disabled = true;
         lineNr = 0;
         outputArea.value = "";
@@ -146,7 +145,7 @@ export function papyros(inputTextArray?: Uint8Array, inputMetaData?: Int32Array)
 
     function terminate(): Promise<void> {
         papyrosLog(LogType.Debug, "Called terminate, stopping backend!");
-        runId = ""; // ignore messages coming from last run
+        runId += 1; // ignore messages coming from last run
         terminateButton.hidden = true;
         stopBackend(backend);
         return initBackend();

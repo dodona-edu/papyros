@@ -37,12 +37,12 @@ function getInputCallback(inputTextArray?: Uint8Array, inputMetaData?: Int32Arra
 
 export abstract class Backend {
     onEvent: (e: PapyrosEvent) => void;
-    runId: string;
+    runId: number;
 
     constructor() {
         // eslint-disable-next-line @typescript-eslint/no-empty-function
         this.onEvent = () => { };
-        this.runId = "";
+        this.runId = 0;
     }
 
     /**
@@ -73,7 +73,7 @@ export abstract class Backend {
      * @param {string} runId The uuid for this execution
      * @return {Promise<void>} Promise of execution
      */
-    async runCode(code: string, runId: string): Promise<void> {
+    async runCode(code: string, runId: number): Promise<void> {
         this.runId = runId;
         papyrosLog(LogType.Debug, "Running code in worker: ", code);
         try {
