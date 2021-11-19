@@ -6,9 +6,8 @@ import sys
 def __override_builtins(cb):
     __capture_stdout(cb)
     __override_stdin(cb)
-    global __dodona_globals
-    __dodona_globals = globals()
-    __dodona_globals["__name__"] = "__main__"
+    # set name to main instead of builtins
+    globals()["__name__"] = "__main__"
 
 def __capture_stdout(cb):
     class _OutputWriter:

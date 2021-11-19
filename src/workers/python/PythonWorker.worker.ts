@@ -1,21 +1,17 @@
 import { expose } from "comlink";
 import { Backend } from "../../Backend";
 import { PapyrosEvent } from "../../PapyrosEvent";
+import { LogType, papyrosLog } from "../../util/Logging";
 import { INITIALIZATION_CODE } from "./init.py";
 
-interface LoadPyodideArgs {
-    indexURL: string;
-    fullStdLib: boolean;
-}
 interface Pyodide {
     runPython: (code: string, globals?: any) => any;
     runPythonAsync: (code: string) => Promise<void>;
     loadPackagesFromImports: (code: string) => Promise<void>;
     globals: Map<string, any>;
-    toPy: (obj: any) => any;
 }
 declare function importScripts(...urls: string[]): void;
-declare function loadPyodide(args: LoadPyodideArgs): Promise<Pyodide>;
+declare function loadPyodide(args: { indexURL: string; fullStdLib: boolean }): Promise<Pyodide>;
 
 importScripts("https://cdn.jsdelivr.net/pyodide/v0.18.1/full/pyodide.js");
 
@@ -45,9 +41,10 @@ class PythonWorker extends Backend {
         const eventCallback = (data: Map<string, any>): void =>
             this.onEvent(Object.fromEntries(data) as PapyrosEvent);
         this.pyodide.globals.get("__override_builtins")(eventCallback);
-        this.globals = new Map(this.pyodide.globals.get("__dodona_globals").toJs());
+        this.globals = new Map((this.pyodide.globals as any).toJs());
         const originalOnEvent = this.onEvent;
         this.onEvent = (e: PapyrosEvent) => {
+            // the event could be a PyProxy, in which case it must be converted
             const jsEvent: PapyrosEvent = "toJs" in e ? (e as any).toJs() as PapyrosEvent : e;
             return originalOnEvent(jsEvent);
         };
@@ -57,8 +54,22 @@ class PythonWorker extends Backend {
     override async _runCodeInternal(code: string): Promise<any> {
         await this.pyodide.loadPackagesFromImports(code);
         if (this.initialized) {
-            // return this.pyodide.runPython(code, this.pyodide.toPy(new Map(this.globals)));
-            return this.pyodide.runPython(code);
+            // run the code, potentially polluting the namespace
+            const result = this.pyodide.runPython(code);
+            // Find newly added globals
+            const pyodideGlobals = this.pyodide.globals;
+            const keysToRemove: Array<string> = [];
+            for (const key of pyodideGlobals.keys()) {
+                if (!this.globals.has(key)) {
+                    keysToRemove.push(key);
+                } else {
+                    // Reset value in case it was overriden
+                    pyodideGlobals.set(key, this.globals.get(key));
+                }
+            }
+            // remove them from the actual globals
+            keysToRemove.forEach(k => pyodideGlobals.delete(k));
+            return result;
         } else {
             return this.pyodide.runPythonAsync(code);
         }
