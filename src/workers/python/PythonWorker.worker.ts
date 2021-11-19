@@ -38,16 +38,12 @@ class PythonWorker extends Backend {
         this.pyodide = pyodide;
         await this.runCode(INITIALIZATION_CODE, 0);
         // Python calls our function with a dict, which must be converted to a PapyrosEvent
-        const eventCallback = (data: Map<string, any>): void =>
-            this.onEvent(Object.fromEntries(data) as PapyrosEvent);
+        const eventCallback = (data: any): void => {
+            const jsEvent: PapyrosEvent = "toJs" in data ? data.toJs() : Object.fromEntries(data);
+            this.onEvent(jsEvent);
+        }
         this.pyodide.globals.get("__override_builtins")(eventCallback);
         this.globals = new Map((this.pyodide.globals as any).toJs());
-        const originalOnEvent = this.onEvent;
-        this.onEvent = (e: PapyrosEvent) => {
-            // the event could be a PyProxy, in which case it must be converted
-            const jsEvent: PapyrosEvent = "toJs" in e ? (e as any).toJs() as PapyrosEvent : e;
-            return originalOnEvent(jsEvent);
-        };
         this.initialized = true;
     }
 
