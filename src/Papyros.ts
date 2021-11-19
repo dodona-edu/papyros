@@ -1,13 +1,16 @@
 import { proxy, Remote } from "comlink";
 import { Backend } from "./Backend";
 import { getBackend, stopBackend } from "./BackendManager";
-import { CODE_TA_ID, DEFAULT_PROGRAMMING_LANGUAGE, INPUT_RELATIVE_URL,
+import {
+    CODE_TA_ID, DEFAULT_PROGRAMMING_LANGUAGE, INPUT_RELATIVE_URL,
     INPUT_TA_ID, LANGUAGE_SELECT_ID, OUTPUT_TA_ID,
-    RUN_BTN_ID, TERMINATE_BTN_ID } from "./Constants";
+    RUN_BTN_ID, TERMINATE_BTN_ID
+} from "./Constants";
 import { PapyrosEvent } from "./PapyrosEvent";
 import { LogType, papyrosLog } from "./util/Logging";
 
 export function papyros(inputTextArray?: Uint8Array, inputMetaData?: Int32Array): void {
+    let runId = 0;
     let backend: Remote<Backend>;
 
     // textareas
@@ -30,7 +33,7 @@ export function papyros(inputTextArray?: Uint8Array, inputMetaData?: Int32Array)
 
     function init(): void {
         const language = new URLSearchParams(window.location.search).get("language") ||
-                             DEFAULT_PROGRAMMING_LANGUAGE;
+            DEFAULT_PROGRAMMING_LANGUAGE;
         initBackend(language);
         initTextAreas();
         initButtons();
@@ -110,23 +113,28 @@ export function papyros(inputTextArray?: Uint8Array, inputMetaData?: Int32Array)
 
     function onMessage(e: PapyrosEvent): void {
         papyrosLog(LogType.Debug, "received event in onMessage", e);
-        if (e.type === "output") {
-            outputArea.value += e.data;
-        } else if (e.type === "input") {
-            onInput(e);
-        } else if (e.type === "error") {
-            onError(e);
+        if (e.runId === runId) {
+            if (e.type === "output") {
+                outputArea.value += e.data;
+            } else if (e.type === "input") {
+                onInput(e);
+            } else if (e.type === "error") {
+                onError(e);
+            }
+        } else {
+            papyrosLog(LogType.Debug, "Received event with outdated runId: ", e);
         }
     }
 
     async function runCode(): Promise<void> {
+        runId += 1;
         runButton.disabled = true;
         lineNr = 0;
         outputArea.value = "";
         terminateButton.hidden = false;
         papyrosLog(LogType.Debug, "Running code in Papyros, sending to backend");
         try {
-            await backend.runCode(codeArea.value);
+            await backend.runCode(codeArea.value, runId);
         } catch (error: any) {
             onError(error);
         } finally {
@@ -137,6 +145,7 @@ export function papyros(inputTextArray?: Uint8Array, inputMetaData?: Int32Array)
 
     function terminate(): Promise<void> {
         papyrosLog(LogType.Debug, "Called terminate, stopping backend!");
+        runId += 1; // ignore messages coming from last run
         terminateButton.hidden = true;
         stopBackend(backend);
         return initBackend();

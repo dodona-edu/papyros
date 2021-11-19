@@ -36,7 +36,7 @@ class PythonWorker extends Backend {
             fullStdLib: true
         });
         this.pyodide = pyodide;
-        await this.runCode(INITIALIZATION_CODE);
+        await this.runCode(INITIALIZATION_CODE, 0);
         // Python calls our function with a dict, which must be converted to a PapyrosEvent
         const eventCallback = (data: Map<string, any>): void =>
             this.onEvent(Object.fromEntries(data) as PapyrosEvent);
