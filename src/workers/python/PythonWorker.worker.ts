@@ -50,8 +50,10 @@ class PythonWorker extends Backend {
         await this.pyodide.loadPackagesFromImports(code);
         if (this.initialized) {
             // run the code, potentially polluting the namespace
+            // Functions and variables defined by the user become global
+            // We need them to be global to let doctest work out of the box
             const result = this.pyodide.runPython(code);
-            // Find newly added globals
+            // Find these newly added globals
             const pyodideGlobals = this.pyodide.globals;
             const keysToRemove: Array<string> = [];
             for (const key of pyodideGlobals.keys()) {
@@ -62,7 +64,9 @@ class PythonWorker extends Backend {
                     pyodideGlobals.set(key, this.globals.get(key));
                 }
             }
-            // remove them from the actual globals
+            // Remove them from the actual globals
+            // Separate runs of code should not be able to access variables/functions
+            // that were defined earlier on, as this could cause non-obvious bugs
             keysToRemove.forEach(k => pyodideGlobals.delete(k));
             return result;
         } else {
