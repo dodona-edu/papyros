@@ -3,9 +3,14 @@ import { proxy, Remote } from "comlink";
 import I18n from "i18n-js";
 import { Backend } from "./Backend";
 import { getBackend, stopBackend } from "./BackendManager";
+<<<<<<< HEAD
 import { CodeEditor } from "./CodeEditor";
 import {
     APPLICATION_STATE_TEXT_ID, EDITOR_WRAPPER_ID, DEFAULT_LOCALE, DEFAULT_PROGRAMMING_LANGUAGE, INPUT_RELATIVE_URL,
+=======
+import {
+    APPLICATION_STATE_TEXT_ID, CODE_TA_ID, DEFAULT_PROGRAMMING_LANGUAGE, INPUT_RELATIVE_URL,
+>>>>>>> Add ProgrammingLanguage enum
     INPUT_TA_ID, LANGUAGE_SELECT_ID, OUTPUT_TA_ID,
     RUN_BTN_ID, STATE_SPINNER_ID, TERMINATE_BTN_ID
 } from "./Constants";
