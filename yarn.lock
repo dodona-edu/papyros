@@ -400,7 +400,11 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
+<<<<<<< HEAD
 "@codemirror/autocomplete@^0.19.0", "@codemirror/autocomplete@^0.19.8":
+=======
+"@codemirror/autocomplete@^0.19.0":
+>>>>>>> Add CodeMirror dependency and setup
   version "0.19.8"
   resolved "https://registry.yarnpkg.com/@codemirror/autocomplete/-/autocomplete-0.19.8.tgz#a4a886089f0248a0d1ccdc11d9f8560c0b2c2abd"
   integrity sha512-o4I1pRlFjhBHOYab+QfpKcW0B8FqAH+2pdmCYrkTz3bm1djVwhlMEhv1s/aTKhdjLtkfZFUbdHBi+8xe22wUCA==
@@ -412,6 +416,30 @@
     "@codemirror/view" "^0.19.0"
     "@lezer/common" "^0.15.0"
 
+<<<<<<< HEAD
+=======
+"@codemirror/basic-setup@^0.19.0":
+  version "0.19.0"
+  resolved "https://registry.yarnpkg.com/@codemirror/basic-setup/-/basic-setup-0.19.0.tgz#dc84dd735c8a88dd38c9dcc80cbfefa31d7e8f20"
+  integrity sha512-Yhrf7fIz8+INHWOhpWeRwbs8fpc0KsydX9baD7TyYqniLVWyTi0Hwm52mr0f5O+k4YaJPeHAgT3x9gzDXZIvOw==
+  dependencies:
+    "@codemirror/autocomplete" "^0.19.0"
+    "@codemirror/closebrackets" "^0.19.0"
+    "@codemirror/commands" "^0.19.0"
+    "@codemirror/comment" "^0.19.0"
+    "@codemirror/fold" "^0.19.0"
+    "@codemirror/gutter" "^0.19.0"
+    "@codemirror/highlight" "^0.19.0"
+    "@codemirror/history" "^0.19.0"
+    "@codemirror/language" "^0.19.0"
+    "@codemirror/lint" "^0.19.0"
+    "@codemirror/matchbrackets" "^0.19.0"
+    "@codemirror/rectangular-selection" "^0.19.0"
+    "@codemirror/search" "^0.19.0"
+    "@codemirror/state" "^0.19.0"
+    "@codemirror/view" "^0.19.0"
+
+>>>>>>> Add CodeMirror dependency and setup
 "@codemirror/closebrackets@^0.19.0":
   version "0.19.0"
   resolved "https://registry.yarnpkg.com/@codemirror/closebrackets/-/closebrackets-0.19.0.tgz#69fdcee85779d638a00a42becd9f53a33a26d77f"
@@ -423,7 +451,11 @@
     "@codemirror/text" "^0.19.0"
     "@codemirror/view" "^0.19.0"
 
+<<<<<<< HEAD
 "@codemirror/commands@^0.19.5":
+=======
+"@codemirror/commands@^0.19.0":
+>>>>>>> Add CodeMirror dependency and setup
   version "0.19.5"
   resolved "https://registry.yarnpkg.com/@codemirror/commands/-/commands-0.19.5.tgz#2607b5c12c5c96df2cabce2e43f6285c07cfaf11"
   integrity sha512-8PZOtx7d/GbKhFYA88zs2wINDtaUgj3pEjLYScKTd/Vsyw8qOp86tJQQNnMFTRZj/ISQl9Lbg3aAmHvroMqspw==
@@ -444,7 +476,11 @@
     "@codemirror/text" "^0.19.0"
     "@codemirror/view" "^0.19.0"
 
+<<<<<<< HEAD
 "@codemirror/fold@^0.19.1":
+=======
+"@codemirror/fold@^0.19.0":
+>>>>>>> Add CodeMirror dependency and setup
   version "0.19.1"
   resolved "https://registry.yarnpkg.com/@codemirror/fold/-/fold-0.19.1.tgz#52000ff329ab69c4ba32e94401777941e29d8ad0"
   integrity sha512-3GwQpxgv03urb8BPBvX1JSjl+uMXKqngRG6qHZXSM2FefxFKvTuyL44MCb35aodtfKjGwoxizk+7b6CbAOLyOw==
@@ -555,7 +591,11 @@
   dependencies:
     "@codemirror/state" "^0.19.0"
 
+<<<<<<< HEAD
 "@codemirror/rectangular-selection@^0.19.1":
+=======
+"@codemirror/rectangular-selection@^0.19.0":
+>>>>>>> Add CodeMirror dependency and setup
   version "0.19.1"
   resolved "https://registry.yarnpkg.com/@codemirror/rectangular-selection/-/rectangular-selection-0.19.1.tgz#5a88ece4fb68ce5682539497db8a64fc015aae63"
   integrity sha512-9ElnqOg3mpZIWe0prPRd1SZ48Q9QB3bR8Aocq8UtjboJSUG8ABhRrbuTZMW/rMqpBPSjVpCe9xkCCkEQMYQVmw==
@@ -564,6 +604,7 @@
     "@codemirror/text" "^0.19.4"
     "@codemirror/view" "^0.19.0"
 
+<<<<<<< HEAD
 "@codemirror/search@^0.19.3":
   version "0.19.3"
   resolved "https://registry.yarnpkg.com/@codemirror/search/-/search-0.19.3.tgz#9c81f89e965e708a5095aeebb4a181c463d37f17"
@@ -572,6 +613,16 @@
     "@codemirror/panel" "^0.19.0"
     "@codemirror/rangeset" "^0.19.0"
     "@codemirror/state" "^0.19.3"
+=======
+"@codemirror/search@^0.19.0":
+  version "0.19.2"
+  resolved "https://registry.yarnpkg.com/@codemirror/search/-/search-0.19.2.tgz#d549c3daa527e17c173cdfc90b7c1b02deab1502"
+  integrity sha512-TrRxUxyJ/a7HXtUvMZhgkOUbKE1xO33UhXjn1XACEHKWhgovw1vEeEEti9dZejN8/QOOFJed39InUxmp7oQ8HA==
+  dependencies:
+    "@codemirror/panel" "^0.19.0"
+    "@codemirror/rangeset" "^0.19.0"
+    "@codemirror/state" "^0.19.2"
+>>>>>>> Add CodeMirror dependency and setup
     "@codemirror/text" "^0.19.0"
     "@codemirror/view" "^0.19.0"
     crelt "^1.0.5"
