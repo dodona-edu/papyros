@@ -1,6 +1,7 @@
 import { proxy, Remote } from "comlink";
 import { Backend } from "./Backend";
 import { getBackend, stopBackend } from "./BackendManager";
+import { CodeEditor } from "./CodeEditor";
 import {
     APPLICATION_STATE_TEXT_ID, CODE_TA_ID, DEFAULT_PROGRAMMING_LANGUAGE, INPUT_RELATIVE_URL,
     INPUT_TA_ID, LANGUAGE_SELECT_ID, OUTPUT_TA_ID,
@@ -13,9 +14,8 @@ import { LogType, papyrosLog } from "./util/Logging";
 export function papyros(inputTextArray?: Uint8Array, inputMetaData?: Int32Array): void {
     let runId = 0;
     let backend: Remote<Backend>;
-
+    let codeEditor: CodeEditor;
     // textareas
-    const codeArea = document.getElementById(CODE_TA_ID) as HTMLInputElement;
     let lineNr = 0;
     const inputArea = document.getElementById(INPUT_TA_ID) as HTMLInputElement;
     const outputArea = document.getElementById(OUTPUT_TA_ID) as HTMLInputElement;
@@ -36,7 +36,7 @@ export function papyros(inputTextArray?: Uint8Array, inputMetaData?: Int32Array)
 
     function init(): void {
         const language = plFromString(new URLSearchParams(window.location.search).get("language") ||
-                         DEFAULT_PROGRAMMING_LANGUAGE);
+            DEFAULT_PROGRAMMING_LANGUAGE);
         languageSelect.value = language;
         initBackend(language);
         initTextAreas();
@@ -57,14 +57,22 @@ export function papyros(inputTextArray?: Uint8Array, inputMetaData?: Int32Array)
 
     function initLanguageSelect(): void {
         languageSelect.addEventListener("change",
-            () => {
+            async () => {
+                const language = plFromString(languageSelect.value);
                 stopBackend(backend);
-                return initBackend(plFromString(languageSelect.value));
+                codeEditor.setLanguage(language);
+                initBackend(language);
             }
         );
     }
 
+    function initEditor(language: ProgrammingLanguage): void {
+        codeEditor = new CodeEditor(
+            document.getElementById(CODE_TA_ID) as HTMLInputElement, language);
+    }
+
     function initTextAreas(): void {
+        initEditor(plFromString(languageSelect.value));
         inputArea.onkeydown = e => {
             papyrosLog(LogType.Debug, "Key down in inputArea", e);
             if (awaitingInput && e.key.toLowerCase() === "enter") {
@@ -147,7 +155,7 @@ export function papyros(inputTextArray?: Uint8Array, inputMetaData?: Int32Array)
         try {
             stateSpinner.style.display = "";
             stateText.innerText = "Running";
-            await backend.runCode(codeArea.value, runId);
+            await backend.runCode(codeEditor.getCode(), runId);
         } catch (error: any) {
             onError(error);
         } finally {

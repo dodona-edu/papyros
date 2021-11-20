@@ -20,8 +20,8 @@ function getLanguageSupport(language: ProgrammingLanguage): LanguageSupport {
     }
 }
 
-export function initEditor(elemId: string, language: ProgrammingLanguage, initialCode?: string)
-    : EditorView {
+function getEditorView(parentElement: HTMLElement,
+    language: ProgrammingLanguage, initialCode?: string): EditorView {
     return new EditorView({
         state: EditorState.create({
             doc: initialCode || "",
@@ -31,6 +31,33 @@ export function initEditor(elemId: string, language: ProgrammingLanguage, initia
                 getLanguageSupport(language)
             ]
         }),
-        parent: document.getElementById(elemId) as HTMLElement
+        parent: parentElement
     });
+}
+
+export class CodeEditor {
+    element: HTMLElement;
+    editorView: EditorView | undefined;
+    minLines: number;
+
+    constructor(element: HTMLElement, language: ProgrammingLanguage,
+        initialCode?: string, minLines = 10) {
+        this.element = element;
+        this.minLines = minLines;
+        this.setLanguage(language, initialCode);
+    }
+
+    setLanguage(language: ProgrammingLanguage, code?: string): void {
+        const initialCode = code || new Array(this.minLines).fill("").join("\n");
+        this.editorView = getEditorView(this.element, language, initialCode);
+        this.element.replaceChildren(this.editorView.dom);
+    }
+
+    getCode(): string {
+        if (this.editorView) {
+            return this.editorView.state.sliceDoc();
+        } else {
+            return "";
+        }
+    }
 }
