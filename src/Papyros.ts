@@ -1,10 +1,7 @@
 import { proxy, Remote } from "comlink";
 import { Backend } from "./Backend";
 import { getBackend, stopBackend } from "./BackendManager";
-<<<<<<< HEAD
 import { CodeEditor } from "./CodeEditor";
-=======
->>>>>>> Add ProgrammingLanguage enum
 import {
     APPLICATION_STATE_TEXT_ID, CODE_TA_ID, DEFAULT_PROGRAMMING_LANGUAGE, INPUT_RELATIVE_URL,
     INPUT_TA_ID, LANGUAGE_SELECT_ID, OUTPUT_TA_ID,
@@ -63,12 +60,8 @@ export function papyros(inputTextArray?: Uint8Array, inputMetaData?: Int32Array)
             async () => {
                 const language = plFromString(languageSelect.value);
                 stopBackend(backend);
-<<<<<<< HEAD
                 codeEditor.setLanguage(language, codeEditor.getCode());
                 initBackend(language);
-=======
-                return initBackend(plFromString(languageSelect.value));
->>>>>>> Add ProgrammingLanguage enum
             }
         );
     }
