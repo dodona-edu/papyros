@@ -41,19 +41,12 @@
       Papyros
     </div>
     <div id="papyros">
-      <div class="row h-64">
-        <div class="col">
-          <h1>Enter your code here:</h1>
-          <div id="code-area"></div>
-          <h1>Provide input for the code here:</h1>
-          <textarea id="code-input-area" class="border-2 h-auto"></textarea>
-        </div>
-        <div class="col">
-          <h1>Code output:</h1>
-          <textarea id="code-output-area" readonly class="border-2 h-full"></textarea>
-        </div>
-      </div>
-      <div class="flex flex-row">
+      <div class="flex flex-row items-center">
+        <label for="language-select">Programming language</label>
+        <select id="language-select" class="border-2">
+          <option value="Python">Python</option>
+          <option value="JavaScript">JavaScript</option>
+        </select>
         <button id="run-code-btn" type="button" class="mr-1 btn btn-primary">Run</button>
         <button id="terminate-btn" type="button" class="mr-1 btn btn-danger" hidden>Terminate</button>
         <div class="flex flex-row items-center">
@@ -64,12 +57,18 @@
           <div id="application-state-text">Loading</div>
         </div>
       </div>
-
-      <label for="language-select">Programming language</label>
-      <select id="language-select" class="border-2">
-        <option value="Python">Python</option>
-        <option value="JavaScript">JavaScript</option>
-      </select>
+      <div class="row">
+        <div class="col">
+          <h1>Enter your code here:</h1>
+          <div id="code-area"></div>
+        </div>
+        <div class="col">
+          <h1>Provide input for the code here:</h1>
+          <textarea id="code-input-area" class="border-2 h-auto" rows="5"></textarea>
+          <h1>Code output:</h1>
+          <textarea id="code-output-area" readonly class="border-2 h-full"></textarea>
+        </div>
+      </div>
     </div>
 
   </body>
