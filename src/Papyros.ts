@@ -60,7 +60,7 @@ export function papyros(inputTextArray?: Uint8Array, inputMetaData?: Int32Array)
             async () => {
                 const language = plFromString(languageSelect.value);
                 stopBackend(backend);
-                codeEditor.setLanguage(language);
+                codeEditor.setLanguage(language, codeEditor.getCode());
                 initBackend(language);
             }
         );
