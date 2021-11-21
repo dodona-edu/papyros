@@ -46,6 +46,24 @@ class PythonWorker extends Backend {
         this.initialized = true;
     }
 
+    _cleanScope(): void {
+        // Find the newly added globals
+        const pyodideGlobals = this.pyodide.globals;
+        const keysToRemove: Array<string> = [];
+        for (const key of pyodideGlobals.keys()) {
+            if (!this.globals.has(key)) {
+                keysToRemove.push(key);
+            } else {
+                // Reset value in case it was overriden
+                pyodideGlobals.set(key, this.globals.get(key));
+            }
+        }
+        // Remove them from the actual globals
+        // Separate runs of code should not be able to access variables/functions
+        // that were defined earlier on, as this could cause non-obvious bugs
+        keysToRemove.forEach(k => pyodideGlobals.delete(k));
+    }
+
     override async _runCodeInternal(code: string): Promise<any> {
         await this.pyodide.loadPackagesFromImports(code);
         if (this.initialized) {
@@ -53,21 +71,8 @@ class PythonWorker extends Backend {
             // Functions and variables defined by the user become global
             // We need them to be global to let doctest work out of the box
             const result = this.pyodide.runPython(code);
-            // Find these newly added globals
-            const pyodideGlobals = this.pyodide.globals;
-            const keysToRemove: Array<string> = [];
-            for (const key of pyodideGlobals.keys()) {
-                if (!this.globals.has(key)) {
-                    keysToRemove.push(key);
-                } else {
-                    // Reset value in case it was overriden
-                    pyodideGlobals.set(key, this.globals.get(key));
-                }
-            }
-            // Remove them from the actual globals
-            // Separate runs of code should not be able to access variables/functions
-            // that were defined earlier on, as this could cause non-obvious bugs
-            keysToRemove.forEach(k => pyodideGlobals.delete(k));
+            // Cleanup the scope after computations are done
+            this._cleanScope();
             return result;
         } else {
             return this.pyodide.runPythonAsync(code);
