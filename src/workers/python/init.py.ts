@@ -6,27 +6,21 @@ import sys
 def __override_builtins(cb):
     __capture_stdout(cb)
     __override_stdin(cb)
+    # set name to main instead of builtins
+    globals()["__name__"] = "__main__"
 
 def __capture_stdout(cb):
     class _OutputWriter:
-
+        def __init__(self):
+            self.encoding = "utf-8"
+            
         def write(self, s):
             cb(to_js({"type": "output", "data":s}))
 
         def flush(self):
             pass # Given data is always immediately written
 
-    global print
-    __original_print = print
-    __writer = _OutputWriter()
-
-    def __dodona_print(*objects, sep=' ', end='\\n', file=sys.stdout, flush=False):
-        if file == sys.stdout:
-            __original_print(*objects, sep=sep, end=end, file=__writer, flush=flush)
-        else:
-            __original_print(*objects, sep=sep, end=end, file=file, flush=flush)
-
-    print = __dodona_print
+    sys.stdout = _OutputWriter()
 
 def __override_stdin(cb):
     global input
@@ -37,7 +31,4 @@ def __override_stdin(cb):
         return user_value
 
     input = __dodona_input
-
-def __run_code(code):
-    return exec(code, dict(globals()))
 `;
