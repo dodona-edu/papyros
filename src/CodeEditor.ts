@@ -5,6 +5,7 @@ import { javascript } from "@codemirror/lang-javascript";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import { python } from "@codemirror/lang-python";
 import { LanguageSupport } from "@codemirror/language";
+import { autocompletion } from "@codemirror/autocomplete";
 
 function getLanguageSupport(language: ProgrammingLanguage): LanguageSupport {
     switch (language) {
@@ -26,9 +27,9 @@ function getEditorView(parentElement: HTMLElement,
         state: EditorState.create({
             doc: initialCode || "",
             extensions: [
+                getLanguageSupport(language),
                 basicSetup,
-                keymap.of([indentWithTab]),
-                getLanguageSupport(language)
+                keymap.of([indentWithTab])
             ]
         }),
         parent: parentElement
@@ -55,7 +56,7 @@ export class CodeEditor {
 
     getCode(): string {
         if (this.editorView) {
-            return this.editorView.state.sliceDoc();
+            return this.editorView.state.doc.toString();
         } else {
             return "";
         }
