@@ -1,7 +1,10 @@
 import { proxy, Remote } from "comlink";
 import { Backend } from "./Backend";
 import { getBackend, stopBackend } from "./BackendManager";
+<<<<<<< HEAD
 import { CodeEditor } from "./CodeEditor";
+=======
+>>>>>>> Add i18n support
 import {
     APPLICATION_STATE_TEXT_ID, CODE_TA_ID, DEFAULT_PROGRAMMING_LANGUAGE, INPUT_RELATIVE_URL,
     INPUT_TA_ID, LANGUAGE_SELECT_ID, OUTPUT_TA_ID,
@@ -10,11 +13,14 @@ import {
 import { PapyrosEvent } from "./PapyrosEvent";
 import { plFromString, ProgrammingLanguage } from "./ProgrammingLanguage";
 import { LogType, papyrosLog } from "./util/Logging";
-
-export function papyros(inputTextArray?: Uint8Array, inputMetaData?: Int32Array): void {
+export function papyros(t: (key: string) => string,
+    inputTextArray?: Uint8Array, inputMetaData?: Int32Array): void {
     let runId = 0;
     let backend: Remote<Backend>;
+<<<<<<< HEAD
     let codeEditor: CodeEditor;
+=======
+>>>>>>> Add i18n support
     // textareas
     let lineNr = 0;
     const inputArea = document.getElementById(INPUT_TA_ID) as HTMLInputElement;
