@@ -20,34 +20,25 @@
       Obtain Pyodide to run Python in the browser
     -->
     <script src="https://cdn.jsdelivr.net/pyodide/v0.18.1/full/pyodide.js"></script>
-
-    <!-- 
-      Bootstrap for styling the page
-    -->
-    <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css"
-    integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU"
-    crossorigin="anonymous"
-  />
   <!-- Wait with running the script until the elements are loaded as they are needed immediately -->
   <script src="./bundle.js" defer></script>
 
   <title>Papyros</title>
   </head>
-  <body>
+  <body class="max-h-screen h-full overflow-y-hidden">
     <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div class="bg-blue-500 text-white text-lg">
+    <div class="bg-blue-500 text-white text-lg p-4">
       Papyros
     </div>
-    <div id="papyros">
+    <div id="papyros" class="m-10">
+      <!-- Header -->
       <div class="flex flex-row items-center">
         <label for="language-select">Programming language</label>
-        <select id="language-select" class="border-2">
+        <select id="language-select" class="m-2 border-2">
           <option value="Python">Python</option>
           <option value="JavaScript">JavaScript</option>
         </select>
-        <button id="run-code-btn" type="button" class="mr-1 btn btn-primary">Run</button>
+        <button id="run-code-btn" type="button" class="text-white bg-blue-500 border-2 m-3 px-4 inset-y-2 rounded-lg justify-items-center ">Run</button>
         <button id="terminate-btn" type="button" class="mr-1 btn btn-danger" hidden>Terminate</button>
         <div class="flex flex-row items-center">
           <svg id="state-spinner" class="animate-spin mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" display="none">
@@ -57,18 +48,23 @@
           <div id="application-state-text">Loading</div>
         </div>
       </div>
-      <div class="row">
-        <div class="col">
+
+      <!--Body of the application-->
+      <div class="grid grid-cols-2 gap-4 box-border max-h-full">
+        <!--Left code section-->
+        <div class="col-span-1">
           <h1>Enter your code here:</h1>
-          <div id="code-area"></div>
+          <div id="code-area" class="overflow-auto max-h-full"></div>
         </div>
-        <div class="col">
+        <!--Right user input and output section-->
+        <div class="col-span-1">
           <h1>Provide input for the code here:</h1>
-          <textarea id="code-input-area" class="border-2 h-auto" rows="5"></textarea>
+          <textarea id="code-input-area" class="border-2 h-auto w-full max-h-1/4 overflow-auto" rows="5"></textarea>
           <h1>Code output:</h1>
-          <textarea id="code-output-area" readonly class="border-2 h-full"></textarea>
+          <textarea id="code-output-area" readonly class="border-2 w-full min-h-1/5 max-h-3/5 overflow-auto"></textarea>
         </div>
       </div>
+
     </div>
 
   </body>
