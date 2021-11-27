@@ -41,7 +41,8 @@ function renderPapyros(parent: HTMLElement, programmingLanguage: ProgrammingLang
           ${options}
         </select>
         <button id="run-code-btn" type="button"
-          class="text-white bg-blue-500 border-2 m-3 px-4 inset-y-2 rounded-lg justify-items-center">
+          class="text-white bg-blue-500 border-2 m-3 px-4 inset-y-2 rounded-lg
+                 disabled:opacity-50 disabled:cursor-wait">
             ${t("run")}
         </button>
         <button id="terminate-btn" type="button" class="mr-1 btn btn-danger" hidden>
@@ -95,12 +96,12 @@ class PapyrosStateManager {
     runButton: HTMLButtonElement;
     terminateButton: HTMLButtonElement;
 
-    constructor(state: PapyrosState) {
+    constructor() {
         this.stateSpinner = document.getElementById(STATE_SPINNER_ID) as HTMLElement;
         this.stateText = document.getElementById(APPLICATION_STATE_TEXT_ID) as HTMLElement;
         this.runButton = document.getElementById(RUN_BTN_ID) as HTMLButtonElement;
         this.terminateButton = document.getElementById(TERMINATE_BTN_ID) as HTMLButtonElement;
-        this.state = state;
+        this.state = PapyrosState.Ready;
     }
 
     setState(state: PapyrosState, message?: string): void {
@@ -144,7 +145,7 @@ export class Papyros {
 
     constructor(programmingLanguage: ProgrammingLanguage,
         inputTextArray?: Uint8Array, inputMetaData?: Int32Array) {
-        this.stateManager = new PapyrosStateManager(PapyrosState.Loading);
+        this.stateManager = new PapyrosStateManager();
         this.codeState = {
             programmingLanguage: programmingLanguage,
             editor: new CodeEditor(
@@ -167,13 +168,7 @@ export class Papyros {
     async launch(): Promise<Papyros> {
         this.codeState.languageSelect.addEventListener("change",
             async () => {
-                const {
-                    languageSelect, editor, backend
-                } = this.codeState;
-                const language = plFromString(languageSelect.value);
-                stopBackend(backend);
-                editor.setLanguage(language, editor.getCode());
-                await this.startBackend();
+                return this.setProgrammingLanguage(plFromString(this.codeState.languageSelect.value));
             }
         );
         this.stateManager.runButton.addEventListener("click", () => this.runCode());
@@ -191,11 +186,12 @@ export class Papyros {
         return this;
     }
 
-    setProgrammingLanguage(programmingLanguage: ProgrammingLanguage): void {
+    async setProgrammingLanguage(programmingLanguage: ProgrammingLanguage): Promise<void> {
         if (this.codeState.programmingLanguage !== programmingLanguage) {
             stopBackend(this.codeState.backend);
             this.codeState.programmingLanguage = programmingLanguage;
             this.codeState.editor.setLanguage(programmingLanguage);
+            await this.startBackend();
         }
     }
 
