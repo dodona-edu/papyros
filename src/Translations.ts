@@ -6,6 +6,8 @@ const ENGLISH_TRANSLATION = {
     "run": "Run",
     "terminate": "Terminate",
     "loading": "Loading",
+    "ready": "",
+    "finished": "Code executed in %{time} ms",
     "programming language": "Programming language",
     "Python": "Python",
     "JavaScript": "JavaScript"
@@ -19,6 +21,8 @@ const DUTCH_TRANSLATION = {
     "run": "Voer uit",
     "terminate": "Stop uitvoering",
     "loading": "Aan het laden",
+    "ready": "",
+    "finished": "Code uitgevoerd in %{time} ms",
     "programming language": "Programmeertaal",
     "Python": "Python",
     "JavaScript": "JavaScript"

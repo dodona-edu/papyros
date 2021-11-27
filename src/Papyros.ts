@@ -5,7 +5,7 @@ import { Backend } from "./Backend";
 import { getBackend, stopBackend } from "./BackendManager";
 import { CodeEditor } from "./CodeEditor";
 import {
-    APPLICATION_STATE_TEXT_ID, CODE_TA_ID, DEFAULT_LOCALE, DEFAULT_PROGRAMMING_LANGUAGE, INPUT_RELATIVE_URL,
+    APPLICATION_STATE_TEXT_ID, EDITOR_WRAPPER_ID, DEFAULT_LOCALE, DEFAULT_PROGRAMMING_LANGUAGE, INPUT_RELATIVE_URL,
     INPUT_TA_ID, LANGUAGE_SELECT_ID, OUTPUT_TA_ID,
     RUN_BTN_ID, STATE_SPINNER_ID, TERMINATE_BTN_ID
 } from "./Constants";
@@ -64,7 +64,7 @@ function renderPapyros(parent: HTMLElement, programmingLanguage: ProgrammingLang
         <!--Left code section-->
         <div class="col-span-1">
           <h1>${t("enter code")}:</h1>
-          <div id="code-area" class="overflow-auto max-h-full"></div>
+          <div id="code-area" class="overflow-auto max-h-full min-h-1/4 border-solid border-gray-200 border-2"></div>
         </div>
         <!--Right user input and output section-->
         <div class="col-span-1">
@@ -92,23 +92,30 @@ class PapyrosStateManager {
     state: PapyrosState;
     stateSpinner: HTMLElement;
     stateText: HTMLElement;
+    runButton: HTMLButtonElement;
+    terminateButton: HTMLButtonElement;
 
     constructor(state: PapyrosState) {
         this.stateSpinner = document.getElementById(STATE_SPINNER_ID) as HTMLElement;
         this.stateText = document.getElementById(APPLICATION_STATE_TEXT_ID) as HTMLElement;
+        this.runButton = document.getElementById(RUN_BTN_ID) as HTMLButtonElement;
+        this.terminateButton = document.getElementById(TERMINATE_BTN_ID) as HTMLButtonElement;
         this.state = state;
     }
 
-    setState(state: PapyrosState): void {
+    setState(state: PapyrosState, message?: string): void {
         if (state !== this.state) {
             this.state = state;
             if (state === PapyrosState.Ready) {
                 this.stateSpinner.style.display = "none";
-                this.stateText.innerText = "";
+                this.runButton.disabled = false;
+                this.terminateButton.hidden = true;
             } else {
                 this.stateSpinner.style.display = "";
-                this.stateText.innerText = t(state);
+                this.runButton.disabled = true;
+                this.terminateButton.hidden = false;
             }
+            this.stateText.innerText = message || t(state);
         }
     }
 }
@@ -118,10 +125,7 @@ interface PapyrosCodeState {
     editor: CodeEditor;
     backend: Remote<Backend>;
     languageSelect: HTMLSelectElement;
-    codeElement: HTMLInputElement;
     runId: number;
-    runButton: HTMLButtonElement;
-    terminateButton: HTMLButtonElement;
     outputArea: HTMLInputElement;
 }
 
@@ -138,20 +142,17 @@ export class Papyros {
     codeState: PapyrosCodeState;
     inputState: PapyrosInputState;
 
-    constructor(parent: HTMLElement, locale: string, programmingLanguage: ProgrammingLanguage,
+    constructor(programmingLanguage: ProgrammingLanguage,
         inputTextArray?: Uint8Array, inputMetaData?: Int32Array) {
         this.stateManager = new PapyrosStateManager(PapyrosState.Loading);
         this.codeState = {
             programmingLanguage: programmingLanguage,
             editor: new CodeEditor(
-                document.getElementById(CODE_TA_ID) as HTMLInputElement, programmingLanguage),
+                document.getElementById(EDITOR_WRAPPER_ID) as HTMLInputElement, programmingLanguage),
             backend: {} as Remote<Backend>,
             languageSelect: document.getElementById(LANGUAGE_SELECT_ID) as HTMLSelectElement,
-            codeElement: document.getElementById(CODE_TA_ID) as HTMLInputElement,
             outputArea: document.getElementById(OUTPUT_TA_ID) as HTMLInputElement,
-            runId: 0,
-            runButton: document.getElementById(RUN_BTN_ID) as HTMLButtonElement,
-            terminateButton: document.getElementById(TERMINATE_BTN_ID) as HTMLButtonElement,
+            runId: 0
         };
 
         this.inputState = {
@@ -175,8 +176,8 @@ export class Papyros {
                 await this.startBackend();
             }
         );
-        this.codeState.runButton.addEventListener("click", () => this.runCode());
-        this.codeState.terminateButton.addEventListener("click", () => this.terminate());
+        this.stateManager.runButton.addEventListener("click", () => this.runCode());
+        this.stateManager.terminateButton.addEventListener("click", () => this.terminate());
 
         this.inputState.inputArea.onkeydown = e => {
             papyrosLog(LogType.Debug, "Key down in inputArea", e);
@@ -186,7 +187,7 @@ export class Papyros {
                 this.sendInput();
             }
         };
-
+        await this.startBackend();
         return this;
     }
 
@@ -200,25 +201,25 @@ export class Papyros {
 
     async startBackend(): Promise<void> {
         const {
-            runButton, programmingLanguage
+            programmingLanguage
         } = this.codeState;
         const {
             inputTextArray, inputMetaData
         } = this.inputState;
         this.stateManager.setState(PapyrosState.Loading);
-        runButton.disabled = true;
         const backend = getBackend(programmingLanguage);
         await backend.launch(proxy(e => this.onMessage(e)), inputTextArray, inputMetaData);
-        runButton.disabled = false;
+        this.codeState.backend = backend;
         this.stateManager.setState(PapyrosState.Ready);
-        return Promise.resolve();
     }
 
     static fromElement(parent: HTMLElement, locale = DEFAULT_LOCALE, programmingLanguage = DEFAULT_PROGRAMMING_LANGUAGE,
         inputTextArray?: Uint8Array, inputMetaData?: Int32Array): Promise<Papyros> {
         loadTranslations();
+        I18n.locale = locale;
+        I18n.defaultLocale = DEFAULT_LOCALE;
         renderPapyros(parent, programmingLanguage);
-        return new Papyros(parent, locale, programmingLanguage, inputTextArray, inputMetaData).launch();
+        return new Papyros(programmingLanguage, inputTextArray, inputMetaData).launch();
     }
 
 
@@ -287,23 +288,19 @@ export class Papyros {
     async runCode(): Promise<void> {
         this.codeState.runId += 1;
         this.stateManager.setState(PapyrosState.Running);
-        this.codeState.runButton.disabled = true;
-        this.inputState.lineNr = 0;
         this.codeState.outputArea.value = "";
-        this.codeState.terminateButton.hidden = false;
         papyrosLog(LogType.Debug, "Running code in Papyros, sending to backend");
-        // const start = new Date().getTime();
+        const start = new Date().getTime();
         try {
             await this.codeState.backend.runCode(
-                this.codeState.codeElement.value, this.codeState.runId);
+                this.codeState.editor.getCode(), this.codeState.runId);
         } catch (error: any) {
             this.onError(error);
         } finally {
-            // const end = new Date().getTime();
-            this.stateManager.setState(PapyrosState.Ready);
-            // stateText.innerText = `Code executed in ${end - start} ms`;
-            // terminateButton.hidden = true;
-            // runButton.disabled = false;
+            const end = new Date().getTime();
+            this.stateManager.setState(PapyrosState.Ready, t("finished", { time: end - start }));
+            this.inputState.inputArea.value = "";
+            this.inputState.lineNr = 0;
         }
     }
 
@@ -311,7 +308,6 @@ export class Papyros {
         papyrosLog(LogType.Debug, "Called terminate, stopping backend!");
         this.codeState.runId += 1; // ignore messages coming from last run
         this.stateManager.setState(PapyrosState.Terminating);
-        // terminateButton.hidden = true;
         stopBackend(this.codeState.backend);
         return this.startBackend();
     }
