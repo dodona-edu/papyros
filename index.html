@@ -1,71 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="icon" href="favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <meta
-      name="description"
-      content="Scratchpad for various programming languages in the browser"
-    />
-    <link rel="apple-touch-icon" href="logo192.png" />
-    <!--
+
+<head>
+  <meta charset="utf-8" />
+  <link rel="icon" href="favicon.ico" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#000000" />
+  <meta name="description" content="Scratchpad for various programming languages in the browser" />
+  <link rel="apple-touch-icon" href="logo192.png" />
+  <!--
       manifest.json provides metadata used when your web app is installed on a
       user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
     -->
-    <link rel="manifest" href="manifest.json" />
+  <link rel="manifest" href="manifest.json" />
 
-    <!--
-      Obtain Pyodide to run Python in the browser
-    -->
-    <script src="https://cdn.jsdelivr.net/pyodide/v0.18.1/full/pyodide.js"></script>
   <!-- Wait with running the script until the elements are loaded as they are needed immediately -->
   <script src="./bundle.js" defer></script>
 
   <title>Papyros</title>
-  </head>
-  <body class="max-h-screen h-full overflow-y-hidden">
-    <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div class="bg-blue-500 text-white text-lg p-4">
-      Papyros
-    </div>
-    <div id="papyros" class="m-10">
-      <!-- Header -->
-      <div class="flex flex-row items-center">
-        <label for="language-select">Programming language</label>
-        <select id="language-select" class="m-2 border-2">
-          <option value="Python">Python</option>
-          <option value="JavaScript">JavaScript</option>
-        </select>
-        <button id="run-code-btn" type="button" class="text-white bg-blue-500 border-2 m-3 px-4 inset-y-2 rounded-lg justify-items-center ">Run</button>
-        <button id="terminate-btn" type="button" class="mr-1 btn btn-danger" hidden>Terminate</button>
-        <div class="flex flex-row items-center">
-          <svg id="state-spinner" class="animate-spin mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" display="none">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="red" stroke-width="4"></circle>
-            <path class="opacity-75" fill="red" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          <div id="application-state-text">Loading</div>
-        </div>
-      </div>
+</head>
 
-      <!--Body of the application-->
-      <div class="grid grid-cols-2 gap-4 box-border max-h-full">
-        <!--Left code section-->
-        <div class="col-span-1">
-          <h1>Enter your code here:</h1>
-          <div id="code-area" class="overflow-auto max-h-full"></div>
-        </div>
-        <!--Right user input and output section-->
-        <div class="col-span-1">
-          <h1>Provide input for the code here:</h1>
-          <textarea id="code-input-area" class="border-2 h-auto w-full max-h-1/4 overflow-auto" rows="5"></textarea>
-          <h1>Code output:</h1>
-          <textarea id="code-output-area" readonly class="border-2 w-full min-h-1/5 max-h-3/5 overflow-auto"></textarea>
-        </div>
-      </div>
+<body>
+  <noscript>You need to enable JavaScript to run this app.</noscript>
+  <div id="root"></div>
+</body>
 
-    </div>
-
-  </body>
 </html>
