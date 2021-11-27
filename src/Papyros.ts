@@ -351,7 +351,7 @@ export class Papyros {
         this.stateManager.setState(PapyrosState.Running);
         this.codeState.outputArea.value = "";
         papyrosLog(LogType.Debug, "Running code in Papyros, sending to backend");
-        const start = new Date().getTime();
+        // const start = new Date().getTime();
         try {
             await this.codeState.backend.runCode(
                 this.codeState.editor.getCode(), this.codeState.runId);
