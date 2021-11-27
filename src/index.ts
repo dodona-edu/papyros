@@ -1,10 +1,9 @@
 import "bootstrap/dist/css/bootstrap.css";
 import "./App.css";
-import { MAIN_APP_ID } from "./Constants";
-import { papyros } from "./Papyros";
+import { DEFAULT_PROGRAMMING_LANGUAGE, MAIN_APP_ID } from "./Constants";
+import { Papyros } from "./Papyros";
 import { papyrosLog, LogType } from "./util/Logging";
-import I18n from "i18n-js";
-import { TRANSLATIONS } from "./Translations";
+import { plFromString } from "./ProgrammingLanguage";
 
 const RELOAD_STORAGE_KEY = "__papyros_reloading";
 const SERVICE_WORKER_PATH = "./inputServiceWorker.js";
@@ -46,8 +45,8 @@ function startPapyros(): void {
     } else {
         papyrosLog(LogType.Important, "Using serviceWorker for input");
     }
-    for (const [language, translations] of Object.entries(TRANSLATIONS)) {
-        I18n.translations[language] = translations;
-    }
-    papyros((key: string) => I18n.t(key), inputTextArray, inputMetaData);
+    const rootElement = document.getElementById("root")!;
+    const language = plFromString(new URLSearchParams(window.location.search).get("language") ||
+        DEFAULT_PROGRAMMING_LANGUAGE);
+    Papyros.fromElement(rootElement, "nl", language, inputTextArray, inputMetaData);
 }

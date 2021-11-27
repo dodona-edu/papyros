@@ -3,6 +3,11 @@ export enum ProgrammingLanguage {
     JavaScript = "JavaScript"
 }
 
+export const PROGRAMMING_LANGUAGES = [
+    ProgrammingLanguage.Python,
+    ProgrammingLanguage.JavaScript
+];
+
 const LANGUAGE_MAP = new Map([
     ["python", ProgrammingLanguage.Python],
     ["javascript", ProgrammingLanguage.JavaScript]
