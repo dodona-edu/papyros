@@ -36,7 +36,7 @@ function renderPapyros(parent: HTMLElement, programmingLanguage: ProgrammingLang
     <div class="m-10">
       <!-- Header -->
       <div class="flex flex-row items-center">
-        <label for="language-select">Programming language</label>
+        <label for="language-select">${t("programming language")}</label>
         <select id="language-select" class="m-2 border-2">
           ${options}
         </select>
