@@ -34,9 +34,15 @@
   },
   "dependencies": {
     "@codemirror/autocomplete": "^0.19.8",
-    "@codemirror/basic-setup": "^0.19.0",
+    "@codemirror/closebrackets": "^0.19.0",
+    "@codemirror/commands": "^0.19.5",
+    "@codemirror/comment": "^0.19.0",
+    "@codemirror/fold": "^0.19.1",
+    "@codemirror/history": "^0.19.0",
     "@codemirror/lang-javascript": "^0.19.3",
     "@codemirror/lang-python": "^0.19.2",
+    "@codemirror/rectangular-selection": "^0.19.1",
+    "@codemirror/search": "^0.19.3",
     "comlink": "^4.3.1"
   },
   "scripts": {
