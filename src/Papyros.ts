@@ -413,7 +413,6 @@ export class Papyros {
         loadTranslations();
 <<<<<<< HEAD
         I18n.locale = locale;
-        I18n.defaultLocale = DEFAULT_LOCALE;
         renderPapyros(parent, programmingLanguage);
         return new Papyros(programmingLanguage, inputTextArray, inputMetaData).launch();
 =======
