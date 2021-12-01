@@ -11,7 +11,7 @@ import {
 } from "./Constants";
 import { PapyrosEvent } from "./PapyrosEvent";
 import { plFromString, ProgrammingLanguage } from "./ProgrammingLanguage";
-import { TRANSLATIONS } from "./Translations";
+import * as TRANSLATIONS from "./Translations";
 import { LogType, papyrosLog } from "./util/Logging";
 
 function loadTranslations(): void {
@@ -141,7 +141,7 @@ class PapyrosStateManager {
         this.state = PapyrosState.Ready;
     }
 
-    setState(state: PapyrosState, message?: string): void {
+    setState(state: PapyrosState, message: string): void {
         if (state !== this.state) {
             this.state = state;
             this.terminateButton.disabled = [PapyrosState.Ready, PapyrosState.Loading].includes(state);
@@ -152,7 +152,7 @@ class PapyrosStateManager {
                 this.stateSpinner.style.display = "";
                 this.runButton.disabled = true;
             }
-            this.stateText.innerText = message || t(`Papyros.${state}`);
+            this.stateText.innerText = message;
         }
     }
 }
@@ -244,11 +244,11 @@ export class Papyros {
         const {
             inputTextArray, inputMetaData
         } = this.inputState;
-        this.stateManager.setState(PapyrosState.Loading);
+        this.stateManager.setState(PapyrosState.Loading, t("Papyros.loading"));
         const backend = getBackend(programmingLanguage);
         await backend.launch(proxy(e => this.onMessage(e)), inputTextArray, inputMetaData);
         this.codeState.backend = backend;
-        this.stateManager.setState(PapyrosState.Ready);
+        this.stateManager.setState(PapyrosState.Ready, t("Papyros.ready"));
     }
 
     static fromElement(parent: HTMLElement, config: PapyrosConfig): Promise<Papyros> {
@@ -308,7 +308,7 @@ export class Papyros {
                 Atomics.store(inputMetaData, 0, 1);
             }
             this.inputState.lineNr += 1;
-            this.stateManager.setState(PapyrosState.Running);
+            this.stateManager.setState(PapyrosState.Running, t("Papyros.running"));
             return true;
         } else {
             papyrosLog(LogType.Debug, "Had no input to send, still waiting!");
@@ -319,11 +319,11 @@ export class Papyros {
     async onInput(e: PapyrosEvent): Promise<void> {
         papyrosLog(LogType.Debug, "Received onInput event in Papyros: ", e);
         if (!await this.sendInput()) {
-            this.stateManager.setState(PapyrosState.AwaitingInput);
+            this.stateManager.setState(PapyrosState.AwaitingInput, t("Papyros.awaiting_input"));
             // stateText.innerText = "Awaiting input for: " + e.data;
             papyrosLog(LogType.Debug, "User needs to enter input before code can continue");
         } else {
-            this.stateManager.setState(PapyrosState.Running);
+            this.stateManager.setState(PapyrosState.Running, t("Papyros.running"));
         }
     }
 
@@ -348,7 +348,7 @@ export class Papyros {
             return;
         }
         this.codeState.runId += 1;
-        this.stateManager.setState(PapyrosState.Running);
+        this.stateManager.setState(PapyrosState.Running, t("Papyros.running"));
         this.codeState.outputArea.value = "";
         papyrosLog(LogType.Debug, "Running code in Papyros, sending to backend");
         const start = new Date().getTime();
@@ -371,7 +371,7 @@ export class Papyros {
         }
         papyrosLog(LogType.Debug, "Called terminate, stopping backend!");
         this.codeState.runId += 1; // ignore messages coming from last run
-        this.stateManager.setState(PapyrosState.Terminating);
+        this.stateManager.setState(PapyrosState.Terminating, t("Papyros.terminating"));
         stopBackend(this.codeState.backend);
         return this.startBackend();
     }

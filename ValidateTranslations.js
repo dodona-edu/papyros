@@ -4,12 +4,13 @@ const translations = require("./src/Translations.js");
 const usedKeys = extract.extractFromFiles([
     "src/*.ts"
 ], {
-    marker: "t",
+    marker: "t", // renamed I18n.t to t for convenience
     parser: "typescript",
 });
 let validTranslations = true;
 for (const locale of Object.keys(translations)) {
     const missing = extract.findMissing(
+        // requires flattening as the translations object uses the Papyros-scope
         extract.flatten(translations[locale]),
         usedKeys
     );

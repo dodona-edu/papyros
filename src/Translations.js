@@ -34,6 +34,7 @@ const DUTCH_TRANSLATION = {
     "JavaScript": "JavaScript"
 };
 
+// JS exports to allow use in TS and JS files
 module.exports = {
     en: { "Papyros": ENGLISH_TRANSLATION },
     nl: { "Papyros": DUTCH_TRANSLATION }
