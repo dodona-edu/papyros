@@ -42,6 +42,8 @@
     "@codemirror/history": "^0.19.0",
     "@codemirror/lang-javascript": "^0.19.3",
     "@codemirror/lang-python": "^0.19.2",
+    "@codemirror/rectangular-selection": "^0.19.1",
+    "@codemirror/search": "^0.19.3",
     "comlink": "^4.3.1",
     "i18n-js": "^3.8.0"
   },
