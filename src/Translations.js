@@ -35,6 +35,7 @@ const DUTCH_TRANSLATION = {
 };
 
 // JS exports to allow use in TS and JS files
+// eslint-disable-next-line no-undef
 module.exports = {
     en: { "Papyros": ENGLISH_TRANSLATION },
     nl: { "Papyros": DUTCH_TRANSLATION }
