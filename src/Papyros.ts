@@ -16,7 +16,8 @@ import { LogType, papyrosLog } from "./util/Logging";
 
 function loadTranslations(): void {
     for (const [language, translations] of Object.entries(TRANSLATIONS)) {
-        I18n.translations[language] = translations;
+        // Add keys to already existing translations if they exist
+        I18n.translations[language] = Object.assign((I18n.translations[language] || {}), translations);
     }
 }
 
@@ -25,28 +26,28 @@ const t = I18n.t;
 function renderPapyros(parent: HTMLElement, programmingLanguage: ProgrammingLanguage): void {
     const options = PROGRAMMING_LANGUAGES.map(pl => {
         const selected = programmingLanguage === pl ? "selected" : "";
-        return `<option ${selected}} value="${pl}">${t(pl)}</option>`;
+        return `<option ${selected}} value="${pl}">${t(`Papyros.${pl}`)}</option>`;
     }).join("\n");
     parent.innerHTML =
         `
     <div id="papyros" class="max-h-screen h-full overflow-y-hidden">
     <div class="bg-blue-500 text-white text-lg p-4">
-      ${t("Papyros")}
+      ${t("Papyros.Papyros")}
     </div>
     <div class="m-10">
       <!-- Header -->
       <div class="flex flex-row items-center">
-        <label for="language-select">${t("programming language")}</label>
+        <label for="language-select">${t("Papyros.programming_language")}</label>
         <select id="language-select" class="m-2 border-2">
           ${options}
         </select>
         <button id="run-code-btn" type="button"
           class="text-white bg-blue-500 border-2 m-3 px-4 inset-y-2 rounded-lg
                  disabled:opacity-50 disabled:cursor-wait">
-            ${t("run")}
+            ${t("Papyros.run")}
         </button>
         <button id="terminate-btn" type="button" class="mr-1 btn btn-danger" hidden>
-            ${t("terminate")}
+            ${t("Papyros.terminate")}
         </button>
         <div class="flex flex-row items-center">
           <svg id="state-spinner" class="animate-spin mr-3 h-5 w-5 text-white"
@@ -56,7 +57,7 @@ function renderPapyros(parent: HTMLElement, programmingLanguage: ProgrammingLang
           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
             </path>
           </svg>
-          <div id="application-state-text">${t("loading")}</div>
+          <div id="application-state-text">${t("Papyros.loading")}</div>
         </div>
       </div>
 
@@ -64,14 +65,14 @@ function renderPapyros(parent: HTMLElement, programmingLanguage: ProgrammingLang
       <div class="grid grid-cols-2 gap-4 box-border max-h-full">
         <!--Left code section-->
         <div class="col-span-1">
-          <h1>${t("enter code")}:</h1>
+          <h1>${t("Papyros.enter_code")}:</h1>
           <div id="code-area" class="overflow-auto max-h-full min-h-1/4 border-solid border-gray-200 border-2"></div>
         </div>
         <!--Right user input and output section-->
         <div class="col-span-1">
-          <h1>${t("enter input")}:</h1>
+          <h1>${t("Papyros.enter_input")}:</h1>
           <textarea id="code-input-area" class="border-2 h-auto w-full max-h-1/4 overflow-auto" rows="5"></textarea>
-          <h1>${t("code output")}:</h1>
+          <h1>${t("Papyros.code_output")}:</h1>
           <textarea id="code-output-area" readonly class="border-2 w-full min-h-1/5 max-h-3/5 overflow-auto"></textarea>
         </div>
       </div>
@@ -84,7 +85,7 @@ function renderPapyros(parent: HTMLElement, programmingLanguage: ProgrammingLang
 enum PapyrosState {
     Loading = "loading",
     Running = "running",
-    AwaitingInput = "awaiting input",
+    AwaitingInput = "awaiting_input",
     Terminating = "terminating",
     Ready = "ready"
 }
@@ -116,7 +117,7 @@ class PapyrosStateManager {
                 this.runButton.disabled = true;
                 this.terminateButton.hidden = false;
             }
-            this.stateText.innerText = message || t(state);
+            this.stateText.innerText = message || t(`Papyros.${state}`);
         }
     }
 }
@@ -294,7 +295,7 @@ export class Papyros {
             this.onError(error);
         } finally {
             const end = new Date().getTime();
-            this.stateManager.setState(PapyrosState.Ready, t("finished", { time: end - start }));
+            this.stateManager.setState(PapyrosState.Ready, t("Papyros.finished", { time: end - start }));
             this.inputState.inputArea.value = "";
             this.inputState.lineNr = 0;
         }
