@@ -4,6 +4,8 @@
   "private": true,
   "homepage": ".",
   "devDependencies": {
+    "@codemirror/language": "^0.19.5",
+    "@types/codemirror": "^5.60.5",
     "@typescript-eslint/eslint-plugin": "^4.5.0",
     "@typescript-eslint/parser": "^4.5.0",
     "autoprefixer": "^10.4.0",
@@ -31,6 +33,16 @@
     "webpack-dev-server": "3.11.1"
   },
   "dependencies": {
+    "@codemirror/autocomplete": "^0.19.8",
+    "@codemirror/closebrackets": "^0.19.0",
+    "@codemirror/commands": "^0.19.5",
+    "@codemirror/comment": "^0.19.0",
+    "@codemirror/fold": "^0.19.1",
+    "@codemirror/history": "^0.19.0",
+    "@codemirror/lang-javascript": "^0.19.3",
+    "@codemirror/lang-python": "^0.19.2",
+    "@codemirror/rectangular-selection": "^0.19.1",
+    "@codemirror/search": "^0.19.3",
     "comlink": "^4.3.1"
   },
   "scripts": {
