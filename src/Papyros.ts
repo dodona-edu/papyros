@@ -46,7 +46,9 @@ function renderPapyros(parent: HTMLElement, programmingLanguage: ProgrammingLang
                  disabled:opacity-50 disabled:cursor-wait">
             ${t("Papyros.run")}
         </button>
-        <button id="terminate-btn" type="button" class="mr-1 btn btn-danger" hidden>
+        <button id="terminate-btn" type="button" 
+            class="text-white bg-red-500 border-2 m-3 px-4 inset-y-2 rounded-lg
+            disabled:opacity-50 disabled:cursor-wait" hidden>
             ${t("Papyros.terminate")}
         </button>
         <div class="flex flex-row items-center">
