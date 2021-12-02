@@ -1,6 +1,6 @@
 import "bootstrap/dist/css/bootstrap.css";
 import "./App.css";
-import { DEFAULT_PROGRAMMING_LANGUAGE, MAIN_APP_ID } from "./Constants";
+import { DEFAULT_LOCALE, DEFAULT_PROGRAMMING_LANGUAGE, MAIN_APP_ID } from "./Constants";
 import { Papyros } from "./Papyros";
 import { papyrosLog, LogType } from "./util/Logging";
 import { plFromString } from "./ProgrammingLanguage";
@@ -48,5 +48,11 @@ function startPapyros(): void {
     const rootElement = document.getElementById("root")!;
     const language = plFromString(new URLSearchParams(window.location.search).get("language") ||
         DEFAULT_PROGRAMMING_LANGUAGE);
-    Papyros.fromElement(rootElement, "nl", language, inputTextArray, inputMetaData);
+    Papyros.fromElement(rootElement, {
+        standAlone: false,
+        programmingLanguage: language,
+        locale: DEFAULT_LOCALE,
+        inputTextArray: inputTextArray,
+        inputMetaData: inputMetaData
+    });
 }

@@ -23,11 +23,20 @@ function loadTranslations(): void {
 
 const t = I18n.t;
 
-function renderPapyros(parent: HTMLElement, programmingLanguage: ProgrammingLanguage): void {
+function renderPapyros(parent: HTMLElement, programmingLanguage: ProgrammingLanguage, standAlone: boolean): void {
     const options = PROGRAMMING_LANGUAGES.map(pl => {
         const selected = programmingLanguage === pl ? "selected" : "";
         return `<option ${selected}} value="${pl}">${t(`Papyros.${pl}`)}</option>`;
     }).join("\n");
+    const languageSelect = standAlone ?
+        `
+    <div class="mr-2">
+        <label for="language-select">${t("Papyros.programming_language")}</label>
+        <select id="language-select" class="m-2 border-2">
+            ${options}
+        </select>
+    </div>
+    ` : "";
     parent.innerHTML =
         `
     <div id="papyros" class="max-h-screen h-full overflow-y-hidden">
@@ -37,12 +46,9 @@ function renderPapyros(parent: HTMLElement, programmingLanguage: ProgrammingLang
     <div class="m-10">
       <!-- Header -->
       <div class="flex flex-row items-center">
-        <label for="language-select">${t("Papyros.programming_language")}</label>
-        <select id="language-select" class="m-2 border-2">
-          ${options}
-        </select>
+        ${languageSelect}
         <button id="run-code-btn" type="button"
-          class="text-white bg-blue-500 border-2 m-3 px-4 inset-y-2 rounded-lg
+          class="text-white bg-blue-500 border-2 px-4 inset-y-2 rounded-lg
                  disabled:opacity-50 disabled:cursor-wait">
             ${t("Papyros.run")}
         </button>
@@ -128,7 +134,6 @@ interface PapyrosCodeState {
     programmingLanguage: ProgrammingLanguage;
     editor: CodeEditor;
     backend: Remote<Backend>;
-    languageSelect: HTMLSelectElement;
     runId: number;
     outputArea: HTMLInputElement;
 }
@@ -137,6 +142,14 @@ interface PapyrosInputState {
     lineNr: number;
     textEncoder: TextEncoder;
     inputArea: HTMLInputElement;
+    inputTextArray?: Uint8Array;
+    inputMetaData?: Int32Array;
+}
+
+interface PapyrosConfig {
+    standAlone: boolean;
+    locale?: string;
+    programmingLanguage?: ProgrammingLanguage;
     inputTextArray?: Uint8Array;
     inputMetaData?: Int32Array;
 }
@@ -154,7 +167,6 @@ export class Papyros {
             editor: new CodeEditor(
                 document.getElementById(EDITOR_WRAPPER_ID) as HTMLInputElement, programmingLanguage),
             backend: {} as Remote<Backend>,
-            languageSelect: document.getElementById(LANGUAGE_SELECT_ID) as HTMLSelectElement,
             outputArea: document.getElementById(OUTPUT_TA_ID) as HTMLInputElement,
             runId: 0
         };
@@ -169,11 +181,6 @@ export class Papyros {
     }
 
     async launch(): Promise<Papyros> {
-        this.codeState.languageSelect.addEventListener("change",
-            async () => {
-                return this.setProgrammingLanguage(plFromString(this.codeState.languageSelect.value));
-            }
-        );
         this.stateManager.runButton.addEventListener("click", () => this.runCode());
         this.stateManager.terminateButton.addEventListener("click", () => this.terminate());
 
@@ -212,12 +219,27 @@ export class Papyros {
         this.stateManager.setState(PapyrosState.Ready);
     }
 
-    static fromElement(parent: HTMLElement, locale = DEFAULT_LOCALE, programmingLanguage = DEFAULT_PROGRAMMING_LANGUAGE,
-        inputTextArray?: Uint8Array, inputMetaData?: Int32Array): Promise<Papyros> {
+    static fromElement(parent: HTMLElement, config: PapyrosConfig): Promise<Papyros> {
+        const papyrosConfig: PapyrosConfig = Object.assign(
+            {
+                standAlone: true,
+                programmingLanguage: DEFAULT_PROGRAMMING_LANGUAGE,
+                locale: DEFAULT_LOCALE
+            }, config
+        );
         loadTranslations();
-        renderPapyros(parent, programmingLanguage);
-        I18n.locale = locale;
-        return new Papyros(programmingLanguage, inputTextArray, inputMetaData).launch();
+        I18n.locale = papyrosConfig.locale!;
+        renderPapyros(parent, papyrosConfig.programmingLanguage!, papyrosConfig.standAlone);
+        const papyros = new Papyros(papyrosConfig.programmingLanguage!, papyrosConfig.inputTextArray, papyrosConfig.inputMetaData);
+        if (papyrosConfig.standAlone) {
+            const languageSelect = document.getElementById(LANGUAGE_SELECT_ID) as HTMLSelectElement;
+            languageSelect.addEventListener("change",
+                async () => {
+                    return papyros.setProgrammingLanguage(plFromString(languageSelect.value));
+                }
+            );
+        }
+        return papyros.launch();
     }
 
 
