@@ -55,7 +55,7 @@
     "build": "webpack build --mode production",
     "test": "echo No tests defined yet",
     "lint": "eslint  --ext '.js' --ext '.ts' src",
-    "validate:translations": "node ValidateTranslations.js"
+    "validate:translations": "node scripts/ValidateTranslations.js"
   },
   "babel": {
     "presets": [
