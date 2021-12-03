@@ -70,10 +70,13 @@ class PythonWorker extends Backend {
             // run the code, potentially polluting the namespace
             // Functions and variables defined by the user become global
             // We need them to be global to let doctest work out of the box
-            const result = this.pyodide.runPython(code);
-            // Cleanup the scope after computations are done
-            this._cleanScope();
-            return result;
+            try {
+                return this.pyodide.runPython(code);
+            } finally {
+                // Cleanup the scope after computations are done
+                // Even in case of errors
+                this._cleanScope();
+            }
         } else {
             return this.pyodide.runPythonAsync(code);
         }
