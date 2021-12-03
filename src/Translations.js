@@ -1,3 +1,6 @@
+// Empty strings are considered missing by i18n-extract
+// Therefore the ready-key is an explicit space now, which is still invisible
+
 const ENGLISH_TRANSLATION = {
     "Papyros": "Papyros",
     "enter_code": "Enter your code here",
@@ -9,7 +12,7 @@ const ENGLISH_TRANSLATION = {
     "terminating": "Terminating",
     "loading": "Loading",
     "awaiting_input": "Awaiting input",
-    "ready": "",
+    "ready": " ",
     "finished": "Code executed in %{time} ms",
     "programming_language": "Programming language",
     "Python": "Python",
@@ -27,7 +30,7 @@ const DUTCH_TRANSLATION = {
     "terminating": "Aan het stoppen",
     "loading": "Aan het laden",
     "awaiting_input": "Aan het wachten op invoer",
-    "ready": "",
+    "ready": " ",
     "finished": "Code uitgevoerd in %{time} ms",
     "programming_language": "Programmeertaal",
     "Python": "Python",
