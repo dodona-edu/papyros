@@ -39,7 +39,7 @@ class PythonWorker extends Backend {
         // Python calls our function with a dict, which must be converted to a PapyrosEvent
         const eventCallback = (data: any): void => {
             const jsEvent: PapyrosEvent = "toJs" in data ? data.toJs() : Object.fromEntries(data);
-            this.onEvent(jsEvent);
+            return this.onEvent(jsEvent);
         };
         this.pyodide.globals.get("__override_builtins")(eventCallback);
         this.globals = new Map((this.pyodide.globals as any).toJs());
