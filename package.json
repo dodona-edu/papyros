@@ -6,6 +6,7 @@
   "devDependencies": {
     "@codemirror/language": "^0.19.5",
     "@types/codemirror": "^5.60.5",
+    "@types/i18n-js": "^3.8.2",
     "@typescript-eslint/eslint-plugin": "^4.5.0",
     "@typescript-eslint/parser": "^4.5.0",
     "autoprefixer": "^10.4.0",
@@ -43,7 +44,8 @@
     "@codemirror/lang-python": "^0.19.2",
     "@codemirror/rectangular-selection": "^0.19.1",
     "@codemirror/search": "^0.19.3",
-    "comlink": "^4.3.1"
+    "comlink": "^4.3.1",
+    "i18n-js": "^3.8.0"
   },
   "scripts": {
     "start": "webpack serve",

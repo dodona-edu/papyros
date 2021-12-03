@@ -107,18 +107,15 @@ function getEditorView(parentElement: HTMLElement,
 export class CodeEditor {
     element: HTMLElement;
     editorView: EditorView | undefined;
-    minLines: number;
 
     constructor(element: HTMLElement, language: ProgrammingLanguage,
-        initialCode?: string, minLines = 10) {
+        initialCode?: string) {
         this.element = element;
-        this.minLines = minLines;
         this.setLanguage(language, initialCode);
     }
 
     setLanguage(language: ProgrammingLanguage, code?: string): void {
-        const initialCode = code || new Array(this.minLines).fill("").join("\n");
-        this.editorView = getEditorView(this.element, language, initialCode);
+        this.editorView = getEditorView(this.element, language, code);
         this.element.replaceChildren(this.editorView.dom);
     }
 
