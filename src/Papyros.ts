@@ -215,9 +215,8 @@ export class Papyros {
     static fromElement(parent: HTMLElement, locale = DEFAULT_LOCALE, programmingLanguage = DEFAULT_PROGRAMMING_LANGUAGE,
         inputTextArray?: Uint8Array, inputMetaData?: Int32Array): Promise<Papyros> {
         loadTranslations();
-        I18n.locale = locale;
-        I18n.defaultLocale = DEFAULT_LOCALE;
         renderPapyros(parent, programmingLanguage);
+        I18n.locale = locale;
         return new Papyros(programmingLanguage, inputTextArray, inputMetaData).launch();
     }
 

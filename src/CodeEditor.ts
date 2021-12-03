@@ -1,15 +1,15 @@
 import { indentWithTab } from "@codemirror/commands";
 import { javascript } from "@codemirror/lang-javascript";
+import { indentUnit, LanguageSupport } from "@codemirror/language";
+import { Compartment, EditorState, Extension } from "@codemirror/state";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import { python } from "@codemirror/lang-python";
-import { LanguageSupport } from "@codemirror/language";
 import {
     EditorView,
     keymap, highlightSpecialChars,
     drawSelection, highlightActiveLine
 }
     from "@codemirror/view";
-import { EditorState, Extension } from "@codemirror/state";
 import { history, historyKeymap } from "@codemirror/history";
 import { foldGutter, foldKeymap } from "@codemirror/fold";
 import { indentOnInput } from "@codemirror/language";
@@ -37,6 +37,7 @@ function getLanguageSupport(language: ProgrammingLanguage): LanguageSupport {
         }
     }
 }
+
 /*
 *  - [syntax highlighting depending on the language](#getLanguageSupport)
 *  - [line numbers](#gutter.lineNumbers)
@@ -61,9 +62,8 @@ function getLanguageSupport(language: ProgrammingLanguage): LanguageSupport {
 *  - [linting](#lint.lintKeymap)
 *  - [indenting with tab](#commands.indentWithTab)
 */
-function getExtensions(language: ProgrammingLanguage): Array<Extension> {
+function getExtensions(): Array<Extension> {
     return [
-        getLanguageSupport(language),
         lineNumbers(),
         highlightActiveLineGutter(),
         highlightSpecialChars(),
@@ -94,36 +94,52 @@ function getExtensions(language: ProgrammingLanguage): Array<Extension> {
 }
 
 function getEditorView(parentElement: HTMLElement,
-    language: ProgrammingLanguage, initialCode?: string): EditorView {
+    initialCode = "", extensions: Extension[] = []): EditorView {
     return new EditorView({
         state: EditorState.create({
-            doc: initialCode || "",
-            extensions: getExtensions(language)
+            doc: initialCode,
+            extensions: extensions
         }),
         parent: parentElement
     });
 }
 
+function getIndentUnit(indentLength: number): string {
+    return new Array(indentLength).fill(" ").join("");
+}
+
 export class CodeEditor {
-    element: HTMLElement;
-    editorView: EditorView | undefined;
+    editorView: EditorView;
+    languageCompartment: Compartment;
+    indentCompartment: Compartment;
 
     constructor(element: HTMLElement, language: ProgrammingLanguage,
-        initialCode?: string) {
-        this.element = element;
-        this.setLanguage(language, initialCode);
+        initialCode?: string, indentLength = 4) {
+        this.languageCompartment = new Compartment();
+        this.indentCompartment = new Compartment();
+        this.editorView = getEditorView(element, initialCode,
+            [
+                this.languageCompartment.of(getLanguageSupport(language)),
+                this.indentCompartment.of(indentUnit.of(getIndentUnit(indentLength))),
+                keymap.of([indentWithTab]),
+                ...getExtensions()
+            ]);
+        element.replaceChildren(this.editorView.dom);
     }
 
-    setLanguage(language: ProgrammingLanguage, code?: string): void {
-        this.editorView = getEditorView(this.element, language, code);
-        this.element.replaceChildren(this.editorView.dom);
+    setLanguage(language: ProgrammingLanguage): void {
+        this.editorView.dispatch({
+            effects: this.languageCompartment.reconfigure(getLanguageSupport(language))
+        });
+    }
+
+    setIndentLength(indentLength: number): void {
+        this.editorView.dispatch({
+            effects: this.indentCompartment.reconfigure(indentUnit.of(getIndentUnit(indentLength)))
+        });
     }
 
     getCode(): string {
-        if (this.editorView) {
-            return this.editorView.state.doc.toString();
-        } else {
-            return "";
-        }
+        return this.editorView.state.doc.toString();
     }
 }
