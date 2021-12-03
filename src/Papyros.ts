@@ -144,14 +144,13 @@ class PapyrosStateManager {
     setState(state: PapyrosState, message?: string): void {
         if (state !== this.state) {
             this.state = state;
+            this.terminateButton.hidden = [PapyrosState.Ready, PapyrosState.Loading].includes(state);
             if (state === PapyrosState.Ready) {
                 this.stateSpinner.style.display = "none";
                 this.runButton.disabled = false;
-                this.terminateButton.hidden = true;
             } else {
                 this.stateSpinner.style.display = "";
                 this.runButton.disabled = true;
-                this.terminateButton.hidden = false;
             }
             this.stateText.innerText = message || t(`Papyros.${state}`);
         }
@@ -208,13 +207,17 @@ export class Papyros {
         };
     }
 
+    get state(): PapyrosState {
+        return this.stateManager.state;
+    }
+
     async launch(): Promise<Papyros> {
         this.stateManager.runButton.addEventListener("click", () => this.runCode());
         this.stateManager.terminateButton.addEventListener("click", () => this.terminate());
 
         this.inputState.inputArea.onkeydown = e => {
             papyrosLog(LogType.Debug, "Key down in inputArea", e);
-            if (this.stateManager.state === PapyrosState.AwaitingInput &&
+            if (this.state === PapyrosState.AwaitingInput &&
                 e.key.toLowerCase() === "enter") {
                 papyrosLog(LogType.Debug, "Pressed enter! Sending input to user");
                 this.sendInput();
@@ -339,6 +342,10 @@ export class Papyros {
     }
 
     async runCode(): Promise<void> {
+        if (this.state !== PapyrosState.Ready) {
+            papyrosLog(LogType.Error, `Run code called from invalid state: ${this.state}`);
+            return;
+        }
         this.codeState.runId += 1;
         this.stateManager.setState(PapyrosState.Running);
         this.codeState.outputArea.value = "";
@@ -357,7 +364,11 @@ export class Papyros {
         }
     }
 
-    terminate(): Promise<void> {
+    async terminate(): Promise<void> {
+        if (this.state !== PapyrosState.Running) {
+            papyrosLog(LogType.Error, `Terminate called from invalid state: ${this.state}`);
+            return;
+        }
         papyrosLog(LogType.Debug, "Called terminate, stopping backend!");
         this.codeState.runId += 1; // ignore messages coming from last run
         this.stateManager.setState(PapyrosState.Terminating);
