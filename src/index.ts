@@ -46,12 +46,13 @@ function startPapyros(): void {
         papyrosLog(LogType.Important, "Using serviceWorker for input");
     }
     const rootElement = document.getElementById("root")!;
-    const language = plFromString(new URLSearchParams(window.location.search).get("language") ||
-        DEFAULT_PROGRAMMING_LANGUAGE);
+    const urlParams = new URLSearchParams(window.location.search);
+    const language = plFromString(urlParams.get("language") || DEFAULT_PROGRAMMING_LANGUAGE);
+    const locale = urlParams.get("locale") || DEFAULT_LOCALE;
     Papyros.fromElement(rootElement, {
         standAlone: false,
         programmingLanguage: language,
-        locale: DEFAULT_LOCALE,
+        locale: locale,
         inputTextArray: inputTextArray,
         inputMetaData: inputMetaData
     });

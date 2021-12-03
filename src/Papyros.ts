@@ -6,11 +6,11 @@ import { getBackend, stopBackend } from "./BackendManager";
 import { CodeEditor } from "./CodeEditor";
 import {
     APPLICATION_STATE_TEXT_ID, EDITOR_WRAPPER_ID, DEFAULT_LOCALE, DEFAULT_PROGRAMMING_LANGUAGE, INPUT_RELATIVE_URL,
-    INPUT_TA_ID, LANGUAGE_SELECT_ID, OUTPUT_TA_ID,
-    RUN_BTN_ID, STATE_SPINNER_ID, TERMINATE_BTN_ID
+    INPUT_TA_ID, PROGRAMMING_LANGUAGE_SELECT_ID, OUTPUT_TA_ID,
+    RUN_BTN_ID, STATE_SPINNER_ID, TERMINATE_BTN_ID, LOCALE_SELECT_ID
 } from "./Constants";
 import { PapyrosEvent } from "./PapyrosEvent";
-import { plFromString, ProgrammingLanguage, PROGRAMMING_LANGUAGES } from "./ProgrammingLanguage";
+import { plFromString, ProgrammingLanguage } from "./ProgrammingLanguage";
 import { TRANSLATIONS } from "./Translations";
 import { LogType, papyrosLog } from "./util/Logging";
 
@@ -23,30 +23,58 @@ function loadTranslations(): void {
 
 const t = I18n.t;
 
-function renderPapyros(parent: HTMLElement, programmingLanguage: ProgrammingLanguage, standAlone: boolean): void {
-    const options = PROGRAMMING_LANGUAGES.map(pl => {
-        const selected = programmingLanguage === pl ? "selected" : "";
-        return `<option ${selected}} value="${pl}">${t(`Papyros.${pl}`)}</option>`;
-    }).join("\n");
-    const languageSelect = standAlone ?
+function renderPapyros(parent: HTMLElement, programmingLanguage: ProgrammingLanguage,
+    standAlone: boolean, locale: string): void {
+    const getSelectedValue = (selected: string, current: string): string => {
+        return selected === current ? "selected" : "";
+    };
+    const programmingLanguageSelect = standAlone ?
         `
-    <div class="mr-2">
-        <label for="language-select">${t("Papyros.programming_language")}</label>
-        <select id="language-select" class="m-2 border-2">
-            ${options}
-        </select>
-    </div>
-    ` : "";
+        <div class="mr-2">
+            <label for="programming-language-select">${t("Papyros.programming_language")}</label>
+            <select id="programming-language-select" class="m-2 border-2">
+                <option ${getSelectedValue(programmingLanguage, ProgrammingLanguage.Python)}
+                 value="${ProgrammingLanguage.Python}">
+                    ${t("Papyros.Python")}
+                </option>
+                <option ${getSelectedValue(programmingLanguage, ProgrammingLanguage.JavaScript)}
+                value="${ProgrammingLanguage.JavaScript}">
+                   ${t("Papyros.JavaScript")}
+               </option>
+            </select>
+        </div>
+        ` : "";
+    const localeSelect = standAlone ?
+        `
+        <div class="flex flex-row-reverse">
+            <!-- row-reverse to start at the right, so put elements in order of display -->
+            <select id="locale-select" class="m-2 border-2">
+                <option value="en" ${getSelectedValue(locale, "en")}>English</option>
+                <option value="nl" ${getSelectedValue(locale, "nl")}>Nederlands</option>
+            </select>
+            <i class="mdi mdi-web text-4xl text-white"></i>
+        </div>
+        ` : "";
+
+    const navBar = standAlone ?
+        `
+        <div class="bg-blue-500 text-white text-lg p-4 grid grid-cols-8 items-center">
+            <div class="col-span-6">
+                ${t("Papyros.Papyros")}
+            </div>
+            <div class="col-span-2 text-black">
+                ${localeSelect}
+            </div>
+        </div>
+        ` : "";
     parent.innerHTML =
         `
     <div id="papyros" class="max-h-screen h-full overflow-y-hidden">
-    <div class="bg-blue-500 text-white text-lg p-4">
-      ${t("Papyros.Papyros")}
-    </div>
+    ${navBar}
     <div class="m-10">
       <!-- Header -->
       <div class="flex flex-row items-center">
-        ${languageSelect}
+        ${programmingLanguageSelect}
         <button id="run-code-btn" type="button"
           class="text-white bg-blue-500 border-2 px-4 inset-y-2 rounded-lg
                  disabled:opacity-50 disabled:cursor-wait">
@@ -229,15 +257,20 @@ export class Papyros {
         );
         loadTranslations();
         I18n.locale = papyrosConfig.locale!;
-        renderPapyros(parent, papyrosConfig.programmingLanguage!, papyrosConfig.standAlone);
+        renderPapyros(parent, papyrosConfig.programmingLanguage!, papyrosConfig.standAlone, papyrosConfig.locale!);
         const papyros = new Papyros(papyrosConfig.programmingLanguage!, papyrosConfig.inputTextArray, papyrosConfig.inputMetaData);
         if (papyrosConfig.standAlone) {
-            const languageSelect = document.getElementById(LANGUAGE_SELECT_ID) as HTMLSelectElement;
-            languageSelect.addEventListener("change",
+            const programmingLanguageSelect = document.getElementById(PROGRAMMING_LANGUAGE_SELECT_ID) as HTMLSelectElement;
+            programmingLanguageSelect.addEventListener("change",
                 async () => {
-                    return papyros.setProgrammingLanguage(plFromString(languageSelect.value));
+                    return papyros.setProgrammingLanguage(plFromString(programmingLanguageSelect.value));
                 }
             );
+
+            const localeSelect = document.getElementById(LOCALE_SELECT_ID) as HTMLSelectElement;
+            localeSelect.addEventListener("change", async () => {
+                document.location.href = `?locale=${localeSelect.value}&language=${programmingLanguageSelect.value}`;
+            });
         }
         return papyros.launch();
     }
