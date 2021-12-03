@@ -194,6 +194,7 @@ export class Papyros {
             stopBackend(this.codeState.backend);
             this.codeState.programmingLanguage = programmingLanguage;
             this.codeState.editor.setLanguage(programmingLanguage);
+            this.codeState.outputArea.value = "";
             await this.startBackend();
         }
     }
