@@ -50,7 +50,7 @@ function startPapyros(): void {
     const language = plFromString(urlParams.get("language") || DEFAULT_PROGRAMMING_LANGUAGE);
     const locale = urlParams.get("locale") || DEFAULT_LOCALE;
     Papyros.fromElement(rootElement, {
-        standAlone: false,
+        standAlone: true,
         programmingLanguage: language,
         locale: locale,
         inputTextArray: inputTextArray,
