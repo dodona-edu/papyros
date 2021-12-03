@@ -15,7 +15,8 @@ for (const locale of Object.keys(translations)) {
         usedKeys
     );
     if (missing.length > 0) {
-        console.log(`Found missing keys for locale: ${locale}`);
+        console.log(`Found ${missing.length} missing keys for locale: ${locale}.`);
+        console.log(missing)
         validTranslations = false;
     }
 }
