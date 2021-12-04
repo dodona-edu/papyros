@@ -23,12 +23,10 @@ def __capture_stdout(cb):
     sys.stdout = _OutputWriter()
 
 def __override_stdin(cb):
-    global input
-    def __dodona_input(prompt=""):
-        print(prompt, end="")
-        user_value = cb(to_js({"type": "input", "data":prompt}))
-        print(user_value)
+    def __papyros_readline():
+        user_value = cb(to_js({"type": "input", "data":"next line"}))
+        print(user_value, type(user_value))
         return user_value
 
-    input = __dodona_input
+    sys.stdin.readline = __papyros_readline
 `;
