@@ -82,7 +82,7 @@ function renderPapyros(parent: HTMLElement, programmingLanguage: ProgrammingLang
         </button>
         <button id="terminate-btn" type="button" 
             class="text-white bg-red-500 border-2 m-3 px-4 inset-y-2 rounded-lg
-            disabled:opacity-50 disabled:cursor-wait" hidden>
+            disabled:opacity-50 disabled:cursor-wait">
             ${t("Papyros.terminate")}
         </button>
         <div class="flex flex-row items-center">
@@ -144,7 +144,7 @@ class PapyrosStateManager {
     setState(state: PapyrosState, message?: string): void {
         if (state !== this.state) {
             this.state = state;
-            this.terminateButton.hidden = [PapyrosState.Ready, PapyrosState.Loading].includes(state);
+            this.terminateButton.disabled = [PapyrosState.Ready, PapyrosState.Loading].includes(state);
             if (state === PapyrosState.Ready) {
                 this.stateSpinner.style.display = "none";
                 this.runButton.disabled = false;
