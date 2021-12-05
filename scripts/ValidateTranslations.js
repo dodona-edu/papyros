@@ -21,14 +21,11 @@ const criteria = {
     "missing": extract.findMissing,
     "unused": extract.findUnused,
     "duplicate": extract.findDuplicated,
-    // disallow dynamic keys as otherwise this script has no use (static analysis)
-    "dynamic": extract.forbidDynamic
 };
 let validTranslations = true;
 for (const locale of Object.keys(translations)) {
     // requires flattening as the translations object uses the Papyros-scope
     const localeKeys = extract.flatten(translations[locale]);
-    console.log(localeKeys, translations[locale]);
     for (const [criterium, check] of Object.entries(criteria)) {
         // not &&= to ensure checkReport is actually executed
         validTranslations = checkReport(

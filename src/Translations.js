@@ -8,15 +8,24 @@ const ENGLISH_TRANSLATION = {
     "code_output": "Code output",
     "run": "Run",
     "terminate": "Terminate",
-    "running": "Running",
-    "terminating": "Terminating",
-    "loading": "Loading",
-    "awaiting_input": "Awaiting input",
-    "ready": " ",
+
     "finished": "Code executed in %{time} ms",
+    "states": {
+        "running": "Running",
+        "terminating": "Terminating",
+        "loading": "Loading",
+        "awaiting_input": "Awaiting input",
+        "ready": " ",
+    },
     "programming_language": "Programming language",
-    "Python": "Python",
-    "JavaScript": "JavaScript"
+    "programming_languages": {
+        "Python": "Python",
+        "JavaScript": "JavaScript"
+    },
+    "locales": {
+        "en": "English",
+        "nl": "Nederlands"
+    }
 };
 
 const DUTCH_TRANSLATION = {
@@ -26,15 +35,23 @@ const DUTCH_TRANSLATION = {
     "code_output": "Resultaat van de code",
     "run": "Voer uit",
     "terminate": "Stop uitvoering",
-    "running": "Aan het uitvoeren",
-    "terminating": "Aan het stoppen",
-    "loading": "Aan het laden",
-    "awaiting_input": "Aan het wachten op invoer",
-    "ready": " ",
+    "states": {
+        "running": "Aan het uitvoeren",
+        "terminating": "Aan het stoppen",
+        "loading": "Aan het laden",
+        "awaiting_input": "Aan het wachten op invoer",
+        "ready": " ",
+    },
     "finished": "Code uitgevoerd in %{time} ms",
     "programming_language": "Programmeertaal",
-    "Python": "Python",
-    "JavaScript": "JavaScript"
+    "programming_languages": {
+        "Python": "Python",
+        "JavaScript": "JavaScript"
+    },
+    "locales": {
+        "en": "English",
+        "nl": "Nederlands"
+    }
 };
 
 // JS exports to allow use in TS and JS files
