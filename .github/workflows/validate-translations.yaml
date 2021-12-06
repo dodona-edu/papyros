@@ -17,6 +17,13 @@ jobs:
     - name: Install dependencies
       run: |
         yarn install
-    - name: Lint
-      run: |
-        yarn run validate:translations
+    - name: Check translations
+      - run: |
+          yarn run validate:translations
+      - uses: pytorch/add-annotations-github-action@master
+        with:
+          check_name: Check translations
+          linter_output_path: translationIssues.txt
+          commit_sha: ${{ github.event.pull_request.head.sha }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -3,22 +3,6 @@ const translations = require("../src/Translations.js");
 const fs = require("fs");
 
 const outputFile = fs.openSync("translationIssues.txt", "w");
-function checkReport(report, type, locale) {
-    const valid = report.length === 0;
-    if (!valid) {
-        console.log(`Found ${report.length} ${type} keys for locale: ${locale}.`);
-        console.log(report);
-        console.log(JSON.stringify(report));
-        for (const issue of report) {
-            const {
-                line, column
-            } = issue.loc.start;
-            const errorMsg = `${type} key ${issue.key} for locale ${locale}`;
-            fs.writeFileSync(outputFile, `${issue.file}:${line}:${column}: ${errorMsg}\n`);
-        }
-    }
-    return valid;
-}
 
 const usedKeys = extract.extractFromFiles([
     "src/*.ts"
@@ -46,10 +30,24 @@ const checks = [
     {
         "type": "dynamic",
         "check": extract.forbidDynamic,
-        // "allowed": ["Papyros.programming_languages.*", "Papyros.locales.*", "Papyros.states.*"]
-        "allowed": []
+        "allowed": ["Papyros.programming_languages.*", "Papyros.locales.*", "Papyros.states.*"]
     }
 ];
+
+function checkReport(report, type, locale) {
+    const valid = report.length === 0;
+    if (!valid) {
+        const errorNumber = checks.map(c => c.type).indexOf(type);
+        for (const issue of report) {
+            const {
+                line, column
+            } = issue.loc.start;
+            const errorMsg = `R${errorNumber} ${type} key ${issue.key} for locale ${locale}`;
+            fs.writeFileSync(outputFile, `${issue.file}:${line}:${column}: ${errorMsg}\n`);
+        }
+    }
+    return valid;
+}
 
 
 let validTranslations = true;
