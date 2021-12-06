@@ -9,7 +9,7 @@ import {
     PROGRAMMING_LANGUAGE_SELECT_ID, OUTPUT_TA_ID,
     RUN_BTN_ID, STATE_SPINNER_ID, TERMINATE_BTN_ID, LOCALE_SELECT_ID
 } from "./Constants";
-import { InputManager } from "./InputManager";
+import { InputManager, InputMode, INPUT_MODES } from "./InputManager";
 import { PapyrosEvent } from "./PapyrosEvent";
 import { plFromString, ProgrammingLanguage, PROGRAMMING_LANGUAGES } from "./ProgrammingLanguage";
 import * as TRANSLATIONS from "./Translations";
@@ -35,8 +35,8 @@ function getSelectOptions<T>(options: Array<T>, selected: T, optionText: (option
     }).join("\n");
 }
 
-function renderPapyros(parent: HTMLElement, programmingLanguage: ProgrammingLanguage,
-    standAlone: boolean, locale: string): void {
+function renderPapyros(parent: HTMLElement, standAlone: boolean,
+    programmingLanguage: ProgrammingLanguage, locale: string, inputMode: InputMode): void {
     const programmingLanguageSelect = standAlone ?
         `
         <div class="mr-2">
@@ -69,6 +69,11 @@ function renderPapyros(parent: HTMLElement, programmingLanguage: ProgrammingLang
             </div>
         </div>
         ` : "";
+
+    const inputModeSelect = `
+    <select id="input-mode-select" class="m-2 border-2">
+        ${getSelectOptions(INPUT_MODES, inputMode, im => t(`Papyros.input_modes.${im}`))}
+    </select>`;
     parent.innerHTML =
         `
     <div id="papyros" class="max-h-screen h-full overflow-y-hidden">
@@ -111,6 +116,7 @@ function renderPapyros(parent: HTMLElement, programmingLanguage: ProgrammingLang
           <h1>${t("Papyros.code_output")}:</h1>
           <textarea id="code-output-area" readonly class="border-2 w-full min-h-1/4 max-h-3/5 overflow-auto"></textarea>
           <h1>${t("Papyros.enter_input")}:</h1>
+          ${inputModeSelect}
           <div id="code-input-area-wrapper">
           </div>
         </div>
@@ -170,10 +176,9 @@ interface PapyrosCodeState {
 
 interface PapyrosConfig {
     standAlone: boolean;
-    locale?: string;
-    programmingLanguage?: ProgrammingLanguage;
-    inputTextArray?: Uint8Array;
-    inputMetaData?: Int32Array;
+    programmingLanguage: ProgrammingLanguage;
+    locale: string;
+    inputMode: InputMode
 }
 
 export class Papyros {
@@ -181,7 +186,7 @@ export class Papyros {
     codeState: PapyrosCodeState;
     inputManager: InputManager;
 
-    constructor(programmingLanguage: ProgrammingLanguage) {
+    constructor(programmingLanguage: ProgrammingLanguage, inputMode: InputMode) {
         this.stateManager = new PapyrosStateManager();
         this.codeState = {
             programmingLanguage: programmingLanguage,
@@ -191,7 +196,7 @@ export class Papyros {
             outputArea: document.getElementById(OUTPUT_TA_ID) as HTMLInputElement,
             runId: 0
         };
-        this.inputManager = new InputManager(() => this.stateManager.setState(PapyrosState.Running));
+        this.inputManager = new InputManager(() => this.stateManager.setState(PapyrosState.Running), inputMode);
     }
 
     get state(): PapyrosState {
@@ -227,18 +232,11 @@ export class Papyros {
     }
 
     static fromElement(parent: HTMLElement, config: PapyrosConfig): Promise<Papyros> {
-        const papyrosConfig: PapyrosConfig = Object.assign(
-            {
-                standAlone: true,
-                programmingLanguage: DEFAULT_PROGRAMMING_LANGUAGE,
-                locale: DEFAULT_LOCALE
-            }, config
-        );
         loadTranslations();
-        I18n.locale = papyrosConfig.locale!;
-        renderPapyros(parent, papyrosConfig.programmingLanguage!, papyrosConfig.standAlone, papyrosConfig.locale!);
-        const papyros = new Papyros(papyrosConfig.programmingLanguage!);
-        if (papyrosConfig.standAlone) {
+        I18n.locale = config.locale;
+        renderPapyros(parent, config.standAlone, config.programmingLanguage, config.locale, config.inputMode);
+        const papyros = new Papyros(config.programmingLanguage, config.inputMode);
+        if (config.standAlone) {
             const programmingLanguageSelect = document.getElementById(PROGRAMMING_LANGUAGE_SELECT_ID) as HTMLSelectElement;
             programmingLanguageSelect.addEventListener("change",
                 async () => {

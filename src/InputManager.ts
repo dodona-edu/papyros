@@ -1,10 +1,12 @@
-import { INPUT_AREA_WRAPPER_ID, INPUT_RELATIVE_URL, INPUT_TA_ID } from "./Constants";
+import { INPUT_AREA_WRAPPER_ID, INPUT_MODE_SELECT_ID, INPUT_RELATIVE_URL, INPUT_TA_ID } from "./Constants";
 import { papyrosLog, LogType } from "./util/Logging";
 
 export enum InputMode {
-    SingleLine,
-    Batch
+    SingleLine = "SingleLine",
+    Batch = "Batch"
 }
+
+export const INPUT_MODES = [InputMode.Batch, InputMode.SingleLine];
 
 export class InputManager {
     inputWrapper: HTMLElement;
@@ -17,7 +19,7 @@ export class InputManager {
     inputMetaData?: Int32Array;
     textEncoder: TextEncoder;
 
-    constructor(onSend: () => void, inputMode = InputMode.SingleLine) {
+    constructor(onSend: () => void, inputMode: InputMode) {
         this.inputWrapper = document.getElementById(INPUT_AREA_WRAPPER_ID) as HTMLElement;
         this.inputMode = inputMode;
         this.lineNr = 0;
@@ -37,14 +39,17 @@ export class InputManager {
         }
         this.waiting = false;
         this.onSend = onSend;
-        this.initialize();
+        const inputModeSelect = document.getElementById(INPUT_MODE_SELECT_ID) as HTMLSelectElement;
+        inputModeSelect.addEventListener("change",
+            () => this.setInputMode(InputMode[inputModeSelect.value as keyof typeof InputMode]));
+        this.buildInputArea();
     }
 
     get inputArea(): HTMLInputElement {
         return document.getElementById(INPUT_TA_ID) as HTMLInputElement;
     }
 
-    initialize(): void {
+    buildInputArea(): void {
         this.inputWrapper.innerHTML = this.inputMode === InputMode.Batch ? `
         <textarea id="code-input-area" 
         class="border-2 h-auto w-full max-h-1/4 overflow-auto" rows="5">
@@ -62,6 +67,13 @@ export class InputManager {
                 }
             }
         };
+    }
+
+    setInputMode(inputMode: InputMode): void {
+        if (inputMode !== this.inputMode) {
+            this.inputMode = inputMode;
+            this.buildInputArea();
+        }
     }
 
     async sendInput(): Promise<void> {

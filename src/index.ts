@@ -4,6 +4,7 @@ import { DEFAULT_LOCALE, DEFAULT_PROGRAMMING_LANGUAGE, MAIN_APP_ID } from "./Con
 import { Papyros } from "./Papyros";
 import { papyrosLog, LogType } from "./util/Logging";
 import { plFromString } from "./ProgrammingLanguage";
+import { InputMode } from "./InputManager";
 
 const RELOAD_STORAGE_KEY = "__papyros_reloading";
 const SERVICE_WORKER_PATH = "./inputServiceWorker.js";
@@ -41,6 +42,7 @@ function startPapyros(): void {
     Papyros.fromElement(rootElement, {
         standAlone: true,
         programmingLanguage: language,
-        locale: locale
+        locale: locale,
+        inputMode: InputMode.Batch
     });
 }

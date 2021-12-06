@@ -25,6 +25,10 @@ const ENGLISH_TRANSLATION = {
         "en": "English",
         "nl": "Nederlands"
     },
+    "input_modes": {
+        "SingleLine": "Single line",
+        "Batch": "Batch"
+    }
 };
 
 const DUTCH_TRANSLATION = {
@@ -50,6 +54,10 @@ const DUTCH_TRANSLATION = {
     "locales": {
         "en": "English",
         "nl": "Nederlands"
+    },
+    "input_modes": {
+        "SingleLine": "Eén lijn",
+        "Batch": "Meerdere"
     }
 };
 
