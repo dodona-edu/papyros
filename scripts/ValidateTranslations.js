@@ -39,8 +39,8 @@ function checkReport(report, type, locale) {
     if (!valid) {
         const errorNumber = checks.map(c => c.type).indexOf(type);
         for (const issue of report) {
-            let line = "0";
-            let column = "0";
+            let line = "1";
+            let column = "1";
             if (issue.loc && issue.loc.start) {
                 line = issue.loc.start.line;
                 column = issue.loc.start.column;
