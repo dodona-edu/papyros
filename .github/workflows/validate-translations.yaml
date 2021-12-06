@@ -19,9 +19,9 @@ jobs:
       run: |
         yarn install
     - name: Check translations
-    - run: |
+      run: |
           yarn run validate:translations
-    - uses: pytorch/add-annotations-github-action@master
+      uses: pytorch/add-annotations-github-action@master
       with:
         check_name: Check translations
         linter_output_path: translationIssues.txt
