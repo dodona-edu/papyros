@@ -10,8 +10,8 @@ import {
     RUN_BTN_ID, STATE_SPINNER_ID, TERMINATE_BTN_ID, LOCALE_SELECT_ID
 } from "./Constants";
 import { PapyrosEvent } from "./PapyrosEvent";
-import { plFromString, ProgrammingLanguage } from "./ProgrammingLanguage";
-import { TRANSLATIONS } from "./Translations";
+import { plFromString, ProgrammingLanguage, PROGRAMMING_LANGUAGES } from "./ProgrammingLanguage";
+import * as TRANSLATIONS from "./Translations";
 import { LogType, papyrosLog } from "./util/Logging";
 
 function loadTranslations(): void {
@@ -23,34 +23,35 @@ function loadTranslations(): void {
 
 const t = I18n.t;
 
+function getSelectOptions<T>(options: Array<T>, selected: T, optionText: (option: T) => string): string {
+    return options.map(option => {
+        const selectedValue = selected === option ? "selected" : "";
+        return `
+            <option ${selectedValue} value="${option}">
+                ${optionText(option)}
+            </option>
+        `;
+    }).join("\n");
+}
+
 function renderPapyros(parent: HTMLElement, programmingLanguage: ProgrammingLanguage,
     standAlone: boolean, locale: string): void {
-    const getSelectedValue = (selected: string, current: string): string => {
-        return selected === current ? "selected" : "";
-    };
     const programmingLanguageSelect = standAlone ?
         `
         <div class="mr-2">
             <label for="programming-language-select">${t("Papyros.programming_language")}</label>
             <select id="programming-language-select" class="m-2 border-2">
-                <option ${getSelectedValue(programmingLanguage, ProgrammingLanguage.Python)}
-                 value="${ProgrammingLanguage.Python}">
-                    ${t("Papyros.Python")}
-                </option>
-                <option ${getSelectedValue(programmingLanguage, ProgrammingLanguage.JavaScript)}
-                value="${ProgrammingLanguage.JavaScript}">
-                   ${t("Papyros.JavaScript")}
-               </option>
+                ${getSelectOptions(PROGRAMMING_LANGUAGES, programmingLanguage, l => t(`Papyros.programming_languages.${l}`))} 
             </select>
         </div>
         ` : "";
+    const locales = [locale, ...Object.keys(TRANSLATIONS).filter(l => l != locale)];
     const localeSelect = standAlone ?
         `
         <div class="flex flex-row-reverse">
             <!-- row-reverse to start at the right, so put elements in order of display -->
             <select id="locale-select" class="m-2 border-2">
-                <option value="en" ${getSelectedValue(locale, "en")}>English</option>
-                <option value="nl" ${getSelectedValue(locale, "nl")}>Nederlands</option>
+                ${getSelectOptions(locales, locale, l => t(`Papyros.locales.${l}`))}
             </select>
             <i class="mdi mdi-web text-4xl text-white"></i>
         </div>
@@ -93,7 +94,7 @@ function renderPapyros(parent: HTMLElement, programmingLanguage: ProgrammingLang
           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
             </path>
           </svg>
-          <div id="application-state-text">${t("Papyros.loading")}</div>
+          <div id="application-state-text">${t("Papyros.states.loading")}</div>
         </div>
       </div>
 
@@ -152,7 +153,7 @@ class PapyrosStateManager {
                 this.stateSpinner.style.display = "";
                 this.runButton.disabled = true;
             }
-            this.stateText.innerText = message || t(`Papyros.${state}`);
+            this.stateText.innerText = message || t(`Papyros.states.${state}`);
         }
     }
 }
@@ -320,7 +321,6 @@ export class Papyros {
         papyrosLog(LogType.Debug, "Received onInput event in Papyros: ", e);
         if (!await this.sendInput()) {
             this.stateManager.setState(PapyrosState.AwaitingInput);
-            // stateText.innerText = "Awaiting input for: " + e.data;
             papyrosLog(LogType.Debug, "User needs to enter input before code can continue");
         } else {
             this.stateManager.setState(PapyrosState.Running);
@@ -365,7 +365,7 @@ export class Papyros {
     }
 
     async terminate(): Promise<void> {
-        if (this.state !== PapyrosState.Running) {
+        if (![PapyrosState.Running, PapyrosState.AwaitingInput].includes(this.state)) {
             papyrosLog(LogType.Error, `Terminate called from invalid state: ${this.state}`);
             return;
         }
