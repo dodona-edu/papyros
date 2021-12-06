@@ -24,7 +24,7 @@ jobs:
     - name: Add annotations
       uses: pytorch/add-annotations-github-action@master
       with:
-        check_name: Check translations
+        check_name: validate_translations
         linter_output_path: translationIssues.txt
         commit_sha: ${{ github.sha }}
       env:
