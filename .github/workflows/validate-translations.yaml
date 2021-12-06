@@ -5,11 +5,11 @@ on:
   workflow_dispatch:
 
 jobs:
-  javascript:
-    name: JavaScript
+  validate_translations:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout
+      uses: actions/checkout@v2
     - name: Set up Node
       uses: actions/setup-node@v2
       with:
@@ -21,6 +21,7 @@ jobs:
     - name: Check translations
       run: |
           yarn run validate:translations
+    - name: Add annotations
       uses: pytorch/add-annotations-github-action@master
       with:
         check_name: Check translations
