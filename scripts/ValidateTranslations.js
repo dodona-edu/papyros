@@ -30,7 +30,12 @@ const checks = [
     {
         "type": "dynamic",
         "check": extract.forbidDynamic,
-        "allowed": ["Papyros.programming_languages.*", "Papyros.locales.*", "Papyros.states.*"]
+        "allowed": [
+            "Papyros.programming_languages.*",
+            "Papyros.locales.*",
+            "Papyros.states.*",
+            "Papyros.input_modes.*"
+        ]
     }
 ];
 

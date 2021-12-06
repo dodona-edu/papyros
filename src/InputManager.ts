@@ -1,5 +1,9 @@
-import { INPUT_AREA_WRAPPER_ID, INPUT_MODE_SELECT_ID, INPUT_RELATIVE_URL, INPUT_TA_ID } from "./Constants";
+import {
+    INPUT_AREA_WRAPPER_ID, INPUT_MODE_SELECT_ID,
+    INPUT_RELATIVE_URL, INPUT_TA_ID
+} from "./Constants";
 import { papyrosLog, LogType } from "./util/Logging";
+import { addSelectChangeListener } from "./util/Util";
 
 export enum InputMode {
     SingleLine = "SingleLine",
@@ -39,9 +43,8 @@ export class InputManager {
         }
         this.waiting = false;
         this.onSend = onSend;
-        const inputModeSelect = document.getElementById(INPUT_MODE_SELECT_ID) as HTMLSelectElement;
-        inputModeSelect.addEventListener("change",
-            () => this.setInputMode(InputMode[inputModeSelect.value as keyof typeof InputMode]));
+        addSelectChangeListener<InputMode>(
+            INPUT_MODE_SELECT_ID, (im: InputMode) => this.setInputMode(im));
         this.buildInputArea();
     }
 

@@ -14,6 +14,7 @@ import { PapyrosEvent } from "./PapyrosEvent";
 import { plFromString, ProgrammingLanguage, PROGRAMMING_LANGUAGES } from "./ProgrammingLanguage";
 import * as TRANSLATIONS from "./Translations";
 import { LogType, papyrosLog } from "./util/Logging";
+import { addSelectChangeListener, getSelectOptions } from "./util/Util";
 
 function loadTranslations(): void {
     for (const [language, translations] of Object.entries(TRANSLATIONS)) {
@@ -23,17 +24,6 @@ function loadTranslations(): void {
 }
 
 const t = I18n.t;
-
-function getSelectOptions<T>(options: Array<T>, selected: T, optionText: (option: T) => string): string {
-    return options.map(option => {
-        const selectedValue = selected === option ? "selected" : "";
-        return `
-            <option ${selectedValue} value="${option}">
-                ${optionText(option)}
-            </option>
-        `;
-    }).join("\n");
-}
 
 function renderPapyros(parent: HTMLElement, standAlone: boolean,
     programmingLanguage: ProgrammingLanguage, locale: string, inputMode: InputMode): void {
@@ -237,16 +227,15 @@ export class Papyros {
         renderPapyros(parent, config.standAlone, config.programmingLanguage, config.locale, config.inputMode);
         const papyros = new Papyros(config.programmingLanguage, config.inputMode);
         if (config.standAlone) {
-            const programmingLanguageSelect = document.getElementById(PROGRAMMING_LANGUAGE_SELECT_ID) as HTMLSelectElement;
-            programmingLanguageSelect.addEventListener("change",
-                async () => {
-                    return papyros.setProgrammingLanguage(plFromString(programmingLanguageSelect.value));
+            addSelectChangeListener<ProgrammingLanguage>(
+                PROGRAMMING_LANGUAGE_SELECT_ID, pl => {
+                    papyros.setProgrammingLanguage(pl);
+                    // Modify search query params without reloading page
+                    history.pushState(null, "", `?locale=${I18n.locale}&language=${pl}`);
                 }
             );
-
-            const localeSelect = document.getElementById(LOCALE_SELECT_ID) as HTMLSelectElement;
-            localeSelect.addEventListener("change", async () => {
-                document.location.href = `?locale=${localeSelect.value}&language=${programmingLanguageSelect.value}`;
+            addSelectChangeListener(LOCALE_SELECT_ID, locale => {
+                document.location.href = `?locale=${locale}&language=${papyros.codeState.programmingLanguage}`;
             });
         }
         return papyros.launch();
