@@ -5,10 +5,11 @@ import { Backend } from "./Backend";
 import { getBackend, stopBackend } from "./BackendManager";
 import { CodeEditor } from "./CodeEditor";
 import {
-    APPLICATION_STATE_TEXT_ID, EDITOR_WRAPPER_ID, DEFAULT_LOCALE, DEFAULT_PROGRAMMING_LANGUAGE, INPUT_RELATIVE_URL,
-    INPUT_TA_ID, PROGRAMMING_LANGUAGE_SELECT_ID, OUTPUT_TA_ID,
+    APPLICATION_STATE_TEXT_ID, EDITOR_WRAPPER_ID, DEFAULT_LOCALE, DEFAULT_PROGRAMMING_LANGUAGE,
+    PROGRAMMING_LANGUAGE_SELECT_ID, OUTPUT_TA_ID,
     RUN_BTN_ID, STATE_SPINNER_ID, TERMINATE_BTN_ID, LOCALE_SELECT_ID
 } from "./Constants";
+import { InputManager } from "./InputManager";
 import { PapyrosEvent } from "./PapyrosEvent";
 import { plFromString, ProgrammingLanguage, PROGRAMMING_LANGUAGES } from "./ProgrammingLanguage";
 import * as TRANSLATIONS from "./Translations";
@@ -83,7 +84,7 @@ function renderPapyros(parent: HTMLElement, programmingLanguage: ProgrammingLang
         </button>
         <button id="terminate-btn" type="button" 
             class="text-white bg-red-500 border-2 m-3 px-4 inset-y-2 rounded-lg
-            disabled:opacity-50 disabled:cursor-wait">
+            disabled:opacity-50 disabled:cursor-not-allowed">
             ${t("Papyros.terminate")}
         </button>
         <div class="flex flex-row items-center">
@@ -107,10 +108,11 @@ function renderPapyros(parent: HTMLElement, programmingLanguage: ProgrammingLang
         </div>
         <!--Right user input and output section-->
         <div class="col-span-1">
-          <h1>${t("Papyros.enter_input")}:</h1>
-          <textarea id="code-input-area" class="border-2 h-auto w-full max-h-1/4 overflow-auto" rows="5"></textarea>
           <h1>${t("Papyros.code_output")}:</h1>
-          <textarea id="code-output-area" readonly class="border-2 w-full min-h-1/5 max-h-3/5 overflow-auto"></textarea>
+          <textarea id="code-output-area" readonly class="border-2 w-full min-h-1/4 max-h-3/5 overflow-auto"></textarea>
+          <h1>${t("Papyros.enter_input")}:</h1>
+          <div id="code-input-area-wrapper">
+          </div>
         </div>
       </div>
     </div>
@@ -166,14 +168,6 @@ interface PapyrosCodeState {
     outputArea: HTMLInputElement;
 }
 
-interface PapyrosInputState {
-    lineNr: number;
-    textEncoder: TextEncoder;
-    inputArea: HTMLInputElement;
-    inputTextArray?: Uint8Array;
-    inputMetaData?: Int32Array;
-}
-
 interface PapyrosConfig {
     standAlone: boolean;
     locale?: string;
@@ -185,10 +179,9 @@ interface PapyrosConfig {
 export class Papyros {
     stateManager: PapyrosStateManager;
     codeState: PapyrosCodeState;
-    inputState: PapyrosInputState;
+    inputManager: InputManager;
 
-    constructor(programmingLanguage: ProgrammingLanguage,
-        inputTextArray?: Uint8Array, inputMetaData?: Int32Array) {
+    constructor(programmingLanguage: ProgrammingLanguage) {
         this.stateManager = new PapyrosStateManager();
         this.codeState = {
             programmingLanguage: programmingLanguage,
@@ -198,14 +191,7 @@ export class Papyros {
             outputArea: document.getElementById(OUTPUT_TA_ID) as HTMLInputElement,
             runId: 0
         };
-
-        this.inputState = {
-            lineNr: 0,
-            textEncoder: new TextEncoder(),
-            inputArea: document.getElementById(INPUT_TA_ID) as HTMLInputElement,
-            inputTextArray: inputTextArray,
-            inputMetaData: inputMetaData
-        };
+        this.inputManager = new InputManager(() => this.stateManager.setState(PapyrosState.Running));
     }
 
     get state(): PapyrosState {
@@ -215,15 +201,6 @@ export class Papyros {
     async launch(): Promise<Papyros> {
         this.stateManager.runButton.addEventListener("click", () => this.runCode());
         this.stateManager.terminateButton.addEventListener("click", () => this.terminate());
-
-        this.inputState.inputArea.onkeydown = e => {
-            papyrosLog(LogType.Debug, "Key down in inputArea", e);
-            if (this.state === PapyrosState.AwaitingInput &&
-                e.key.toLowerCase() === "enter") {
-                papyrosLog(LogType.Debug, "Pressed enter! Sending input to user");
-                this.sendInput();
-            }
-        };
         await this.startBackend();
         return this;
     }
@@ -242,12 +219,9 @@ export class Papyros {
         const {
             programmingLanguage
         } = this.codeState;
-        const {
-            inputTextArray, inputMetaData
-        } = this.inputState;
         this.stateManager.setState(PapyrosState.Loading);
         const backend = getBackend(programmingLanguage);
-        await backend.launch(proxy(e => this.onMessage(e)), inputTextArray, inputMetaData);
+        await backend.launch(proxy(e => this.onMessage(e)), this.inputManager.inputTextArray, this.inputManager.inputMetaData);
         this.codeState.backend = backend;
         this.stateManager.setState(PapyrosState.Ready);
     }
@@ -263,7 +237,7 @@ export class Papyros {
         loadTranslations();
         I18n.locale = papyrosConfig.locale!;
         renderPapyros(parent, papyrosConfig.programmingLanguage!, papyrosConfig.standAlone, papyrosConfig.locale!);
-        const papyros = new Papyros(papyrosConfig.programmingLanguage!, papyrosConfig.inputTextArray, papyrosConfig.inputMetaData);
+        const papyros = new Papyros(papyrosConfig.programmingLanguage!);
         if (papyrosConfig.standAlone) {
             const programmingLanguageSelect = document.getElementById(PROGRAMMING_LANGUAGE_SELECT_ID) as HTMLSelectElement;
             programmingLanguageSelect.addEventListener("change",
@@ -287,44 +261,10 @@ export class Papyros {
         this.codeState.outputArea.value += e.data;
     }
 
-    async sendInput(): Promise<boolean> {
-        papyrosLog(LogType.Debug, "Handling send Input in Papyros");
-        const {
-            inputArea, lineNr, inputMetaData, inputTextArray, textEncoder
-        } = this.inputState;
-        const lines = inputArea.value.split("\n");
-        if (lines.length > lineNr && lines[lineNr]) {
-            papyrosLog(LogType.Debug, "Sending input to user: " + lines[lineNr]);
-            const line = lines[lineNr];
-            if (!inputMetaData || !inputTextArray) {
-                await fetch(INPUT_RELATIVE_URL,
-                    {
-                        method: "POST",
-                        body: JSON.stringify({ "input": line })
-                    });
-            } else {
-                const encoded = textEncoder.encode(lines[lineNr]);
-                inputTextArray.set(encoded);
-                Atomics.store(inputMetaData, 1, encoded.length);
-                Atomics.store(inputMetaData, 0, 1);
-            }
-            this.inputState.lineNr += 1;
-            this.stateManager.setState(PapyrosState.Running);
-            return true;
-        } else {
-            papyrosLog(LogType.Debug, "Had no input to send, still waiting!");
-            return false;
-        }
-    }
-
     async onInput(e: PapyrosEvent): Promise<void> {
         papyrosLog(LogType.Debug, "Received onInput event in Papyros: ", e);
-        if (!await this.sendInput()) {
-            this.stateManager.setState(PapyrosState.AwaitingInput);
-            papyrosLog(LogType.Debug, "User needs to enter input before code can continue");
-        } else {
-            this.stateManager.setState(PapyrosState.Running);
-        }
+        this.stateManager.setState(PapyrosState.AwaitingInput);
+        await this.inputManager.sendInput();
     }
 
     onMessage(e: PapyrosEvent): void {
@@ -360,7 +300,7 @@ export class Papyros {
         } finally {
             const end = new Date().getTime();
             this.stateManager.setState(PapyrosState.Ready, t("Papyros.finished", { time: end - start }));
-            this.inputState.lineNr = 0;
+            this.inputManager.lineNr = 0;
         }
     }
 

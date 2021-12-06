@@ -34,17 +34,6 @@ if (window.localStorage.getItem(RELOAD_STORAGE_KEY)) {
 
 
 function startPapyros(): void {
-    let inputTextArray: Uint8Array | undefined = undefined;
-    let inputMetaData: Int32Array | undefined = undefined;
-    if (typeof SharedArrayBuffer !== "undefined") {
-        papyrosLog(LogType.Important, "Using SharedArrayBuffers");
-        // shared memory
-        inputTextArray = new Uint8Array(new SharedArrayBuffer(Uint8Array.BYTES_PER_ELEMENT * 1024));
-        // 2 Int32s: index 0 indicates whether data is written, index 1 denotes length of the string
-        inputMetaData = new Int32Array(new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * 2));
-    } else {
-        papyrosLog(LogType.Important, "Using serviceWorker for input");
-    }
     const rootElement = document.getElementById("root")!;
     const urlParams = new URLSearchParams(window.location.search);
     const language = plFromString(urlParams.get("language") || DEFAULT_PROGRAMMING_LANGUAGE);
@@ -52,8 +41,6 @@ function startPapyros(): void {
     Papyros.fromElement(rootElement, {
         standAlone: true,
         programmingLanguage: language,
-        locale: locale,
-        inputTextArray: inputTextArray,
-        inputMetaData: inputMetaData
+        locale: locale
     });
 }

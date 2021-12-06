@@ -3,6 +3,7 @@ import { ProgrammingLanguage } from "./ProgrammingLanguage";
 export const MAIN_APP_ID = "papyros";
 
 export const OUTPUT_TA_ID = "code-output-area";
+export const INPUT_AREA_WRAPPER_ID = "code-input-area-wrapper";
 export const INPUT_TA_ID = "code-input-area";
 export const EDITOR_WRAPPER_ID = "code-area";
 
