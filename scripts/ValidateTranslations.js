@@ -39,11 +39,15 @@ function checkReport(report, type, locale) {
     if (!valid) {
         const errorNumber = checks.map(c => c.type).indexOf(type);
         for (const issue of report) {
-            const {
-                line, column
-            } = issue.loc.start;
+            let line = "";
+            let column = "";
+            if (issue.loc && issue.loc.start) {
+                line = issue.loc.start.line;
+                column = issue.loc.start.column;
+            }
+            const file = issue.file || "src/Translations.js";
             const errorMsg = `R${errorNumber} ${type} key ${issue.key} for locale ${locale}`;
-            fs.writeFileSync(outputFile, `${issue.file}:${line}:${column}: ${errorMsg}\n`);
+            fs.writeFileSync(outputFile, `${file}:${line}:${column}: ${errorMsg}\n`);
         }
     }
     return valid;

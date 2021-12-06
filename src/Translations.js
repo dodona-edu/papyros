@@ -8,7 +8,6 @@ const ENGLISH_TRANSLATION = {
     "code_output": "Code output",
     "run": "Run",
     "terminate": "Terminate",
-
     "finished": "Code executed in %{time} ms",
     "states": {
         "running": "Running",
@@ -25,7 +24,8 @@ const ENGLISH_TRANSLATION = {
     "locales": {
         "en": "English",
         "nl": "Nederlands"
-    }
+    },
+    "myUnusedKey": "testing"
 };
 
 const DUTCH_TRANSLATION = {
