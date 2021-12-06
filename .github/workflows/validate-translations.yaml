@@ -27,6 +27,7 @@ jobs:
       with:
         check_name: validate_translations
         linter_output_path: translationIssues.txt
+        regex: '^(?<filename>.*?):(?<lineNumber>\d+):(?<columnNumber>\d+): (?<errorCode>\w\d+) (?<errorDesc>[\s|\w|.]*)'
         commit_sha: ${{ github.sha }}
       env:
         GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
