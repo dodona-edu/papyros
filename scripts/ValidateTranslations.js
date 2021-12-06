@@ -17,20 +17,39 @@ const usedKeys = extract.extractFromFiles([
     parser: "typescript",
 });
 
-const criteria = {
-    "missing": extract.findMissing,
-    "unused": extract.findUnused,
-    "duplicate": extract.findDuplicated,
-};
+const checks = [
+    {
+        "type": "missing",
+        "check": extract.findMissing,
+        "allowed": []
+    },
+    {
+        "type": "unused",
+        "check": extract.findUnused,
+        "allowed": []
+    },
+    {
+        "type": "duplicate",
+        "check": extract.findDuplicated,
+        "allowed": []
+    },
+    {
+        "type": "dynamic",
+        "check": extract.forbidDynamic,
+        "allowed": ["Papyros.programming_languages.*", "Papyros.locales.*", "Papyros.states.*"]
+    }
+];
+
+
 let validTranslations = true;
 for (const locale of Object.keys(translations)) {
     // requires flattening as the translations object uses the Papyros-scope
     const localeKeys = extract.flatten(translations[locale]);
-    for (const [criterium, check] of Object.entries(criteria)) {
+    for (const check of checks) {
         // not &&= to ensure checkReport is actually executed
         validTranslations = checkReport(
-            check(localeKeys, usedKeys),
-            criterium, locale
+            check.check(localeKeys, usedKeys).filter(k => !check.allowed.includes(k.key)),
+            check.type, locale
         ) && validTranslations;
     }
 }

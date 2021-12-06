@@ -23,12 +23,12 @@ function loadTranslations(): void {
 
 const t = I18n.t;
 
-function getSelectOptions<T>(options: Array<T>, selected: T, translationPrefix: string): string {
+function getSelectOptions<T>(options: Array<T>, selected: T, optionText: (option: T) => string): string {
     return options.map(option => {
         const selectedValue = selected === option ? "selected" : "";
         return `
             <option ${selectedValue} value="${option}">
-                ${t(`Papyros.${translationPrefix}.${option}`)}
+                ${optionText(option)}
             </option>
         `;
     }).join("\n");
@@ -41,7 +41,7 @@ function renderPapyros(parent: HTMLElement, programmingLanguage: ProgrammingLang
         <div class="mr-2">
             <label for="programming-language-select">${t("Papyros.programming_language")}</label>
             <select id="programming-language-select" class="m-2 border-2">
-                ${getSelectOptions(PROGRAMMING_LANGUAGES, programmingLanguage, "programming_languages")} 
+                ${getSelectOptions(PROGRAMMING_LANGUAGES, programmingLanguage, l => t(`Papyros.programming_languages.${l}`))} 
             </select>
         </div>
         ` : "";
@@ -51,7 +51,7 @@ function renderPapyros(parent: HTMLElement, programmingLanguage: ProgrammingLang
         <div class="flex flex-row-reverse">
             <!-- row-reverse to start at the right, so put elements in order of display -->
             <select id="locale-select" class="m-2 border-2">
-                ${getSelectOptions(locales, locale, "locales")}
+                ${getSelectOptions(locales, locale, l => t(`Papyros.locales.${l}`))}
             </select>
             <i class="mdi mdi-web text-4xl text-white"></i>
         </div>
@@ -153,7 +153,7 @@ class PapyrosStateManager {
                 this.stateSpinner.style.display = "";
                 this.runButton.disabled = true;
             }
-            this.stateText.innerText = message || t(`Papyros.state.${state}`);
+            this.stateText.innerText = message || t(`Papyros.states.${state}`);
         }
     }
 }
