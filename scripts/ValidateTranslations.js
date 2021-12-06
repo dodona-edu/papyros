@@ -53,22 +53,15 @@ function checkReport(report, type, locale) {
     return valid;
 }
 
-
-let validTranslations = true;
 for (const locale of Object.keys(translations)) {
     // requires flattening as the translations object uses the Papyros-scope
     const localeKeys = extract.flatten(translations[locale]);
     for (const check of checks) {
         // not &&= to ensure checkReport is actually executed
-        validTranslations = checkReport(
+        checkReport(
             check.check(localeKeys, usedKeys).filter(k => !check.allowed.includes(k.key)),
             check.type, locale
-        ) && validTranslations;
+        );
     }
-}
-if (!validTranslations) {
-    process.exit(1);
-} else {
-    console.log("All translation operations are valid.");
 }
 
