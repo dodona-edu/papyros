@@ -28,4 +28,4 @@ jobs:
         linter_output_path: translationIssues.txt
         commit_sha: ${{ github.event.pull_request.head.sha }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
