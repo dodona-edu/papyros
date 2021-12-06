@@ -2,6 +2,7 @@ name: Validate translations
 
 on:
   push:
+  workflow_dispatch:
 
 jobs:
   javascript:
