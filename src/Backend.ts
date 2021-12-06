@@ -36,7 +36,7 @@ function getInputCallback(inputTextArray?: Uint8Array, inputMetaData?: Int32Arra
 }
 
 export abstract class Backend {
-    onEvent: (e: PapyrosEvent) => void;
+    onEvent: (e: PapyrosEvent) => any;
     runId: number;
 
     constructor() {
