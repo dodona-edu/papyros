@@ -5,13 +5,12 @@ import { Backend } from "./Backend";
 import { getBackend, stopBackend } from "./BackendManager";
 import { CodeEditor } from "./CodeEditor";
 import {
-    APPLICATION_STATE_TEXT_ID, EDITOR_WRAPPER_ID, DEFAULT_LOCALE, DEFAULT_PROGRAMMING_LANGUAGE,
-    PROGRAMMING_LANGUAGE_SELECT_ID, OUTPUT_TA_ID,
+    APPLICATION_STATE_TEXT_ID, EDITOR_WRAPPER_ID, PROGRAMMING_LANGUAGE_SELECT_ID, OUTPUT_TA_ID,
     RUN_BTN_ID, STATE_SPINNER_ID, TERMINATE_BTN_ID, LOCALE_SELECT_ID
 } from "./Constants";
 import { InputManager, InputMode, INPUT_MODES } from "./InputManager";
 import { PapyrosEvent } from "./PapyrosEvent";
-import { plFromString, ProgrammingLanguage, PROGRAMMING_LANGUAGES } from "./ProgrammingLanguage";
+import { ProgrammingLanguage, PROGRAMMING_LANGUAGES } from "./ProgrammingLanguage";
 import * as TRANSLATIONS from "./Translations";
 import { LogType, papyrosLog } from "./util/Logging";
 import { addSelectChangeListener, getSelectOptions } from "./util/Util";
