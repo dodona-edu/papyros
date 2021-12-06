@@ -27,5 +27,5 @@ jobs:
         check_name: Check translations
         linter_output_path: translationIssues.txt
         commit_sha: ${{ github.event.pull_request.head.sha }}
-        env:
-          token: ${{secrets.GITHUB_TOKEN}}
+      env:
+        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
