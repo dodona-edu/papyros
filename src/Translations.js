@@ -25,7 +25,6 @@ const ENGLISH_TRANSLATION = {
         "en": "English",
         "nl": "Nederlands"
     },
-    "myUnusedKey": "testing"
 };
 
 const DUTCH_TRANSLATION = {

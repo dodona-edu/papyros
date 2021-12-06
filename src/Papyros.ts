@@ -367,7 +367,6 @@ export class Papyros {
     async terminate(): Promise<void> {
         if (![PapyrosState.Running, PapyrosState.AwaitingInput].includes(this.state)) {
             papyrosLog(LogType.Error, `Terminate called from invalid state: ${this.state}`);
-            papyrosLog(LogType.Debug, t("Papyros.invalid_terminate"));
             return;
         }
         papyrosLog(LogType.Debug, "Called terminate, stopping backend!");
