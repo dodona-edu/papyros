@@ -1,16 +1,19 @@
+import I18n from "i18n-js";
 import {
-    INPUT_AREA_WRAPPER_ID, INPUT_MODE_SELECT_ID,
+    INPUT_AREA_WRAPPER_ID,
     INPUT_RELATIVE_URL, INPUT_TA_ID
 } from "./Constants";
 import { papyrosLog, LogType } from "./util/Logging";
-import { addSelectChangeListener } from "./util/Util";
+import { addListener } from "./util/Util";
+
+const t = I18n.t;
 
 export enum InputMode {
-    SingleLine = "SingleLine",
-    Batch = "Batch"
+    Interactive = "interactive",
+    Batch = "batch"
 }
 
-export const INPUT_MODES = [InputMode.Batch, InputMode.SingleLine];
+export const INPUT_MODES = [InputMode.Batch, InputMode.Interactive];
 
 export class InputManager {
     inputWrapper: HTMLElement;
@@ -43,8 +46,6 @@ export class InputManager {
         }
         this.waiting = false;
         this.onSend = onSend;
-        addSelectChangeListener<InputMode>(
-            INPUT_MODE_SELECT_ID, (im: InputMode) => this.setInputMode(im));
         this.buildInputArea();
     }
 
@@ -53,13 +54,28 @@ export class InputManager {
     }
 
     buildInputArea(): void {
-        this.inputWrapper.innerHTML = this.inputMode === InputMode.Batch ? `
+        const inputArea = this.inputMode === InputMode.Batch ? `
         <textarea id="code-input-area" 
         class="border-2 h-auto w-full max-h-1/4 overflow-auto" rows="5">
         </textarea>` : `
         <input id="code-input-area" type="text"
         class="border-2 h-auto w-full overflow-auto">
         </input>`;
+        const otherMode = this.inputMode === InputMode.Batch ?
+            InputMode.Interactive : InputMode.Batch;
+        const switchMode = `
+            <a id="switch-input-mode" data-value="${otherMode}"
+             class="flex flex-row-reverse hover:cursor-pointer">
+                ${t(`Papyros.input_modes.switch_to_${otherMode}`)}
+            </a>
+        `;
+        this.inputWrapper.innerHTML = `
+        ${inputArea}
+        ${switchMode}
+        `;
+        addListener<InputMode>("switch-input-mode", im => this.setInputMode(im),
+            "click", "data-value");
+
         this.inputArea.onkeydown = async e => {
             if (this.waiting &&
                 e.key.toLowerCase() === "enter") {

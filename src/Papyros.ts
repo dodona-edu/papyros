@@ -8,12 +8,12 @@ import {
     APPLICATION_STATE_TEXT_ID, EDITOR_WRAPPER_ID, PROGRAMMING_LANGUAGE_SELECT_ID, OUTPUT_TA_ID,
     RUN_BTN_ID, STATE_SPINNER_ID, TERMINATE_BTN_ID, LOCALE_SELECT_ID
 } from "./Constants";
-import { InputManager, InputMode, INPUT_MODES } from "./InputManager";
+import { InputManager, InputMode } from "./InputManager";
 import { PapyrosEvent } from "./PapyrosEvent";
 import { ProgrammingLanguage, PROGRAMMING_LANGUAGES } from "./ProgrammingLanguage";
 import * as TRANSLATIONS from "./Translations";
 import { LogType, papyrosLog } from "./util/Logging";
-import { addSelectChangeListener, getSelectOptions } from "./util/Util";
+import { addListener, getSelectOptions } from "./util/Util";
 
 function loadTranslations(): void {
     for (const [language, translations] of Object.entries(TRANSLATIONS)) {
@@ -25,7 +25,7 @@ function loadTranslations(): void {
 const t = I18n.t;
 
 function renderPapyros(parent: HTMLElement, standAlone: boolean,
-    programmingLanguage: ProgrammingLanguage, locale: string, inputMode: InputMode): void {
+    programmingLanguage: ProgrammingLanguage, locale: string): void {
     const programmingLanguageSelect = standAlone ?
         `
         <div class="mr-2">
@@ -58,11 +58,6 @@ function renderPapyros(parent: HTMLElement, standAlone: boolean,
             </div>
         </div>
         ` : "";
-
-    const inputModeSelect = `
-    <select id="input-mode-select" class="m-2 border-2">
-        ${getSelectOptions(INPUT_MODES, inputMode, im => t(`Papyros.input_modes.${im}`))}
-    </select>`;
     parent.innerHTML =
         `
     <div id="papyros" class="max-h-screen h-full overflow-y-hidden">
@@ -105,7 +100,6 @@ function renderPapyros(parent: HTMLElement, standAlone: boolean,
           <h1>${t("Papyros.code_output")}:</h1>
           <textarea id="code-output-area" readonly class="border-2 w-full min-h-1/4 max-h-3/5 overflow-auto"></textarea>
           <h1>${t("Papyros.enter_input")}:</h1>
-          ${inputModeSelect}
           <div id="code-input-area-wrapper">
           </div>
         </div>
@@ -223,17 +217,17 @@ export class Papyros {
     static fromElement(parent: HTMLElement, config: PapyrosConfig): Promise<Papyros> {
         loadTranslations();
         I18n.locale = config.locale;
-        renderPapyros(parent, config.standAlone, config.programmingLanguage, config.locale, config.inputMode);
+        renderPapyros(parent, config.standAlone, config.programmingLanguage, config.locale);
         const papyros = new Papyros(config.programmingLanguage, config.inputMode);
         if (config.standAlone) {
-            addSelectChangeListener<ProgrammingLanguage>(
+            addListener<ProgrammingLanguage>(
                 PROGRAMMING_LANGUAGE_SELECT_ID, pl => {
                     papyros.setProgrammingLanguage(pl);
                     // Modify search query params without reloading page
                     history.pushState(null, "", `?locale=${I18n.locale}&language=${pl}`);
                 }
             );
-            addSelectChangeListener(LOCALE_SELECT_ID, locale => {
+            addListener(LOCALE_SELECT_ID, locale => {
                 document.location.href = `?locale=${locale}&language=${papyros.codeState.programmingLanguage}`;
             });
         }
