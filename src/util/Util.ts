@@ -10,9 +10,12 @@ export function getSelectOptions<T>(
     }).join("\n");
 }
 
-export function addSelectChangeListener<T extends string>(
-    selectId: string, onChange: (newValue: T) => void
+export function addListener<T extends string>(
+    elementId: string, onEvent: (e: T) => void, eventType = "change", attribute = "value"
 ): void {
-    const selectElement = document.getElementById(selectId) as HTMLSelectElement;
-    selectElement.addEventListener("change", () => onChange(selectElement.value as T));
+    const element = document.getElementById(elementId) as HTMLElement;
+    element.addEventListener(eventType, () => {
+        onEvent((element as any)[attribute] || element.getAttribute(attribute) as T);
+    });
 }
+
