@@ -26,8 +26,8 @@ const ENGLISH_TRANSLATION = {
         "nl": "Nederlands"
     },
     "input_modes": {
-        "SingleLine": "Single line",
-        "Batch": "Batch"
+        "switch_to_interactive": "Switch to interactive mode",
+        "switch_to_batch": "Switch to batch input"
     }
 };
 
@@ -56,8 +56,8 @@ const DUTCH_TRANSLATION = {
         "nl": "Nederlands"
     },
     "input_modes": {
-        "SingleLine": "Eén lijn",
-        "Batch": "Meerdere"
+        "switch_to_interactive": "Wissel naar interactieve invoer",
+        "switch_to_batch": "Geef invoer vooraf in"
     }
 };
 
