@@ -7,7 +7,7 @@ module.exports = {
     extend: {
       backgroundColor: ["active"],
       opacity: ['disabled'],
-      cursor: ['disabled'],
+      cursor: ['disabled', 'hover'],
     }
   },
   theme: {
