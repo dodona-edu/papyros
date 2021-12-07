@@ -97,9 +97,9 @@ function renderPapyros(parent: HTMLElement, standAlone: boolean,
         </div>
         <!--Right user input and output section-->
         <div class="col-span-1">
-          <h1>${t("Papyros.code_output")}:</h1>
+          <h1>${t("Papyros.output")}:</h1>
           <textarea id="code-output-area" readonly class="border-2 w-full min-h-1/4 max-h-3/5 overflow-auto"></textarea>
-          <h1>${t("Papyros.enter_input")}:</h1>
+          <h1>${t("Papyros.input")}:</h1>
           <div id="code-input-area-wrapper">
           </div>
         </div>

@@ -4,8 +4,8 @@
 const ENGLISH_TRANSLATION = {
     "Papyros": "Papyros",
     "enter_code": "Enter your code here",
-    "enter_input": "Provide input for your code here",
-    "code_output": "Code output",
+    "input": "Input",
+    "output": "Output",
     "run": "Run",
     "terminate": "Terminate",
     "finished": "Code executed in %{time} ms",
@@ -34,8 +34,8 @@ const ENGLISH_TRANSLATION = {
 const DUTCH_TRANSLATION = {
     "Papyros": "Papyros",
     "enter_code": "Voer hier je code in",
-    "enter_input": "Geef hier de invoer voor je code in",
-    "code_output": "Resultaat van de code",
+    "input": "Invoer",
+    "output": "Uitvoer",
     "run": "Voer uit",
     "terminate": "Stop uitvoering",
     "states": {
