@@ -43,6 +43,6 @@ function startPapyros(): void {
         standAlone: true,
         programmingLanguage: language,
         locale: locale,
-        inputMode: InputMode.Batch
+        inputMode: InputMode.Interactive
     });
 }
