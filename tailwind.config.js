@@ -8,6 +8,7 @@ module.exports = {
       backgroundColor: ["active"],
       opacity: ['disabled'],
       cursor: ['disabled', 'hover'],
+      borderWidth: ['focus']
     }
   },
   theme: {

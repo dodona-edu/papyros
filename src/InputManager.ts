@@ -44,9 +44,10 @@ export class InputManager {
         } else {
             papyrosLog(LogType.Important, "Using serviceWorker for input");
         }
-        this.waiting = false;
         this.onSend = onSend;
         this.buildInputArea();
+        this.waiting = false; // prevent TS error from no initializer
+        this.setWaiting(false);
     }
 
     get inputArea(): HTMLInputElement {
@@ -54,13 +55,14 @@ export class InputManager {
     }
 
     buildInputArea(): void {
+        const focusStyleClasses = " focus:outline-none focus:ring-1 focus:ring-blue-500";
         const inputArea = this.inputMode === InputMode.Batch ? `
         <textarea id="code-input-area" 
-        class="border-2 h-auto w-full max-h-1/4 overflow-auto" rows="5">
+        class="border-2 h-auto w-full max-h-1/4 overflow-auto ${focusStyleClasses}" rows="5">
         </textarea>` : `
         <div class="flex flex-row">
             <input id="code-input-area" type="text"
-            class="border-2 h-auto w-full overflow-auto">
+            class="border border-transparent w-full ${focusStyleClasses} mr-0.5"
             </input>
             <button id="send-input-button" type="button"
             class="text-black bg-white border-2 px-4
@@ -88,9 +90,6 @@ export class InputManager {
                 e.key.toLowerCase() === "enter") {
                 papyrosLog(LogType.Debug, "Pressed enter! Sending input to user");
                 await this.sendInput();
-                if (!this.waiting) {
-                    this.inputArea.value = "";
-                }
             }
         };
     }
@@ -100,6 +99,19 @@ export class InputManager {
             this.inputMode = inputMode;
             this.buildInputArea();
         }
+    }
+
+    setWaiting(waiting: boolean): void {
+        if (!waiting) {
+            if (this.inputMode === InputMode.Interactive) {
+                this.inputArea.value = "";
+                this.inputArea.disabled = true;
+            }
+        } else {
+            this.inputArea.disabled = false;
+            this.inputArea.focus();
+        }
+        this.waiting = waiting;
     }
 
     async sendInput(): Promise<void> {
@@ -121,11 +133,11 @@ export class InputManager {
                 Atomics.store(this.inputMetaData, 0, 1);
             }
             this.lineNr += 1;
-            this.waiting = false;
+            this.setWaiting(false);
             this.onSend();
         } else {
             papyrosLog(LogType.Debug, "Had no input to send, still waiting!");
-            this.waiting = true;
+            this.setWaiting(true);
         }
     }
 
