@@ -125,10 +125,17 @@ export class InputManager {
 
     async sendInput(): Promise<void> {
         papyrosLog(LogType.Debug, "Handling send Input in Papyros");
-        const lines = this.inputArea.value.split("\n");
-        if (lines.length > this.lineNr && lines[this.lineNr]) {
-            papyrosLog(LogType.Debug, "Sending input to user: " + lines[this.lineNr]);
-            const line = lines[this.lineNr];
+        let line = "";
+        if (this.inputMode === InputMode.Interactive) {
+            line = this.inputArea.value;
+        } else {
+            const lines = this.inputArea.value.split("\n");
+            if (lines.length > this.lineNr && lines[this.lineNr]) {
+                line = lines[this.lineNr];
+            }
+        }
+        if (line) {
+            papyrosLog(LogType.Debug, "Sending input to user: " + line);
             if (!this.inputMetaData || !this.inputTextArray) {
                 await fetch(INPUT_RELATIVE_URL,
                     {
@@ -136,7 +143,7 @@ export class InputManager {
                         body: JSON.stringify({ "input": line })
                     });
             } else {
-                const encoded = this.textEncoder.encode(lines[this.lineNr]);
+                const encoded = this.textEncoder.encode(line);
                 this.inputTextArray.set(encoded);
                 Atomics.store(this.inputMetaData, 1, encoded.length);
                 Atomics.store(this.inputMetaData, 0, 1);
