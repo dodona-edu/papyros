@@ -46,9 +46,8 @@ export class InputManager {
             papyrosLog(LogType.Important, "Using serviceWorker for input");
         }
         this.onSend = onSend;
-        this.buildInputArea();
         this.waiting = false; // prevent TS error from no initializer
-        this.setWaiting(false);
+        this.setInputMode(this.inputMode);
     }
 
     get inputArea(): HTMLInputElement {
@@ -104,25 +103,24 @@ export class InputManager {
     }
 
     setInputMode(inputMode: InputMode): void {
-        if (inputMode !== this.inputMode) {
-            this.inputMode = inputMode;
-            this.buildInputArea();
-            this.setWaiting(this.waiting);
-        }
+        this.inputMode = inputMode;
+        this.buildInputArea();
+        this.setWaiting(this.waiting);
     }
 
     setWaiting(waiting: boolean): void {
-        if (!waiting) {
+        this.inputArea.setAttribute("placeholder",
+            t(`Papyros.input_placeholder.${this.inputMode}`));
+        if (waiting) {
+            this.inputArea.disabled = false;
+            this.inputArea.focus();
+        } else {
             if (this.inputMode === InputMode.Interactive) {
                 this.inputArea.value = "";
                 this.inputArea.disabled = true;
                 // Remove placeholder as it is disabled
                 this.inputArea.setAttribute("placeholder", "");
             }
-        } else {
-            this.inputArea.disabled = false;
-            this.inputArea.focus();
-            this.inputArea.setAttribute("placeholder", t("Papyros.input_placeholder"));
         }
         this.waiting = waiting;
     }
