@@ -63,8 +63,7 @@ export class InputManager {
             inputArea = `
             <textarea id="${INPUT_TA_ID}" 
             class="border-2 h-auto w-full max-h-1/4 overflow-auto ${focusStyleClasses}"
-            rows="5">
-            </textarea>`;
+            rows="5"></textarea>`;
             otherMode = InputMode.Interactive;
         } else {
             inputArea = `
