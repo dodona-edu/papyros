@@ -6,7 +6,7 @@ import { getBackend, stopBackend } from "./BackendManager";
 import { CodeEditor } from "./CodeEditor";
 import {
     APPLICATION_STATE_TEXT_ID, EDITOR_WRAPPER_ID, PROGRAMMING_LANGUAGE_SELECT_ID, OUTPUT_TA_ID,
-    RUN_BTN_ID, STATE_SPINNER_ID, TERMINATE_BTN_ID, LOCALE_SELECT_ID
+    RUN_BTN_ID, STATE_SPINNER_ID, TERMINATE_BTN_ID, LOCALE_SELECT_ID, INPUT_AREA_WRAPPER_ID
 } from "./Constants";
 import { InputManager, InputMode } from "./InputManager";
 import { PapyrosEvent } from "./PapyrosEvent";
@@ -29,8 +29,8 @@ function renderPapyros(parent: HTMLElement, standAlone: boolean,
     const programmingLanguageSelect = standAlone ?
         `
         <div class="mr-2">
-            <label for="programming-language-select">${t("Papyros.programming_language")}</label>
-            <select id="programming-language-select" class="m-2 border-2">
+            <label for="${PROGRAMMING_LANGUAGE_SELECT_ID}">${t("Papyros.programming_language")}</label>
+            <select id="${PROGRAMMING_LANGUAGE_SELECT_ID}" class="m-2 border-2">
                 ${getSelectOptions(PROGRAMMING_LANGUAGES, programmingLanguage, l => t(`Papyros.programming_languages.${l}`))} 
             </select>
         </div>
@@ -40,7 +40,7 @@ function renderPapyros(parent: HTMLElement, standAlone: boolean,
         `
         <div class="flex flex-row-reverse">
             <!-- row-reverse to start at the right, so put elements in order of display -->
-            <select id="locale-select" class="m-2 border-2">
+            <select id="${LOCALE_SELECT_ID}" class="m-2 border-2">
                 ${getSelectOptions(locales, locale, l => t(`Papyros.locales.${l}`))}
             </select>
             <i class="mdi mdi-web text-4xl text-white"></i>
@@ -66,25 +66,25 @@ function renderPapyros(parent: HTMLElement, standAlone: boolean,
       <!-- Header -->
       <div class="flex flex-row items-center">
         ${programmingLanguageSelect}
-        <button id="run-code-btn" type="button"
+        <button id="${RUN_BTN_ID}" type="button"
           class="text-white bg-blue-500 border-2 px-4 inset-y-2 rounded-lg
                  disabled:opacity-50 disabled:cursor-wait">
             ${t("Papyros.run")}
         </button>
-        <button id="terminate-btn" type="button" 
+        <button id="${TERMINATE_BTN_ID}" type="button" 
             class="text-white bg-red-500 border-2 m-3 px-4 inset-y-2 rounded-lg
             disabled:opacity-50 disabled:cursor-not-allowed">
             ${t("Papyros.terminate")}
         </button>
         <div class="flex flex-row items-center">
-          <svg id="state-spinner" class="animate-spin mr-3 h-5 w-5 text-white"
+          <svg id="${STATE_SPINNER_ID}" class="animate-spin mr-3 h-5 w-5 text-white"
            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" display="none">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="red" stroke-width="4"></circle>
           <path class="opacity-75" fill="red"
           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
             </path>
           </svg>
-          <div id="application-state-text">${t("Papyros.states.loading")}</div>
+          <div id="${APPLICATION_STATE_TEXT_ID}">${t("Papyros.states.loading")}</div>
         </div>
       </div>
 
@@ -93,14 +93,14 @@ function renderPapyros(parent: HTMLElement, standAlone: boolean,
         <!--Left code section-->
         <div class="col-span-1">
           <h1>${t("Papyros.enter_code")}:</h1>
-          <div id="code-area" class="overflow-auto max-h-full min-h-1/4 border-solid border-gray-200 border-2"></div>
+          <div id="${EDITOR_WRAPPER_ID}" class="overflow-auto max-h-full min-h-1/4 border-solid border-gray-200 border-2"></div>
         </div>
         <!--Right user input and output section-->
         <div class="col-span-1">
           <h1>${t("Papyros.output")}:</h1>
-          <textarea id="code-output-area" readonly class="border-2 w-full min-h-1/4 max-h-3/5 overflow-auto"></textarea>
+          <textarea id="${OUTPUT_TA_ID}" readonly class="border-2 w-full min-h-1/4 max-h-3/5 overflow-auto"></textarea>
           <h1>${t("Papyros.input")}:</h1>
-          <div id="code-input-area-wrapper">
+          <div id="${INPUT_AREA_WRAPPER_ID}">
           </div>
         </div>
       </div>
