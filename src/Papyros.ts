@@ -272,7 +272,7 @@ export class Papyros {
             this.onError(error);
         } finally {
             const end = new Date().getTime();
-            this.stateManager.setState(PapyrosState.Ready, t("Papyros.finished", { time: end - start }));
+            this.stateManager.setState(PapyrosState.Ready, t("Papyros.finished", { time: (end - start) / 1000 }));
             this.inputManager.onRunEnd();
         }
     }

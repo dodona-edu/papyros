@@ -15,7 +15,7 @@ const ENGLISH_TRANSLATION = {
     "output_placeholder": "The output of your code will be shown here",
     "run": "Run",
     "terminate": "Terminate",
-    "finished": "Code executed in %{time} ms",
+    "finished": "Code executed in %{time} s",
     "states": {
         "running": "Running",
         "terminating": "Terminating",
@@ -60,7 +60,7 @@ const DUTCH_TRANSLATION = {
         "awaiting_input": "Aan het wachten op invoer",
         "ready": " ",
     },
-    "finished": "Code uitgevoerd in %{time} ms",
+    "finished": "Code uitgevoerd in %{time} s",
     "programming_language": "Programmeertaal",
     "programming_languages": {
         "Python": "Python",
