@@ -16,12 +16,18 @@ export enum InputMode {
 
 export const INPUT_MODES = [InputMode.Batch, InputMode.Interactive];
 
+interface InputSession {
+    lineNr: number;
+    inputMode: InputMode;
+}
+
 export class InputManager {
     inputWrapper: HTMLElement;
     inputMode: InputMode;
-    lineNr: number;
     waiting: boolean;
+    batchInput: string;
     onSend: () => void;
+    session: InputSession;
 
     inputTextArray?: Uint8Array;
     inputMetaData?: Int32Array;
@@ -30,7 +36,8 @@ export class InputManager {
     constructor(onSend: () => void, inputMode: InputMode) {
         this.inputWrapper = document.getElementById(INPUT_AREA_WRAPPER_ID) as HTMLElement;
         this.inputMode = inputMode;
-        this.lineNr = 0;
+        this.session = { lineNr: 0, inputMode: inputMode };
+        this.batchInput = "";
         this.textEncoder = new TextEncoder();
         if (typeof SharedArrayBuffer !== "undefined") {
             papyrosLog(LogType.Important, "Using SharedArrayBuffers");
@@ -68,7 +75,8 @@ export class InputManager {
             inputArea = `
             <div class="flex flex-row">
                 <input id="${INPUT_TA_ID}" type="text"
-                class="border border-transparent w-full ${focusStyleClasses} mr-0.5"
+                class="border border-transparent w-full ${focusStyleClasses} mr-0.5
+                disabled:cursor-not-allowed">
                 </input>
                 <button id="${SEND_INPUT_BTN_ID}" type="button"
                 class="text-black bg-white border-2 px-4
@@ -103,17 +111,30 @@ export class InputManager {
     }
 
     setInputMode(inputMode: InputMode): void {
+        papyrosLog(LogType.Debug, `Switching input mode from ${this.inputMode} to ${inputMode}`);
+        if (this.inputMode === InputMode.Batch) {
+            // store for re-use later
+            this.batchInput = this.inputArea.value;
+        }
         this.inputMode = inputMode;
         this.buildInputArea();
         this.setWaiting(this.waiting);
+        if (this.inputMode === InputMode.Batch) {
+            // Set previous batch
+            this.inputArea.value = this.batchInput;
+        }
     }
 
     setWaiting(waiting: boolean): void {
         this.inputArea.setAttribute("placeholder",
             t(`Papyros.input_placeholder.${this.inputMode}`));
+        this.waiting = waiting;
         if (waiting) {
             this.inputArea.disabled = false;
             this.inputArea.focus();
+            if (this.inputMode === InputMode.Batch) {
+                this.setInputMode(InputMode.Interactive);
+            }
         } else {
             if (this.inputMode === InputMode.Interactive) {
                 this.inputArea.value = "";
@@ -122,7 +143,6 @@ export class InputManager {
                 this.inputArea.setAttribute("placeholder", "");
             }
         }
-        this.waiting = waiting;
     }
 
     async sendInput(): Promise<void> {
@@ -132,8 +152,8 @@ export class InputManager {
             line = this.inputArea.value;
         } else {
             const lines = this.inputArea.value.split("\n");
-            if (lines.length > this.lineNr) {
-                line = lines[this.lineNr];
+            if (lines.length > this.session.lineNr) {
+                line = lines[this.session.lineNr];
             }
         }
         if (line) {
@@ -150,7 +170,7 @@ export class InputManager {
                 Atomics.store(this.inputMetaData, 1, encoded.length);
                 Atomics.store(this.inputMetaData, 0, 1);
             }
-            this.lineNr += 1;
+            this.session.lineNr += 1;
             this.setWaiting(false);
             this.onSend();
         } else {
@@ -163,9 +183,14 @@ export class InputManager {
         if (this.inputMode === InputMode.Interactive) {
             this.inputArea.value = "";
         }
+        this.session.lineNr = 0;
+        this.session.inputMode = this.inputMode;
     }
 
     onRunEnd(): void {
-        this.lineNr = 0;
+        if (this.session.inputMode !== this.inputMode) {
+            // Restore previous state if changed during run
+            this.setInputMode(this.session.inputMode);
+        }
     }
 }
