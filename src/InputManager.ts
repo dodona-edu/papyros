@@ -58,14 +58,21 @@ export class InputManager {
         <textarea id="code-input-area" 
         class="border-2 h-auto w-full max-h-1/4 overflow-auto" rows="5">
         </textarea>` : `
-        <input id="code-input-area" type="text"
-        class="border-2 h-auto w-full overflow-auto">
-        </input>`;
+        <div class="flex flex-row">
+            <input id="code-input-area" type="text"
+            class="border-2 h-auto w-full overflow-auto">
+            </input>
+            <button id="send-input-button" type="button"
+            class="text-black bg-white border-2 px-4
+                   disabled:opacity-50 disabled:cursor-wait">
+                   ${t("Papyros.enter")}
+            </button>
+        </div>`;
         const otherMode = this.inputMode === InputMode.Batch ?
             InputMode.Interactive : InputMode.Batch;
         const switchMode = `
             <a id="switch-input-mode" data-value="${otherMode}"
-             class="flex flex-row-reverse hover:cursor-pointer">
+             class="flex flex-row-reverse hover:cursor-pointer text-blue-500">
                 ${t(`Papyros.input_modes.switch_to_${otherMode}`)}
             </a>
         `;
@@ -120,5 +127,15 @@ export class InputManager {
             papyrosLog(LogType.Debug, "Had no input to send, still waiting!");
             this.waiting = true;
         }
+    }
+
+    onRunStart(): void {
+        if (this.inputMode === InputMode.Interactive) {
+            this.inputArea.value = "";
+        }
+    }
+
+    onRunEnd(): void {
+        this.lineNr = 0;
     }
 }

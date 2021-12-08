@@ -269,6 +269,7 @@ export class Papyros {
         }
         this.codeState.runId += 1;
         this.stateManager.setState(PapyrosState.Running);
+        this.inputManager.onRunStart();
         this.codeState.outputArea.value = "";
         papyrosLog(LogType.Debug, "Running code in Papyros, sending to backend");
         const start = new Date().getTime();
@@ -280,7 +281,7 @@ export class Papyros {
         } finally {
             const end = new Date().getTime();
             this.stateManager.setState(PapyrosState.Ready, t("Papyros.finished", { time: end - start }));
-            this.inputManager.lineNr = 0;
+            this.inputManager.onRunEnd();
         }
     }
 
