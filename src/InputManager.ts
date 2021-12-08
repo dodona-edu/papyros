@@ -130,7 +130,7 @@ export class InputManager {
             line = this.inputArea.value;
         } else {
             const lines = this.inputArea.value.split("\n");
-            if (lines.length > this.lineNr && lines[this.lineNr]) {
+            if (lines.length > this.lineNr) {
                 line = lines[this.lineNr];
             }
         }
