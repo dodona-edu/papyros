@@ -12,6 +12,8 @@ export const APPLICATION_STATE_TEXT_ID = "application-state-text";
 
 export const RUN_BTN_ID = "run-code-btn";
 export const TERMINATE_BTN_ID = "terminate-btn";
+export const SEND_INPUT_BTN_ID = "send-input-btn";
+export const SWITCH_INPUT_MODE_A_ID = "switch-input-mode";
 
 export const PROGRAMMING_LANGUAGE_SELECT_ID = "programming-language-select";
 export const DEFAULT_PROGRAMMING_LANGUAGE = ProgrammingLanguage.Python;

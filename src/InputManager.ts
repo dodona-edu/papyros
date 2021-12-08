@@ -1,7 +1,8 @@
 import I18n from "i18n-js";
 import {
+    SWITCH_INPUT_MODE_A_ID,
     INPUT_AREA_WRAPPER_ID,
-    INPUT_RELATIVE_URL, INPUT_TA_ID
+    INPUT_RELATIVE_URL, INPUT_TA_ID, SEND_INPUT_BTN_ID
 } from "./Constants";
 import { papyrosLog, LogType } from "./util/Logging";
 import { addListener } from "./util/Util";
@@ -56,24 +57,30 @@ export class InputManager {
 
     buildInputArea(): void {
         const focusStyleClasses = " focus:outline-none focus:ring-1 focus:ring-blue-500";
-        const inputArea = this.inputMode === InputMode.Batch ? `
-        <textarea id="code-input-area" 
-        class="border-2 h-auto w-full max-h-1/4 overflow-auto ${focusStyleClasses}" rows="5">
-        </textarea>` : `
-        <div class="flex flex-row">
-            <input id="code-input-area" type="text"
-            class="border border-transparent w-full ${focusStyleClasses} mr-0.5"
-            </input>
-            <button id="send-input-button" type="button"
-            class="text-black bg-white border-2 px-4
-                   disabled:opacity-50 disabled:cursor-wait">
-                   ${t("Papyros.enter")}
-            </button>
-        </div>`;
-        const otherMode = this.inputMode === InputMode.Batch ?
-            InputMode.Interactive : InputMode.Batch;
+        let inputArea = "";
+        let otherMode: InputMode;
+        if (this.inputMode === InputMode.Batch) {
+            inputArea = `
+            <textarea id="${INPUT_TA_ID}" 
+            class="border-2 h-auto w-full max-h-1/4 overflow-auto ${focusStyleClasses}" rows="5">
+            </textarea>`;
+            otherMode = InputMode.Interactive;
+        } else {
+            inputArea = `
+            <div class="flex flex-row">
+                <input id="${INPUT_TA_ID}" type="text"
+                class="border border-transparent w-full ${focusStyleClasses} mr-0.5"
+                </input>
+                <button id="${SEND_INPUT_BTN_ID}" type="button"
+                class="text-black bg-white border-2 px-4
+                    disabled:opacity-50 disabled:cursor-wait">
+                    ${t("Papyros.enter")}
+                </button>
+            </div>`;
+            otherMode = InputMode.Batch;
+        }
         const switchMode = `
-            <a id="switch-input-mode" data-value="${otherMode}"
+            <a id="${SWITCH_INPUT_MODE_A_ID}" data-value="${otherMode}"
              class="flex flex-row-reverse hover:cursor-pointer text-blue-500">
                 ${t(`Papyros.input_modes.switch_to_${otherMode}`)}
             </a>
@@ -82,9 +89,11 @@ export class InputManager {
         ${inputArea}
         ${switchMode}
         `;
-        addListener<InputMode>("switch-input-mode", im => this.setInputMode(im),
+        addListener<InputMode>(SWITCH_INPUT_MODE_A_ID, im => this.setInputMode(im),
             "click", "data-value");
-
+        if (this.inputMode === InputMode.Interactive) {
+            addListener(SEND_INPUT_BTN_ID, () => this.sendInput(), "click");
+        }
         this.inputArea.onkeydown = async e => {
             if (this.waiting &&
                 e.key.toLowerCase() === "enter") {
