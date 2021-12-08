@@ -23,3 +23,6 @@ export const DEFAULT_LOCALE = "nl";
 
 export const INPUT_RELATIVE_URL = "/__papyros_input";
 
+export const CODE_FONT_FAMILY =
+    "Monaco, Menlo, \"Ubuntu Mono\", Consolas, source-code-pro, monospace";
+

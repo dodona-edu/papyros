@@ -24,6 +24,7 @@ import { commentKeymap } from "@codemirror/comment";
 import { rectangularSelection } from "@codemirror/rectangular-selection";
 import { defaultHighlightStyle } from "@codemirror/highlight";
 import { lintKeymap } from "@codemirror/lint";
+import { CODE_FONT_FAMILY } from "./Constants";
 
 function getLanguageSupport(language: ProgrammingLanguage): LanguageSupport {
     switch (language) {
@@ -124,6 +125,12 @@ export class CodeEditor {
                 this.indentCompartment.of(indentUnit.of(getIndentUnit(indentLength))),
                 keymap.of([indentWithTab]),
                 placeholder(editorPlaceHolder),
+                EditorView.theme({
+                    ".cm-content, .cm-gutter": {
+                        minHeight: "20vh",
+                        fontFamily: CODE_FONT_FAMILY
+                    },
+                }),
                 ...getExtensions()
             ]);
         element.replaceChildren(this.editorView.dom);
