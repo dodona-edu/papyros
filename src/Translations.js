@@ -3,8 +3,10 @@
 
 const ENGLISH_TRANSLATION = {
     "Papyros": "Papyros",
-    "enter_code": "Enter your code here",
+    "code": "Code",
+    "code_placeholder": "Enter your code here",
     "input": "Input",
+    "input_placeholder": "Provide input here",
     "output": "Output",
     "run": "Run",
     "terminate": "Terminate",
@@ -34,8 +36,10 @@ const ENGLISH_TRANSLATION = {
 
 const DUTCH_TRANSLATION = {
     "Papyros": "Papyros",
-    "enter_code": "Voer hier je code in",
+    "code": "Code",
+    "code_placeholder": "Voer hier je code in",
     "input": "Invoer",
+    "input_placeholder": "Geef hier invoer in",
     "output": "Uitvoer",
     "run": "Voer uit",
     "terminate": "Stop uitvoering",

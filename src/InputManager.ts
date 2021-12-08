@@ -62,7 +62,8 @@ export class InputManager {
         if (this.inputMode === InputMode.Batch) {
             inputArea = `
             <textarea id="${INPUT_TA_ID}" 
-            class="border-2 h-auto w-full max-h-1/4 overflow-auto ${focusStyleClasses}" rows="5">
+            class="border-2 h-auto w-full max-h-1/4 overflow-auto ${focusStyleClasses}"
+            rows="5">
             </textarea>`;
             otherMode = InputMode.Interactive;
         } else {
@@ -107,6 +108,7 @@ export class InputManager {
         if (inputMode !== this.inputMode) {
             this.inputMode = inputMode;
             this.buildInputArea();
+            this.setWaiting(this.waiting);
         }
     }
 
@@ -115,10 +117,13 @@ export class InputManager {
             if (this.inputMode === InputMode.Interactive) {
                 this.inputArea.value = "";
                 this.inputArea.disabled = true;
+                // Remove placeholder as it is disabled
+                this.inputArea.setAttribute("placeholder", "");
             }
         } else {
             this.inputArea.disabled = false;
             this.inputArea.focus();
+            this.inputArea.setAttribute("placeholder", t("Papyros.input_placeholder"));
         }
         this.waiting = waiting;
     }

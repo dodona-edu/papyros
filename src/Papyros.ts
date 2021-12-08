@@ -11,18 +11,8 @@ import {
 import { InputManager, InputMode } from "./InputManager";
 import { PapyrosEvent } from "./PapyrosEvent";
 import { ProgrammingLanguage, PROGRAMMING_LANGUAGES } from "./ProgrammingLanguage";
-import * as TRANSLATIONS from "./Translations";
 import { LogType, papyrosLog } from "./util/Logging";
-import { addListener, getSelectOptions } from "./util/Util";
-
-function loadTranslations(): void {
-    for (const [language, translations] of Object.entries(TRANSLATIONS)) {
-        // Add keys to already existing translations if they exist
-        I18n.translations[language] = Object.assign((I18n.translations[language] || {}), translations);
-    }
-}
-
-const t = I18n.t;
+import { addListener, getLocales, getSelectOptions, t, loadTranslations } from "./util/Util";
 
 function renderPapyros(parent: HTMLElement, standAlone: boolean,
     programmingLanguage: ProgrammingLanguage, locale: string): void {
@@ -35,7 +25,7 @@ function renderPapyros(parent: HTMLElement, standAlone: boolean,
             </select>
         </div>
         ` : "";
-    const locales = [locale, ...Object.keys(TRANSLATIONS).filter(l => l != locale)];
+    const locales = [locale, ...getLocales().filter(l => l != locale)];
     const localeSelect = standAlone ?
         `
         <div class="flex flex-row-reverse">
@@ -92,7 +82,7 @@ function renderPapyros(parent: HTMLElement, standAlone: boolean,
       <div class="grid grid-cols-2 gap-4 box-border max-h-full">
         <!--Left code section-->
         <div class="col-span-1">
-          <h1>${t("Papyros.enter_code")}:</h1>
+          <h1>${t("Papyros.code")}:</h1>
           <div id="${EDITOR_WRAPPER_ID}" class="overflow-auto max-h-full min-h-1/4 border-solid border-gray-200 border-2"></div>
         </div>
         <!--Right user input and output section-->
@@ -174,7 +164,8 @@ export class Papyros {
         this.codeState = {
             programmingLanguage: programmingLanguage,
             editor: new CodeEditor(
-                document.getElementById(EDITOR_WRAPPER_ID) as HTMLInputElement, programmingLanguage),
+                document.getElementById(EDITOR_WRAPPER_ID) as HTMLInputElement,
+                programmingLanguage, t("Papyros.code_placeholder")),
             backend: {} as Remote<Backend>,
             outputArea: document.getElementById(OUTPUT_TA_ID) as HTMLInputElement,
             runId: 0

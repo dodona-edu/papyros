@@ -7,7 +7,8 @@ import { python } from "@codemirror/lang-python";
 import {
     EditorView,
     keymap, highlightSpecialChars,
-    drawSelection, highlightActiveLine
+    drawSelection, highlightActiveLine,
+    placeholder
 }
     from "@codemirror/view";
 import { history, historyKeymap } from "@codemirror/history";
@@ -114,7 +115,7 @@ export class CodeEditor {
     indentCompartment: Compartment;
 
     constructor(element: HTMLElement, language: ProgrammingLanguage,
-        initialCode?: string, indentLength = 4) {
+        editorPlaceHolder: string, initialCode?: string, indentLength = 4) {
         this.languageCompartment = new Compartment();
         this.indentCompartment = new Compartment();
         this.editorView = getEditorView(element, initialCode,
@@ -122,6 +123,7 @@ export class CodeEditor {
                 this.languageCompartment.of(getLanguageSupport(language)),
                 this.indentCompartment.of(indentUnit.of(getIndentUnit(indentLength))),
                 keymap.of([indentWithTab]),
+                placeholder(editorPlaceHolder),
                 ...getExtensions()
             ]);
         element.replaceChildren(this.editorView.dom);
