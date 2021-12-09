@@ -166,7 +166,7 @@ export class Papyros {
             programmingLanguage: programmingLanguage,
             editor: new CodeEditor(
                 document.getElementById(EDITOR_WRAPPER_ID) as HTMLInputElement,
-                programmingLanguage, t("Papyros.code_placeholder")),
+                programmingLanguage, t("Papyros.code_placeholder", { programmingLanguage })),
             backend: {} as Remote<Backend>,
             outputArea: document.getElementById(OUTPUT_TA_ID) as HTMLInputElement,
             runId: 0
@@ -189,7 +189,7 @@ export class Papyros {
         if (this.codeState.programmingLanguage !== programmingLanguage) {
             stopBackend(this.codeState.backend);
             this.codeState.programmingLanguage = programmingLanguage;
-            this.codeState.editor.setLanguage(programmingLanguage);
+            this.codeState.editor.setLanguage(programmingLanguage, t("Papyros.code_placeholder", { programmingLanguage }));
             this.codeState.outputArea.value = "";
             await this.startBackend();
         }

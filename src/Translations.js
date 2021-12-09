@@ -1,18 +1,19 @@
+/* eslint-disable max-len */
 // Empty strings are considered missing by i18n-extract
 // Therefore the ready-key is an explicit space now, which is still invisible
 
 const ENGLISH_TRANSLATION = {
     "Papyros": "Papyros",
     "code": "Code",
-    "code_placeholder": "Enter your code here",
+    "code_placeholder": "Write your %{programmingLanguage} code here and click 'Run' to execute...",
     "input": "Input",
     "input_placeholder": {
-        "interactive": "Provide input here. Press enter to send.",
+        "interactive": "Provide input and press enter to send",
         "batch": "Provide all input required by your code here.\n" +
             "You can enter multiple lines by pressing enter."
     },
     "output": "Output",
-    "output_placeholder": "The output of your code will be shown here",
+    "output_placeholder": "The output of your code will appear here",
     "run": "Run",
     "terminate": "Terminate",
     "finished": "Code executed in %{time} s",
@@ -42,10 +43,10 @@ const ENGLISH_TRANSLATION = {
 const DUTCH_TRANSLATION = {
     "Papyros": "Papyros",
     "code": "Code",
-    "code_placeholder": "Voer hier je code in",
+    "code_placeholder": "Schrijf hier je %{programmingLanguage} code en klik op 'Run' om uit te voeren...",
     "input": "Invoer",
     "input_placeholder": {
-        "interactive": "Geef hier je invoer in. Duw op enter om te verzenden.",
+        "interactive": "Geef invoer in en druk op enter",
         "batch": "Geef hier alle invoer die je code nodig heeft vooraf in.\n" +
             "Je kan verschillende lijnen ingeven door op enter te drukken."
     },

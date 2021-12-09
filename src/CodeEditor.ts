@@ -114,17 +114,19 @@ export class CodeEditor {
     editorView: EditorView;
     languageCompartment: Compartment;
     indentCompartment: Compartment;
+    placeholderCompartment: Compartment;
 
     constructor(element: HTMLElement, language: ProgrammingLanguage,
         editorPlaceHolder: string, initialCode?: string, indentLength = 4) {
         this.languageCompartment = new Compartment();
         this.indentCompartment = new Compartment();
+        this.placeholderCompartment = new Compartment();
         this.editorView = getEditorView(element, initialCode,
             [
                 this.languageCompartment.of(getLanguageSupport(language)),
                 this.indentCompartment.of(indentUnit.of(getIndentUnit(indentLength))),
                 keymap.of([indentWithTab]),
-                placeholder(editorPlaceHolder),
+                this.placeholderCompartment.of(placeholder(editorPlaceHolder)),
                 EditorView.theme({
                     ".cm-content, .cm-gutter": {
                         minHeight: "20vh",
@@ -136,9 +138,12 @@ export class CodeEditor {
         element.replaceChildren(this.editorView.dom);
     }
 
-    setLanguage(language: ProgrammingLanguage): void {
+    setLanguage(language: ProgrammingLanguage, editorPlaceHolder: string): void {
         this.editorView.dispatch({
-            effects: this.languageCompartment.reconfigure(getLanguageSupport(language))
+            effects: [
+                this.languageCompartment.reconfigure(getLanguageSupport(language)),
+                this.placeholderCompartment.reconfigure(placeholder(editorPlaceHolder))
+            ]
         });
     }
 
