@@ -18,7 +18,6 @@ export const INPUT_MODES = [InputMode.Batch, InputMode.Interactive];
 
 interface InputSession {
     lineNr: number;
-    inputMode: InputMode;
 }
 
 export class InputManager {
@@ -36,7 +35,7 @@ export class InputManager {
     constructor(onSend: () => void, inputMode: InputMode) {
         this.inputWrapper = document.getElementById(INPUT_AREA_WRAPPER_ID) as HTMLElement;
         this.inputMode = inputMode;
-        this.session = { lineNr: 0, inputMode: inputMode };
+        this.session = { lineNr: 0 };
         this.batchInput = "";
         this.textEncoder = new TextEncoder();
         if (typeof SharedArrayBuffer !== "undefined") {
@@ -128,19 +127,18 @@ export class InputManager {
     setWaiting(waiting: boolean): void {
         this.inputArea.setAttribute("placeholder",
             t(`Papyros.input_placeholder.${this.inputMode}`));
+        this.inputArea.setAttribute("title", "");
         this.waiting = waiting;
         if (waiting) {
             this.inputArea.disabled = false;
             this.inputArea.focus();
-            if (this.inputMode === InputMode.Batch) {
-                this.setInputMode(InputMode.Interactive);
-            }
         } else {
             if (this.inputMode === InputMode.Interactive) {
                 this.inputArea.value = "";
                 this.inputArea.disabled = true;
                 // Remove placeholder as it is disabled
                 this.inputArea.setAttribute("placeholder", "");
+                this.inputArea.setAttribute("title", t("Papyros.input_disabled"));
             }
         }
     }
@@ -184,13 +182,9 @@ export class InputManager {
             this.inputArea.value = "";
         }
         this.session.lineNr = 0;
-        this.session.inputMode = this.inputMode;
     }
 
     onRunEnd(): void {
-        if (this.session.inputMode !== this.inputMode) {
-            // Restore previous state if changed during run
-            this.setInputMode(this.session.inputMode);
-        }
+        // currently empty
     }
 }

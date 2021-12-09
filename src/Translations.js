@@ -12,6 +12,7 @@ const ENGLISH_TRANSLATION = {
         "batch": "Provide all input required by your code here.\n" +
             "You can enter multiple lines by pressing enter."
     },
+    "input_disabled": "You can only provide input when your code requires it in interactive mode",
     "output": "Output",
     "output_placeholder": "The output of your code will appear here",
     "run": "Run",
@@ -50,6 +51,7 @@ const DUTCH_TRANSLATION = {
         "batch": "Geef hier alle invoer die je code nodig heeft vooraf in.\n" +
             "Je kan verschillende lijnen ingeven door op enter te drukken."
     },
+    "input_disabled": "Je kan enkel invoer invullen als je code erom vraagt in interactieve modus",
     "output": "Uitvoer",
     "output_placeholder": "Hier komt de uitvoer van je code",
     "run": "Voer uit",
