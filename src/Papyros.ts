@@ -182,6 +182,7 @@ export class Papyros {
         this.stateManager.runButton.addEventListener("click", () => this.runCode());
         this.stateManager.terminateButton.addEventListener("click", () => this.terminate());
         await this.startBackend();
+        this.codeState.editor.focus();
         return this;
     }
 
@@ -196,11 +197,8 @@ export class Papyros {
     }
 
     async startBackend(): Promise<void> {
-        const {
-            programmingLanguage
-        } = this.codeState;
         this.stateManager.setState(PapyrosState.Loading);
-        const backend = getBackend(programmingLanguage);
+        const backend = getBackend(this.codeState.programmingLanguage);
         await backend.launch(proxy(e => this.onMessage(e)), this.inputManager.inputTextArray, this.inputManager.inputMetaData);
         this.codeState.backend = backend;
         this.stateManager.setState(PapyrosState.Ready);

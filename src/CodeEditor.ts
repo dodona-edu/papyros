@@ -156,4 +156,8 @@ export class CodeEditor {
     getCode(): string {
         return this.editorView.state.doc.toString();
     }
+
+    focus(): void {
+        this.editorView.focus();
+    }
 }
