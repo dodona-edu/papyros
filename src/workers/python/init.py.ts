@@ -24,15 +24,21 @@ def __capture_stdout(cb):
 
 __papyros_input = ""
 def __override_stdin(cb):
-    def __papyros_readline(n=-1):
+
+    def __papyros_input(prompt=""):
+        return __papyros_readline(prompt=prompt)[:-1] # Remove newline
+
+    def __papyros_readline(n=-1, prompt=""):
         global __papyros_input
         if not __papyros_input:
-            __papyros_input = cb(to_js({"type": "input", "data":"next line"})) + "\\n"
+            __papyros_input = cb(to_js({"type": "input", "data": prompt})) + "\\n"
         if n < 0 or n > len(__papyros_input):
             n = len(__papyros_input)
         to_return = __papyros_input[0:n]
         __papyros_input = __papyros_input[n:]
         return to_return
 
+    global input
+    input = __papyros_input
     sys.stdin.readline = __papyros_readline
 `;

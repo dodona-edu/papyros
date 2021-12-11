@@ -11,25 +11,17 @@ class JavaScriptWorker extends Backend {
         ]);
         const overrideBuiltins = `
 function prompt(text="", defaultText=""){
-    __onEvent({"type": "output", "data": text});
     const promptedValue = __onEvent({"type": "input", "data": text});
-    __onEvent({"type": "output", "data": promptedValue + "\\n"});
     return promptedValue;
 }
 function __stringify(args, addNewline=false){
     let asString = "";
     if(Array.isArray(args)){
-        if(args.length === 1){
-            asString = JSON.stringify(args[0]);
-        } else {
-            asString = args.map(s => {
-                if(typeof s === 'string' || s instanceof String){
-                    return s; // prevent spurious quotes
-                } else {
-                    return JSON.stringify(s);
-                }
-            }).join(" ");
-        }
+        asString = JSON.stringify(args)
+    } else if (typeof(args) === 'string') {
+        asString = args;
+    } else if ("toString" in args) {
+        asString = args.toString();
     } else {
         asString = JSON.stringify(args);
     }
@@ -39,10 +31,10 @@ function __stringify(args, addNewline=false){
     return asString;
 }
 console.log = (...args) => {
-    __onEvent({"type": "output", "data": __stringify(args, true)});
+    __onEvent({"type": "output", "data": __stringify(...args, true)});
 }
 console.error = (...args) => {
-    __onEvent({"type": "error", "data": __stringify(args, true)});
+    __onEvent({"type": "error", "data": __stringify(...args, true)});
 }
         `;
         const newContext = {

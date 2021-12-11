@@ -4,6 +4,7 @@ import {
     INPUT_AREA_WRAPPER_ID,
     INPUT_RELATIVE_URL, INPUT_TA_ID, SEND_INPUT_BTN_ID
 } from "./Constants";
+import { PapyrosEvent } from "./PapyrosEvent";
 import { papyrosLog, LogType } from "./util/Logging";
 import { addListener } from "./util/Util";
 
@@ -98,13 +99,13 @@ export class InputManager {
         addListener<InputMode>(SWITCH_INPUT_MODE_A_ID, im => this.setInputMode(im),
             "click", "data-value");
         if (this.inputMode === InputMode.Interactive) {
-            addListener(SEND_INPUT_BTN_ID, () => this.sendInput(), "click");
+            addListener(SEND_INPUT_BTN_ID, () => this.sendLine(), "click");
         }
         this.inputArea.onkeydown = async e => {
             if (this.waiting &&
                 e.key.toLowerCase() === "enter") {
                 papyrosLog(LogType.Debug, "Pressed enter! Sending input to user");
-                await this.sendInput();
+                await this.onInput();
             }
         };
     }
@@ -124,9 +125,9 @@ export class InputManager {
         }
     }
 
-    setWaiting(waiting: boolean): void {
+    setWaiting(waiting: boolean, prompt = ""): void {
         this.inputArea.setAttribute("placeholder",
-            t(`Papyros.input_placeholder.${this.inputMode}`));
+            prompt || t(`Papyros.input_placeholder.${this.inputMode}`));
         this.inputArea.setAttribute("title", "");
         this.waiting = waiting;
         if (waiting) {
@@ -143,8 +144,7 @@ export class InputManager {
         }
     }
 
-    async sendInput(): Promise<void> {
-        papyrosLog(LogType.Debug, "Handling send Input in Papyros");
+    async sendLine(): Promise<boolean> {
         let line = "";
         if (this.inputMode === InputMode.Interactive) {
             line = this.inputArea.value;
@@ -169,11 +169,20 @@ export class InputManager {
                 Atomics.store(this.inputMetaData, 0, 1);
             }
             this.session.lineNr += 1;
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    async onInput(e?: PapyrosEvent): Promise<void> {
+        papyrosLog(LogType.Debug, "Handling send Input in Papyros");
+        if (await this.sendLine()) {
             this.setWaiting(false);
             this.onSend();
         } else {
             papyrosLog(LogType.Debug, "Had no input to send, still waiting!");
-            this.setWaiting(true);
+            this.setWaiting(true, e?.data);
         }
     }
 

@@ -234,7 +234,7 @@ export class Papyros {
     async onInput(e: PapyrosEvent): Promise<void> {
         papyrosLog(LogType.Debug, "Received onInput event in Papyros: ", e);
         this.stateManager.setState(PapyrosState.AwaitingInput);
-        await this.inputManager.sendInput();
+        await this.inputManager.onInput(e);
     }
 
     onMessage(e: PapyrosEvent): void {
