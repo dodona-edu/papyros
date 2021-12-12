@@ -1,18 +1,20 @@
 /* eslint-disable max-len */
+import "./Papyros.css";
 import { proxy, Remote } from "comlink";
 import I18n from "i18n-js";
 import { Backend } from "./Backend";
 import { getBackend, stopBackend } from "./BackendManager";
 import { CodeEditor } from "./CodeEditor";
 import {
-    APPLICATION_STATE_TEXT_ID, EDITOR_WRAPPER_ID, PROGRAMMING_LANGUAGE_SELECT_ID, OUTPUT_TA_ID,
-    RUN_BTN_ID, STATE_SPINNER_ID, TERMINATE_BTN_ID, LOCALE_SELECT_ID, INPUT_AREA_WRAPPER_ID
+    EDITOR_WRAPPER_ID, PROGRAMMING_LANGUAGE_SELECT_ID, OUTPUT_TA_ID,
+    RUN_BTN_ID, STOP_BTN_ID, LOCALE_SELECT_ID, INPUT_AREA_WRAPPER_ID
 } from "./Constants";
 import { InputManager, InputMode } from "./InputManager";
 import { PapyrosEvent } from "./PapyrosEvent";
 import { ProgrammingLanguage, PROGRAMMING_LANGUAGES } from "./ProgrammingLanguage";
 import { LogType, papyrosLog } from "./util/Logging";
 import { addListener, getLocales, getSelectOptions, t, loadTranslations } from "./util/Util";
+import { StatusPanel } from "./StatusPanel";
 
 function renderPapyros(parent: HTMLElement, standAlone: boolean,
     programmingLanguage: ProgrammingLanguage, locale: string): void {
@@ -56,26 +58,6 @@ function renderPapyros(parent: HTMLElement, standAlone: boolean,
       <!-- Header -->
       <div class="flex flex-row items-center">
         ${programmingLanguageSelect}
-        <button id="${RUN_BTN_ID}" type="button"
-          class="text-white bg-blue-500 border-2 px-4 inset-y-2 rounded-lg
-                 disabled:opacity-50 disabled:cursor-wait">
-            ${t("Papyros.run")}
-        </button>
-        <button id="${TERMINATE_BTN_ID}" type="button" 
-            class="text-white bg-red-500 border-2 m-3 px-4 inset-y-2 rounded-lg
-            disabled:opacity-50 disabled:cursor-not-allowed">
-            ${t("Papyros.terminate")}
-        </button>
-        <div class="flex flex-row items-center">
-          <svg id="${STATE_SPINNER_ID}" class="animate-spin mr-3 h-5 w-5 text-white"
-           xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" display="none">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="red" stroke-width="4"></circle>
-          <path class="opacity-75" fill="red"
-          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-            </path>
-          </svg>
-          <div id="${APPLICATION_STATE_TEXT_ID}">${t("Papyros.states.loading")}</div>
-        </div>
       </div>
 
       <!--Body of the application-->
@@ -105,37 +87,36 @@ enum PapyrosState {
     Loading = "loading",
     Running = "running",
     AwaitingInput = "awaiting_input",
-    Terminating = "terminating",
+    Stopping = "stopping",
     Ready = "ready"
 }
 
 class PapyrosStateManager {
     state: PapyrosState;
-    stateSpinner: HTMLElement;
-    stateText: HTMLElement;
+    statusPanel: StatusPanel;
     runButton: HTMLButtonElement;
-    terminateButton: HTMLButtonElement;
+    stopButton: HTMLButtonElement;
 
-    constructor() {
-        this.stateSpinner = document.getElementById(STATE_SPINNER_ID) as HTMLElement;
-        this.stateText = document.getElementById(APPLICATION_STATE_TEXT_ID) as HTMLElement;
+    constructor(statusPanel: StatusPanel) {
+        this.statusPanel = statusPanel;
+        this.statusPanel.initialize();
         this.runButton = document.getElementById(RUN_BTN_ID) as HTMLButtonElement;
-        this.terminateButton = document.getElementById(TERMINATE_BTN_ID) as HTMLButtonElement;
+        this.stopButton = document.getElementById(STOP_BTN_ID) as HTMLButtonElement;
         this.state = PapyrosState.Ready;
     }
 
     setState(state: PapyrosState, message?: string): void {
         if (state !== this.state) {
             this.state = state;
-            this.terminateButton.disabled = [PapyrosState.Ready, PapyrosState.Loading].includes(state);
+            this.stopButton.disabled = [PapyrosState.Ready, PapyrosState.Loading].includes(state);
             if (state === PapyrosState.Ready) {
-                this.stateSpinner.style.display = "none";
+                this.statusPanel.showSpinner(false);
                 this.runButton.disabled = false;
             } else {
-                this.stateSpinner.style.display = "";
+                this.statusPanel.showSpinner(true);
                 this.runButton.disabled = true;
             }
-            this.stateText.innerText = message || t(`Papyros.states.${state}`);
+            this.statusPanel.setStatus(message || t(`Papyros.states.${state}`));
         }
     }
 }
@@ -161,16 +142,18 @@ export class Papyros {
     inputManager: InputManager;
 
     constructor(programmingLanguage: ProgrammingLanguage, inputMode: InputMode) {
-        this.stateManager = new PapyrosStateManager();
+        const statusPanel = new StatusPanel(() => this.runCode());
         this.codeState = {
             programmingLanguage: programmingLanguage,
             editor: new CodeEditor(
                 document.getElementById(EDITOR_WRAPPER_ID) as HTMLInputElement,
-                programmingLanguage, t("Papyros.code_placeholder", { programmingLanguage })),
+                programmingLanguage, statusPanel.render(document.createElement("div")),
+                t("Papyros.code_placeholder", { programmingLanguage })),
             backend: {} as Remote<Backend>,
             outputArea: document.getElementById(OUTPUT_TA_ID) as HTMLInputElement,
             runId: 0
         };
+        this.stateManager = new PapyrosStateManager(statusPanel);
         this.inputManager = new InputManager(() => this.stateManager.setState(PapyrosState.Running), inputMode);
     }
 
@@ -180,7 +163,7 @@ export class Papyros {
 
     async launch(): Promise<Papyros> {
         this.stateManager.runButton.addEventListener("click", () => this.runCode());
-        this.stateManager.terminateButton.addEventListener("click", () => this.terminate());
+        this.stateManager.stopButton.addEventListener("click", () => this.stop());
         await this.startBackend();
         this.codeState.editor.focus();
         return this;
@@ -275,14 +258,14 @@ export class Papyros {
         }
     }
 
-    async terminate(): Promise<void> {
+    async stop(): Promise<void> {
         if (![PapyrosState.Running, PapyrosState.AwaitingInput].includes(this.state)) {
-            papyrosLog(LogType.Error, `Terminate called from invalid state: ${this.state}`);
+            papyrosLog(LogType.Error, `Stop called from invalid state: ${this.state}`);
             return;
         }
-        papyrosLog(LogType.Debug, "Called terminate, stopping backend!");
+        papyrosLog(LogType.Debug, "Stopping backend!");
         this.codeState.runId += 1; // ignore messages coming from last run
-        this.stateManager.setState(PapyrosState.Terminating);
+        this.stateManager.setState(PapyrosState.Stopping);
         stopBackend(this.codeState.backend);
         return this.startBackend();
     }

@@ -24,7 +24,8 @@ import { commentKeymap } from "@codemirror/comment";
 import { rectangularSelection } from "@codemirror/rectangular-selection";
 import { defaultHighlightStyle } from "@codemirror/highlight";
 import { lintKeymap } from "@codemirror/lint";
-import { CODE_FONT_FAMILY } from "./Constants";
+import { showPanel } from "@codemirror/panel";
+import { StatusPanel } from "./StatusPanel";
 
 function getLanguageSupport(language: ProgrammingLanguage): LanguageSupport {
     switch (language) {
@@ -89,9 +90,9 @@ function getExtensions(): Array<Extension> {
             ...foldKeymap,
             ...commentKeymap,
             ...completionKeymap,
-            ...lintKeymap
+            ...lintKeymap,
+            indentWithTab
         ]),
-        keymap.of([indentWithTab])
     ];
 }
 
@@ -116,7 +117,8 @@ export class CodeEditor {
     indentCompartment: Compartment;
     placeholderCompartment: Compartment;
 
-    constructor(element: HTMLElement, language: ProgrammingLanguage,
+    constructor(element: HTMLElement, language: ProgrammingLanguage, 
+        panel: HTMLElement,
         editorPlaceHolder: string, initialCode?: string, indentLength = 4) {
         this.languageCompartment = new Compartment();
         this.indentCompartment = new Compartment();
@@ -127,11 +129,8 @@ export class CodeEditor {
                 this.indentCompartment.of(indentUnit.of(getIndentUnit(indentLength))),
                 keymap.of([indentWithTab]),
                 this.placeholderCompartment.of(placeholder(editorPlaceHolder)),
-                EditorView.theme({
-                    ".cm-content, .cm-gutter": {
-                        minHeight: "20vh",
-                        fontFamily: CODE_FONT_FAMILY
-                    },
+                showPanel.of(() => {
+                    return { dom: panel };
                 }),
                 ...getExtensions()
             ]);

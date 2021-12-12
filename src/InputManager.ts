@@ -1,4 +1,4 @@
-import I18n from "i18n-js";
+import { t } from "i18n-js";
 import {
     SWITCH_INPUT_MODE_A_ID,
     INPUT_AREA_WRAPPER_ID,
@@ -8,7 +8,6 @@ import { PapyrosEvent } from "./PapyrosEvent";
 import { papyrosLog, LogType } from "./util/Logging";
 import { addListener } from "./util/Util";
 
-const t = I18n.t;
 
 export enum InputMode {
     Interactive = "interactive",
@@ -68,7 +67,7 @@ export class InputManager {
         if (this.inputMode === InputMode.Batch) {
             inputArea = `
             <textarea id="${INPUT_TA_ID}" 
-            class="border-2 h-auto w-full max-h-1/4 overflow-auto ${focusStyleClasses}"
+            class="border-2 h-auto w-full max-h-1/4 px-1 overflow-auto ${focusStyleClasses}"
             rows="5"></textarea>`;
             otherMode = InputMode.Interactive;
         } else {
