@@ -134,7 +134,7 @@ export class InputManager {
         this.inputArea.setAttribute("title", "");
         this.waiting = waiting;
         if (waiting) {
-            if(this.inputMode === InputMode.Interactive){
+            if (this.inputMode === InputMode.Interactive) {
                 this.enterButton.disabled = false;
             }
             this.inputArea.disabled = false;
