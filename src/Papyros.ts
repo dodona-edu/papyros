@@ -71,7 +71,7 @@ function renderPapyros(parent: HTMLElement, standAlone: boolean,
         <div class="col-span-1">
           <h1>${t("Papyros.output")}:</h1>
           <textarea id="${OUTPUT_TA_ID}" readonly placeholder="${t("Papyros.output_placeholder")}"
-           class="border-2 w-full min-h-1/4 max-h-3/5 overflow-auto"></textarea>
+           class="border-2 w-full min-h-1/4 max-h-3/5 overflow-auto px-1"></textarea>
           <h1>${t("Papyros.input")}:</h1>
           <div id="${INPUT_AREA_WRAPPER_ID}">
           </div>

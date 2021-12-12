@@ -74,7 +74,7 @@ export class InputManager {
             inputArea = `
             <div class="flex flex-row">
                 <input id="${INPUT_TA_ID}" type="text"
-                class="border border-transparent w-full ${focusStyleClasses} mr-0.5
+                class="border border-transparent w-full ${focusStyleClasses} mr-0.5 px-1
                 disabled:cursor-not-allowed">
                 </input>
                 <button id="${SEND_INPUT_BTN_ID}" type="button"
