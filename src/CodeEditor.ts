@@ -25,7 +25,6 @@ import { rectangularSelection } from "@codemirror/rectangular-selection";
 import { defaultHighlightStyle } from "@codemirror/highlight";
 import { lintKeymap } from "@codemirror/lint";
 import { showPanel } from "@codemirror/panel";
-import { StatusPanel } from "./StatusPanel";
 
 function getLanguageSupport(language: ProgrammingLanguage): LanguageSupport {
     switch (language) {
@@ -117,7 +116,7 @@ export class CodeEditor {
     indentCompartment: Compartment;
     placeholderCompartment: Compartment;
 
-    constructor(element: HTMLElement, language: ProgrammingLanguage, 
+    constructor(element: HTMLElement, language: ProgrammingLanguage,
         panel: HTMLElement,
         editorPlaceHolder: string, initialCode?: string, indentLength = 4) {
         this.languageCompartment = new Compartment();
