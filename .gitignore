@@ -8,10 +8,10 @@
 # testing
 /coverage
 
-# production    Build folder now also contains public files such as index.html
-# /build
+# Ignore packaged files
 /lib
 /dist
+*.tgz
 
 # misc
 .DS_Store
