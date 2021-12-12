@@ -1,7 +1,7 @@
 {
-  "name": "papyros",
-  "version": "0.1.0",
-  "private": true,
+  "name": "@dodona/papyros",
+  "version": "0.1.20-rc",
+  "private": false,
   "homepage": ".",
   "devDependencies": {
     "@babel/traverse": "^7.16.3",
@@ -61,7 +61,20 @@
       "@babel/preset-typescript"
     ]
   },
-  "compilerOptions": {
-    "allowJs": true
-  }
+  "description": "Scratchpad for multiple programming languages in the browser.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dodona-edu/papyros.git"
+  },
+  "keywords": [
+    "programming",
+    "scratchpad"
+  ],
+  "author": "Winnie De Ridder",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dodona-edu/papyros/issues"
+  },
+  "main": "./lib/index.js",
+  "types": "./lib/library.d.ts"
 }
