@@ -7,7 +7,8 @@ import { python } from "@codemirror/lang-python";
 import {
     EditorView,
     keymap, highlightSpecialChars,
-    drawSelection, highlightActiveLine
+    drawSelection, highlightActiveLine,
+    placeholder
 }
     from "@codemirror/view";
 import { history, historyKeymap } from "@codemirror/history";
@@ -23,6 +24,7 @@ import { commentKeymap } from "@codemirror/comment";
 import { rectangularSelection } from "@codemirror/rectangular-selection";
 import { defaultHighlightStyle } from "@codemirror/highlight";
 import { lintKeymap } from "@codemirror/lint";
+import { showPanel } from "@codemirror/panel";
 
 function getLanguageSupport(language: ProgrammingLanguage): LanguageSupport {
     switch (language) {
@@ -87,9 +89,9 @@ function getExtensions(): Array<Extension> {
             ...foldKeymap,
             ...commentKeymap,
             ...completionKeymap,
-            ...lintKeymap
+            ...lintKeymap,
+            indentWithTab
         ]),
-        keymap.of([indentWithTab])
     ];
 }
 
@@ -112,24 +114,34 @@ export class CodeEditor {
     editorView: EditorView;
     languageCompartment: Compartment;
     indentCompartment: Compartment;
+    placeholderCompartment: Compartment;
 
     constructor(element: HTMLElement, language: ProgrammingLanguage,
-        initialCode?: string, indentLength = 4) {
+        panel: HTMLElement,
+        editorPlaceHolder: string, initialCode?: string, indentLength = 4) {
         this.languageCompartment = new Compartment();
         this.indentCompartment = new Compartment();
+        this.placeholderCompartment = new Compartment();
         this.editorView = getEditorView(element, initialCode,
             [
                 this.languageCompartment.of(getLanguageSupport(language)),
                 this.indentCompartment.of(indentUnit.of(getIndentUnit(indentLength))),
                 keymap.of([indentWithTab]),
+                this.placeholderCompartment.of(placeholder(editorPlaceHolder)),
+                showPanel.of(() => {
+                    return { dom: panel };
+                }),
                 ...getExtensions()
             ]);
         element.replaceChildren(this.editorView.dom);
     }
 
-    setLanguage(language: ProgrammingLanguage): void {
+    setLanguage(language: ProgrammingLanguage, editorPlaceHolder: string): void {
         this.editorView.dispatch({
-            effects: this.languageCompartment.reconfigure(getLanguageSupport(language))
+            effects: [
+                this.languageCompartment.reconfigure(getLanguageSupport(language)),
+                this.placeholderCompartment.reconfigure(placeholder(editorPlaceHolder))
+            ]
         });
     }
 
@@ -141,5 +153,9 @@ export class CodeEditor {
 
     getCode(): string {
         return this.editorView.state.doc.toString();
+    }
+
+    focus(): void {
+        this.editorView.focus();
     }
 }
