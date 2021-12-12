@@ -1,6 +1,6 @@
 {
   "name": "@dodona/papyros",
-  "version": "0.1.20-rc",
+  "version": "0.1.21-rc",
   "private": false,
   "homepage": ".",
   "devDependencies": {
