@@ -56,6 +56,10 @@ export class InputManager {
         this.setInputMode(this.inputMode);
     }
 
+    get enterButton(): HTMLButtonElement {
+        return document.getElementById(SEND_INPUT_BTN_ID) as HTMLButtonElement;
+    }
+
     get inputArea(): HTMLInputElement {
         return document.getElementById(INPUT_TA_ID) as HTMLInputElement;
     }
@@ -130,6 +134,9 @@ export class InputManager {
         this.inputArea.setAttribute("title", "");
         this.waiting = waiting;
         if (waiting) {
+            if(this.inputMode === InputMode.Interactive){
+                this.enterButton.disabled = false;
+            }
             this.inputArea.disabled = false;
             this.inputArea.focus();
         } else {
@@ -139,6 +146,7 @@ export class InputManager {
                 // Remove placeholder as it is disabled
                 this.inputArea.setAttribute("placeholder", "");
                 this.inputArea.setAttribute("title", t("Papyros.input_disabled"));
+                this.enterButton.disabled = true;
             }
         }
     }
