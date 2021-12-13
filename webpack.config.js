@@ -9,8 +9,15 @@ module.exports = function (webpackEnv) {
 		module: {
 			rules: [
 				{
+					test: /\.worker\.ts?$/,
+					loader: 'worker-loader',
+					options: {
+						inline: 'no-fallback'
+					}
+				},
+				{
 					test: /\.ts?$/,
-					use: "ts-loader",
+					loader: "ts-loader",
 					exclude: /node_modules/,
 				},
 				{
@@ -32,7 +39,8 @@ module.exports = function (webpackEnv) {
 			library: {
 				name: "Papyros",
 				type: "umd"
-			}
+			},
+			publicPath: "auto"
 		},
 		mode: mode,
 		target: "web",

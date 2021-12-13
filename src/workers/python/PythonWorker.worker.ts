@@ -81,3 +81,4 @@ class PythonWorker extends Backend {
 }
 
 expose(new PythonWorker());
+export default null as any;

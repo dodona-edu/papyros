@@ -66,3 +66,4 @@ ${restoreBuiltins.join("\n")}
 }
 
 expose(new JavaScriptWorker());
+export default null as any;

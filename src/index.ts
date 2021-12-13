@@ -1,4 +1,3 @@
-import "bootstrap/dist/css/bootstrap.css";
 import { DEFAULT_LOCALE, DEFAULT_PROGRAMMING_LANGUAGE, MAIN_APP_ID } from "./Constants";
 import { Papyros } from "./Papyros";
 import { papyrosLog, LogType } from "./util/Logging";
