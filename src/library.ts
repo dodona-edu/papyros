@@ -5,4 +5,5 @@ export * from "./PapyrosEvent";
 export * from "./Papyros";
 export * from "./ProgrammingLanguage";
 export * from "./CodeEditor";
-
+export * from "./InputManager";
+export * from "./StatusPanel";
