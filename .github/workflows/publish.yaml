@@ -29,11 +29,6 @@ jobs:
         run: |
           yarn install
           yarn build
-      - name: Deploy 🚀
-        uses: JamesIves/github-pages-deploy-action@4.1.5
-        run: |
-          yarn pack
-          yarn publish
       - name: Publish @dodona/papyros to NPM
         uses: JS-DevTools/npm-publish@v1
         with:
