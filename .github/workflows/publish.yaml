@@ -2,6 +2,8 @@ name: Publish on NPM
 
 on:
   push:
+    tags:
+      - "v*"
   workflow_dispatch:
 
 jobs:
