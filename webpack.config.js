@@ -46,7 +46,7 @@ module.exports = function (webpackEnv) {
 		mode: mode,
 		target: "web",
 		devServer: {
-			contentBase: path.join(__dirname, "public"),
+			static: path.join(__dirname, "public"),
 		},
 	}
 };
