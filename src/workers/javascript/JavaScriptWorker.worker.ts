@@ -66,4 +66,5 @@ ${restoreBuiltins.join("\n")}
 }
 
 expose(new JavaScriptWorker());
+// Default export to be recognized as a TS module
 export default null as any;

@@ -8,6 +8,7 @@ module.exports = function (webpackEnv) {
 		entry: entry,
 		module: {
 			rules: [
+				// Inline bundle worker-scripts to prevent bundle resolving errors
 				{
 					test: /\.worker\.ts?$/,
 					loader: 'worker-loader',
