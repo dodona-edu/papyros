@@ -1,4 +1,4 @@
-name: Deploy on GitHub Pages
+name: Release as NPM package
 on:
   workflow_dispatch:
   push:
