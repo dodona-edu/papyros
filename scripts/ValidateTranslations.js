@@ -1,5 +1,5 @@
 const extract = require("i18n-extract");
-const translations = require("../src/Translations.js");
+const translations = require("../src/Translations.js").TRANSLATIONS;
 const fs = require("fs");
 
 const outputFile = fs.openSync("translationIssues.txt", "w");
