@@ -1,17 +1,35 @@
-name: Release as NPM package
+name: Validate translations
+
 on:
-  workflow_dispatch:
   push:
     tags:
       - 'v*'
-jobs:
-  build-and-release:
-    runs-on: ubuntu-latest
-    environment:
-      name: production
-      url: https://docs.dodona.be/papyros/
-    steps:
-      - name: Parse tag
-        id: parse_tag
-        run: "echo ${{ github.ref }} | sed 's#^refs/tags/#::set-output name=version::#'"
+  workflow_dispatch:
 
+jobs:
+  validate_translations:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Set up Node
+      uses: actions/setup-node@v2
+      with:
+        node-version: 12.x
+        cache: yarn
+    - name: Install dependencies
+      run: |
+        yarn install
+    - name: Check translations
+      run: |
+          yarn run validate:translations
+          cat translationIssues.txt
+    - name: Add annotations
+      uses: pytorch/add-annotations-github-action@master
+      with:
+        check_name: validate_translations
+        linter_output_path: translationIssues.txt
+        regex: '^(?<filename>.*?):(?<lineNumber>\d+):(?<columnNumber>\d+): (?<errorCode>\w\d+) (?<errorDesc>[\s|\w|.]*)'
+        commit_sha: ${{ github.sha }}
+      env:
+        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
