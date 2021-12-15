@@ -42,10 +42,8 @@ console.error = (...args) => {
         };
         const restoreBuiltins = [];
         const newBody = [];
-        for (const k in newContext) {
-            if (Object.prototype.hasOwnProperty.call(newContext, k)) {
-                newBody.push(`const ${k} = ctx['${k}'];`);
-            }
+        for (const k of Object.keys(newContext)) {
+            newBody.push(`const ${k} = ctx['${k}'];`);
         }
         for (const [fn, backup] of toRestore.entries()) {
             newBody.push(`${backup} = ${fn}`);
