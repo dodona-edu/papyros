@@ -7,34 +7,32 @@ import { getBackend, stopBackend } from "./BackendManager";
 import { CodeEditor } from "./CodeEditor";
 import {
     EDITOR_WRAPPER_ID, PROGRAMMING_LANGUAGE_SELECT_ID, OUTPUT_TA_ID,
-    RUN_BTN_ID, STOP_BTN_ID, LOCALE_SELECT_ID, INPUT_AREA_WRAPPER_ID
+    RUN_BTN_ID, STOP_BTN_ID, LOCALE_SELECT_ID, INPUT_AREA_WRAPPER_ID, EXAMPLE_SELECT_ID
 } from "./Constants";
 import { InputManager, InputMode } from "./InputManager";
 import { PapyrosEvent } from "./PapyrosEvent";
 import { ProgrammingLanguage, PROGRAMMING_LANGUAGES } from "./ProgrammingLanguage";
 import { LogType, papyrosLog } from "./util/Logging";
-import { addListener, getLocales, getSelectOptions, t, loadTranslations } from "./util/Util";
+import { addListener, getLocales, getSelectOptions, t, loadTranslations, renderSelect } from "./util/Util";
 import { StatusPanel } from "./StatusPanel";
+import { getExamples } from "./examples/Examples";
+import { Example } from "./examples/Example";
 
 function renderPapyros(parent: HTMLElement, standAlone: boolean,
     programmingLanguage: ProgrammingLanguage, locale: string): void {
     const programmingLanguageSelect = standAlone ?
-        `
-        <div class="mr-2">
-            <label for="${PROGRAMMING_LANGUAGE_SELECT_ID}">${t("Papyros.programming_language")}</label>
-            <select id="${PROGRAMMING_LANGUAGE_SELECT_ID}" class="m-2 border-2">
-                ${getSelectOptions(PROGRAMMING_LANGUAGES, programmingLanguage, l => t(`Papyros.programming_languages.${l}`))} 
-            </select>
-        </div>
-        ` : "";
+        renderSelect(PROGRAMMING_LANGUAGE_SELECT_ID, PROGRAMMING_LANGUAGES,
+            l => t(`Papyros.programming_languages.${l}`), programmingLanguage, t("Papyros.programming_language")) :
+        "";
+    const exampleSelect = standAlone ?
+        renderSelect(EXAMPLE_SELECT_ID, getExamples(programmingLanguage),
+            ex => ex.name, undefined, t("Papyros.examples")) : "";
     const locales = [locale, ...getLocales().filter(l => l != locale)];
     const localeSelect = standAlone ?
         `
         <div class="flex flex-row-reverse">
             <!-- row-reverse to start at the right, so put elements in order of display -->
-            <select id="${LOCALE_SELECT_ID}" class="m-2 border-2">
-                ${getSelectOptions(locales, locale, l => t(`Papyros.locales.${l}`))}
-            </select>
+            ${renderSelect(LOCALE_SELECT_ID, locales, l => t(`Papyros.locales.${l}`), locale)}
             <i class="mdi mdi-web text-4xl text-white"></i>
         </div>
         ` : "";
@@ -58,6 +56,7 @@ function renderPapyros(parent: HTMLElement, standAlone: boolean,
       <!-- Header -->
       <div class="flex flex-row items-center">
         ${programmingLanguageSelect}
+        ${exampleSelect}
       </div>
 
       <!--Body of the application-->
@@ -179,6 +178,10 @@ export class Papyros {
         }
     }
 
+    setCode(code: string): void {
+        this.codeState.editor.setCode(code);
+    }
+
     async startBackend(): Promise<void> {
         this.stateManager.setState(PapyrosState.Loading);
         const backend = getBackend(this.codeState.programmingLanguage);
@@ -196,6 +199,7 @@ export class Papyros {
             addListener<ProgrammingLanguage>(
                 PROGRAMMING_LANGUAGE_SELECT_ID, pl => {
                     papyros.setProgrammingLanguage(pl);
+                    document.getElementById(EXAMPLE_SELECT_ID)!.innerHTML = getSelectOptions(getExamples(pl), ex => ex.name);
                     // Modify search query params without reloading page
                     history.pushState(null, "", `?locale=${I18n.locale}&language=${pl}`);
                 }
@@ -203,6 +207,7 @@ export class Papyros {
             addListener(LOCALE_SELECT_ID, locale => {
                 document.location.href = `?locale=${locale}&language=${papyros.codeState.programmingLanguage}`;
             });
+            addListener<Example>(EXAMPLE_SELECT_ID, ex => papyros.setCode(ex.code))
         }
         return papyros.launch();
     }
