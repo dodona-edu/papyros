@@ -71,7 +71,7 @@ class PythonWorker extends Backend {
             // Functions and variables defined by the user become global
             // We need them to be global to let doctest work out of the box
             try {
-                return this.pyodide.runPython(code);
+                return this.pyodide.globals.get("__run_code")(code);
             } finally {
                 // Cleanup the scope after computations are done
                 // Even in case of errors

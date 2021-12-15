@@ -41,4 +41,12 @@ def __override_stdin(cb):
     global input
     input = __papyros_input
     sys.stdin.readline = __papyros_readline
+
+def __run_code(code, filename="code.py"):
+    with open(filename, "w") as f:
+        f.write(code)
+    code_obj = compile(code, filename, "exec")
+    m = sys.modules.get("__main__")
+    m.__file__ = filename
+    return exec(code_obj, globals())
 `;
