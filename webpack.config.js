@@ -3,7 +3,12 @@ const path = require("path");
 module.exports = function (webpackEnv) {
 	const mode = webpackEnv["mode"];
 	const outDir = mode === "development" ? "public" : "dist";
-	const entry = mode === "development" ? "./src/index.ts" : "./src/library.ts";
+	let entry = "";
+	if(webpackEnv["entry"]){
+		entry = webpackEnv["entry"];
+	} else {
+		entry = mode === "development" ? "./src/index.ts" : "./src/library.ts";
+	}
 	return {
 		entry: entry,
 		module: {

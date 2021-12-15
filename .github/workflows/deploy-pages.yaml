@@ -23,7 +23,7 @@ jobs:
           rm -rf dist/ 
           cp -r public/ dist
           yarn install
-          yarn build
+          yarn build:app
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@4.1.5
         with:
