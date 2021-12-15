@@ -13,10 +13,9 @@ import { InputManager, InputMode } from "./InputManager";
 import { PapyrosEvent } from "./PapyrosEvent";
 import { ProgrammingLanguage, PROGRAMMING_LANGUAGES } from "./ProgrammingLanguage";
 import { LogType, papyrosLog } from "./util/Logging";
-import { addListener, getLocales, getSelectOptions, t, loadTranslations, renderSelect } from "./util/Util";
+import { addListener, getLocales, getSelectOptions, t, loadTranslations, renderSelect, removeSelection } from "./util/Util";
 import { StatusPanel } from "./StatusPanel";
-import { getExamples } from "./examples/Examples";
-import { Example } from "./examples/Example";
+import { getCodeForExample, getExampleNames } from "./examples/Examples";
 
 function renderPapyros(parent: HTMLElement, standAlone: boolean,
     programmingLanguage: ProgrammingLanguage, locale: string): void {
@@ -25,8 +24,8 @@ function renderPapyros(parent: HTMLElement, standAlone: boolean,
             l => t(`Papyros.programming_languages.${l}`), programmingLanguage, t("Papyros.programming_language")) :
         "";
     const exampleSelect = standAlone ?
-        renderSelect(EXAMPLE_SELECT_ID, getExamples(programmingLanguage),
-            ex => ex.name, undefined, t("Papyros.examples")) : "";
+        renderSelect(EXAMPLE_SELECT_ID, getExampleNames(programmingLanguage),
+            name => name, undefined, t("Papyros.examples")) : "";
     const locales = [locale, ...getLocales().filter(l => l != locale)];
     const localeSelect = standAlone ?
         `
@@ -199,7 +198,8 @@ export class Papyros {
             addListener<ProgrammingLanguage>(
                 PROGRAMMING_LANGUAGE_SELECT_ID, pl => {
                     papyros.setProgrammingLanguage(pl);
-                    document.getElementById(EXAMPLE_SELECT_ID)!.innerHTML = getSelectOptions(getExamples(pl), ex => ex.name);
+                    document.getElementById(EXAMPLE_SELECT_ID)!.innerHTML = getSelectOptions(getExampleNames(pl), name => name);
+                    removeSelection(EXAMPLE_SELECT_ID);
                     // Modify search query params without reloading page
                     history.pushState(null, "", `?locale=${I18n.locale}&language=${pl}`);
                 }
@@ -207,7 +207,11 @@ export class Papyros {
             addListener(LOCALE_SELECT_ID, locale => {
                 document.location.href = `?locale=${locale}&language=${papyros.codeState.programmingLanguage}`;
             });
-            addListener<Example>(EXAMPLE_SELECT_ID, ex => papyros.setCode(ex.code))
+            addListener(EXAMPLE_SELECT_ID, name => {
+                const code = getCodeForExample(papyros.codeState.programmingLanguage, name);
+                papyros.setCode(code);
+            }, "input");
+            removeSelection(EXAMPLE_SELECT_ID);
         }
         return papyros.launch();
     }

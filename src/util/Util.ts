@@ -20,12 +20,8 @@ export function getLocales(): Array<string> {
 
 export function getSelectOptions<T>(
     options: Array<T>, optionText: (option: T) => string, selected?: T): string {
-    if (options.length === 0) {
-        return "";
-    }
-    const actuallySelected = selected || options[0];
     return options.map((option: T) => {
-        const selectedValue = actuallySelected === option ? "selected" : "";
+        const selectedValue = option === selected ? "selected" : "";
         return `
             <option ${selectedValue} value="${option}">
                 ${optionText(option)}
@@ -37,8 +33,10 @@ export function getSelectOptions<T>(
 export function renderSelect<T>(selectId: string,
     options: Array<T>, optionText: (option: T) => string, selected?: T,
     labelText?: string): string {
-    const label = labelText ? `<label for="${selectId}">${labelText}}</label>
+    const label = labelText ? `<label for="${selectId}">${labelText}: </label>
     `: "";
+    console.log("Rendering options for select: ", selectId);
+    console.log(options, selected, getSelectOptions(options, optionText, selected));
     const select = `
     <select id="${selectId}" class="m-2 border-2">
         ${getSelectOptions(options, optionText, selected)}
@@ -58,3 +56,6 @@ export function addListener<T extends string>(
     });
 }
 
+export function removeSelection(selectId: string): void {
+    (document.getElementById(selectId) as HTMLSelectElement).selectedIndex = -1;
+}

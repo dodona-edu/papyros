@@ -156,7 +156,7 @@ export class CodeEditor {
     }
 
     setCode(code: string): void {
-        this.editorView.state.update(
+        this.editorView.dispatch(
             { changes: { from: 0, to: this.getCode().length, insert: code } }
         );
     }

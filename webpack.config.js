@@ -31,7 +31,7 @@ module.exports = function(webpackEnv){
 	  devtool: "inline-source-map",
 	  mode: mode,
 	  devServer: {
-		contentBase: path.join(__dirname, "build"),
+		static: path.join(__dirname, "build"),
 	  },
     }
 };
