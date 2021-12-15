@@ -51,7 +51,7 @@
     "i18n-js": "^3.8.0"
   },
   "scripts": {
-    "start": "webpack serve",
+    "start": "webpack serve --mode development",
     "build": "webpack build --mode production",
     "test": "echo No tests defined yet",
     "lint": "eslint  --ext '.js' --ext '.ts' src",

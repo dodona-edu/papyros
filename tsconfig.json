@@ -21,7 +21,7 @@
     "isolatedModules": true,
     "downlevelIteration": true,
 	  "sourceMap": true,
-    "outDir": "./lib",
+    "outDir": "./dist",
     "declaration": true
   },
   "include": [

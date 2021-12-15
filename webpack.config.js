@@ -1,8 +1,8 @@
 const path = require("path");
 
 module.exports = function (webpackEnv) {
-	const mode = webpackEnv["WEBPACK_SERVE"] ? "development" : "production";
-	const outDir = mode === "development" ? "public" : "lib";
+	const mode = webpackEnv["mode"];
+	const outDir = mode === "development" ? "public" : "dist";
 	const entry = mode === "development" ? "./src/index.ts" : "./src/library.ts";
 	return {
 		entry: entry,
