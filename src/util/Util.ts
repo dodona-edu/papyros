@@ -4,7 +4,6 @@ import { TRANSLATIONS } from "../Translations";
 export const t = I18n.t;
 
 export function loadTranslations(): void {
-    console.log(TRANSLATIONS);
     for (const [language, translations] of Object.entries(TRANSLATIONS)) {
         // Add keys to already existing translations if they exist
         I18n.translations[language] = Object.assign(
