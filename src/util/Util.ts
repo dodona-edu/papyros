@@ -35,8 +35,6 @@ export function renderSelect<T>(selectId: string,
     labelText?: string): string {
     const label = labelText ? `<label for="${selectId}">${labelText}: </label>
     `: "";
-    console.log("Rendering options for select: ", selectId);
-    console.log(options, selected, getSelectOptions(options, optionText, selected));
     const select = `
     <select id="${selectId}" class="m-2 border-2">
         ${getSelectOptions(options, optionText, selected)}
