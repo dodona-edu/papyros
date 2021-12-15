@@ -97,7 +97,6 @@ class PapyrosStateManager {
 
     constructor(statusPanel: StatusPanel) {
         this.statusPanel = statusPanel;
-        this.statusPanel.initialize();
         this.runButton = document.getElementById(RUN_BTN_ID) as HTMLButtonElement;
         this.stopButton = document.getElementById(STOP_BTN_ID) as HTMLButtonElement;
         this.state = PapyrosState.Ready;
@@ -140,7 +139,7 @@ export class Papyros {
     inputManager: InputManager;
 
     constructor(programmingLanguage: ProgrammingLanguage, inputMode: InputMode) {
-        const statusPanel = new StatusPanel(() => this.runCode());
+        const statusPanel = new StatusPanel();
         this.codeState = {
             programmingLanguage: programmingLanguage,
             editor: new CodeEditor(

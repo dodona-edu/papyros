@@ -1,18 +1,8 @@
 /* eslint-disable max-len */
 import { t } from "i18n-js";
 import { RUN_BTN_ID, APPLICATION_STATE_TEXT_ID, STATE_SPINNER_ID, STOP_BTN_ID } from "./Constants";
-import { addListener } from "./util/Util";
 
 export class StatusPanel {
-    onRun: () => void;
-    constructor(onRun: () => void) {
-        this.onRun = onRun;
-    }
-
-    initialize(): void {
-        addListener(RUN_BTN_ID, () => this.onRun(), "click");
-    }
-
     get statusSpinner(): HTMLElement {
         return document.getElementById(STATE_SPINNER_ID) as HTMLElement;
     }
