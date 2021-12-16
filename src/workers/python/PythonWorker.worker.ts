@@ -1,7 +1,7 @@
 import { expose } from "comlink";
 import { Backend } from "../../Backend";
 import { PapyrosEvent } from "../../PapyrosEvent";
-import { INITIALIZATION_CODE } from "./init.py";
+import { INITIALIZATION_CODE, INITIALIZE_PYTHON_BACKEND, RUN_PYTHON_CODE } from "./init.py";
 
 interface Pyodide {
     runPython: (code: string, globals?: any) => any;
@@ -40,7 +40,7 @@ class PythonWorker extends Backend {
             const jsEvent: PapyrosEvent = "toJs" in data ? data.toJs() : Object.fromEntries(data);
             return this.onEvent(jsEvent);
         };
-        this.pyodide.globals.get("__override_builtins")(eventCallback);
+        this.pyodide.globals.get(INITIALIZE_PYTHON_BACKEND)(eventCallback);
         this.globals = new Map((this.pyodide.globals as any).toJs());
         this.initialized = true;
     }
@@ -70,7 +70,7 @@ class PythonWorker extends Backend {
             // Functions and variables defined by the user become global
             // We need them to be global to let doctest work out of the box
             try {
-                return await this.pyodide.globals.get("__run_code")(code);
+                return await this.pyodide.globals.get(RUN_PYTHON_CODE)(code);
             } finally {
                 // Cleanup the scope after computations are done
                 // Even in case of errors

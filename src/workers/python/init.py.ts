@@ -1,51 +1,72 @@
+export const INITIALIZE_PYTHON_BACKEND = "__init_papyros";
+export const RUN_PYTHON_CODE = "__run_code";
 export const INITIALIZATION_CODE =
     `
 from pyodide import to_js, eval_code_async
 import sys
+import micropip
+await micropip.install('friendly')
+import friendly
 
-def __override_builtins(cb):
-    __capture_stdout(cb)
-    __override_stdin(cb)
-    # set name to main instead of builtins
-    globals()["__name__"] = "__main__"
+__papyros = None
 
-def __capture_stdout(cb):
-    class _OutputWriter:
-        def __init__(self):
-            self.encoding = "utf-8"
-            
-        def write(self, s):
-            cb(to_js({"type": "output", "data":s}))
+class __Papyros():
+    def __init__(self, cb):
+        self.cb = cb
+        self.line = ""
+        self.override_builtins()
 
-        def flush(self):
-            pass # Given data is always immediately written
+    def message(self, data):
+        return self.cb(to_js(data))
 
-    sys.stdout = _OutputWriter()
+    def override_builtins(self):
+        self.override_output()
+        self.override_input()
 
-__papyros_input = ""
-def __override_stdin(cb):
+    def override_output(self):
+        class _OutputWriter:
+            def __init__(self, type, on_write):
+                self.encoding = "utf-8"
+                self.type = type
+                self.on_write = on_write
+                
+            def write(self, s):
+                self.on_write(dict(type=self.type, data=s))
 
-    def __papyros_input(prompt=""):
-        return __papyros_readline(prompt=prompt)[:-1] # Remove newline
+            def flush(self):
+                pass # Given data is always immediately written
 
-    def __papyros_readline(n=-1, prompt=""):
-        global __papyros_input
-        if not __papyros_input:
-            __papyros_input = cb(to_js({"type": "input", "data": prompt})) + "\\n"
-        if n < 0 or n > len(__papyros_input):
-            n = len(__papyros_input)
-        to_return = __papyros_input[0:n]
-        __papyros_input = __papyros_input[n:]
+        on_write = lambda d: self.message(d)
+        sys.stdout = _OutputWriter("output", on_write)
+        sys.stderr = _OutputWriter("error", on_write)
+
+    def readline(self, n=-1, prompt=""):
+        if not self.line:
+            self.line = self.message(dict(type="input", data=prompt)) + "\\n"
+        if n < 0 or n > len(self.line):
+            n = len(self.line)
+        to_return = self.line[0:n]
+        self.line = self.line[n:]
         return to_return
 
-    global input
-    input = __papyros_input
-    sys.stdin.readline = __papyros_readline
+    def override_input(self):
+        global input
+        input = lambda prompt="": self.readline(prompt=prompt)[:-1] # Remove newline
 
-async def __run_code(code, filename="code.py"):
+        sys.stdin.readline = self.readline
+
+def ${INITIALIZE_PYTHON_BACKEND}(cb):
+    globals()["__name__"] = "__main__"
+    global __papyros
+    __papyros = __Papyros(cb)
+
+async def ${RUN_PYTHON_CODE}(code, filename="my_code.py"):
     with open(filename, "w") as f:
         f.write(code)
     m = sys.modules.get("__main__")
     m.__file__ = filename
-    return await eval_code_async(code, globals(), filename=filename)
+    try:
+        return await eval_code_async(code, globals(), filename=filename)
+    except Exception:
+        friendly.explain_traceback()
 `;
