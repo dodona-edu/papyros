@@ -4,9 +4,10 @@ export const INITIALIZATION_CODE =
     `
 from pyodide import to_js, eval_code_async
 import sys
+import json
 import micropip
-await micropip.install('friendly')
-import friendly
+await micropip.install('friendly_traceback')
+import friendly_traceback
 
 __papyros = None
 
@@ -24,7 +25,7 @@ class __Papyros():
         self.override_input()
 
     def override_output(self):
-        class _OutputWriter:
+        class __OutputWriter:
             def __init__(self, type, on_write):
                 self.encoding = "utf-8"
                 self.type = type
@@ -35,10 +36,9 @@ class __Papyros():
 
             def flush(self):
                 pass # Given data is always immediately written
-
         on_write = lambda d: self.message(d)
-        sys.stdout = _OutputWriter("output", on_write)
-        sys.stderr = _OutputWriter("error", on_write)
+        sys.stdout = __OutputWriter("output", on_write)
+        sys.stderr = __OutputWriter("error", on_write)
 
     def readline(self, n=-1, prompt=""):
         if not self.line:
@@ -55,6 +55,36 @@ class __Papyros():
 
         sys.stdin.readline = self.readline
 
+def clean_filename(filename, tb):
+    for prefix in ["\\"", " "]:
+        tb = tb.replace(prefix + filename[1:], prefix + filename)
+    return tb
+
+def format_exception(filename, exc):
+    friendly_traceback.set_stream("capture")
+    friendly_traceback.explain_traceback()
+    ftb = friendly_traceback.get_output()
+    # For some reason __file__ data loses its first symbol?
+    ftb = clean_filename(filename, ftb)
+    parts = ftb.split("\\n\\n")
+    summary = parts[0]
+    info = parts[1]
+    where = parts[2]
+    what = parts[3]
+    summary = summary.split("\\n")
+    i = 0
+    while i < len(summary) and filename not in summary[i]:
+        i += 1
+    summary = "\\n".join(summary[i:])
+    return json.dumps(
+        dict(
+            summary=summary,
+            info=info,
+            where=where,
+            what=what
+        )
+    )
+
 def ${INITIALIZE_PYTHON_BACKEND}(cb):
     globals()["__name__"] = "__main__"
     global __papyros
@@ -63,10 +93,11 @@ def ${INITIALIZE_PYTHON_BACKEND}(cb):
 async def ${RUN_PYTHON_CODE}(code, filename="my_code.py"):
     with open(filename, "w") as f:
         f.write(code)
-    m = sys.modules.get("__main__")
-    m.__file__ = filename
+    globals()["__file__"] = filename
     try:
         return await eval_code_async(code, globals(), filename=filename)
-    except Exception:
-        friendly.explain_traceback()
+    except Exception as e:
+        global __papyros
+        __papyros.message(dict(type="error", data=format_exception(filename, e)))
+
 `;
