@@ -30,11 +30,10 @@ class PythonWorker extends Backend {
     override async launch(onEvent: (e: PapyrosEvent) => void,
         inputTextArray?: Uint8Array, inputMetaData?: Int32Array): Promise<void> {
         await super.launch(onEvent, inputTextArray, inputMetaData);
-        const pyodide = await loadPyodide({
+        this.pyodide = await loadPyodide({
             indexURL: "https://cdn.jsdelivr.net/pyodide/v0.18.1/full/",
             fullStdLib: false
         });
-        this.pyodide = pyodide;
         await this.runCode(INITIALIZATION_CODE, 0);
         // Python calls our function with a dict, which must be converted to a PapyrosEvent
         const eventCallback = (data: any): void => {
@@ -71,7 +70,7 @@ class PythonWorker extends Backend {
             // Functions and variables defined by the user become global
             // We need them to be global to let doctest work out of the box
             try {
-                return this.pyodide.globals.get("__run_code")(code);
+                return await this.pyodide.globals.get("__run_code")(code);
             } finally {
                 // Cleanup the scope after computations are done
                 // Even in case of errors

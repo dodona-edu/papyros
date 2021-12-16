@@ -6,7 +6,7 @@ export const PYTHON_EXAMPLES = {
         return n;
     return fibonacci(n - 2) + fibonacci(n - 1)`,
     "Doctests":
-`def factorial(n):
+        `def factorial(n):
     """Return the factorial of n, an exact integer >= 0.
 
     >>> [factorial(n) for n in range(6)]
@@ -59,5 +59,15 @@ def wrong_factorial(n):
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
+`,
+    "Async":
+`async def main():
+    import micropip
+    await micropip.install('snowballstemmer')
+    import snowballstemmer
+    stemmer = snowballstemmer.stemmer('english')
+    print(stemmer.stemWords('go goes going gone'.split()))
+
+main()
 `
 };

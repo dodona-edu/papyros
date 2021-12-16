@@ -1,6 +1,6 @@
 export const INITIALIZATION_CODE =
     `
-from pyodide import to_js
+from pyodide import to_js, eval_code_async
 import sys
 
 def __override_builtins(cb):
@@ -42,11 +42,10 @@ def __override_stdin(cb):
     input = __papyros_input
     sys.stdin.readline = __papyros_readline
 
-def __run_code(code, filename="code.py"):
+async def __run_code(code, filename="code.py"):
     with open(filename, "w") as f:
         f.write(code)
-    code_obj = compile(code, filename, "exec")
     m = sys.modules.get("__main__")
     m.__file__ = filename
-    return exec(code_obj, globals())
+    return await eval_code_async(code, globals(), filename=filename)
 `;
