@@ -1,13 +1,17 @@
 export const INITIALIZE_PYTHON_BACKEND = "__init_papyros";
-export const RUN_PYTHON_CODE = "__run_code";
+export const PROCESS_PYTHON_CODE = "__process_code";
 export const INITIALIZATION_CODE =
     `
 from pyodide import to_js, eval_code_async
+from js import console
 import sys
+import ast
 import json
+import html
 import micropip
 await micropip.install('friendly_traceback')
 import friendly_traceback
+from friendly_traceback.core import FriendlyTraceback
 
 __papyros = None
 
@@ -55,33 +59,39 @@ class __Papyros():
 
         sys.stdin.readline = self.readline
 
-def clean_filename(filename, tb):
-    for prefix in ["\\"", " "]:
+def clean_traceback(tb, filename):
+    # For some reason the first character of __file__ is lost in friendly_traceback
+    for prefix in ["\\"", "\\'", " "]:
         tb = tb.replace(prefix + filename[1:], prefix + filename)
-    return tb
+    return html.escape(tb)
 
 def format_exception(filename, exc):
-    friendly_traceback.set_stream("capture")
-    friendly_traceback.explain_traceback()
-    ftb = friendly_traceback.get_output()
-    # For some reason __file__ data loses its first symbol?
-    ftb = clean_filename(filename, ftb)
-    parts = ftb.split("\\n\\n")
-    summary = parts[0]
-    info = parts[1]
-    where = parts[2]
-    what = parts[3]
-    summary = summary.split("\\n")
-    i = 0
-    while i < len(summary) and filename not in summary[i]:
-        i += 1
-    summary = "\\n".join(summary[i:])
+    fr = FriendlyTraceback(type(exc), exc, exc.__traceback__)
+    fr.assign_generic()
+    fr.assign_cause()
+    tb = fr.info.get("simulated_python_traceback", "No traceback")
+    info = fr.info.get("generic", "No information available.")
+    why = fr.info.get("cause", "Unknown cause")
+    suggestions = fr.info.get("suggest", "No suggestions")
+    what = fr.info.get("message", "No message")
+    user_start = 0
+    tb_lines = tb.split("\\n")
+    while user_start < len(tb_lines) and filename not in tb_lines[user_start]:
+        user_start += 1
+    name = type(exc).__name__
+    user_end = user_start + 1
+    while user_end < len(tb_lines) and name not in tb_lines[user_end]:
+        user_end += 1
+    where = "\\n".join(tb_lines[user_start:user_end]) or "No location"
     return json.dumps(
         dict(
-            summary=summary,
+            name=name,
+            traceback=tb,
             info=info,
+            why=why,
             where=where,
-            what=what
+            what=what,
+            suggestions=suggestions
         )
     )
 
@@ -90,14 +100,19 @@ def ${INITIALIZE_PYTHON_BACKEND}(cb):
     global __papyros
     __papyros = __Papyros(cb)
 
-async def ${RUN_PYTHON_CODE}(code, filename="my_code.py"):
+async def ${PROCESS_PYTHON_CODE}(code, run, filename="my_code.py"):
     with open(filename, "w") as f:
         f.write(code)
     globals()["__file__"] = filename
     try:
-        return await eval_code_async(code, globals(), filename=filename)
+        if run:
+            await eval_code_async(code, globals(), filename=filename)
+        else:
+            compile(code, filename, mode="exec", flags=ast.PyCF_ALLOW_TOP_LEVEL_AWAIT)
+        return True
     except Exception as e:
         global __papyros
         __papyros.message(dict(type="error", data=format_exception(filename, e)))
+        return False
 
 `;

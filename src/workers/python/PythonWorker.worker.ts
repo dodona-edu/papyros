@@ -1,7 +1,7 @@
 import { expose } from "comlink";
 import { Backend } from "../../Backend";
 import { PapyrosEvent } from "../../PapyrosEvent";
-import { INITIALIZATION_CODE, INITIALIZE_PYTHON_BACKEND, RUN_PYTHON_CODE } from "./init.py";
+import { INITIALIZATION_CODE, INITIALIZE_PYTHON_BACKEND, PROCESS_PYTHON_CODE } from "./init.py";
 
 interface Pyodide {
     runPython: (code: string, globals?: any) => any;
@@ -64,19 +64,19 @@ class PythonWorker extends Backend {
     }
 
     override async _runCodeInternal(code: string): Promise<any> {
-        await this.pyodide.loadPackagesFromImports(code);
         if (this.initialized) {
             // run the code, potentially polluting the namespace
             // Functions and variables defined by the user become global
             // We need them to be global to let doctest work out of the box
-            try {
-                return await this.pyodide.globals.get(RUN_PYTHON_CODE)(code);
-            } finally {
-                // Cleanup the scope after computations are done
-                // Even in case of errors
-                this._cleanScope();
+            if (await this.pyodide.globals.get(PROCESS_PYTHON_CODE)(code, false)) {
+                await this.pyodide.loadPackagesFromImports(code);
+                await this.pyodide.globals.get(PROCESS_PYTHON_CODE)(code, true);
             }
+            // Cleanup the scope after computations are done
+            // Even in case of errors
+            this._cleanScope();
         } else {
+            await this.pyodide.loadPackagesFromImports(code);
             return this.pyodide.runPythonAsync(code);
         }
     }

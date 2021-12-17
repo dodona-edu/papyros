@@ -61,7 +61,7 @@ if __name__ == "__main__":
     doctest.testmod()
 `,
     "Async":
-`async def main():
+        `async def main():
     import micropip
     await micropip.install('snowballstemmer')
     import snowballstemmer
@@ -69,5 +69,38 @@ if __name__ == "__main__":
     print(stemmer.stemWords('go goes going gone'.split()))
 
 main()
+`,
+    "Erroneous":
+`def bitonic_search(numbers, query):
+    if not numbers:
+        return -1
+    if len(numbers) == 1:
+        return 0 if numbers[0] == query else -1
+    int top_index = find_max_index(numbers, 0, len(numbers))
+    possible_position = find_bitonic_query(numbers,query,0,top_index+1, lambda a, b: a - b)
+    if possible_position != -1:
+        return possible_position
+    else:
+        return find_bitonic_query(numbers,query,top_index, len(numbers), lambda a, b: b - a)
+
+def find_max_index(numbers, start, stop):
+    while start <= stop:
+        if stop - start <= 1:
+            return start
+        middle = (start + stop) / 2;
+        if numbers[middle] < numbers[middle+1]:
+            start = midden + 1
+        else:
+            stop = midden
+        
+def find_bitonic_query(numbers, query, start, stop, comp):
+    while start <= stop:
+        if stop - start <= 1:
+            return start if numbers[start] == query else -1
+        middle = (start + stop) / 2;
+        if comp(numbers[midden], query) <= 0:
+            start = midden
+        else:
+            stop = midden
 `
 };
