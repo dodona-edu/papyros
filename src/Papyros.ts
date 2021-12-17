@@ -16,6 +16,7 @@ import { LogType, papyrosLog } from "./util/Logging";
 import { addListener, getLocales, getSelectOptions, t, loadTranslations, renderSelect, removeSelection } from "./util/Util";
 import { StatusPanel } from "./StatusPanel";
 import { getCodeForExample, getExampleNames } from "./examples/Examples";
+import { FriendlyError, OutputManager } from "./OutputManager";
 
 function renderPapyros(parent: HTMLElement, standAlone: boolean,
     programmingLanguage: ProgrammingLanguage, locale: string): void {
@@ -68,8 +69,8 @@ function renderPapyros(parent: HTMLElement, standAlone: boolean,
         <!--Right user input and output section-->
         <div class="col-span-1">
           <h1>${t("Papyros.output")}:</h1>
-          <textarea id="${OUTPUT_TA_ID}" readonly placeholder="${t("Papyros.output_placeholder")}"
-           class="border-2 w-full min-h-1/4 max-h-3/5 overflow-auto px-1"></textarea>
+          <div id="${OUTPUT_TA_ID}" title="${t("Papyros.output_placeholder")}"
+           class="border-2 w-full min-h-1/4 max-h-3/5 overflow-auto px-1"></div>
           <h1>${t("Papyros.input")}:</h1>
           <div id="${INPUT_AREA_WRAPPER_ID}">
           </div>
@@ -137,8 +138,10 @@ export class Papyros {
     stateManager: PapyrosStateManager;
     codeState: PapyrosCodeState;
     inputManager: InputManager;
+    outputManager: OutputManager;
 
     constructor(programmingLanguage: ProgrammingLanguage, inputMode: InputMode) {
+        this.outputManager = new OutputManager(OUTPUT_TA_ID);
         const statusPanel = new StatusPanel();
         this.codeState = {
             programmingLanguage: programmingLanguage,
@@ -219,7 +222,7 @@ export class Papyros {
     onError(e: PapyrosEvent): void {
         papyrosLog(LogType.Debug, "Got error in Papyros: ", e);
         // todo prettify errors
-        this.codeState.outputArea.value += e.data;
+        this.outputManager.showError(JSON.parse(e.data) as FriendlyError);
     }
 
     async onInput(e: PapyrosEvent): Promise<void> {
@@ -232,7 +235,7 @@ export class Papyros {
         papyrosLog(LogType.Debug, "received event in onMessage", e);
         if (e.runId === this.codeState.runId) {
             if (e.type === "output") {
-                this.codeState.outputArea.value += e.data;
+                this.outputManager.showOutput(e.data);
             } else if (e.type === "input") {
                 this.onInput(e);
             } else if (e.type === "error") {
@@ -251,6 +254,7 @@ export class Papyros {
         this.codeState.runId += 1;
         this.stateManager.setState(PapyrosState.Running);
         this.inputManager.onRunStart();
+        this.outputManager.onRunStart();
         this.codeState.outputArea.value = "";
         papyrosLog(LogType.Debug, "Running code in Papyros, sending to backend");
         const start = new Date().getTime();
@@ -263,6 +267,7 @@ export class Papyros {
             const end = new Date().getTime();
             this.stateManager.setState(PapyrosState.Ready, t("Papyros.finished", { time: (end - start) / 1000 }));
             this.inputManager.onRunEnd();
+            this.outputManager.onRunEnd();
         }
     }
 
