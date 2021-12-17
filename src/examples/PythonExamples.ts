@@ -4,7 +4,9 @@ export const PYTHON_EXAMPLES = {
         `def fibonacci(n):
     if n <= 1:
         return n;
-    return fibonacci(n - 2) + fibonacci(n - 1)`,
+    return fibonacci(n - 2) + fibonacci(n - 1)
+
+print([fib(n) for n in range(10)])`,
     "Doctests":
         `def factorial(n):
     """Return the factorial of n, an exact integer >= 0.
@@ -68,10 +70,9 @@ if __name__ == "__main__":
     stemmer = snowballstemmer.stemmer('english')
     print(stemmer.stemWords('go goes going gone'.split()))
 
-main()
-`,
+await main()`,
     "Erroneous":
-`def bitonic_search(numbers, query):
+        `def bitonic_search(numbers, query):
     if not numbers:
         return -1
     if len(numbers) == 1:
@@ -102,5 +103,10 @@ def find_bitonic_query(numbers, query, start, stop, comp):
             start = midden
         else:
             stop = midden
+`,
+    "Unicode":
+`import random
+emoji = '🎅🤶👪🦌🌟❄️☃️🔥🎄🎁🧦🔔🎶🕯️🦆'
+print(''.join(random.choice(emoji) for _ in range(512)))
 `
 };
