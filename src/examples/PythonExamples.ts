@@ -6,7 +6,7 @@ export const PYTHON_EXAMPLES = {
         return n;
     return fibonacci(n - 2) + fibonacci(n - 1)
 
-print([fib(n) for n in range(10)])`,
+print([fibonacci(n) for n in range(10)])`,
     "Doctests":
         `def factorial(n):
     """Return the factorial of n, an exact integer >= 0.
