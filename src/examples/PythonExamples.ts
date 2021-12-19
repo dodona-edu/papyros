@@ -2,9 +2,7 @@ export const PYTHON_EXAMPLES = {
     "Hello world!": "print(\"Hello world!\")",
     "Fibonacci":
         `def fibonacci(n):
-    if n <= 1:
-        return n;
-    return fibonacci(n - 2) + fibonacci(n - 1)
+    return n if n <= 1 else fibonacci(n- 2) + fibonacci(n - 1)
 
 print([fibonacci(n) for n in range(10)])`,
     "Doctests":
