@@ -221,8 +221,7 @@ export class Papyros {
 
     onError(e: PapyrosEvent): void {
         papyrosLog(LogType.Debug, "Got error in Papyros: ", e);
-        // todo prettify errors
-        this.outputManager.showError(JSON.parse(e.data) as FriendlyError);
+        this.outputManager.showError(e.data);
     }
 
     async onInput(e: PapyrosEvent): Promise<void> {

@@ -47,25 +47,36 @@ export class OutputManager {
         this.renderNextElement(this.spanify(output));
     }
 
-    showError(error: FriendlyError): void {
+    showError(error: FriendlyError | string): void {
         console.log("Got friendly error: ", error);
         let errorHTML = "";
-        const shortTraceback = (error.where || error.traceback || "").trim();
-        errorHTML +=
-            `<div class="text-red-500 text-bold">
-                ${inCircle("?", error.info)}${error.name} traceback: <br/>
-                ${this.spanify(shortTraceback, true)}
-            </div>`;
-        errorHTML += newLine();
-        if (error.what) {
-            errorHTML += this.spanify(error.what.trim(), true) + newLine();
+        let errorObject = {} as FriendlyError;
+        if (typeof (error) === "string") {
+            try {
+                errorObject = JSON.parse(error) as FriendlyError;
+            } catch (_) {
+                errorHTML = this.spanify(error);
+            }
         }
-        if (error.why) {
-            errorHTML += this.spanify(error.why.trim(), true) + newLine();
+        if (Object.keys(errorObject).length > 0) {
+            const shortTraceback = (errorObject.where || errorObject.traceback || "").trim();
+            errorHTML +=
+                `<div class="text-red-500 text-bold">
+                    ${inCircle("?", errorObject.info)}${errorObject.name} traceback: <br/>
+                    ${this.spanify(shortTraceback, true)}
+                </div>`;
+            errorHTML += newLine();
+            if (errorObject.what) {
+                errorHTML += this.spanify(errorObject.what.trim(), true) + newLine();
+            }
+            if (errorObject.why) {
+                errorHTML += this.spanify(errorObject.why.trim(), true) + newLine();
+            }
+            if (errorObject.suggestions) {
+                errorHTML += this.spanify(errorObject.suggestions, true) + newLine();
+            }
         }
-        if (error.suggestions) {
-            errorHTML += this.spanify(error.suggestions, true) + newLine();
-        }
+
         this.renderNextElement(errorHTML);
     }
 
