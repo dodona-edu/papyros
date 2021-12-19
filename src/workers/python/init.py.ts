@@ -11,9 +11,6 @@ import html
 import types
 import os
 import micropip
-# temporarily until friendly_traceback does this automatically
-await micropip.install("stack_data")
-import stack_data
 await micropip.install('friendly_traceback')
 import friendly_traceback
 from friendly_traceback.core import FriendlyTraceback
@@ -106,8 +103,6 @@ async def ${PROCESS_PYTHON_CODE}(code, run, filename="my_code.py"):
     with open(filename, "w") as f:
         f.write(code)
     friendly_traceback.source_cache.cache.add(filename, code)
-    # temporary patch see top of file
-    stack_data.Source._class_local("__source_cache", {}).pop(filename, None)
     mod = types.ModuleType("__main__")
     mod.__file__ = filename
     sys.modules["__main__"] = mod
