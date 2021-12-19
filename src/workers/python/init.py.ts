@@ -55,17 +55,15 @@ class __Papyros():
         self.line = self.line[n:]
         return to_return
 
+    def globals(self, filename):
+        mod = types.ModuleType("__main__")
+        mod.__file__ = filename
+        sys.modules["__main__"] = mod
+        mod.input = lambda prompt="": self.readline(prompt=prompt)[:-1] # Remove newline
+        return mod.__dict__
+
     def override_input(self):
-        global input
-        input = lambda prompt="": self.readline(prompt=prompt)[:-1] # Remove newline
-
         sys.stdin.readline = self.readline
-
-def clean_traceback(tb, filename):
-    # For some reason the first character of __file__ is lost in friendly_traceback
-    for prefix in ["\\"", "\\'", " "]:
-        tb = tb.replace(prefix + filename[1:], prefix + filename)
-    return html.escape(tb)
 
 def format_exception(filename, exc):
     fr = FriendlyTraceback(type(exc), exc, exc.__traceback__)
@@ -100,20 +98,18 @@ def ${INITIALIZE_PYTHON_BACKEND}(cb):
     __papyros = __Papyros(cb)
 
 async def ${PROCESS_PYTHON_CODE}(code, run, filename="my_code.py"):
+    global __papyros
     with open(filename, "w") as f:
         f.write(code)
     friendly_traceback.source_cache.cache.add(filename, code)
-    mod = types.ModuleType("__main__")
-    mod.__file__ = filename
-    sys.modules["__main__"] = mod
     try:
         if run:
-            await eval_code_async(code, mod.__dict__, filename=filename, return_mode="none")
+            await eval_code_async(code, __papyros.globals(filename),
+                filename=filename, return_mode="none")
         else: # Only compile code (TODO separate Backend endpoint)
             compile(code, filename, mode="exec", flags=ast.PyCF_ALLOW_TOP_LEVEL_AWAIT)
         return True
     except Exception as e:
-        global __papyros
         __papyros.message(dict(type="error", data=format_exception(filename, e)))
         return False
 
