@@ -1,3 +1,4 @@
+import escapeHTML from "escape-html";
 import { inCircle } from "./util/HTMLShapes";
 
 export interface FriendlyError {
@@ -34,10 +35,10 @@ export class OutputManager {
         } else if (text.includes("\n")) {
             return text.split("\n")
                 .filter(text => !ignoreEmpty || text.trim().length > 0)
-                .map(text => `<span>${text}</span><br/>`)
+                .map(text => `<span>${escapeHTML(text)}</span><br/>`)
                 .join("\n");
         } else {
-            return `<span>${text}</span>`;
+            return `<span>${escapeHTML(text)}</span>`;
         }
     }
 

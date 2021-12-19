@@ -31,7 +31,10 @@ module.exports = function(webpackEnv){
 	  devtool: "inline-source-map",
 	  mode: mode,
 	  devServer: {
-		static: path.join(__dirname, "build"),
+		static: {
+		  directory: path.join(__dirname, 'build'),
+		},
+		port: 8080,
 	  },
     }
 };

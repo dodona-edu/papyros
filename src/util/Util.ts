@@ -1,6 +1,5 @@
 import I18n from "i18n-js";
 import * as TRANSLATIONS from "../Translations";
-
 export const t = I18n.t;
 
 export function loadTranslations(): void {
