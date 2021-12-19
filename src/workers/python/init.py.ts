@@ -59,11 +59,12 @@ class __Papyros():
         mod = types.ModuleType("__main__")
         mod.__file__ = filename
         sys.modules["__main__"] = mod
-        mod.input = lambda prompt="": self.readline(prompt=prompt)[:-1] # Remove newline
         return mod.__dict__
 
     def override_input(self):
         sys.stdin.readline = self.readline
+        import builtins
+        builtins.input = lambda prompt="": self.readline(prompt=prompt)[:-1] # Remove newline
 
 def format_exception(filename, exc):
     fr = FriendlyTraceback(type(exc), exc, exc.__traceback__)
