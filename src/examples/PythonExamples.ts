@@ -1,5 +1,8 @@
 export const PYTHON_EXAMPLES = {
-    "Hello world!": "print(\"Hello world!\")",
+    "Hello world!": "print('Hello, World!')",
+    "Input":
+        `name = input('What is your name?')
+print(f'Hello, {name}!')`,
     "Fibonacci":
         `def fibonacci(n):
     return n if n <= 1 else fibonacci(n- 2) + fibonacci(n - 1)
@@ -103,7 +106,7 @@ def find_bitonic_query(numbers, query, start, stop, comp):
             stop = midden
 `,
     "Unicode":
-`import random
+        `import random
 emoji = '🎅🤶👪🦌🌟❄️☃️🔥🎄🎁🧦🔔🎶🕯️🦆'
 print(''.join(random.choice(emoji) for _ in range(512)))
 `

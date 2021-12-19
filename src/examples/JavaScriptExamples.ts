@@ -1,7 +1,10 @@
 export const JAVASCRIPT_EXAMPLES = {
-    "Hello world!": "console.log(\"Hello world!\");",
+    "Hello world!": "console.log(\"Hello, World!\");",
+    "Input":
+        `const name = prompt('What is your name?')
+console.log(\`Hello, \${name}!\`)`,
     "Fibonacci":
-`function fibonacci(n){
+        `function fibonacci(n){
     if (n <= 1) {
         return n;
     }

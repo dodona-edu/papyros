@@ -115,7 +115,7 @@ async def ${PROCESS_PYTHON_CODE}(code, run, filename="my_code.py"):
     sys.modules["__main__"] = mod
     try:
         if run:
-            await eval_code_async(code, mod.__dict__, filename=filename)
+            await eval_code_async(code, mod.__dict__, filename=filename, return_mode="none")
         else: # Only compile code (TODO separate Backend endpoint)
             compile(code, filename, mode="exec", flags=ast.PyCF_ALLOW_TOP_LEVEL_AWAIT)
         return True
