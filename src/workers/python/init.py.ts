@@ -47,8 +47,6 @@ class __Papyros():
                 pass # Given data is always immediately written
 
             def __getattr__(self, item):
-                if item in self.__dict__:
-                    return self.item
                 return getattr(self.original, item)
 
         on_write = lambda d: self.message(d)
