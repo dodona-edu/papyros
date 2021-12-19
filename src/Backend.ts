@@ -79,9 +79,12 @@ export abstract class Backend {
         try {
             const data = await this._runCodeInternal(code);
             papyrosLog(LogType.Important, "ran code: " + code + " and received: ", data);
-            return this.onEvent({ type: "success", data: data, runId: runId });
+            return this.onEvent({ type: "success", data: JSON.stringify(data), runId: runId });
         } catch (error: any) {
-            const errorString = "toString" in error ? error.toString() : JSON.stringify(error);
+            const errorString =
+                typeof (error) !== "string" && "toString" in error ?
+                    error.toString() :
+                    JSON.stringify(error);
             papyrosLog(LogType.Error, "Error during execution: ", error, errorString);
             return this.onEvent({ type: "error", data: errorString, runId: runId });
         }

@@ -20,7 +20,7 @@ function __stringify(args, addNewline=false){
         asString = JSON.stringify(args)
     } else if (typeof(args) === 'string') {
         asString = args;
-    } else if ("toString" in args) {
+    } else if (typeof(args) === "object" && "toString" in args) {
         asString = args.toString();
     } else {
         asString = JSON.stringify(args);

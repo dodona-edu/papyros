@@ -33,9 +33,10 @@ export class OutputManager {
         if (text === "\n") {
             return newLine();
         } else if (text.includes("\n")) {
-            return text.split("\n")
-                .filter(text => !ignoreEmpty || text.trim().length > 0)
-                .map(text => `<span>${escapeHTML(text)}</span><br/>`)
+            const actualText = text.endsWith("\n") ? text.substring(0, text.length - 1) : text;
+            return actualText.split("\n")
+                .filter(line => !ignoreEmpty || line.trim().length > 0)
+                .map(line => `<span>${escapeHTML(line)}</span><br/>`)
                 .join("\n");
         } else {
             return `<span>${escapeHTML(text)}</span>`;
