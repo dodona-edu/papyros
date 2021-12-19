@@ -32,19 +32,28 @@ class __Papyros():
 
     def override_output(self):
         class __OutputWriter:
-            def __init__(self, type, on_write):
+            def __init__(self, type, on_write, original):
                 self.encoding = "utf-8"
                 self.type = type
                 self.on_write = on_write
+                self.original = original
                 
             def write(self, s):
+                if isinstance(s, bytes):
+                    s = s.decode("utf8", "replace")
                 self.on_write(dict(type=self.type, data=s))
 
             def flush(self):
                 pass # Given data is always immediately written
+
+            def __getattr__(self, item):
+                if item in self.__dict__:
+                    return self.item
+                return getattr(self.original, item)
+
         on_write = lambda d: self.message(d)
-        sys.stdout = __OutputWriter("output", on_write)
-        sys.stderr = __OutputWriter("error", on_write)
+        sys.stdout = __OutputWriter("output", on_write, sys.stdout)
+        sys.stderr = __OutputWriter("error", on_write, sys.stderr)
 
     def readline(self, n=-1, prompt=""):
         if not self.line:
