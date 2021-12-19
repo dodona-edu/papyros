@@ -8,7 +8,6 @@ export interface FriendlyError {
     why?: string;
     what?: string;
     where?: string;
-    suggestions?: string;
 }
 
 function newLine(): string {
@@ -71,9 +70,6 @@ export class OutputManager {
             }
             if (errorObject.why) {
                 errorHTML += this.spanify(errorObject.why.trim(), true) + newLine();
-            }
-            if (errorObject.suggestions) {
-                errorHTML += this.spanify(errorObject.suggestions, true) + newLine();
             }
         }
 

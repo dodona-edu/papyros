@@ -74,10 +74,9 @@ def format_exception(filename, exc):
     fr = FriendlyTraceback(type(exc), exc, exc.__traceback__)
     fr.assign_generic()
     fr.assign_cause()
-    tb = fr.info.get("simulated_python_traceback", "No traceback")
+    tb = fr.info.get("shortened_traceback", "No traceback")
     info = fr.info.get("generic", "No information available.")
     why = fr.info.get("cause", "Unknown cause")
-    suggestions = fr.info.get("suggest", "No suggestions")
     what = fr.info.get("message", "No message")
     user_start = 0
     tb_lines = tb.split("\\n")
@@ -95,8 +94,7 @@ def format_exception(filename, exc):
             info=info,
             why=why,
             where=where,
-            what=what,
-            suggestions=suggestions
+            what=what
         )
     )
 
