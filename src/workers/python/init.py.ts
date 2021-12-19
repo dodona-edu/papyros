@@ -8,6 +8,7 @@ import sys
 import ast
 import json
 import html
+import types
 import micropip
 await micropip.install('friendly_traceback')
 import friendly_traceback
@@ -96,18 +97,19 @@ def format_exception(filename, exc):
     )
 
 def ${INITIALIZE_PYTHON_BACKEND}(cb):
-    globals()["__name__"] = "__main__"
     global __papyros
     __papyros = __Papyros(cb)
 
 async def ${PROCESS_PYTHON_CODE}(code, run, filename="my_code.py"):
     with open(filename, "w") as f:
         f.write(code)
-    globals()["__file__"] = filename
+    mod = types.ModuleType("__main__")
+    mod.__file__ = filename
+    sys.modules["__main__"] = mod
     try:
         if run:
-            await eval_code_async(code, globals(), filename=filename)
-        else:
+            await eval_code_async(code, mod.__dict__, filename=filename)
+        else: # Only compile code (TODO separate Backend endpoint)
             compile(code, filename, mode="exec", flags=ast.PyCF_ALLOW_TOP_LEVEL_AWAIT)
         return True
     except Exception as e:
