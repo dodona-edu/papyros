@@ -9,6 +9,7 @@ import ast
 import json
 import html
 import types
+import os
 import micropip
 await micropip.install('friendly_traceback')
 import friendly_traceback
@@ -101,6 +102,8 @@ def ${INITIALIZE_PYTHON_BACKEND}(cb):
     __papyros = __Papyros(cb)
 
 async def ${PROCESS_PYTHON_CODE}(code, run, filename="my_code.py"):
+    if os.path.isfile(filename):
+        os.remove(filename)
     with open(filename, "w") as f:
         f.write(code)
     mod = types.ModuleType("__main__")
