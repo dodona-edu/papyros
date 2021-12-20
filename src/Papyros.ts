@@ -16,7 +16,7 @@ import { LogType, papyrosLog } from "./util/Logging";
 import { addListener, getLocales, getSelectOptions, t, loadTranslations, renderSelect, removeSelection } from "./util/Util";
 import { StatusPanel } from "./StatusPanel";
 import { getCodeForExample, getExampleNames } from "./examples/Examples";
-import { FriendlyError, OutputManager } from "./OutputManager";
+import { OutputManager } from "./OutputManager";
 
 function renderPapyros(parent: HTMLElement, standAlone: boolean,
     programmingLanguage: ProgrammingLanguage, locale: string): void {
@@ -39,7 +39,7 @@ function renderPapyros(parent: HTMLElement, standAlone: boolean,
 
     const navBar = standAlone ?
         `
-        <div class="bg-blue-500 text-white text-lg p-4 grid grid-cols-8 items-center">
+        <div class="bg-blue-500 text-white text-lg p-4 grid grid-cols-8 items-center max-h-1/5">
             <div class="col-span-6">
                 ${t("Papyros.Papyros")}
             </div>
@@ -64,7 +64,7 @@ function renderPapyros(parent: HTMLElement, standAlone: boolean,
         <!--Left code section-->
         <div class="col-span-1">
           <h1>${t("Papyros.code")}:</h1>
-          <div id="${EDITOR_WRAPPER_ID}" class="overflow-auto max-h-full min-h-1/4 border-solid border-gray-200 border-2"></div>
+          <div id="${EDITOR_WRAPPER_ID}" class="overflow-auto max-h-9/10 min-h-1/4 border-solid border-gray-200 border-2"></div>
         </div>
         <!--Right user input and output section-->
         <div class="col-span-1">

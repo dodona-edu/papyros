@@ -2,9 +2,14 @@ import { ProgrammingLanguage } from "../ProgrammingLanguage";
 import { JAVASCRIPT_EXAMPLES } from "./JavaScriptExamples";
 import { PYTHON_EXAMPLES } from "./PythonExamples";
 
-const EXAMPLES_MAP: Map<ProgrammingLanguage, { [key: string]: string }> = new Map([
+interface Examples {
+    [key: string]: string;
+}
+
+const EXAMPLES_MAP: Map<ProgrammingLanguage, Examples> = new Map([
     [ProgrammingLanguage.JavaScript, JAVASCRIPT_EXAMPLES],
-    [ProgrammingLanguage.Python, PYTHON_EXAMPLES]
+    // Hello, World! as key seems to cause issues for TypeScript
+    [ProgrammingLanguage.Python, PYTHON_EXAMPLES as Examples]
 ]);
 
 export function getExamples(language: ProgrammingLanguage): { [key: string]: string } {

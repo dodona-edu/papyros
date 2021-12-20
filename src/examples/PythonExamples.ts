@@ -1,5 +1,5 @@
 export const PYTHON_EXAMPLES = {
-    "Hello world!": "print('Hello, World!')",
+    "Hello, World!": "print('Hello, World!')",
     "Input":
         `name = input('What is your name?')
 print(f'Hello, {name}!')`,
