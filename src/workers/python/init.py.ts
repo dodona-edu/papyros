@@ -105,19 +105,14 @@ def ${INITIALIZE_PYTHON_BACKEND}(cb):
     global papyros
     papyros = Papyros(cb)
 
-async def ${PROCESS_PYTHON_CODE}(code, run, filename="my_code.py"):
+async def ${PROCESS_PYTHON_CODE}(code, filename="my_code.py"):
     with open(filename, "w") as f:
         f.write(code)
     friendly_traceback.source_cache.cache.add(filename, code)
     try:
-        if run:
-            await eval_code_async(code, papyros.globals(filename),
+        await eval_code_async(code, papyros.globals(filename),
                 filename=filename, return_mode="none")
-        else: # Only compile code (TODO separate Backend endpoint)
-            compile(code, filename, mode="exec", flags=ast.PyCF_ALLOW_TOP_LEVEL_AWAIT)
-        return True
     except Exception as e:
         papyros.message(dict(type="error", data=format_exception(filename, e)))
-        return False
 
 `;

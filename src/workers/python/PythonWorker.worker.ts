@@ -1,6 +1,7 @@
 import { expose } from "comlink";
 import { Backend } from "../../Backend";
 import { PapyrosEvent } from "../../PapyrosEvent";
+import { LogType, papyrosLog } from "../../util/Logging";
 import { INITIALIZATION_CODE, INITIALIZE_PYTHON_BACKEND, PROCESS_PYTHON_CODE } from "./init.py";
 
 interface Pyodide {
@@ -43,13 +44,14 @@ class PythonWorker extends Backend {
     }
 
     override async _runCodeInternal(code: string): Promise<any> {
-        if (this.initialized) {
-            if (await this.pyodide.globals.get(PROCESS_PYTHON_CODE)(code, false)) {
-                await this.pyodide.loadPackagesFromImports(code);
-                await this.pyodide.globals.get(PROCESS_PYTHON_CODE)(code, true);
-            }
-        } else {
+        try {
             await this.pyodide.loadPackagesFromImports(code);
+        } catch (e) {
+            papyrosLog(LogType.Debug, "Something went wrong while loading imports: ", e);
+        }
+        if (this.initialized) {
+            await this.pyodide.globals.get(PROCESS_PYTHON_CODE)(code);
+        } else {
             return this.pyodide.runPythonAsync(code);
         }
     }
