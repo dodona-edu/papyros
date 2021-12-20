@@ -15,9 +15,9 @@ await micropip.install('friendly_traceback')
 import friendly_traceback
 from friendly_traceback.core import FriendlyTraceback
 
-__papyros = None
+papyros = None
 
-class __Papyros():
+class Papyros():
     def __init__(self, cb):
         self.cb = cb
         self.line = ""
@@ -31,7 +31,7 @@ class __Papyros():
         self.override_input()
 
     def override_output(self):
-        class __OutputWriter:
+        class OutputWriter:
             def __init__(self, type, on_write, original):
                 self.encoding = "utf-8"
                 self.type = type
@@ -50,8 +50,8 @@ class __Papyros():
                 return getattr(self.original, item)
 
         on_write = lambda d: self.message(d)
-        sys.stdout = __OutputWriter("output", on_write, sys.stdout)
-        sys.stderr = __OutputWriter("error", on_write, sys.stderr)
+        sys.stdout = OutputWriter("output", on_write, sys.stdout)
+        sys.stderr = OutputWriter("error", on_write, sys.stderr)
 
     def readline(self, n=-1, prompt=""):
         if not self.line:
@@ -102,23 +102,22 @@ def format_exception(filename, exc):
     )
 
 def ${INITIALIZE_PYTHON_BACKEND}(cb):
-    global __papyros
-    __papyros = __Papyros(cb)
+    global papyros
+    papyros = Papyros(cb)
 
 async def ${PROCESS_PYTHON_CODE}(code, run, filename="my_code.py"):
-    global __papyros
     with open(filename, "w") as f:
         f.write(code)
     friendly_traceback.source_cache.cache.add(filename, code)
     try:
         if run:
-            await eval_code_async(code, __papyros.globals(filename),
+            await eval_code_async(code, papyros.globals(filename),
                 filename=filename, return_mode="none")
         else: # Only compile code (TODO separate Backend endpoint)
             compile(code, filename, mode="exec", flags=ast.PyCF_ALLOW_TOP_LEVEL_AWAIT)
         return True
     except Exception as e:
-        __papyros.message(dict(type="error", data=format_exception(filename, e)))
+        papyros.message(dict(type="error", data=format_exception(filename, e)))
         return False
 
 `;
