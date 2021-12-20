@@ -109,5 +109,14 @@ def find_bitonic_query(numbers, query, start, stop, comp):
         `import random
 emoji = '🎅🤶👪🦌🌟❄️☃️🔥🎄🎁🧦🔔🎶🕯️🦆'
 print(''.join(random.choice(emoji) for _ in range(512)))
+`,
+    "Files":
+`with open("names.txt", "w") as out_file:
+    for name in ["Alice", "Bob", "Charlie"]:
+        print(name, file=out_file)
+
+with open("names.txt", "r") as in_file:
+    for line in in_file:
+        print(line.rstrip())
 `
 };
