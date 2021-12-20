@@ -112,7 +112,7 @@ print(''.join(random.choice(emoji) for _ in range(512)))
 `,
     "Files":
 `with open("names.txt", "w") as out_file:
-    for name in ["Alice", "Bob", "Charlie"]:
+    for name in ["Alice", "Bob", "Claire"]:
         print(name, file=out_file)
 
 with open("names.txt", "r") as in_file:
