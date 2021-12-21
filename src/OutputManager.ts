@@ -1,4 +1,5 @@
 import escapeHTML from "escape-html";
+import { PapyrosEvent } from "./PapyrosEvent";
 import { inCircle } from "./util/HTMLShapes";
 
 export interface FriendlyError {
@@ -42,8 +43,12 @@ export class OutputManager {
         }
     }
 
-    showOutput(output: string): void {
-        this.renderNextElement(this.spanify(output));
+    showOutput(output: PapyrosEvent): void {
+        if (output.content === "img") {
+            this.renderNextElement(`<img src="data:image/png;base64, ${output.data}"></img>`);
+        } else {
+            this.renderNextElement(this.spanify(output.data));
+        }
     }
 
     showError(error: FriendlyError | string): void {

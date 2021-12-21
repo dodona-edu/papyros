@@ -111,12 +111,21 @@ emoji = '🎅🤶👪🦌🌟❄️☃️🔥🎄🎁🧦🔔🎶🕯️🦆'
 print(''.join(random.choice(emoji) for _ in range(512)))
 `,
     "Files":
-`with open("names.txt", "w") as out_file:
+        `with open("names.txt", "w") as out_file:
     for name in ["Alice", "Bob", "Claire"]:
         print(name, file=out_file)
 
 with open("names.txt", "r") as in_file:
     for line in in_file:
         print(line.rstrip())
+`,
+    "Matplotlib":
+        `import numpy as np
+import matplotlib.pyplot as plt
+
+x = np.linspace(0, 10, 1000)
+plt.plot(x, np.sin(x));
+
+plt.show()
 `
 };

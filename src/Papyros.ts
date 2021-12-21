@@ -218,7 +218,6 @@ export class Papyros {
         return papyros.launch();
     }
 
-
     onError(e: PapyrosEvent): void {
         papyrosLog(LogType.Debug, "Got error in Papyros: ", e);
         this.outputManager.showError(e.data);
@@ -234,7 +233,7 @@ export class Papyros {
         papyrosLog(LogType.Debug, "received event in onMessage", e);
         if (e.runId === this.codeState.runId) {
             if (e.type === "output") {
-                this.outputManager.showOutput(e.data);
+                this.outputManager.showOutput(e);
             } else if (e.type === "input") {
                 this.onInput(e);
             } else if (e.type === "error") {

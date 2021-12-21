@@ -29,6 +29,7 @@ class Papyros():
     def override_builtins(self):
         self.override_output()
         self.override_input()
+        self.override_matplotlib()
 
     def override_output(self):
         class OutputWriter:
@@ -72,6 +73,27 @@ class Papyros():
         sys.stdin.readline = self.readline
         import builtins
         builtins.input = lambda prompt="": self.readline(prompt=prompt)[:-1] # Remove newline
+
+    def override_matplotlib(self):
+        # workaround from https://github.com/pyodide/pyodide/issues/1518
+        import base64
+        import os
+        
+        from io import BytesIO
+    
+        os.environ['MPLBACKEND'] = 'AGG'
+        
+        import matplotlib.pyplot
+        def show():
+            buf = BytesIO()
+            matplotlib.pyplot.savefig(buf, format='png')
+            buf.seek(0)
+            # encode to a base64 str
+            img = base64.b64encode(buf.read()).decode('utf-8')
+            matplotlib.pyplot.clf()
+            self.message(dict(type="output", content="img", data=img))
+        
+        matplotlib.pyplot.show = show
 
 def format_exception(filename, exc):
     fr = FriendlyTraceback(type(exc), exc, exc.__traceback__)
