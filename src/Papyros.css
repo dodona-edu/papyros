@@ -10,7 +10,7 @@ body {
 .cm-scroller, .cm-gutters { /* Min height of the editor via both gutter and scroller */
   min-height: 20vh !important;
 }
-.cm-content {
+.cm-content, #code-output-area {
   font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
 }
 
