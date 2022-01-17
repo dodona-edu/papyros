@@ -1,7 +1,8 @@
 import { expose } from "comlink";
 import { Backend } from "../../Backend";
 import { PapyrosEvent } from "../../PapyrosEvent";
-import { INITIALIZATION_CODE } from "./init.py";
+import { LogType, papyrosLog } from "../../util/Logging";
+import { INITIALIZATION_CODE, INITIALIZE_PYTHON_BACKEND, PROCESS_PYTHON_CODE } from "./init.py";
 
 interface Pyodide {
     runPython: (code: string, globals?: any) => any;
@@ -18,62 +19,38 @@ importScripts("https://cdn.jsdelivr.net/pyodide/v0.18.1/full/pyodide.js");
 class PythonWorker extends Backend {
     pyodide: Pyodide;
     initialized: boolean;
-    globals: Map<string, any>;
 
     constructor() {
         super();
         this.pyodide = {} as Pyodide;
         this.initialized = false;
-        this.globals = new Map();
     }
 
     override async launch(onEvent: (e: PapyrosEvent) => void,
         inputTextArray?: Uint8Array, inputMetaData?: Int32Array): Promise<void> {
         await super.launch(onEvent, inputTextArray, inputMetaData);
-        const pyodide = await loadPyodide({
+        this.pyodide = await loadPyodide({
             indexURL: "https://cdn.jsdelivr.net/pyodide/v0.18.1/full/",
             fullStdLib: false
         });
-        this.pyodide = pyodide;
         await this.runCode(INITIALIZATION_CODE, 0);
         // Python calls our function with a dict, which must be converted to a PapyrosEvent
         const eventCallback = (data: any): void => {
             const jsEvent: PapyrosEvent = "toJs" in data ? data.toJs() : Object.fromEntries(data);
             return this.onEvent(jsEvent);
         };
-        this.pyodide.globals.get("__override_builtins")(eventCallback);
-        this.globals = new Map((this.pyodide.globals as any).toJs());
+        this.pyodide.globals.get(INITIALIZE_PYTHON_BACKEND)(eventCallback);
         this.initialized = true;
     }
 
-    _cleanScope(): void {
-        // Find the newly added globals
-        const pyodideGlobals = this.pyodide.globals;
-        const keysToRemove: Array<string> = [];
-        for (const key of pyodideGlobals.keys()) {
-            if (!this.globals.has(key)) {
-                keysToRemove.push(key);
-            } else {
-                // Reset value in case it was overriden
-                pyodideGlobals.set(key, this.globals.get(key));
-            }
-        }
-        // Remove them from the actual globals
-        // Separate runs of code should not be able to access variables/functions
-        // that were defined earlier on, as this could cause non-obvious bugs
-        keysToRemove.forEach(k => pyodideGlobals.delete(k));
-    }
-
     override async _runCodeInternal(code: string): Promise<any> {
-        await this.pyodide.loadPackagesFromImports(code);
+        try {
+            await this.pyodide.loadPackagesFromImports(code);
+        } catch (e) {
+            papyrosLog(LogType.Debug, "Something went wrong while loading imports: ", e);
+        }
         if (this.initialized) {
-            // run the code, potentially polluting the namespace
-            // Functions and variables defined by the user become global
-            // We need them to be global to let doctest work out of the box
-            const result = this.pyodide.runPython(code);
-            // Cleanup the scope after computations are done
-            this._cleanScope();
-            return result;
+            await this.pyodide.globals.get(PROCESS_PYTHON_CODE)(code);
         } else {
             return this.pyodide.runPythonAsync(code);
         }

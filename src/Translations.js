@@ -38,7 +38,8 @@ const ENGLISH_TRANSLATION = {
         "switch_to_interactive": "Switch to interactive mode",
         "switch_to_batch": "Switch to batch input"
     },
-    "enter": "Enter"
+    "enter": "Enter",
+    "examples": "Examples"
 };
 
 const DUTCH_TRANSLATION = {
@@ -77,7 +78,8 @@ const DUTCH_TRANSLATION = {
         "switch_to_interactive": "Wissel naar interactieve invoer",
         "switch_to_batch": "Geef invoer vooraf in"
     },
-    "enter": "Enter"
+    "enter": "Enter",
+    "examples": "Voorbeelden"
 };
 
 // JS exports to allow use in TS and JS files

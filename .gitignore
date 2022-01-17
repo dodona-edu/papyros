@@ -10,7 +10,7 @@
 
 # production    Build folder now also contains public files such as index.html
 # /build
-
+/dist
 # misc
 .DS_Store
 .env.local

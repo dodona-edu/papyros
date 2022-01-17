@@ -1,18 +1,9 @@
 /* eslint-disable max-len */
 import { t } from "i18n-js";
 import { RUN_BTN_ID, APPLICATION_STATE_TEXT_ID, STATE_SPINNER_ID, STOP_BTN_ID } from "./Constants";
-import { addListener } from "./util/Util";
+import { svgCircle } from "./util/HTMLShapes";
 
 export class StatusPanel {
-    onRun: () => void;
-    constructor(onRun: () => void) {
-        this.onRun = onRun;
-    }
-
-    initialize(): void {
-        addListener(RUN_BTN_ID, () => this.onRun(), "click");
-    }
-
     get statusSpinner(): HTMLElement {
         return document.getElementById(STATE_SPINNER_ID) as HTMLElement;
     }
@@ -47,13 +38,7 @@ export class StatusPanel {
             <div class="col-span-1 flex flex-row-reverse">
                 <p id="${APPLICATION_STATE_TEXT_ID}">
                 </p>
-                <svg id="${STATE_SPINNER_ID}" class="animate-spin mr-3 h-5 w-5 text-white"
-                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" display="none">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="red" stroke-width="4"></circle>
-                <path class="opacity-75" fill="red"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                 </path>
-               </svg>
+                ${svgCircle(STATE_SPINNER_ID, "red")}
             </div>
         </div>
         `;

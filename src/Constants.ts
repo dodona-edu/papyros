@@ -17,6 +17,7 @@ export const SWITCH_INPUT_MODE_A_ID = "switch-input-mode";
 
 export const PROGRAMMING_LANGUAGE_SELECT_ID = "programming-language-select";
 export const DEFAULT_PROGRAMMING_LANGUAGE = ProgrammingLanguage.Python;
+export const EXAMPLE_SELECT_ID = "example-select";
 
 export const LOCALE_SELECT_ID = "locale-select";
 export const DEFAULT_LOCALE = "nl";

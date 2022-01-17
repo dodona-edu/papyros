@@ -22,6 +22,7 @@ module.exports = {
         "3/5": "48vh",
         "3/4": "60vh",
         "4/5": "64vh",
+        "9/10": "72vh",
         "full": "80vh"
       },
       minHeight: {

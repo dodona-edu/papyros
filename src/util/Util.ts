@@ -1,6 +1,5 @@
 import I18n from "i18n-js";
 import * as TRANSLATIONS from "../Translations";
-
 export const t = I18n.t;
 
 export function loadTranslations(): void {
@@ -19,15 +18,30 @@ export function getLocales(): Array<string> {
 
 
 export function getSelectOptions<T>(
-    options: Array<T>, selected: T, optionText: (option: T) => string): string {
-    return options.map(option => {
-        const selectedValue = selected === option ? "selected" : "";
+    options: Array<T>, optionText: (option: T) => string, selected?: T): string {
+    return options.map((option: T) => {
+        const selectedValue = option === selected ? "selected" : "";
         return `
             <option ${selectedValue} value="${option}">
                 ${optionText(option)}
             </option>
         `;
     }).join("\n");
+}
+
+export function renderSelect<T>(selectId: string,
+    options: Array<T>, optionText: (option: T) => string, selected?: T,
+    labelText?: string): string {
+    const label = labelText ? `<label for="${selectId}">${labelText}: </label>
+    `: "";
+    const select = `
+    <select id="${selectId}" class="m-2 border-2">
+        ${getSelectOptions(options, optionText, selected)}
+    </select>`;
+    return `
+    ${label}
+    ${select}
+    `;
 }
 
 export function addListener<T extends string>(
@@ -39,3 +53,6 @@ export function addListener<T extends string>(
     });
 }
 
+export function removeSelection(selectId: string): void {
+    (document.getElementById(selectId) as HTMLSelectElement).selectedIndex = -1;
+}

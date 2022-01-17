@@ -20,7 +20,7 @@
     "noEmit": false,
     "isolatedModules": true,
     "downlevelIteration": true,
-	"sourceMap": true
+	  "sourceMap": true
   },
   "include": [
     "src"
