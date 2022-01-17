@@ -2,7 +2,7 @@ import { expose } from "comlink";
 import { Backend } from "../../Backend";
 import { PapyrosEvent } from "../../PapyrosEvent";
 import { LogType, papyrosLog } from "../../util/Logging";
-import { INITIALIZATION_CODE, INITIALIZE_PYTHON_BACKEND, PROCESS_PYTHON_CODE } from "./init.py";
+const initPythonString = require("!!raw-loader!./init.py").default;
 
 interface Pyodide {
     runPython: (code: string, globals?: any) => any;
@@ -33,13 +33,13 @@ class PythonWorker extends Backend {
             indexURL: "https://cdn.jsdelivr.net/pyodide/v0.18.1/full/",
             fullStdLib: false
         });
-        await this.runCode(INITIALIZATION_CODE, 0);
+        await this.runCode(initPythonString, 0);
         // Python calls our function with a dict, which must be converted to a PapyrosEvent
         const eventCallback = (data: any): void => {
             const jsEvent: PapyrosEvent = "toJs" in data ? data.toJs() : Object.fromEntries(data);
             return this.onEvent(jsEvent);
         };
-        this.pyodide.globals.get(INITIALIZE_PYTHON_BACKEND)(eventCallback);
+        this.pyodide.globals.get("init_papyros")(eventCallback);
         this.initialized = true;
     }
 
@@ -50,7 +50,7 @@ class PythonWorker extends Backend {
             papyrosLog(LogType.Debug, "Something went wrong while loading imports: ", e);
         }
         if (this.initialized) {
-            await this.pyodide.globals.get(PROCESS_PYTHON_CODE)(code);
+            await this.pyodide.globals.get("process_code")(code);
         } else {
             return this.pyodide.runPythonAsync(code);
         }

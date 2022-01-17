@@ -1,7 +1,3 @@
-export const INITIALIZE_PYTHON_BACKEND = "__init_papyros";
-export const PROCESS_PYTHON_CODE = "__process_code";
-export const INITIALIZATION_CODE =
-    `
 from pyodide import to_js, eval_code_async
 from js import console
 import sys
@@ -122,11 +118,11 @@ def format_exception(filename, exc):
         )
     )
 
-def ${INITIALIZE_PYTHON_BACKEND}(cb):
+def init_papyros(cb):
     global papyros
     papyros = Papyros(cb)
 
-async def ${PROCESS_PYTHON_CODE}(code, filename="my_code.py"):
+async def process_code(code, filename="my_code.py"):
     with open(filename, "w") as f:
         f.write(code)
     try:
@@ -137,5 +133,3 @@ async def ${PROCESS_PYTHON_CODE}(code, filename="my_code.py"):
         import friendly_traceback
         friendly_traceback.source_cache.cache.add(filename, code)
         papyros.message(dict(type="error", data=format_exception(filename, e)))
-
-`;
