@@ -11,9 +11,7 @@ import html
 import types
 import os
 import micropip
-await micropip.install('friendly_traceback')
-import friendly_traceback
-from friendly_traceback.core import FriendlyTraceback
+ft = micropip.install('friendly_traceback')
 
 papyros = None
 
@@ -96,13 +94,14 @@ class Papyros():
         matplotlib.pyplot.show = show
 
 def format_exception(filename, exc):
+    from friendly_traceback.core import FriendlyTraceback
     fr = FriendlyTraceback(type(exc), exc, exc.__traceback__)
     fr.assign_generic()
     fr.assign_cause()
-    tb = fr.info.get("shortened_traceback", "No traceback")
-    info = fr.info.get("generic", "No information available.")
-    why = fr.info.get("cause", "Unknown cause")
-    what = fr.info.get("message", "No message")
+    tb = fr.info.get("shortened_traceback", "")
+    info = fr.info.get("generic", "")
+    why = fr.info.get("cause", "")
+    what = fr.info.get("message", "")
     user_start = 0
     tb_lines = tb.split("\\n")
     while user_start < len(tb_lines) and filename not in tb_lines[user_start]:
@@ -111,7 +110,7 @@ def format_exception(filename, exc):
     user_end = user_start + 1
     while user_end < len(tb_lines) and name not in tb_lines[user_end]:
         user_end += 1
-    where = "\\n".join(tb_lines[user_start:user_end]) or "No location"
+    where = "\\n".join(tb_lines[user_start:user_end]) or ""
     return json.dumps(
         dict(
             name=name,
@@ -130,11 +129,13 @@ def ${INITIALIZE_PYTHON_BACKEND}(cb):
 async def ${PROCESS_PYTHON_CODE}(code, filename="my_code.py"):
     with open(filename, "w") as f:
         f.write(code)
-    friendly_traceback.source_cache.cache.add(filename, code)
     try:
         await eval_code_async(code, papyros.globals(filename),
                 filename=filename, return_mode="none")
     except Exception as e:
+        await ft
+        import friendly_traceback
+        friendly_traceback.source_cache.cache.add(filename, code)
         papyros.message(dict(type="error", data=format_exception(filename, e)))
 
 `;
