@@ -13,3 +13,7 @@ body {
 .cm-content {
   font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
 }
+
+#code-output-area {
+  white-space: pre;
+}

@@ -12,7 +12,7 @@ export interface FriendlyError {
 }
 
 function newLine(): string {
-    return "<br/>";
+    return "\n";
 }
 
 export class OutputManager {
@@ -25,22 +25,14 @@ export class OutputManager {
         this.outputArea.insertAdjacentHTML("beforeend", html);
     }
 
-    newLine(): void {
-        this.renderNextElement("<br/>");
-    }
-
     spanify(text: string, ignoreEmpty = false): string {
-        if (text === "\n") {
-            return newLine();
-        } else if (text.includes("\n")) {
-            const actualText = text.endsWith("\n") ? text.substring(0, text.length - 1) : text;
-            return actualText.split("\n")
+        if (text.includes("\n") && text !== "\n") {
+            text = text.endsWith("\n") ? text.substring(0, text.length - 1) : text;
+            text = text.split("\n")
                 .filter(line => !ignoreEmpty || line.trim().length > 0)
-                .map(line => `<span>${escapeHTML(line)}</span><br/>`)
                 .join("\n");
-        } else {
-            return `<span>${escapeHTML(text)}</span>`;
         }
+        return `<span>${escapeHTML(text)}</span>`;
     }
 
     showOutput(output: PapyrosEvent): void {
@@ -65,10 +57,11 @@ export class OutputManager {
         if (Object.keys(errorObject).length > 0) {
             const shortTraceback = (errorObject.where || errorObject.traceback || "").trim();
             errorHTML +=
-                `<div class="text-red-500 text-bold">
-                    ${inCircle("?", errorObject.info)}${errorObject.name} traceback: <br/>
-                    ${this.spanify(shortTraceback, true)}
-                </div>`;
+                // This HTML mustn't contain extra whitespace because it will be rendered literally
+                `<div class="text-red-500 text-bold">` +
+                    `${inCircle("?", errorObject.info)}${errorObject.name} traceback:` +
+                    `${this.spanify(shortTraceback, true)}` +
+                `</div>`;
             errorHTML += newLine();
             if (errorObject.what) {
                 errorHTML += this.spanify(errorObject.what.trim(), true) + newLine();
