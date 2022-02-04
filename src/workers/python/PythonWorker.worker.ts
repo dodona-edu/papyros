@@ -8,6 +8,7 @@ interface Pyodide {
     runPython: (code: string, globals?: any) => any;
     runPythonAsync: (code: string) => Promise<void>;
     loadPackagesFromImports: (code: string) => Promise<void>;
+    loadPackage: (names: string | string[]) => Promise<void>;
     globals: Map<string, any>;
 }
 declare function importScripts(...urls: string[]): void;
@@ -44,14 +45,16 @@ class PythonWorker extends Backend {
     }
 
     override async _runCodeInternal(code: string): Promise<any> {
-        try {
-            await this.pyodide.loadPackagesFromImports(code);
-        } catch (e) {
-            papyrosLog(LogType.Debug, "Something went wrong while loading imports: ", e);
-        }
         if (this.initialized) {
+            try {
+                await this.pyodide.loadPackagesFromImports(code);
+            } catch (e) {
+                papyrosLog(LogType.Debug, "Something went wrong while loading imports: ", e);
+            }
             await this.pyodide.globals.get("process_code")(code);
         } else {
+            // Don't use loadPackagesFromImports here because it loads matplotlib immediately
+            await this.pyodide.loadPackage("micropip");
             return this.pyodide.runPythonAsync(code);
         }
     }

@@ -1,12 +1,17 @@
 import json
-from pyodide import to_js
+import os
+from collections.abc import Awaitable
 
 import micropip
+from pyodide import to_js
 
 await micropip.install("python_runner")
 import python_runner
 
 ft = micropip.install('friendly_traceback')
+
+# Otherwise `import matplotlib` fails while assuming a browser backend
+os.environ['MPLBACKEND'] = 'AGG'
 
 papyros = None
 
@@ -15,13 +20,9 @@ class Papyros(python_runner.PatchedStdinRunner):
     def override_matplotlib(self):
         # workaround from https://github.com/pyodide/pyodide/issues/1518
         import base64
-        import os
-
         from io import BytesIO
-
-        os.environ['MPLBACKEND'] = 'AGG'
-
         import matplotlib.pyplot
+
         def show():
             buf = BytesIO()
             matplotlib.pyplot.savefig(buf, format='png')
@@ -42,12 +43,15 @@ class Papyros(python_runner.PatchedStdinRunner):
         with self._execute_context(source_code):
             if code_obj:
                 try:
-                    return await self.execute(code_obj, source_code, mode)
+                    result = self.execute(code_obj, source_code, mode)
                 except:
                     await ft
                     # Let `_execute_context` and `serialize_traceback`
                     # handle the exception
                     raise
+                while isinstance(result, Awaitable):
+                    result = await result
+                return result
 
     def serialize_traceback(self, exc, source_code):
         import friendly_traceback
@@ -110,11 +114,18 @@ def init_papyros(eventCallback):
             raise ValueError(f"Unknown event type {event_type}")
 
     papyros = Papyros(callback=runner_callback)
-    papyros.override_matplotlib()
 
 
 async def process_code(code, filename="my_code.py"):
     with open(filename, "w") as f:
         f.write(code)
     papyros.filename = filename
+
+    try:
+        import matplotlib
+    except ModuleNotFoundError:
+        pass
+    else:
+        papyros.override_matplotlib()
+
     await papyros.run_async(code)
