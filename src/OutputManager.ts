@@ -11,10 +11,6 @@ export interface FriendlyError {
     where?: string;
 }
 
-function newLine(): string {
-    return "\n";
-}
-
 export class OutputManager {
     outputArea: HTMLElement;
     constructor(outputWrapperId: string) {
@@ -26,20 +22,22 @@ export class OutputManager {
     }
 
     spanify(text: string, ignoreEmpty = false): string {
-        if (text.includes("\n") && text !== "\n") {
-            text = text.endsWith("\n") ? text.substring(0, text.length - 1) : text;
-            text = text.split("\n")
+        let spanText = text;
+        if (spanText.includes("\n") && spanText !== "\n") {
+            spanText = spanText.endsWith("\n") ?
+                spanText.substring(0, spanText.length - 1) : spanText;
+            spanText = spanText.split("\n")
                 .filter(line => !ignoreEmpty || line.trim().length > 0)
                 .join("\n");
         }
-        return `<span>${escapeHTML(text)}</span>`;
+        return `<span>${escapeHTML(spanText)}</span>`;
     }
 
     showOutput(output: PapyrosEvent): void {
         if (output.content === "img") {
             this.renderNextElement(`<img src="data:image/png;base64, ${output.data}"></img>`);
         } else {
-            this.renderNextElement(this.spanify(output.data));
+            this.renderNextElement(this.spanify(output.data, false));
         }
     }
 
@@ -55,19 +53,19 @@ export class OutputManager {
             }
         }
         if (Object.keys(errorObject).length > 0) {
-            const shortTraceback = (errorObject.where || errorObject.traceback || "").trim();
+            let shortTraceback = (errorObject.where || errorObject.traceback || "").trim();
+            // Prepend a bit of indentation, so every part has indentation
+            shortTraceback = this.spanify("  " + shortTraceback, true);
             errorHTML +=
-                // This HTML mustn't contain extra whitespace because it will be rendered literally
-                `<div class="text-red-500 text-bold">` +
-                    `${inCircle("?", errorObject.info)}${errorObject.name} traceback:` +
-                    `${this.spanify(shortTraceback, true)}` +
-                `</div>`;
-            errorHTML += newLine();
+`<div class="text-red-500 text-bold">
+${inCircle("?", errorObject.info)}${errorObject.name} traceback:
+${shortTraceback}
+</div>\n`;
             if (errorObject.what) {
-                errorHTML += this.spanify(errorObject.what.trim(), true) + newLine();
+                errorHTML += this.spanify(errorObject.what.trim(), true) + "\n";
             }
             if (errorObject.why) {
-                errorHTML += this.spanify(errorObject.why.trim(), true) + newLine();
+                errorHTML += this.spanify(errorObject.why.trim(), true) + "\n";
             }
         }
 
