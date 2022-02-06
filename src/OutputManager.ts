@@ -56,11 +56,9 @@ export class OutputManager {
             let shortTraceback = (errorObject.where || errorObject.traceback || "").trim();
             // Prepend a bit of indentation, so every part has indentation
             shortTraceback = this.spanify("  " + shortTraceback, true);
-            errorHTML +=
-`<div class="text-red-500 text-bold">
-${inCircle("?", errorObject.info)}${errorObject.name} traceback:
-${shortTraceback}
-</div>\n`;
+            errorHTML += "<div class=\"text-red-500 text-bold\">";
+            errorHTML += `${inCircle("?", errorObject.info)}${errorObject.name} traceback:\n`;
+            errorHTML += shortTraceback + "</div>\n";
             if (errorObject.what) {
                 errorHTML += this.spanify(errorObject.what.trim(), true) + "\n";
             }
