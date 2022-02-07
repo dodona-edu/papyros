@@ -12,28 +12,21 @@
   </a>
 </p>
 
-Papyros is a programming scratchpad in the browser. It allows running arbitrary
-in various programming languages directly in your browser, no installation required.
+Papyros is a programming scratchpad in the browser. It allows running code
+directly in your browser, no installation required. Right now, the focus in on providing a great experience for Python, while also supporting JavaScript.
 By taking away obstacles between students and coding, the learning experience becomes
-smoother and less error-prone. 
-
-Papyros aims to be:
-
-- **Easy to use** by having minimal installation instructions and an intuitive user interface
-- **Flexible** to support many programming languages
+smoother and less error-prone.
 
 Currently, Papyros provides support for the following programming languages:
 - Python, powered by [Pyodide](https://pyodide.org/en/stable/)
 - JavaScript, powered by your browser
 
-## Installation
+## Using Papyros in your own project
 
 You can install Papyros on your system using npm:
 ```shell
 npm install -g @dodona/papyros
 ```
-
-## Usage
 
 Papyros currently supports two modes of operation: stand-alone and embedded.
 
