@@ -70,7 +70,7 @@ function renderPapyros(parent: HTMLElement, standAlone: boolean,
         <div class="col-span-1">
           <h1>${t("Papyros.output")}:</h1>
           <div id="${OUTPUT_TA_ID}" title="${t("Papyros.output_placeholder")}"
-           class="border-2 w-full min-h-1/4 max-h-3/5 overflow-auto px-1"></div>
+           class="border-2 w-full min-h-1/4 max-h-3/5 overflow-auto px-1 whitespace-pre"></div>
           <h1>${t("Papyros.input")}:</h1>
           <div id="${INPUT_AREA_WRAPPER_ID}">
           </div>
@@ -164,7 +164,9 @@ export class Papyros {
     async launch(): Promise<Papyros> {
         this.stateManager.runButton.addEventListener("click", () => this.runCode());
         this.stateManager.stopButton.addEventListener("click", () => this.stop());
+        const start = new Date().getTime();
         await this.startBackend();
+        papyrosLog(LogType.Important, `Finished loading backend after ${new Date().getTime() - start} ms`);
         this.codeState.editor.focus();
         return this;
     }
