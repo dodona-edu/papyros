@@ -155,6 +155,12 @@ export class CodeEditor {
         return this.editorView.state.doc.toString();
     }
 
+    setCode(code: string): void {
+        this.editorView.dispatch(
+            { changes: { from: 0, to: this.getCode().length, insert: code } }
+        );
+    }
+
     focus(): void {
         this.editorView.focus();
     }

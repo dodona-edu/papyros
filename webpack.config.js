@@ -29,7 +29,7 @@ module.exports = function (webpackEnv) {
 						"postcss-loader"
 					],
 				}
-			],
+			]
 		},
 		resolve: {
 			extensions: [".ts", ".js"],
@@ -47,6 +47,7 @@ module.exports = function (webpackEnv) {
 		target: "web",
 		devServer: {
 			static: path.join(__dirname, "public"),
+			port: 8080,
 		},
 	}
 };

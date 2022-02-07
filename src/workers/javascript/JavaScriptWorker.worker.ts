@@ -20,7 +20,7 @@ function __stringify(args, addNewline=false){
         asString = JSON.stringify(args)
     } else if (typeof(args) === 'string') {
         asString = args;
-    } else if ("toString" in args) {
+    } else if (typeof(args) === "object" && "toString" in args) {
         asString = args.toString();
     } else {
         asString = JSON.stringify(args);
@@ -42,10 +42,8 @@ console.error = (...args) => {
         };
         const restoreBuiltins = [];
         const newBody = [];
-        for (const k in newContext) {
-            if (Object.prototype.hasOwnProperty.call(newContext, k)) {
-                newBody.push(`const ${k} = ctx['${k}'];`);
-            }
+        for (const k of Object.keys(newContext)) {
+            newBody.push(`const ${k} = ctx['${k}'];`);
         }
         for (const [fn, backup] of toRestore.entries()) {
             newBody.push(`${backup} = ${fn}`);
