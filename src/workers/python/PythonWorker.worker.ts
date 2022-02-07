@@ -1,5 +1,3 @@
-/* globals importScripts, loadPyodide */
-
 import { expose } from "comlink";
 import { Backend } from "../../Backend";
 import { PapyrosEvent } from "../../PapyrosEvent";
@@ -14,8 +12,12 @@ interface Pyodide {
     loadPackage: (names: string | string[]) => Promise<void>;
     globals: Map<string, any>;
 }
-
+// Worker specific import
+declare function importScripts(...urls: string[]): void;
+// Load in the Pyodide initialization script
 importScripts("https://cdn.jsdelivr.net/pyodide/v0.18.1/full/pyodide.js");
+// Now loadPyodide is available
+declare function loadPyodide(args: { indexURL: string; fullStdLib: boolean }): Promise<Pyodide>;
 
 
 class PythonWorker extends Backend {
