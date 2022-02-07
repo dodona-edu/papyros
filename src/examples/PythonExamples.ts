@@ -108,7 +108,8 @@ def find_bitonic_query(numbers, query, start, stop, comp):
     "Unicode":
         `import random
 emoji = '🎅🤶👪🦌🌟❄️☃️🔥🎄🎁🧦🔔🎶🕯️🦆'
-print(''.join(random.choice(emoji) for _ in range(512)))
+for _ in range(10):
+    print(''.join(random.choice(emoji) for _ in range(30)))
 `,
     "Files":
         `with open("names.txt", "w") as out_file:
