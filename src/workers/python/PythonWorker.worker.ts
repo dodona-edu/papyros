@@ -1,7 +1,10 @@
+/* globals importScripts, loadPyodide */
+
 import { expose } from "comlink";
 import { Backend } from "../../Backend";
 import { PapyrosEvent } from "../../PapyrosEvent";
 import { LogType, papyrosLog } from "../../util/Logging";
+/* eslint-disable-next-line */
 const initPythonString = require("!!raw-loader!./init.py").default;
 
 interface Pyodide {
@@ -11,8 +14,6 @@ interface Pyodide {
     loadPackage: (names: string | string[]) => Promise<void>;
     globals: Map<string, any>;
 }
-declare function importScripts(...urls: string[]): void;
-declare function loadPyodide(args: { indexURL: string; fullStdLib: boolean }): Promise<Pyodide>;
 
 importScripts("https://cdn.jsdelivr.net/pyodide/v0.18.1/full/pyodide.js");
 
