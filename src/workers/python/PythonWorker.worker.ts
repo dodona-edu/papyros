@@ -31,8 +31,9 @@ class PythonWorker extends Backend {
     }
 
     override async launch(onEvent: (e: PapyrosEvent) => void,
+        hostname: string,
         inputTextArray?: Uint8Array, inputMetaData?: Int32Array): Promise<void> {
-        await super.launch(onEvent, inputTextArray, inputMetaData);
+        await super.launch(onEvent, hostname, inputTextArray, inputMetaData);
         this.pyodide = await loadPyodide({
             indexURL: "https://cdn.jsdelivr.net/pyodide/v0.18.1/full/",
             fullStdLib: false

@@ -22,5 +22,5 @@ export const EXAMPLE_SELECT_ID = "example-select";
 export const LOCALE_SELECT_ID = "locale-select";
 export const DEFAULT_LOCALE = "nl";
 
-export const INPUT_RELATIVE_URL = "/__papyros_input";
+export const INPUT_RELATIVE_URL = "__papyros_input";
 

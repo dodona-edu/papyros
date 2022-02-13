@@ -188,12 +188,12 @@ export class Papyros {
     async startBackend(): Promise<void> {
         this.stateManager.setState(PapyrosState.Loading);
         const backend = getBackend(this.codeState.programmingLanguage);
-        await backend.launch(proxy(e => this.onMessage(e)), this.inputManager.inputTextArray, this.inputManager.inputMetaData);
+        await backend.launch(proxy(e => this.onMessage(e)), location.href, this.inputManager.inputTextArray, this.inputManager.inputMetaData);
         this.codeState.backend = backend;
         this.stateManager.setState(PapyrosState.Ready);
     }
 
-    static fromElement(parent: HTMLElement, config: PapyrosConfig): Promise<Papyros> {
+    static fromElement(parent: HTMLElement, config: PapyrosConfig): Papyros {
         loadTranslations();
         I18n.locale = config.locale;
         renderPapyros(parent, config.standAlone, config.programmingLanguage, config.locale);
@@ -217,7 +217,36 @@ export class Papyros {
             }, "input");
             removeSelection(EXAMPLE_SELECT_ID);
         }
-        return papyros.launch();
+        return papyros;
+    }
+
+    static async configureInput(allowReload: boolean): Promise<boolean> {
+        const RELOAD_STORAGE_KEY = "__papyros_reloading";
+        const SERVICE_WORKER_PATH = "./inputServiceWorker.js";
+        if (allowReload && window.localStorage.getItem(RELOAD_STORAGE_KEY)) {
+            // We are the result of the page reload, so we can start
+            window.localStorage.removeItem(RELOAD_STORAGE_KEY);
+            return true;
+        } else {
+            if (typeof SharedArrayBuffer === "undefined") {
+                papyrosLog(LogType.Important, "SharedArrayBuffers are not available. ");
+                if ("serviceWorker" in navigator) {
+                    papyrosLog(LogType.Important, "Registering service worker.");
+                    // Store that we are reloading, to prevent the next load from doing all this again
+                    await navigator.serviceWorker.register(SERVICE_WORKER_PATH, { scope: "" });
+                    if (allowReload) {
+                        window.localStorage.setItem(RELOAD_STORAGE_KEY, RELOAD_STORAGE_KEY);
+                        // service worker adds new headers that may allow SharedArrayBuffers to be used
+                        window.location.reload();
+                    }
+                    return true;
+                } else {
+                    return false;
+                }
+            } else {
+                return true;
+            }
+        }
     }
 
     onError(e: PapyrosEvent): void {

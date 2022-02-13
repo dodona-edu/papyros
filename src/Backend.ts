@@ -2,7 +2,8 @@ import { INPUT_RELATIVE_URL } from "./Constants";
 import { PapyrosEvent } from "./PapyrosEvent";
 import { LogType, papyrosLog } from "./util/Logging";
 
-function getInputCallback(inputTextArray?: Uint8Array, inputMetaData?: Int32Array): () => string {
+function getInputCallback(hostname: string,
+    inputTextArray?: Uint8Array, inputMetaData?: Int32Array): () => string {
     if (inputTextArray && inputMetaData) {
         const textDecoder = new TextDecoder();
         return () => {
@@ -26,9 +27,18 @@ function getInputCallback(inputTextArray?: Uint8Array, inputMetaData?: Int32Arra
         return () => {
             const request = new XMLHttpRequest();
             do {
-                // `false` makes the request synchronous
-                request.open("GET", INPUT_RELATIVE_URL, false);
-                request.send(null);
+                console.log("Hostname is: " + hostname);
+                papyrosLog(LogType.Important, "Requesting input from user on url: " + hostname + INPUT_RELATIVE_URL);
+                try {
+                    // `false` makes the request synchronous
+                    request.open("GET", hostname + INPUT_RELATIVE_URL, false);
+                    papyrosLog(LogType.Important, "Opened get request to " + INPUT_RELATIVE_URL);
+                    request.send(null);
+                    papyrosLog(LogType.Important, "Sent request to user, status is: " + request.status);
+                } catch (e) {
+                    console.log("Error occurred while fetching input!");
+                    console.log(e);
+                }
             } while (request.status >= 400); // todo better error handling
             return request.responseText;
         };
@@ -48,13 +58,15 @@ export abstract class Backend {
     /**
      * Initialize the backend, setting up any globals required
      * @param {function(PapyrosEvent):void} onEvent Callback for when events occur
+     * @param {string} hostname Base URL for input
      * @param {Uint8Array} inputTextArray Optional shared buffer for input
      * @param {Int32Array} inputMetaData Optional shared buffer for metadata about input
      * @return {Promise<void>} Promise of launching
      */
     launch(onEvent: (e: PapyrosEvent) => void,
+        hostname: string,
         inputTextArray?: Uint8Array, inputMetaData?: Int32Array): Promise<void> {
-        const inputCallback = getInputCallback(inputTextArray, inputMetaData);
+        const inputCallback = getInputCallback(hostname, inputTextArray, inputMetaData);
         this.onEvent = (e: PapyrosEvent) => {
             e.runId = this.runId;
             onEvent(e);

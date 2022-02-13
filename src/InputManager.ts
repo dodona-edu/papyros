@@ -164,6 +164,7 @@ export class InputManager {
         if (line) {
             papyrosLog(LogType.Debug, "Sending input to user: " + line);
             if (!this.inputMetaData || !this.inputTextArray) {
+                papyrosLog(LogType.Important, "Sending input to user: " + line);
                 await fetch(INPUT_RELATIVE_URL,
                     {
                         method: "POST",
