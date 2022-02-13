@@ -5,7 +5,10 @@ module.exports = function (webpackEnv) {
 	const outDir = mode === "development" ? "public" : "dist";
 	const entry = webpackEnv["entry"] || "./src/App.ts";
 	return {
-		entry: entry,
+		entry: {
+			index: entry,
+			inputServiceWorker: './src/inputServiceWorker.js'
+		},
 		module: {
 			rules: [
 				// Inline bundle worker-scripts to prevent bundle resolving errors
@@ -35,7 +38,7 @@ module.exports = function (webpackEnv) {
 			extensions: [".ts", ".js"],
 		},
 		output: {
-			filename: "index.js",
+			filename: "[name].js",
 			path: path.resolve(__dirname, outDir),
 			library: {
 				name: "Papyros",
