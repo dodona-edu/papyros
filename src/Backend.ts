@@ -28,13 +28,15 @@ function getInputCallback(hostname: string,
             const request = new XMLHttpRequest();
             do {
                 console.log("Hostname is: " + hostname);
-                papyrosLog(LogType.Important, "Requesting input from user on url: " + hostname + INPUT_RELATIVE_URL);
+                papyrosLog(LogType.Important, 
+                    "Requesting input from user on url: " + hostname + INPUT_RELATIVE_URL);
                 try {
                     // `false` makes the request synchronous
                     request.open("GET", hostname + INPUT_RELATIVE_URL, false);
                     papyrosLog(LogType.Important, "Opened get request to " + INPUT_RELATIVE_URL);
                     request.send(null);
-                    papyrosLog(LogType.Important, "Sent request to user, status is: " + request.status);
+                    papyrosLog(LogType.Important, 
+                        "Sent request to user, status is: " + request.status);
                 } catch (e) {
                     console.log("Error occurred while fetching input!");
                     console.log(e);

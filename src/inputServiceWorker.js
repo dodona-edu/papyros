@@ -35,7 +35,9 @@ addEventListener("fetch", function (event) {
         } else { // Requests to general Papyros pages
             promiseChain = fetch(event.request)
                 .then(response => {
-                    // Add new headers to be able to use SharedArrayBuffers if the browser supports them
+                    // Add new headers to be able to use SharedArrayBuffers
+                    // if the browser supports them
+                    // eslint-disable-next-line max-len
                     // See also https://stackoverflow.com/questions/64650119/react-error-sharedarraybuffer-is-not-defined-in-firefox
                     const newHeaders = new Headers(response.headers);
                     newHeaders.set("Cross-Origin-Embedder-Policy", "require-corp");
