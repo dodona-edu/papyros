@@ -185,6 +185,10 @@ export class Papyros {
         this.codeState.editor.setCode(code);
     }
 
+    getCode(): string {
+        return this.codeState.editor.getCode();
+    }
+
     async startBackend(): Promise<void> {
         this.stateManager.setState(PapyrosState.Loading);
         const backend = getBackend(this.codeState.programmingLanguage);
