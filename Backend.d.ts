@@ -6,11 +6,12 @@ export declare abstract class Backend {
     /**
      * Initialize the backend, setting up any globals required
      * @param {function(PapyrosEvent):void} onEvent Callback for when events occur
+     * @param {string} hostname Base URL for input
      * @param {Uint8Array} inputTextArray Optional shared buffer for input
      * @param {Int32Array} inputMetaData Optional shared buffer for metadata about input
      * @return {Promise<void>} Promise of launching
      */
-    launch(onEvent: (e: PapyrosEvent) => void, inputTextArray?: Uint8Array, inputMetaData?: Int32Array): Promise<void>;
+    launch(onEvent: (e: PapyrosEvent) => void, hostname: string, inputTextArray?: Uint8Array, inputMetaData?: Int32Array): Promise<void>;
     abstract _runCodeInternal(code: string): Promise<any>;
     /**
      * Validate and run arbitrary code

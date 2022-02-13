@@ -46,7 +46,8 @@ export declare class Papyros {
     setProgrammingLanguage(programmingLanguage: ProgrammingLanguage): Promise<void>;
     setCode(code: string): void;
     startBackend(): Promise<void>;
-    static fromElement(parent: HTMLElement, config: PapyrosConfig): Promise<Papyros>;
+    static fromElement(parent: HTMLElement, config: PapyrosConfig): Papyros;
+    static configureInput(allowReload: boolean): Promise<boolean>;
     onError(e: PapyrosEvent): void;
     onInput(e: PapyrosEvent): Promise<void>;
     onMessage(e: PapyrosEvent): void;

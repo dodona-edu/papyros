@@ -15,4 +15,4 @@ export declare const DEFAULT_PROGRAMMING_LANGUAGE = ProgrammingLanguage.Python;
 export declare const EXAMPLE_SELECT_ID = "example-select";
 export declare const LOCALE_SELECT_ID = "locale-select";
 export declare const DEFAULT_LOCALE = "nl";
-export declare const INPUT_RELATIVE_URL = "/__papyros_input";
+export declare const INPUT_RELATIVE_URL = "__papyros_input";
