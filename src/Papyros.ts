@@ -19,7 +19,7 @@ import { getCodeForExample, getExampleNames } from "./examples/Examples";
 import { OutputManager } from "./OutputManager";
 
 function renderPapyros(parent: HTMLElement, standAlone: boolean,
-    programmingLanguage: ProgrammingLanguage, locale: string): void {
+    programmingLanguage: ProgrammingLanguage, locale: string, gridStyle: "columns" | "rows"): void {
     const programmingLanguageSelect = standAlone ?
         renderSelect(PROGRAMMING_LANGUAGE_SELECT_ID, PROGRAMMING_LANGUAGES,
             l => t(`Papyros.programming_languages.${l}`), programmingLanguage, t("Papyros.programming_language")) :
@@ -48,26 +48,28 @@ function renderPapyros(parent: HTMLElement, standAlone: boolean,
             </div>
         </div>
         ` : "";
+    const header = programmingLanguage || exampleSelect ? `
+    <!-- Header -->
+    <div class="flex flex-row items-center">
+        ${programmingLanguageSelect}
+        ${exampleSelect}
+    </div>`: "";
+    const gridStyleClass = gridStyle === "columns" ? "grid-cols-2" : "grid-rows-2";
     parent.innerHTML =
         `
     <div id="papyros" class="max-h-screen h-full overflow-y-hidden">
     ${navBar}
     <div class="m-10">
-      <!-- Header -->
-      <div class="flex flex-row items-center">
-        ${programmingLanguageSelect}
-        ${exampleSelect}
-      </div>
-
+      ${header}
       <!--Body of the application-->
-      <div class="grid grid-cols-2 gap-4 box-border max-h-full">
-        <!--Left code section-->
-        <div class="col-span-1">
+      <div class="grid ${gridStyleClass} gap-4 box-border max-h-full">
+        <!-- Code section-->
+        <div>
           <h1>${t("Papyros.code")}:</h1>
           <div id="${EDITOR_WRAPPER_ID}" class="overflow-auto max-h-9/10 min-h-1/4 border-solid border-gray-200 border-2"></div>
         </div>
-        <!--Right user input and output section-->
-        <div class="col-span-1">
+        <!-- User input and output section-->
+        <div>
           <h1>${t("Papyros.output")}:</h1>
           <div id="${OUTPUT_TA_ID}" title="${t("Papyros.output_placeholder")}"
            class="border-2 w-full min-h-1/4 max-h-3/5 overflow-auto px-1 whitespace-pre"></div>
@@ -200,7 +202,7 @@ export class Papyros {
     static fromElement(parent: HTMLElement, config: PapyrosConfig): Papyros {
         loadTranslations();
         I18n.locale = config.locale;
-        renderPapyros(parent, config.standAlone, config.programmingLanguage, config.locale);
+        renderPapyros(parent, config.standAlone, config.programmingLanguage, config.locale, "rows");
         const papyros = new Papyros(config.programmingLanguage, config.inputMode);
         if (config.standAlone) {
             addListener<ProgrammingLanguage>(
