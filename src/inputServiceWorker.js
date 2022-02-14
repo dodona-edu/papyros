@@ -1,5 +1,5 @@
 /* eslint-disable no-restricted-globals */
-const papyrosHost = location.hostname;
+const papyrosHost = location.href;
 const workerData = {
     "input": ""
 };
