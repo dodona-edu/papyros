@@ -23,6 +23,7 @@ async function startPapyros(): Promise<Papyros> {
         standAlone: true,
         programmingLanguage: language,
         locale: locale,
-        inputMode: InputMode.Interactive
+        inputMode: InputMode.Interactive,
+        gridStyle: "columns"
     }).launch();
 }
