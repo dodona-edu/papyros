@@ -133,7 +133,8 @@ interface PapyrosConfig {
     standAlone: boolean;
     programmingLanguage: ProgrammingLanguage;
     locale: string;
-    inputMode: InputMode
+    inputMode: InputMode;
+    gridStyle: "rows" | "columns";
 }
 
 export class Papyros {
@@ -202,7 +203,7 @@ export class Papyros {
     static fromElement(parent: HTMLElement, config: PapyrosConfig): Papyros {
         loadTranslations();
         I18n.locale = config.locale;
-        renderPapyros(parent, config.standAlone, config.programmingLanguage, config.locale, "rows");
+        renderPapyros(parent, config.standAlone, config.programmingLanguage, config.locale, config.gridStyle);
         const papyros = new Papyros(config.programmingLanguage, config.inputMode);
         if (config.standAlone) {
             addListener<ProgrammingLanguage>(
