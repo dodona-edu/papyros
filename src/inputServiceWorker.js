@@ -1,5 +1,5 @@
 /* eslint-disable no-restricted-globals */
-const papyrosHost = location.href;
+const papyrosHost = location.href.replace("inputServiceWorker.js", "");
 const workerData = {
     "input": ""
 };
@@ -19,7 +19,6 @@ async function waitForInput() {
 
 addEventListener("fetch", function (event) {
     const url = event.request.url;
-    console.log("Fetch event to url: ", url);
     let promiseChain;
     if (url.includes(papyrosHost)) { // requests to our own domain
         // Special requests targeted at getting input from the user
@@ -42,7 +41,8 @@ addEventListener("fetch", function (event) {
                     const newHeaders = new Headers(response.headers);
                     newHeaders.set("Cross-Origin-Embedder-Policy", "require-corp");
                     newHeaders.set("Cross-Origin-Opener-Policy", "same-origin");
-
+                    newHeaders.set("Cross-Origin-Resource-Policy", "cross-origin");
+                    
                     const moddedResponse = new Response(response.body, {
                         status: response.status || 200,
                         statusText: response.statusText,

@@ -1,6 +1,7 @@
 import escapeHTML from "escape-html";
 import { PapyrosEvent } from "./PapyrosEvent";
 import { inCircle } from "./util/HTMLShapes";
+import { RenderOptions, renderWithOptions, t } from "./util/Util";
 
 export interface FriendlyError {
     name: string;
@@ -12,9 +13,10 @@ export interface FriendlyError {
 }
 
 export class OutputManager {
-    outputArea: HTMLElement;
-    constructor(outputWrapperId: string) {
-        this.outputArea = document.getElementById(outputWrapperId) as HTMLElement;
+    OUTPUT_CONTENT_ID = "papyros-output-content"
+
+    get outputArea(): HTMLElement {
+        return document.getElementById(this.OUTPUT_CONTENT_ID) as HTMLElement;
     }
 
     renderNextElement(html: string): void {
@@ -40,7 +42,6 @@ export class OutputManager {
     }
 
     showError(error: FriendlyError | string): void {
-        console.log("Got friendly error: ", error);
         let errorHTML = "";
         let errorObject = {} as FriendlyError;
         if (typeof (error) === "string") {
@@ -68,8 +69,18 @@ export class OutputManager {
         this.renderNextElement(errorHTML);
     }
 
-    onRunStart(): void {
+    render(options: RenderOptions): HTMLElement {
+        return renderWithOptions(options,
+            `<div id="${this.OUTPUT_CONTENT_ID}" title="${t("Papyros.output_placeholder")}"
+        class="border-2 w-full min-h-1/4 max-h-3/5 overflow-auto px-1 whitespace-pre"></div>`);
+    }
+
+    reset(): void {
         this.outputArea.textContent = "";
+    }
+
+    onRunStart(): void {
+        this.reset();
     }
 
     onRunEnd(): void {

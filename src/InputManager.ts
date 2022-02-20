@@ -6,7 +6,7 @@ import {
 } from "./Constants";
 import { PapyrosEvent } from "./PapyrosEvent";
 import { papyrosLog, LogType } from "./util/Logging";
-import { addListener } from "./util/Util";
+import { addListener, RenderOptions, renderWithOptions } from "./util/Util";
 
 
 export enum InputMode {
@@ -21,7 +21,7 @@ interface InputSession {
 }
 
 export class InputManager {
-    inputWrapper: HTMLElement;
+    renderOptions: RenderOptions;
     inputMode: InputMode;
     waiting: boolean;
     batchInput: string;
@@ -33,7 +33,6 @@ export class InputManager {
     textEncoder: TextEncoder;
 
     constructor(onSend: () => void, inputMode: InputMode) {
-        this.inputWrapper = document.getElementById(INPUT_AREA_WRAPPER_ID) as HTMLElement;
         this.inputMode = inputMode;
         this.session = { lineNr: 0 };
         this.batchInput = "";
@@ -52,8 +51,8 @@ export class InputManager {
             papyrosLog(LogType.Important, "Using serviceWorker for input");
         }
         this.onSend = onSend;
-        this.waiting = false; // prevent TS error from no initializer
-        this.setInputMode(this.inputMode);
+        this.waiting = false;
+        this.renderOptions = { parentElement: INPUT_AREA_WRAPPER_ID };
     }
 
     get enterButton(): HTMLButtonElement {
@@ -64,8 +63,11 @@ export class InputManager {
         return document.getElementById(INPUT_TA_ID) as HTMLInputElement;
     }
 
-    buildInputArea(): void {
-        const focusStyleClasses = " focus:outline-none focus:ring-1 focus:ring-blue-500";
+    render(options?: RenderOptions): void {
+        if (options) {
+            this.renderOptions = options;
+        }
+        const focusStyleClasses = "focus:outline-none focus:ring-1 focus:ring-blue-500";
         let inputArea = "";
         let otherMode: InputMode;
         if (this.inputMode === InputMode.Batch) {
@@ -95,10 +97,10 @@ export class InputManager {
                 ${t(`Papyros.input_modes.switch_to_${otherMode}`)}
             </a>
         `;
-        this.inputWrapper.innerHTML = `
+        renderWithOptions(this.renderOptions, `
         ${inputArea}
         ${switchMode}
-        `;
+        `);
         addListener<InputMode>(SWITCH_INPUT_MODE_A_ID, im => this.setInputMode(im),
             "click", "data-value");
         if (this.inputMode === InputMode.Interactive) {
@@ -111,6 +113,7 @@ export class InputManager {
                 await this.onInput();
             }
         };
+        this.setWaiting(this.waiting);
     }
 
     setInputMode(inputMode: InputMode): void {
@@ -120,8 +123,7 @@ export class InputManager {
             this.batchInput = this.inputArea.value;
         }
         this.inputMode = inputMode;
-        this.buildInputArea();
-        this.setWaiting(this.waiting);
+        this.render();
         if (this.inputMode === InputMode.Batch) {
             // Set previous batch
             this.inputArea.value = this.batchInput;

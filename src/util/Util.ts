@@ -58,23 +58,26 @@ export function removeSelection(selectId: string): void {
     (document.getElementById(selectId) as HTMLSelectElement).selectedIndex = -1;
 }
 
-interface RenderOptions {
+export interface RenderOptions {
     parentElement: string | HTMLElement;
-    className?: string;
+    classNames?: string;
     style?: string;
+}
+
+export function getElement(element: string | HTMLElement): HTMLElement {
+    if (typeof element === "string") {
+        return document.getElementById(element) as HTMLElement;
+    } else {
+        return element;
+    }
 }
 
 export function renderWithOptions(
     options: RenderOptions, content: string | HTMLElement
 ): HTMLElement {
-    let parent: HTMLElement;
-    if (typeof options.parentElement === "string") {
-        parent = document.getElementById(options.parentElement) as HTMLElement;
-    } else {
-        parent = options.parentElement as HTMLElement;
-    }
-    if (options.className) {
-        parent.classList.add(options.className);
+    const parent = getElement(options.parentElement);
+    if (options.classNames) {
+        parent.classList.add(...options.classNames.split(" "));
     }
     if (options.style) {
         const newStyle = parent.hasAttribute("style") ?
@@ -84,7 +87,7 @@ export function renderWithOptions(
     if (typeof content === "string") {
         parent.innerHTML = content;
     } else {
-        parent.appendChild(content);
+        parent.replaceChildren(content);
     }
     return parent;
 }

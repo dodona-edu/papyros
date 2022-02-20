@@ -2,6 +2,7 @@
 import { t } from "i18n-js";
 import { RUN_BTN_ID, APPLICATION_STATE_TEXT_ID, STATE_SPINNER_ID, STOP_BTN_ID } from "./Constants";
 import { svgCircle } from "./util/HTMLShapes";
+import { RenderOptions, renderWithOptions } from "./util/Util";
 
 export class StatusPanel {
     get statusSpinner(): HTMLElement {
@@ -20,9 +21,9 @@ export class StatusPanel {
         this.statusText.innerText = status;
     }
 
-    render(parent: HTMLElement): HTMLElement {
-        parent.innerHTML = `
-        <div class="grid grid-cols-2 items-center">
+    render(options: RenderOptions): HTMLElement {
+        return renderWithOptions(options,
+            `<div class="grid grid-cols-2 items-center">
             <div class="col-span-1 flex flex-row">
                 <button id="${RUN_BTN_ID}" type="button" 
                 class="text-white bg-blue-500 border-2 m-1 px-4 inset-y-2 rounded-lg
@@ -41,7 +42,6 @@ export class StatusPanel {
                 ${svgCircle(STATE_SPINNER_ID, "red")}
             </div>
         </div>
-        `;
-        return parent;
+        `);
     }
 }

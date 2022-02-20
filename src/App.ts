@@ -8,7 +8,7 @@ Papyros.configureInput(false).then(success => {
         return startPapyros();
     } else {
         document.getElementById(MAIN_APP_ID)!.innerHTML =
-`Your browser is unsupported.
+            `Your browser is unsupported.
 Please use a modern version of Chrome, Safari, Firefox, ...`;
     }
 });
@@ -19,11 +19,14 @@ async function startPapyros(): Promise<Papyros> {
     const urlParams = new URLSearchParams(window.location.search);
     const language = plFromString(urlParams.get("language") || DEFAULT_PROGRAMMING_LANGUAGE);
     const locale = urlParams.get("locale") || DEFAULT_LOCALE;
-    return Papyros.fromElement(rootElement, {
+    return Papyros.fromElement({
         standAlone: true,
         programmingLanguage: language,
         locale: locale,
         inputMode: InputMode.Interactive,
-        gridStyle: "columns"
+    }, {
+        papyros: {
+            parentElement: rootElement
+        }
     }).launch();
 }
