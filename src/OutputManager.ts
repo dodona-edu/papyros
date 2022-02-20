@@ -13,10 +13,10 @@ export interface FriendlyError {
 }
 
 export class OutputManager {
-    OUTPUT_CONTENT_ID = "papyros-output-content"
+    outputAreaId = "";
 
     get outputArea(): HTMLElement {
-        return document.getElementById(this.OUTPUT_CONTENT_ID) as HTMLElement;
+        return document.getElementById(this.outputAreaId) as HTMLElement;
     }
 
     renderNextElement(html: string): void {
@@ -70,9 +70,14 @@ export class OutputManager {
     }
 
     render(options: RenderOptions): HTMLElement {
-        return renderWithOptions(options,
-            `<div id="${this.OUTPUT_CONTENT_ID}" title="${t("Papyros.output_placeholder")}"
-        class="border-2 w-full min-h-1/4 max-h-3/5 overflow-auto px-1 whitespace-pre"></div>`);
+        this.outputAreaId = options.parentElementId;
+        options.attributes = new Map([
+            ["title", t("Papyros.output_placeholder")],
+            ...(options.attributes || [])
+        ]);
+        // eslint-disable-next-line max-len
+        options.classNames = `border-2 w-full min-h-1/4 max-h-3/5 overflow-auto px-1 whitespace-pre ${options.classNames}`;
+        return renderWithOptions(options, "");
     }
 
     reset(): void {

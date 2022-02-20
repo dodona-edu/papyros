@@ -15,7 +15,6 @@ Please use a modern version of Chrome, Safari, Firefox, ...`;
 
 
 async function startPapyros(): Promise<Papyros> {
-    const rootElement = document.getElementById("root")!;
     const urlParams = new URLSearchParams(window.location.search);
     const language = plFromString(urlParams.get("language") || DEFAULT_PROGRAMMING_LANGUAGE);
     const locale = urlParams.get("locale") || DEFAULT_LOCALE;
@@ -26,7 +25,7 @@ async function startPapyros(): Promise<Papyros> {
         inputMode: InputMode.Interactive,
     }, {
         papyros: {
-            parentElement: rootElement
+            parentElementId: "root"
         }
     }).launch();
 }

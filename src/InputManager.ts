@@ -52,7 +52,7 @@ export class InputManager {
         }
         this.onSend = onSend;
         this.waiting = false;
-        this.renderOptions = { parentElement: INPUT_AREA_WRAPPER_ID };
+        this.renderOptions = { parentElementId: INPUT_AREA_WRAPPER_ID };
     }
 
     get enterButton(): HTMLButtonElement {

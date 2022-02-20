@@ -59,9 +59,9 @@ export function removeSelection(selectId: string): void {
 }
 
 export interface RenderOptions {
-    parentElement: string | HTMLElement;
+    parentElementId: string;
     classNames?: string;
-    style?: string;
+    attributes?: Map<string, string>;
 }
 
 export function getElement(element: string | HTMLElement): HTMLElement {
@@ -75,14 +75,14 @@ export function getElement(element: string | HTMLElement): HTMLElement {
 export function renderWithOptions(
     options: RenderOptions, content: string | HTMLElement
 ): HTMLElement {
-    const parent = getElement(options.parentElement);
+    const parent = document.getElementById(options.parentElementId) as HTMLElement;
     if (options.classNames) {
         parent.classList.add(...options.classNames.split(" "));
     }
-    if (options.style) {
-        const newStyle = parent.hasAttribute("style") ?
-            `${parent.getAttribute("style")} ${options.style}}` : options.style;
-        parent.setAttribute("style", newStyle);
+    if (options.attributes) {
+        for (const [attr, value] of options.attributes.entries()) {
+            parent.setAttribute(attr, value);
+        }
     }
     if (typeof content === "string") {
         parent.innerHTML = content;

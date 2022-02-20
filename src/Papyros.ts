@@ -323,12 +323,12 @@ export class Papyros {
     `);
         }
         this.inputManager.render(
-            Object.assign({ parentElement: INPUT_AREA_WRAPPER_ID }, renderOptions.input)
+            Object.assign({ parentElementId: INPUT_AREA_WRAPPER_ID }, renderOptions.input)
         );
         const panel = this.stateManager.render(
-            Object.assign({ parentElement: document.createElement("div") }, renderOptions.panel)
+            Object.assign({ parentElementId: document.createElement("div") }, renderOptions.panel)
         );
-        this.codeState.editor.render(Object.assign({ parentElement: EDITOR_WRAPPER_ID }, renderOptions.code), panel);
-        this.outputManager.render(Object.assign({ parentElement: OUTPUT_TA_ID }, renderOptions.output));
+        this.codeState.editor.render(Object.assign({ parentElementId: EDITOR_WRAPPER_ID }, renderOptions.code), panel);
+        this.outputManager.render(Object.assign({ parentElementId: OUTPUT_TA_ID }, renderOptions.output));
     }
 }
