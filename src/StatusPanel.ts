@@ -37,8 +37,7 @@ export class StatusPanel {
                 </button>
             </div>
             <div class="col-span-1 flex flex-row-reverse">
-                <p id="${APPLICATION_STATE_TEXT_ID}">
-                </p>
+                <div id="${APPLICATION_STATE_TEXT_ID}"></div>
                 ${svgCircle(STATE_SPINNER_ID, "red")}
             </div>
         </div>
