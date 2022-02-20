@@ -57,3 +57,34 @@ export function addListener<T extends string>(
 export function removeSelection(selectId: string): void {
     (document.getElementById(selectId) as HTMLSelectElement).selectedIndex = -1;
 }
+
+interface RenderOptions {
+    parentElement: string | HTMLElement;
+    className?: string;
+    style?: string;
+}
+
+export function renderWithOptions(
+    options: RenderOptions, content: string | HTMLElement
+): HTMLElement {
+    let parent: HTMLElement;
+    if (typeof options.parentElement === "string") {
+        parent = document.getElementById(options.parentElement) as HTMLElement;
+    } else {
+        parent = options.parentElement as HTMLElement;
+    }
+    if (options.className) {
+        parent.classList.add(options.className);
+    }
+    if (options.style) {
+        const newStyle = parent.hasAttribute("style") ?
+            `${parent.getAttribute("style")} ${options.style}}` : options.style;
+        parent.setAttribute("style", newStyle);
+    }
+    if (typeof content === "string") {
+        parent.innerHTML = content;
+    } else {
+        parent.appendChild(content);
+    }
+    return parent;
+}
