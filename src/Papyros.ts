@@ -7,7 +7,7 @@ import { getBackend, stopBackend } from "./BackendManager";
 import { CodeEditor } from "./CodeEditor";
 import {
     EDITOR_WRAPPER_ID, PROGRAMMING_LANGUAGE_SELECT_ID, OUTPUT_TA_ID,
-    RUN_BTN_ID, STOP_BTN_ID, LOCALE_SELECT_ID, INPUT_AREA_WRAPPER_ID, EXAMPLE_SELECT_ID
+    RUN_BTN_ID, STOP_BTN_ID, LOCALE_SELECT_ID, INPUT_AREA_WRAPPER_ID, EXAMPLE_SELECT_ID, PANEL_WRAPPER_ID
 } from "./Constants";
 import { InputManager, InputMode } from "./InputManager";
 import { PapyrosEvent } from "./PapyrosEvent";
@@ -309,6 +309,7 @@ export class Papyros {
                 <div>
                     <h1>${t("Papyros.code")}:</h1>
                     <div id="${EDITOR_WRAPPER_ID}"></div>
+                    <div id="${PANEL_WRAPPER_ID}"></div>
                 </div>
                 <!-- User input and output section-->
                 <div>
@@ -326,7 +327,7 @@ export class Papyros {
             Object.assign({ parentElementId: INPUT_AREA_WRAPPER_ID }, renderOptions.input)
         );
         const panel = this.stateManager.render(
-            Object.assign({ parentElementId: document.createElement("div") }, renderOptions.panel)
+            Object.assign({ parentElementId: PANEL_WRAPPER_ID }, renderOptions.panel)
         );
         this.codeState.editor.render(Object.assign({ parentElementId: EDITOR_WRAPPER_ID }, renderOptions.code), panel);
         this.outputManager.render(Object.assign({ parentElementId: OUTPUT_TA_ID }, renderOptions.output));
