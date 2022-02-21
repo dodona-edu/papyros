@@ -25,3 +25,5 @@ export const DEFAULT_LOCALE = "nl";
 
 export const INPUT_RELATIVE_URL = "__papyros_input";
 
+export const INSTALLATION_FINISHED = "__installation_finished";
+

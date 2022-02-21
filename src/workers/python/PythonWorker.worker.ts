@@ -1,5 +1,6 @@
 import { expose } from "comlink";
 import { Backend } from "../../Backend";
+import { INSTALLATION_FINISHED } from "../../Constants";
 import { PapyrosEvent } from "../../PapyrosEvent";
 import { LogType, papyrosLog } from "../../util/Logging";
 import { Pyodide, PYODIDE_INDEX_URL, PYODIDE_JS_URL } from "./Pyodide";
@@ -22,6 +23,7 @@ class PythonWorker extends Backend {
         super();
         this.pyodide = {} as Pyodide;
         this.initialized = false;
+        this.packageCallback = this.packageCallback.bind(this);
     }
 
     override async launch(onEvent: (e: PapyrosEvent) => void,
@@ -45,15 +47,27 @@ class PythonWorker extends Backend {
     override async _runCodeInternal(code: string): Promise<any> {
         if (this.initialized) {
             try {
-                await this.pyodide.loadPackagesFromImports(code);
+                await this.pyodide.loadPackagesFromImports(code, this.packageCallback);
             } catch (e) {
                 papyrosLog(LogType.Debug, "Something went wrong while loading imports: ", e);
             }
             await this.pyodide.globals.get("process_code")(code);
         } else {
             // Don't use loadPackagesFromImports here because it loads matplotlib immediately
-            await this.pyodide.loadPackage("micropip");
+            await this.pyodide.loadPackage("micropip", this.packageCallback);
             return this.pyodide.runPythonAsync(code);
+        }
+    }
+
+    packageCallback(m: string): void {
+        papyrosLog(LogType.Debug, "Message callback from import: ", m);
+        if (m.startsWith("Loading")) {
+            this.onEvent({
+                type: "loading",
+                data: m.split(" ")[1].replace(",", "")
+            });
+        } else if (m.startsWith("No") || m.startsWith("Loaded")) {
+            this.onEvent({ type: "loading", data: INSTALLATION_FINISHED });
         }
     }
 }

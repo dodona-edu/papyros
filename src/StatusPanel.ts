@@ -23,7 +23,7 @@ export class StatusPanel {
 
     render(options: RenderOptions): HTMLElement {
         return renderWithOptions(options,
-            `<div class="grid grid-cols-2 items-center">
+            `<div class="grid grid-cols-3 items-center">
             <div class="col-span-1 flex flex-row">
                 <button id="${RUN_BTN_ID}" type="button" 
                 class="text-white bg-blue-500 border-2 m-1 px-4 inset-y-2 rounded-lg
@@ -36,7 +36,7 @@ export class StatusPanel {
                 ${t("Papyros.stop")}
                 </button>
             </div>
-            <div class="col-span-1 flex flex-row-reverse">
+            <div class="col-span-2 flex flex-row-reverse">
                 <div id="${APPLICATION_STATE_TEXT_ID}"></div>
                 ${svgCircle(STATE_SPINNER_ID, "red")}
             </div>

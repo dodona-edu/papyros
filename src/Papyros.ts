@@ -7,7 +7,7 @@ import { getBackend, stopBackend } from "./BackendManager";
 import { CodeEditor } from "./CodeEditor";
 import {
     EDITOR_WRAPPER_ID, PROGRAMMING_LANGUAGE_SELECT_ID, OUTPUT_TA_ID,
-    RUN_BTN_ID, STOP_BTN_ID, LOCALE_SELECT_ID, INPUT_AREA_WRAPPER_ID, EXAMPLE_SELECT_ID, PANEL_WRAPPER_ID
+    RUN_BTN_ID, STOP_BTN_ID, LOCALE_SELECT_ID, INPUT_AREA_WRAPPER_ID, EXAMPLE_SELECT_ID, PANEL_WRAPPER_ID, INSTALLATION_FINISHED
 } from "./Constants";
 import { InputManager, InputMode } from "./InputManager";
 import { PapyrosEvent } from "./PapyrosEvent";
@@ -45,18 +45,16 @@ class PapyrosStateManager {
     }
 
     setState(state: PapyrosState, message?: string): void {
-        if (state !== this.state) {
-            this.state = state;
-            this.stopButton.disabled = [PapyrosState.Ready, PapyrosState.Loading].includes(state);
-            if (state === PapyrosState.Ready) {
-                this.statusPanel.showSpinner(false);
-                this.runButton.disabled = false;
-            } else {
-                this.statusPanel.showSpinner(true);
-                this.runButton.disabled = true;
-            }
-            this.statusPanel.setStatus(message || t(`Papyros.states.${state}`));
+        this.state = state;
+        this.stopButton.disabled = [PapyrosState.Ready, PapyrosState.Loading].includes(state);
+        if (state === PapyrosState.Ready) {
+            this.statusPanel.showSpinner(false);
+            this.runButton.disabled = false;
+        } else {
+            this.statusPanel.showSpinner(true);
+            this.runButton.disabled = true;
         }
+        this.statusPanel.setStatus(message || t(`Papyros.states.${state}`));
     }
 
     render(options: RenderOptions): HTMLElement {
@@ -216,6 +214,14 @@ export class Papyros {
         await this.inputManager.onInput(e);
     }
 
+    async onLoading(e: PapyrosEvent): Promise<void> {
+        if (e.data === INSTALLATION_FINISHED) {
+            this.stateManager.setState(PapyrosState.Running);
+        } else {
+            this.stateManager.setState(PapyrosState.Loading, t("Papyros.installing", { package: e.data }));
+        }
+    }
+
     onMessage(e: PapyrosEvent): void {
         papyrosLog(LogType.Debug, "received event in onMessage", e);
         if (e.runId === this.codeState.runId) {
@@ -225,6 +231,8 @@ export class Papyros {
                 this.onInput(e);
             } else if (e.type === "error") {
                 this.onError(e);
+            } else if (e.type === "loading") {
+                this.onLoading(e);
             }
         } else {
             papyrosLog(LogType.Debug, "Received event with outdated runId: ", e);

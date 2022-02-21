@@ -39,7 +39,8 @@ const ENGLISH_TRANSLATION = {
         "switch_to_batch": "Switch to batch input"
     },
     "enter": "Enter",
-    "examples": "Examples"
+    "examples": "Examples",
+    "installing": "Installing %{package}"
 };
 
 const DUTCH_TRANSLATION = {
@@ -79,7 +80,8 @@ const DUTCH_TRANSLATION = {
         "switch_to_batch": "Geef invoer vooraf in"
     },
     "enter": "Enter",
-    "examples": "Voorbeelden"
+    "examples": "Voorbeelden",
+    "installing": "Bezig met installeren van %{package}"
 };
 
 const TRANSLATIONS = {
