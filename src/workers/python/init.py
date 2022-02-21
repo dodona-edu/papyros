@@ -66,11 +66,14 @@ class Papyros(python_runner.PatchedStdinRunner):
         info = fr.info.get("generic", "")
         why = fr.info.get("cause", "")
         what = fr.info.get("message", "")
+
+        name = type(exc).__name__
         user_start = 0
         tb_lines = tb.split("\n")
+        # Find first line in traceback that involves code from the user
         while user_start < len(tb_lines) and self.filename not in tb_lines[user_start]:
             user_start += 1
-        name = type(exc).__name__
+        # Find line containing Exception name, denoting end of location of issue
         user_end = user_start + 1
         while user_end < len(tb_lines) and name not in tb_lines[user_end]:
             user_end += 1
