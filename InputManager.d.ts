@@ -1,4 +1,5 @@
 import { PapyrosEvent } from "./PapyrosEvent";
+import { RenderOptions } from "./util/Util";
 export declare enum InputMode {
     Interactive = "interactive",
     Batch = "batch"
@@ -8,7 +9,7 @@ interface InputSession {
     lineNr: number;
 }
 export declare class InputManager {
-    inputWrapper: HTMLElement;
+    renderOptions: RenderOptions;
     inputMode: InputMode;
     waiting: boolean;
     batchInput: string;
@@ -20,7 +21,7 @@ export declare class InputManager {
     constructor(onSend: () => void, inputMode: InputMode);
     get enterButton(): HTMLButtonElement;
     get inputArea(): HTMLInputElement;
-    buildInputArea(): void;
+    render(options?: RenderOptions): void;
     setInputMode(inputMode: InputMode): void;
     setWaiting(waiting: boolean, prompt?: string): void;
     sendLine(): Promise<boolean>;

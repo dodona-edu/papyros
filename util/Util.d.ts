@@ -6,3 +6,10 @@ export declare function getSelectOptions<T>(options: Array<T>, optionText: (opti
 export declare function renderSelect<T>(selectId: string, options: Array<T>, optionText: (option: T) => string, selected?: T, labelText?: string): string;
 export declare function addListener<T extends string>(elementId: string, onEvent: (e: T) => void, eventType?: string, attribute?: string): void;
 export declare function removeSelection(selectId: string): void;
+export interface RenderOptions {
+    parentElementId: string;
+    classNames?: string;
+    attributes?: Map<string, string>;
+}
+export declare function getElement(element: string | HTMLElement): HTMLElement;
+export declare function renderWithOptions(options: RenderOptions, content: string | HTMLElement): HTMLElement;

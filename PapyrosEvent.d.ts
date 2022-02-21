@@ -1,6 +1,6 @@
 export interface PapyrosEvent {
-    type: "input" | "output" | "script" | "success" | "error";
+    type: "input" | "output" | "script" | "success" | "error" | "loading";
     data: string;
-    runId: number;
+    runId?: number;
     content?: string;
 }
