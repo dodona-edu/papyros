@@ -1,9 +1,18 @@
-export * from "./Constants";
-export * from "./util/Logging";
-export * from "./Backend";
-export * from "./PapyrosEvent";
-export * from "./Papyros";
-export * from "./ProgrammingLanguage";
-export * from "./CodeEditor";
-export * from "./InputManager";
-export * from "./StatusPanel";
+import { CodeEditor } from "./CodeEditor";
+import { InputManager } from "./InputManager";
+import { OutputManager } from "./OutputManager";
+import { Papyros } from "./Papyros";
+import { PapyrosEvent } from "./PapyrosEvent";
+import { ProgrammingLanguage } from "./ProgrammingLanguage";
+import { StatusPanel } from "./StatusPanel";
+
+export type { PapyrosEvent };
+export {
+    Papyros,
+    CodeEditor,
+    StatusPanel,
+    InputManager,
+    OutputManager,
+    ProgrammingLanguage
+};
+
