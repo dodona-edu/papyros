@@ -23,6 +23,6 @@ export const EXAMPLE_SELECT_ID = "example-select";
 export const LOCALE_SELECT_ID = "locale-select";
 export const DEFAULT_LOCALE = "nl";
 
-export const DEFAULT_SERVICE_WORKER = "InputServiceWorker.js";
+export const DEFAULT_SERVICE_WORKER = "inputServiceWorker.js";
 export const INPUT_RELATIVE_URL = "__papyros_input";
 

@@ -16,7 +16,7 @@ addEventListener("fetch", async function (event: FetchEvent) {
 addEventListener("install", function (event: ExtendableEvent) {
     event.waitUntil(skipWaiting());
 });
-addEventListener("activate", function (event) {
+addEventListener("activate", function (event: ExtendableEvent) {
     event.waitUntil(clients.claim());
 });
 
