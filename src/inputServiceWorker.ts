@@ -1,7 +1,10 @@
+/**
+ * Default service worker to process user input using HTTP requests
+ */
+import { DEFAULT_SERVICE_WORKER } from "./Constants";
 import { InputHandler } from "./workers/input/InputWorker";
 
-/* eslint-disable no-restricted-globals */
-const papyrosHost = location.href.replace("inputServiceWorker.js", "");
+const papyrosHost = location.href.replace(DEFAULT_SERVICE_WORKER, "");
 const inputHandler = new InputHandler(papyrosHost);
 
 addEventListener("fetch", async function (event: FetchEvent) {

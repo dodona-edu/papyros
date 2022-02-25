@@ -7,7 +7,7 @@ module.exports = function (webpackEnv) {
 	return {
 		entry: {
 			index: entry,
-			inputServiceWorker: './src/inputServiceWorker.ts'
+			inputServiceWorker: './src/InputServiceWorker.ts'
 		},
 		module: {
 			rules: [

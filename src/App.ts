@@ -1,9 +1,12 @@
-import { DEFAULT_LOCALE, DEFAULT_PROGRAMMING_LANGUAGE, MAIN_APP_ID } from "./Constants";
+import {
+    DEFAULT_LOCALE, DEFAULT_PROGRAMMING_LANGUAGE,
+    DEFAULT_SERVICE_WORKER, MAIN_APP_ID
+} from "./Constants";
 import { Papyros } from "./Papyros";
 import { plFromString } from "./ProgrammingLanguage";
 import { InputMode } from "./InputManager";
 
-Papyros.configureInput(false, "/inputServiceWorker.js").then(success => {
+Papyros.configureInput(false, `/${DEFAULT_SERVICE_WORKER}`).then(success => {
     if (success) {
         return startPapyros();
     } else {
