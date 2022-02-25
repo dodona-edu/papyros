@@ -2,4 +2,3 @@ webpack.config.js
 tailwind.config.js
 postcss.config.js
 src/Translations.js
-src/inputServiceWorker.js
