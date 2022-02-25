@@ -13,6 +13,10 @@ ft = micropip.install('friendly_traceback')
 # Otherwise `import matplotlib` fails while assuming a browser backend
 os.environ['MPLBACKEND'] = 'AGG'
 
+# Code is executed in a worker with less resources than ful environment
+import sys
+sys.setrecursionlimit(500)
+
 papyros = None
 
 
@@ -39,21 +43,25 @@ class Papyros(python_runner.PatchedStdinRunner):
         Mostly a copy of the parent `run_async` with `await ft` in case of an exception,
         because `serialize_traceback` isn't async.
         """
-        code_obj = self.pre_run(source_code, mode, top_level_await=top_level_await)
-        with self._execute_context(source_code):
-            if code_obj:
-                try:
+        try: 
+            print("Compiling!")
+            code_obj = self.pre_run(source_code, mode, top_level_await=top_level_await)
+            with self._execute_context(source_code):
+                if code_obj:
                     result = self.execute(code_obj, source_code, mode)
-                except:
-                    await ft
-                    # Let `_execute_context` and `serialize_traceback`
-                    # handle the exception
-                    raise
-                while isinstance(result, Awaitable):
-                    result = await result
-                return result
+                    while isinstance(result, Awaitable):
+                        result = await result
+                    return result
+        except: # Also catch compilation errors
+            print("Caught error, so awaiting?")
+            await ft
+            print("Await done")
+            # Let `_execute_context` and `serialize_traceback`
+            # handle the exception
+            raise
 
     def serialize_traceback(self, exc, source_code):
+        print("In serialize traceback")
         import friendly_traceback
         from friendly_traceback.core import FriendlyTraceback
 

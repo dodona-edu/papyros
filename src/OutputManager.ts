@@ -14,6 +14,7 @@ export interface FriendlyError {
 
 export class OutputManager {
     outputAreaId = "";
+    options: RenderOptions = { parentElementId: "" };
 
     get outputArea(): HTMLElement {
         return document.getElementById(this.outputAreaId) as HTMLElement;
@@ -52,12 +53,17 @@ export class OutputManager {
             }
         }
         if (Object.keys(errorObject).length > 0) {
-            let shortTraceback = (errorObject.where || errorObject.traceback || "").trim();
+            let shortTraceback = (errorObject.where || "").trim();
             // Prepend a bit of indentation, so every part has indentation
-            shortTraceback = this.spanify("  " + shortTraceback, true);
+            if (shortTraceback) {
+                shortTraceback = this.spanify("  " + shortTraceback, true);
+            }
             errorHTML += "<div class=\"text-red-500 text-bold\">";
-            errorHTML += `${inCircle("?", errorObject.info)}${errorObject.name} traceback:\n`;
-            errorHTML += shortTraceback + "</div>\n";
+            const infoQM = inCircle("?", escapeHTML(errorObject.info), "blue-500");
+            const tracebackEM = inCircle("!", escapeHTML(errorObject.traceback), "red-500");
+            errorHTML += `${infoQM}${errorObject.name} traceback:${tracebackEM}\n`;
+            errorHTML += shortTraceback;
+            errorHTML += "</div>\n";
             if (errorObject.what) {
                 errorHTML += this.spanify(errorObject.what.trim(), true) + "\n";
             }
@@ -72,16 +78,18 @@ export class OutputManager {
     render(options: RenderOptions): HTMLElement {
         this.outputAreaId = options.parentElementId;
         options.attributes = new Map([
-            ["title", t("Papyros.output_placeholder")],
+            ["data-placeholder", t("Papyros.output_placeholder")],
             ...(options.attributes || [])
         ]);
+        const initialClassNames = options.classNames ? options.classNames + " " : "";
         // eslint-disable-next-line max-len
-        options.classNames = `border-2 w-full min-h-1/4 max-h-3/5 overflow-auto px-1 whitespace-pre ${options.classNames}`;
+        options.classNames = `${initialClassNames}border-2 w-full min-h-1/4 max-h-3/5 overflow-auto px-1 whitespace-pre with-placeholder`;
+        this.options = options;
         return renderWithOptions(options, "");
     }
 
     reset(): void {
-        this.outputArea.textContent = "";
+        this.render(this.options);
     }
 
     onRunStart(): void {
