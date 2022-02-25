@@ -176,9 +176,8 @@ export class Papyros {
         return papyros;
     }
 
-    static async configureInput(allowReload: boolean): Promise<boolean> {
+    static async configureInput(allowReload: boolean, serviceWorkerPath: string): Promise<boolean> {
         const RELOAD_STORAGE_KEY = "__papyros_reloading";
-        const SERVICE_WORKER_PATH = "./inputServiceWorker.js";
         if (allowReload && window.localStorage.getItem(RELOAD_STORAGE_KEY)) {
             // We are the result of the page reload, so we can start
             window.localStorage.removeItem(RELOAD_STORAGE_KEY);
@@ -189,7 +188,7 @@ export class Papyros {
                 if ("serviceWorker" in navigator) {
                     papyrosLog(LogType.Important, "Registering service worker.");
                     // Store that we are reloading, to prevent the next load from doing all this again
-                    await navigator.serviceWorker.register(SERVICE_WORKER_PATH);
+                    await navigator.serviceWorker.register(serviceWorkerPath);
                     if (allowReload) {
                         window.localStorage.setItem(RELOAD_STORAGE_KEY, RELOAD_STORAGE_KEY);
                         // service worker adds new headers that may allow SharedArrayBuffers to be used

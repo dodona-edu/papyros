@@ -3,7 +3,7 @@ import { Papyros } from "./Papyros";
 import { plFromString } from "./ProgrammingLanguage";
 import { InputMode } from "./InputManager";
 
-Papyros.configureInput(false).then(success => {
+Papyros.configureInput(false, "/inputServiceWorker.js").then(success => {
     if (success) {
         return startPapyros();
     } else {
