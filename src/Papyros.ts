@@ -17,7 +17,7 @@ import { addListener, getLocales, getSelectOptions, t, loadTranslations, renderS
 import { StatusPanel } from "./StatusPanel";
 import { getCodeForExample, getExampleNames } from "./examples/Examples";
 import { OutputManager } from "./OutputManager";
-
+import { makeChannel } from "sync-message";
 
 enum PapyrosState {
     Loading = "loading",
@@ -149,7 +149,7 @@ export class Papyros {
     async startBackend(): Promise<void> {
         this.stateManager.setState(PapyrosState.Loading);
         const backend = getBackend(this.codeState.programmingLanguage);
-        await backend.launch(proxy(e => this.onMessage(e)), this.inputURL, this.inputManager.inputTextArray, this.inputManager.inputMetaData);
+        await backend.launch(proxy(e => this.onMessage(e)), this.inputManager.channel);
         this.codeState.backend = backend;
         this.stateManager.setState(PapyrosState.Ready);
     }
@@ -197,12 +197,12 @@ export class Papyros {
                     papyrosLog(LogType.Important, "Unable to register service worker. Please specify all required parameters and ensure service workers are supported.");
                     return false;
                 }
-                if ("serviceWorker" in navigator) {
+                if ("serviceWorker" in window.navigator) {
                     papyrosLog(LogType.Important, "Registering service worker.");
                     // Store that we are reloading, to prevent the next load from doing all this again
-                    await navigator.serviceWorker.register(new URL(serviceWorkerName, serviceWorkerRoot));
+                    await window.navigator.serviceWorker.register(new URL(serviceWorkerName, serviceWorkerRoot));
                     this.inputURL = serviceWorkerRoot;
-                    this.inputManager.inputURL = serviceWorkerRoot;
+                    this.inputManager.channel = makeChannel({ serviceWorker: { scope: window.location.href + "/" } })!;
                     if (allowReload) {
                         window.localStorage.setItem(RELOAD_STORAGE_KEY, RELOAD_STORAGE_KEY);
                         // service worker adds new headers that may allow SharedArrayBuffers to be used

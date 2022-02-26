@@ -1,50 +1,6 @@
-import { INPUT_RELATIVE_URL } from "./Constants";
 import { PapyrosEvent } from "./PapyrosEvent";
 import { LogType, papyrosLog } from "./util/Logging";
-
-function getInputCallback(hostname: string,
-    inputTextArray?: Uint8Array, inputMetaData?: Int32Array): () => string {
-    if (inputTextArray && inputMetaData) {
-        const textDecoder = new TextDecoder();
-        return () => {
-            // eslint-disable-next-line no-constant-condition
-            while (true) {
-                if (Atomics.wait(inputMetaData, 0, 0, 100) === "timed-out") {
-                    // papyrosLog.log("waiting on input");
-                    // if (interruptBuffer[0] === 2) {
-                    //  return null;
-                    // }
-                } else {
-                    break;
-                }
-            }
-            Atomics.store(inputMetaData, 0, 0);
-            const size = Atomics.exchange(inputMetaData, 1, 0);
-            const bytes = inputTextArray.slice(0, size);
-            return textDecoder.decode(bytes);
-        };
-    } else {
-        return () => {
-            const request = new XMLHttpRequest();
-            do {
-                papyrosLog(LogType.Important,
-                    "Requesting input from user on url: " + hostname + INPUT_RELATIVE_URL);
-                try {
-                    // `false` makes the request synchronous
-                    request.open("GET", hostname + INPUT_RELATIVE_URL, false);
-                    papyrosLog(LogType.Important, "Opened get request to " + INPUT_RELATIVE_URL);
-                    request.send(null);
-                    papyrosLog(LogType.Important,
-                        "Sent request to user, status is: " + request.status);
-                } catch (e) {
-                    console.log("Error occurred while fetching input!");
-                    console.log(e);
-                }
-            } while (request.status >= 400); // todo better error handling
-            return request.responseText;
-        };
-    }
-}
+import { Channel, readMessage } from "sync-message";
 
 export abstract class Backend {
     onEvent: (e: PapyrosEvent) => any;
@@ -59,20 +15,18 @@ export abstract class Backend {
     /**
      * Initialize the backend, setting up any globals required
      * @param {function(PapyrosEvent):void} onEvent Callback for when events occur
-     * @param {string} hostname Base URL for input
-     * @param {Uint8Array} inputTextArray Optional shared buffer for input
-     * @param {Int32Array} inputMetaData Optional shared buffer for metadata about input
+     * @param {Channel} channel for communication with the main thread
      * @return {Promise<void>} Promise of launching
      */
-    launch(onEvent: (e: PapyrosEvent) => void,
-        hostname: string,
-        inputTextArray?: Uint8Array, inputMetaData?: Int32Array): Promise<void> {
-        const inputCallback = getInputCallback(hostname, inputTextArray, inputMetaData);
+    launch(
+        onEvent: (e: PapyrosEvent) => void,
+        channel: Channel
+    ): Promise<void> {
         this.onEvent = (e: PapyrosEvent) => {
             e.runId = this.runId;
             onEvent(e);
             if (e.type === "input") {
-                return inputCallback();
+                return readMessage(channel, e.content!);
             }
         };
         return Promise.resolve();

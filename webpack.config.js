@@ -8,7 +8,7 @@ module.exports = function (webpackEnv) {
 		entry: {
 			// webpack output usually starts with lower case letter
 			index: entry,
-			inputServiceWorker: './src/InputServiceWorker.ts'
+			inputServiceWorker: './src/inputServiceWorker.ts'
 		},
 		module: {
 			rules: [

@@ -3,6 +3,7 @@ import { Backend } from "../../Backend";
 import { PapyrosEvent } from "../../PapyrosEvent";
 import { LogType, papyrosLog } from "../../util/Logging";
 import { Pyodide, PYODIDE_INDEX_URL, PYODIDE_JS_URL } from "./Pyodide";
+import { Channel } from "sync-message";
 /* eslint-disable-next-line */
 const initPythonString = require("!!raw-loader!./init.py").default;
 
@@ -24,10 +25,11 @@ class PythonWorker extends Backend {
         this.initialized = false;
     }
 
-    override async launch(onEvent: (e: PapyrosEvent) => void,
-        hostname: string,
-        inputTextArray?: Uint8Array, inputMetaData?: Int32Array): Promise<void> {
-        await super.launch(onEvent, hostname, inputTextArray, inputMetaData);
+    override async launch(
+      onEvent: (e: PapyrosEvent) => void,
+      channel: Channel,
+    ): Promise<void> {
+        await super.launch(onEvent, channel);
         this.pyodide = await loadPyodide({
             indexURL: PYODIDE_INDEX_URL,
             fullStdLib: false
