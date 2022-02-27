@@ -7,7 +7,7 @@ import {
 import { PapyrosEvent } from "./PapyrosEvent";
 import { papyrosLog, LogType } from "./util/Logging";
 import { addListener, RenderOptions, renderWithOptions } from "./util/Util";
-import { Channel, writeMessage } from "sync-message";
+import { Channel, makeChannel, writeMessage } from "sync-message";
 
 export enum InputMode {
     Interactive = "interactive",
@@ -35,7 +35,7 @@ export class InputManager {
         this.inputMode = inputMode;
         this.session = { lineNr: 0 };
         this.batchInput = "";
-        this.channel = {} as Channel;
+        this.channel = makeChannel({ atomics: {} })!; // by default use Atomics
         this.onSend = onSend;
         this.waiting = false;
         this.renderOptions = { parentElementId: INPUT_AREA_WRAPPER_ID };

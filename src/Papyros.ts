@@ -202,7 +202,7 @@ export class Papyros {
                     // Store that we are reloading, to prevent the next load from doing all this again
                     await window.navigator.serviceWorker.register(new URL(serviceWorkerName, serviceWorkerRoot));
                     this.inputURL = serviceWorkerRoot;
-                    this.inputManager.channel = makeChannel({ serviceWorker: { scope: window.location.href + "/" } })!;
+                    this.inputManager.channel = makeChannel({ serviceWorker: { scope: serviceWorkerRoot + "/" } })!;
                     if (allowReload) {
                         window.localStorage.setItem(RELOAD_STORAGE_KEY, RELOAD_STORAGE_KEY);
                         // service worker adds new headers that may allow SharedArrayBuffers to be used
