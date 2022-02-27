@@ -6,6 +6,7 @@ module.exports = function (webpackEnv) {
 	const entry = webpackEnv["entry"] || "./src/App.ts";
 	return {
 		entry: {
+			// webpack output usually starts with lower case letter
 			index: entry,
 			inputServiceWorker: './src/InputServiceWorker.ts'
 		},

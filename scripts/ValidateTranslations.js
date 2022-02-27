@@ -63,7 +63,6 @@ for (const locale of Object.keys(translations)) {
     // requires flattening as the translations object uses the Papyros-scope
     const localeKeys = extract.flatten(translations[locale]);
     for (const check of checks) {
-        // not &&= to ensure checkReport is actually executed
         checkReport(
             check.check(localeKeys, usedKeys).filter(k => !check.allowed.includes(k.key)),
             check.type, locale
