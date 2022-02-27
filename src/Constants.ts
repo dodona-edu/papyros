@@ -24,5 +24,3 @@ export const LOCALE_SELECT_ID = "locale-select";
 export const DEFAULT_LOCALE = "nl";
 
 export const DEFAULT_SERVICE_WORKER = "inputServiceWorker.js";
-export const INPUT_RELATIVE_URL = "__papyros_input";
-

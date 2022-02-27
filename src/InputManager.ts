@@ -2,12 +2,12 @@ import { t } from "i18n-js";
 import {
     SWITCH_INPUT_MODE_A_ID,
     INPUT_AREA_WRAPPER_ID,
-    INPUT_RELATIVE_URL, INPUT_TA_ID, SEND_INPUT_BTN_ID
+    INPUT_TA_ID, SEND_INPUT_BTN_ID
 } from "./Constants";
 import { PapyrosEvent } from "./PapyrosEvent";
 import { papyrosLog, LogType } from "./util/Logging";
 import { addListener, RenderOptions, renderWithOptions } from "./util/Util";
-
+import { Channel, makeChannel, writeMessage } from "sync-message";
 
 export enum InputMode {
     Interactive = "interactive",
@@ -28,35 +28,17 @@ export class InputManager {
     onSend: () => void;
     session: InputSession;
 
-    inputURL: string;
-    inputTextArray?: Uint8Array;
-    inputMetaData?: Int32Array;
-    textEncoder: TextEncoder;
+    channel: Channel;
+    messageId = "";
 
     constructor(onSend: () => void, inputMode: InputMode) {
         this.inputMode = inputMode;
         this.session = { lineNr: 0 };
         this.batchInput = "";
-        this.textEncoder = new TextEncoder();
-        if (typeof SharedArrayBuffer !== "undefined") {
-            papyrosLog(LogType.Important, "Using SharedArrayBuffers");
-            // shared memory
-            this.inputTextArray = new Uint8Array(
-                new SharedArrayBuffer(Uint8Array.BYTES_PER_ELEMENT * 1024)
-            );
-            // 2 Int32s:
-            // index 0 indicates whether data is written
-            // index 1 denotes length of the string
-            this.inputMetaData = new Int32Array(
-                new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * 2)
-            );
-        } else {
-            papyrosLog(LogType.Important, "Using serviceWorker for input");
-        }
+        this.channel = makeChannel({ atomics: {} })!; // by default use Atomics
         this.onSend = onSend;
         this.waiting = false;
         this.renderOptions = { parentElementId: INPUT_AREA_WRAPPER_ID };
-        this.inputURL = location.host;
     }
 
     get enterButton(): HTMLButtonElement {
@@ -169,19 +151,7 @@ export class InputManager {
         }
         if (line) {
             papyrosLog(LogType.Debug, "Sending input to user: " + line);
-            if (!this.inputMetaData || !this.inputTextArray) {
-                papyrosLog(LogType.Important, "Sending input to user: " + line);
-                await fetch(new URL(INPUT_RELATIVE_URL, this.inputURL).href,
-                    {
-                        method: "POST",
-                        body: JSON.stringify({ "input": line })
-                    });
-            } else {
-                const encoded = this.textEncoder.encode(line);
-                this.inputTextArray.set(encoded);
-                Atomics.store(this.inputMetaData, 1, encoded.length);
-                Atomics.store(this.inputMetaData, 0, 1);
-            }
+            await writeMessage(this.channel, line, this.messageId);
             this.session.lineNr += 1;
             return true;
         } else {
@@ -191,6 +161,9 @@ export class InputManager {
 
     async onInput(e?: PapyrosEvent): Promise<void> {
         papyrosLog(LogType.Debug, "Handling send Input in Papyros");
+        if (e?.content) {
+            this.messageId = e.content;
+        }
         if (await this.sendLine()) {
             this.setWaiting(false);
             this.onSend();
