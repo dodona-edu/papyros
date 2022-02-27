@@ -11,7 +11,7 @@ import {
 } from "./Constants";
 import { InputManager, InputMode } from "./InputManager";
 import { PapyrosEvent } from "./PapyrosEvent";
-import { ProgrammingLanguage, PROGRAMMING_LANGUAGES } from "./ProgrammingLanguage";
+import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import { LogType, papyrosLog } from "./util/Logging";
 import { addListener, getLocales, getSelectOptions, t, loadTranslations, renderSelect, removeSelection, RenderOptions, renderWithOptions } from "./util/Util";
 import { StatusPanel } from "./StatusPanel";
@@ -63,6 +63,11 @@ class PapyrosStateManager {
         return this.statusPanel.render(options);
     }
 }
+
+const LANGUAGE_MAP = new Map([
+    ["python", ProgrammingLanguage.Python],
+    ["javascript", ProgrammingLanguage.JavaScript]
+]);
 
 interface PapyrosCodeState {
     programmingLanguage: ProgrammingLanguage;
@@ -270,7 +275,7 @@ export class Papyros {
         renderOptions: PapyrosRenderOptions): void {
         if (standAlone) {
             const programmingLanguageSelect =
-                renderSelect(PROGRAMMING_LANGUAGE_SELECT_ID, PROGRAMMING_LANGUAGES,
+                renderSelect(PROGRAMMING_LANGUAGE_SELECT_ID, new Array(...LANGUAGE_MAP.values()),
                     l => t(`Papyros.programming_languages.${l}`), programmingLanguage, t("Papyros.programming_language"));
             const exampleSelect =
                 renderSelect(EXAMPLE_SELECT_ID, getExampleNames(programmingLanguage),
@@ -330,5 +335,18 @@ export class Papyros {
         );
         this.codeState.editor.render(Object.assign({ parentElementId: EDITOR_WRAPPER_ID }, renderOptions.code), panel);
         this.outputManager.render(Object.assign({ parentElementId: OUTPUT_TA_ID }, renderOptions.output));
+    }
+
+    static supportsProgrammingLanguage(language: string): boolean {
+        return Papyros.toProgrammingLanguage(language) !== undefined;
+    }
+
+    static toProgrammingLanguage(language: string): ProgrammingLanguage | undefined {
+        const langLC = language.toLowerCase();
+        if (LANGUAGE_MAP.has(langLC)) {
+            return LANGUAGE_MAP.get(langLC)!;
+        } else {
+            return undefined;
+        }
     }
 }
