@@ -53,7 +53,7 @@
     "comlink": "^4.3.1",
     "escape-html": "^1.0.3",
     "i18n-js": "^3.8.0",
-    "sync-message": "0.0.8"
+    "sync-message": "^0.0.8"
   },
   "scripts": {
     "start": "webpack serve --mode development",
