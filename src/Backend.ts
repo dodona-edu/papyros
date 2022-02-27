@@ -27,7 +27,6 @@ function getInputCallback(hostname: string,
         return () => {
             const request = new XMLHttpRequest();
             do {
-                console.log("Hostname is: " + hostname);
                 papyrosLog(LogType.Important,
                     "Requesting input from user on url: " + hostname + INPUT_RELATIVE_URL);
                 try {
@@ -92,7 +91,7 @@ export abstract class Backend {
         papyrosLog(LogType.Debug, "Running code in worker: ", code);
         try {
             const data = await this._runCodeInternal(code);
-            papyrosLog(LogType.Important, "ran code: " + code + " and received: ", data);
+            papyrosLog(LogType.Debug, "ran code: " + code + " and received: ", data);
             return this.onEvent({ type: "success", data: JSON.stringify(data), runId: runId });
         } catch (error: any) {
             const errorString =

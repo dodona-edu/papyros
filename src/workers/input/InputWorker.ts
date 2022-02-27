@@ -27,39 +27,42 @@ export class InputWorker {
 
     async handleInputRequest(event: FetchEvent): Promise<boolean> {
         const url = event.request.url;
-        if (url.includes(this.hostName)) { // requests to our own domain
-            let promiseChain: Promise<Response> = Promise.resolve(new Response());
-            // Special requests targeted at getting input from the user
-            if (url.includes(this.suffix)) {
-                if (event.request.method === "GET") { // Request from the worker to receive input
-                    promiseChain = this.waitForInput();
-                } else if (event.request.method === "POST") { // Request from Papyros to send input
-                    promiseChain = event.request.json().then(resp => {
-                        this.input = resp.input;
-                        return new Response("input stored: " + this.input);
-                    });
-                }
-            } else { // Requests to general Papyros pages
-                promiseChain = fetch(event.request)
-                    .then(response => {
-                        // Add new headers to be able to use SharedArrayBuffers
-                        // if the browser supports them
-                        // eslint-disable-next-line max-len
-                        // See also https://stackoverflow.com/questions/64650119/react-error-sharedarraybuffer-is-not-defined-in-firefox
-                        const newHeaders = new Headers(response.headers);
-                        newHeaders.set("Cross-Origin-Embedder-Policy", "require-corp");
-                        newHeaders.set("Cross-Origin-Opener-Policy", "same-origin");
-                        newHeaders.set("Cross-Origin-Resource-Policy", "cross-origin");
-
-                        const moddedResponse = new Response(response.body, {
-                            status: response.status || 200,
-                            statusText: response.statusText,
-                            headers: newHeaders,
-                        });
-                        return moddedResponse;
-                    });
+        console.log("Request url: " + url + " with our hostname: " + this.hostName);
+        console.log("Includes hostname? " + url.includes(this.hostName) + " and includes suffix?" + url.includes(this.suffix));
+        if (url.includes(this.suffix)) { // Special requests targeted at getting input from the user
+            const method = event.request.method;
+            if (method === "GET") { // Request from the worker to receive input
+                event.respondWith(this.waitForInput());
+            } else if (method === "POST") { // Request from Papyros to send input
+                event.respondWith(event.request.json().then(resp => {
+                    this.input = resp.input;
+                    return new Response("input stored: " + this.input);
+                }));
+            } else {
+                event.respondWith(
+                    Promise.reject(new Error(`Unsupported method ${method} for ${this.suffix}`))
+                );
             }
-            event.respondWith(promiseChain);
+            return true;
+        } else if (url.includes(this.hostName)) {
+            event.respondWith(fetch(event.request)
+                .then(response => {
+                    // Add new headers to be able to use SharedArrayBuffers
+                    // if the browser supports them
+                    // eslint-disable-next-line max-len
+                    // See also https://stackoverflow.com/questions/64650119/react-error-sharedarraybuffer-is-not-defined-in-firefox
+                    const newHeaders = new Headers(response.headers);
+                    newHeaders.set("Cross-Origin-Embedder-Policy", "require-corp");
+                    newHeaders.set("Cross-Origin-Opener-Policy", "same-origin");
+                    newHeaders.set("Cross-Origin-Resource-Policy", "cross-origin");
+
+                    const moddedResponse = new Response(response.body, {
+                        status: response.status || 200,
+                        statusText: response.statusText,
+                        headers: newHeaders,
+                    });
+                    return moddedResponse;
+                }));
             return true;
         } else {
             return false;
