@@ -1,11 +1,10 @@
 /**
  * Default service worker to process user input using HTTP requests
  */
-import { DEFAULT_SERVICE_WORKER } from "./Constants";
-import { InputHandler } from "./workers/input/InputWorker";
+import { InputWorker } from "./workers/input/InputWorker";
 
-const papyrosHost = location.href.replace(DEFAULT_SERVICE_WORKER, "");
-const inputHandler = new InputHandler(papyrosHost);
+const papyrosHost = location.host;
+const inputHandler = new InputWorker(papyrosHost);
 
 addEventListener("fetch", async function (event: FetchEvent) {
     if (!await inputHandler.handleInputRequest(event)) {

@@ -4,7 +4,7 @@ function sleep(ms: number): Promise<any> {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export class InputHandler {
+export class InputWorker {
     hostName: string;
     suffix: string;
     input: string;
