@@ -43,26 +43,25 @@ class Papyros(python_runner.PatchedStdinRunner):
         Mostly a copy of the parent `run_async` with `await ft` in case of an exception,
         because `serialize_traceback` isn't async.
         """
-        try: 
-            print("Compiling!")
-            code_obj = self.pre_run(source_code, mode, top_level_await=top_level_await)
-            with self._execute_context(source_code):
+        with self._execute_context(source_code):
+            try:
+                code_obj = self.pre_run(source_code, mode, top_level_await=top_level_await)
                 if code_obj:
                     result = self.execute(code_obj, source_code, mode)
                     while isinstance(result, Awaitable):
                         result = await result
                     return result
-        except: # Also catch compilation errors
-            print("Caught error, so awaiting?")
-            await ft
-            print("Await done")
-            # Let `_execute_context` and `serialize_traceback`
-            # handle the exception
-            raise
+            except:
+                await ft
+                # Let `_execute_context` and `serialize_traceback`
+                # handle the exception
+                raise
+    
+    def serialize_syntax_error(self, exc, source_code):
+        raise # Rethrow to ensure library is imported correctly
 
     def serialize_traceback(self, exc, source_code):
-        print("In serialize traceback")
-        import friendly_traceback
+        import friendly_traceback # Delay import for faster startup
         from friendly_traceback.core import FriendlyTraceback
 
         friendly_traceback.source_cache.cache.add(self.filename, source_code)
