@@ -28,6 +28,7 @@ export class InputManager {
     onSend: () => void;
     session: InputSession;
 
+    inputURL: string;
     inputTextArray?: Uint8Array;
     inputMetaData?: Int32Array;
     textEncoder: TextEncoder;
@@ -55,6 +56,7 @@ export class InputManager {
         this.onSend = onSend;
         this.waiting = false;
         this.renderOptions = { parentElementId: INPUT_AREA_WRAPPER_ID };
+        this.inputURL = location.host;
     }
 
     get enterButton(): HTMLButtonElement {
@@ -169,7 +171,7 @@ export class InputManager {
             papyrosLog(LogType.Debug, "Sending input to user: " + line);
             if (!this.inputMetaData || !this.inputTextArray) {
                 papyrosLog(LogType.Important, "Sending input to user: " + line);
-                await fetch(INPUT_RELATIVE_URL,
+                await fetch(new URL(INPUT_RELATIVE_URL, this.inputURL).href,
                     {
                         method: "POST",
                         body: JSON.stringify({ "input": line })

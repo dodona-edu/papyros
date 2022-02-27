@@ -27,8 +27,6 @@ export class InputWorker {
 
     async handleInputRequest(event: FetchEvent): Promise<boolean> {
         const url = event.request.url;
-        console.log("Request url: " + url + " with our hostname: " + this.hostName);
-        console.log("Includes hostname? " + url.includes(this.hostName) + " and includes suffix?" + url.includes(this.suffix));
         if (url.includes(this.suffix)) { // Special requests targeted at getting input from the user
             const method = event.request.method;
             if (method === "GET") { // Request from the worker to receive input

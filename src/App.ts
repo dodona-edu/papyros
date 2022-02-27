@@ -5,23 +5,13 @@ import {
 import { Papyros } from "./Papyros";
 import { InputMode } from "./InputManager";
 
-Papyros.configureInput(false, `/${DEFAULT_SERVICE_WORKER}`).then(success => {
-    if (success) {
-        return startPapyros();
-    } else {
-        document.getElementById(MAIN_APP_ID)!.innerHTML =
-            `Your browser is unsupported.
-Please use a modern version of Chrome, Safari, Firefox, ...`;
-    }
-});
 
-
-async function startPapyros(): Promise<Papyros> {
+async function startPapyros(): Promise<void> {
     const urlParams = new URLSearchParams(window.location.search);
     const language = Papyros.toProgrammingLanguage(urlParams.get("language") ||
         DEFAULT_PROGRAMMING_LANGUAGE)!;
     const locale = urlParams.get("locale") || DEFAULT_LOCALE;
-    return Papyros.fromElement({
+    const papyros = Papyros.fromElement({
         standAlone: true,
         programmingLanguage: language,
         locale: locale,
@@ -30,5 +20,14 @@ async function startPapyros(): Promise<Papyros> {
         papyros: {
             parentElementId: "root"
         }
-    }).launch();
+    });
+    if (!await papyros.configureInput(false, location.href, DEFAULT_SERVICE_WORKER)) {
+        document.getElementById(MAIN_APP_ID)!.innerHTML =
+            `Your browser is unsupported.
+Please use a modern version of Chrome, Safari, Firefox, ...`;
+    } else {
+        papyros.launch();
+    }
 }
+
+startPapyros();

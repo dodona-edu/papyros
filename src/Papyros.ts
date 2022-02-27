@@ -96,6 +96,7 @@ export class Papyros {
     codeState: PapyrosCodeState;
     inputManager: InputManager;
     outputManager: OutputManager;
+    inputURL: string;
 
     constructor(programmingLanguage: ProgrammingLanguage, inputMode: InputMode) {
         this.outputManager = new OutputManager();
@@ -110,6 +111,7 @@ export class Papyros {
         const statusPanel = new StatusPanel();
         this.stateManager = new PapyrosStateManager(statusPanel);
         this.inputManager = new InputManager(() => this.stateManager.setState(PapyrosState.Running), inputMode);
+        this.inputURL = location.host;
     }
 
     get state(): PapyrosState {
@@ -147,7 +149,7 @@ export class Papyros {
     async startBackend(): Promise<void> {
         this.stateManager.setState(PapyrosState.Loading);
         const backend = getBackend(this.codeState.programmingLanguage);
-        await backend.launch(proxy(e => this.onMessage(e)), location.href, this.inputManager.inputTextArray, this.inputManager.inputMetaData);
+        await backend.launch(proxy(e => this.onMessage(e)), this.inputURL, this.inputManager.inputTextArray, this.inputManager.inputMetaData);
         this.codeState.backend = backend;
         this.stateManager.setState(PapyrosState.Ready);
     }
@@ -181,7 +183,8 @@ export class Papyros {
         return papyros;
     }
 
-    static async configureInput(allowReload: boolean, serviceWorkerPath: string): Promise<boolean> {
+    async configureInput(allowReload: boolean,
+        serviceWorkerRoot?: string, serviceWorkerName?: string): Promise<boolean> {
         const RELOAD_STORAGE_KEY = "__papyros_reloading";
         if (allowReload && window.localStorage.getItem(RELOAD_STORAGE_KEY)) {
             // We are the result of the page reload, so we can start
@@ -190,10 +193,16 @@ export class Papyros {
         } else {
             if (typeof SharedArrayBuffer === "undefined") {
                 papyrosLog(LogType.Important, "SharedArrayBuffers are not available. ");
+                if (!serviceWorkerRoot || !serviceWorkerName || !("serviceWorker" in navigator)) {
+                    papyrosLog(LogType.Important, "Unable to register service worker. Please specify all required parameters and ensure service workers are supported.");
+                    return false;
+                }
                 if ("serviceWorker" in navigator) {
                     papyrosLog(LogType.Important, "Registering service worker.");
                     // Store that we are reloading, to prevent the next load from doing all this again
-                    await navigator.serviceWorker.register(serviceWorkerPath);
+                    await navigator.serviceWorker.register(new URL(serviceWorkerName, serviceWorkerRoot));
+                    this.inputURL = serviceWorkerRoot;
+                    this.inputManager.inputURL = serviceWorkerRoot;
                     if (allowReload) {
                         window.localStorage.setItem(RELOAD_STORAGE_KEY, RELOAD_STORAGE_KEY);
                         // service worker adds new headers that may allow SharedArrayBuffers to be used
