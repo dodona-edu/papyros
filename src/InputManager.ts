@@ -35,7 +35,7 @@ export class InputManager {
         this.inputMode = inputMode;
         this.session = { lineNr: 0 };
         this.batchInput = "";
-        this.channel = makeChannel({ atomics: {} })!; // by default use Atomics
+        this.channel = makeChannel()!; // by default we try to use Atomics
         this.onSend = onSend;
         this.waiting = false;
         this.renderOptions = { parentElementId: INPUT_AREA_WRAPPER_ID };

@@ -96,7 +96,6 @@ export class Papyros {
     codeState: PapyrosCodeState;
     inputManager: InputManager;
     outputManager: OutputManager;
-    inputURL: string;
 
     constructor(programmingLanguage: ProgrammingLanguage, inputMode: InputMode) {
         this.outputManager = new OutputManager();
@@ -111,7 +110,6 @@ export class Papyros {
         const statusPanel = new StatusPanel();
         this.stateManager = new PapyrosStateManager(statusPanel);
         this.inputManager = new InputManager(() => this.stateManager.setState(PapyrosState.Running), inputMode);
-        this.inputURL = location.host;
     }
 
     get state(): PapyrosState {
@@ -197,21 +195,16 @@ export class Papyros {
                     papyrosLog(LogType.Important, "Unable to register service worker. Please specify all required parameters and ensure service workers are supported.");
                     return false;
                 }
-                if ("serviceWorker" in window.navigator) {
-                    papyrosLog(LogType.Important, "Registering service worker.");
-                    // Store that we are reloading, to prevent the next load from doing all this again
-                    await window.navigator.serviceWorker.register(new URL(serviceWorkerName, serviceWorkerRoot));
-                    this.inputURL = serviceWorkerRoot;
-                    this.inputManager.channel = makeChannel({ serviceWorker: { scope: serviceWorkerRoot + "/" } })!;
-                    if (allowReload) {
-                        window.localStorage.setItem(RELOAD_STORAGE_KEY, RELOAD_STORAGE_KEY);
-                        // service worker adds new headers that may allow SharedArrayBuffers to be used
-                        window.location.reload();
-                    }
-                    return true;
-                } else {
-                    return false;
+                papyrosLog(LogType.Important, "Registering service worker.");
+                // Store that we are reloading, to prevent the next load from doing all this again
+                await window.navigator.serviceWorker.register(new URL(serviceWorkerName, serviceWorkerRoot));
+                this.inputManager.channel = makeChannel({ serviceWorker: { scope: serviceWorkerRoot + "/" } })!;
+                if (allowReload) {
+                    window.localStorage.setItem(RELOAD_STORAGE_KEY, RELOAD_STORAGE_KEY);
+                    // service worker adds new headers that may allow SharedArrayBuffers to be used
+                    window.location.reload();
                 }
+                return true;
             } else {
                 return true;
             }
