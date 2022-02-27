@@ -1,6 +1,6 @@
 import { PapyrosEvent } from "./PapyrosEvent";
 import { LogType, papyrosLog } from "./util/Logging";
-import { Channel, readMessage } from "sync-message";
+import { Channel, readMessage, uuidv4 } from "sync-message";
 
 export abstract class Backend {
     onEvent: (e: PapyrosEvent) => any;
@@ -24,6 +24,9 @@ export abstract class Backend {
     ): Promise<void> {
         this.onEvent = (e: PapyrosEvent) => {
             e.runId = this.runId;
+            if (e.type === "input") {
+                e.content = uuidv4();
+            }
             onEvent(e);
             if (e.type === "input") {
                 return readMessage(channel, e.content!);

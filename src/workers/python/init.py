@@ -1,7 +1,6 @@
 import json
 import os
 from collections.abc import Awaitable
-from uuid import uuid4
 
 import micropip
 from pyodide import to_js
@@ -120,7 +119,7 @@ def init_papyros(eventCallback):
                 else:
                     raise ValueError(f"Unknown output part type {part['type']}")
         elif event_type == "input":
-            return cb("input", data["prompt"], content=uuid4().hex)
+            return cb("input", data["prompt"])
         else:
             raise ValueError(f"Unknown event type {event_type}")
 
