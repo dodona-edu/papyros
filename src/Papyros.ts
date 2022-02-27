@@ -84,7 +84,7 @@ interface PapyrosConfig {
 }
 
 interface PapyrosRenderOptions {
-    papyros: RenderOptions;
+    papyros?: RenderOptions;
     code?: RenderOptions;
     panel?: RenderOptions;
     input?: RenderOptions;
@@ -311,7 +311,7 @@ export class Papyros {
                 ${programmingLanguageSelect}
                 ${exampleSelect}
             </div>`;
-            renderWithOptions(renderOptions.papyros,
+            renderWithOptions(renderOptions.papyros!,
                 `<div id="papyros" class="max-h-screen h-full overflow-y-hidden">
         ${navBar}
         <div class="m-10">

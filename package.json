@@ -1,6 +1,6 @@
 {
   "name": "@dodona/papyros",
-  "version": "0.1.57",
+  "version": "0.1.58",
   "private": false,
   "homepage": ".",
   "devDependencies": {
@@ -59,7 +59,6 @@
     "start": "webpack serve --mode development",
     "build:package": "webpack build --mode production --env=entry=./src/Library.ts",
     "build:app": "webpack build --mode production --env=entry=./src/App.ts",
-    "install:worker": "bash scripts/InstallWorker.sh",
     "test": "echo No tests defined yet",
     "lint": "eslint  --ext '.js' --ext '.ts' src",
     "validate:translations": "node scripts/ValidateTranslations.js"
