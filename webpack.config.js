@@ -1,14 +1,21 @@
 const path = require("path");
 
+const PUBLIC_DIR = "public";
+const LIBRARY_DIR = "dist";
+const DEFAULT_ENTRY_POINT = "./src/App.ts";
+const DEFAULT_SERVICE_WORKER_ENTRY_POINT = "./src/InputServiceWorker.ts"
+
 module.exports = function (webpackEnv) {
 	const mode = webpackEnv["mode"];
-	const outDir = mode === "development" ? "public" : "dist";
-	const entry = webpackEnv["entry"] || "./src/App.ts";
+	// In development, the bundle is loaded from the public folder
+	// In production, node_modules typically use the dist folder
+	const outFolder = mode === "development" ? PUBLIC_DIR : LIBRARY_DIR;
+	const entry = webpackEnv["entry"] || DEFAULT_ENTRY_POINT;
 	return {
 		entry: {
 			// webpack output usually starts with lower case letter
 			index: entry,
-			inputServiceWorker: './src/InputServiceWorker.ts'
+			inputServiceWorker: DEFAULT_SERVICE_WORKER_ENTRY_POINT
 		},
 		module: {
 			rules: [
@@ -39,18 +46,14 @@ module.exports = function (webpackEnv) {
 			extensions: [".ts", ".js"],
 		},
 		output: {
+			// allow generating both service worker and Papyros
 			filename: "[name].js",
-			path: path.resolve(__dirname, outDir),
-			library: {
-				name: "Papyros",
-				type: "umd"
-			},
-			publicPath: "auto"
+			path: path.resolve(__dirname, outFolder)
 		},
 		mode: mode,
 		target: "web",
 		devServer: {
-			static: path.join(__dirname, "public"),
+			static: path.join(__dirname, PUBLIC_DIR),
 			port: 8080,
 		},
 	}
