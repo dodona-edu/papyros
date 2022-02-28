@@ -3,9 +3,14 @@ import { LogType, papyrosLog } from "./util/Logging";
 import { Channel, readMessage, uuidv4 } from "sync-message";
 
 export abstract class Backend {
-    onEvent: (e: PapyrosEvent) => any;
-    runId: number;
+    protected onEvent: (e: PapyrosEvent) => any;
+    protected runId: number;
 
+    /**
+     *  Constructor is limited as it is meant to be used as a WebWorker
+     *  These are then exposed via Comlink. Proper initialization occurs
+     *  in the launch method when the worker is started
+     */
     constructor() {
         // eslint-disable-next-line @typescript-eslint/no-empty-function
         this.onEvent = () => { };
@@ -13,7 +18,7 @@ export abstract class Backend {
     }
 
     /**
-     * Initialize the backend, setting up any globals required
+     * Initialize the backend by doing all setup-related work
      * @param {function(PapyrosEvent):void} onEvent Callback for when events occur
      * @param {Channel} channel for communication with the main thread
      * @return {Promise<void>} Promise of launching
@@ -35,10 +40,15 @@ export abstract class Backend {
         return Promise.resolve();
     }
 
-    abstract _runCodeInternal(code: string): Promise<any>;
+    /**
+     * Internal helper method that actually executes the code
+     * This yields a result or an error, which is then processed in runCode
+     * @param code The code to run
+     */
+    protected abstract _runCodeInternal(code: string): Promise<any>;
 
     /**
-     * Validate and run arbitrary code
+     * Executes the given code
      * @param {string} code The code to run
      * @param {string} runId The uuid for this execution
      * @return {Promise<void>} Promise of execution
