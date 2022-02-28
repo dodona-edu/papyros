@@ -83,7 +83,7 @@ export class OutputManager {
         ]);
         const initialClassNames = options.classNames ? options.classNames + " " : "";
         // eslint-disable-next-line max-len
-        options.classNames = `${initialClassNames}border-2 w-full min-h-1/4 max-h-3/5 overflow-auto px-1 whitespace-pre with-placeholder`;
+        options.classNames = `${initialClassNames}border-2 w-full min-h-1/4 max-h-3/5 overflow-auto py-1 px-2 whitespace-pre with-placeholder`;
         this.options = options;
         return renderWithOptions(options, "");
     }
