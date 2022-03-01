@@ -1,5 +1,12 @@
 /* eslint-disable indent */
 /* eslint-disable max-len */
+
+/**
+ * Draw a circle using an HTML svg element
+ * @param {string} id HTML id for this element
+ * @param {string} color The color of the circle
+ * @return {string} A string representation of the circle
+ */
 export const svgCircle = (id: string, color: string): string => {
     return (
 `<svg id="${id}" class="animate-spin mr-3 h-5 w-5 text-white"
@@ -12,6 +19,13 @@ xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
 </svg>`);
 };
 
+/**
+ * Wrap text (best a single character) in a circle to provide information to the user
+ * @param {string} content The symbol in the circle, e.g. ? of !
+ * @param {string} title The information to display when hovering over the element
+ * @param {string} color The color of the circle and the symbol
+ * @return {string} A string representation of the circle with content
+ */
 export const inCircle = (content: string, title: string, color: string): string => {
     return `<span title="${title}" class="display-block font-bold text-center
     w-10 h-10 rounded-full px-1 text-${color} bg-white-500 border-${color} border-2">${content}</span>`;
