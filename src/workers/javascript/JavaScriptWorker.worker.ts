@@ -10,10 +10,6 @@ class JavaScriptWorker extends Backend {
             ["console.error", "__papyros_error"]
         ]);
         const overrideBuiltins = `
-function prompt(text="", defaultText=""){
-    const promptedValue = __onEvent({"type": "input", "data": text});
-    return promptedValue;
-}
 function __stringify(args, addNewline=false){
     let asString = "";
     if(Array.isArray(args)){
@@ -22,6 +18,9 @@ function __stringify(args, addNewline=false){
         asString = args;
     } else if (typeof(args) === "object" && "toString" in args) {
         asString = args.toString();
+        if(asString === "[object Object]"){ // useless toString, so use JSON
+            asString = JSON.stringify(args);
+        }
     } else {
         asString = JSON.stringify(args);
     }
@@ -29,6 +28,14 @@ function __stringify(args, addNewline=false){
         asString += "\\n";
     }
     return asString;
+}
+function prompt(text="", defaultText=""){
+    const promptedValue = __onEvent({
+        "type": "input",
+        "data": __stringify({prompt: text}),
+        "contentType": "text/json"
+    });
+    return promptedValue;
 }
 console.log = (...args) => {
     __onEvent({"type": "output", "data": __stringify(...args, true)});

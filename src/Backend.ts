@@ -1,6 +1,7 @@
 import { PapyrosEvent } from "./PapyrosEvent";
 import { LogType, papyrosLog } from "./util/Logging";
 import { Channel, readMessage, uuidv4 } from "sync-message";
+import { parseEventData } from "./util/Util";
 
 export abstract class Backend {
     protected onEvent: (e: PapyrosEvent) => any;
@@ -27,14 +28,25 @@ export abstract class Backend {
         onEvent: (e: PapyrosEvent) => void,
         channel: Channel
     ): Promise<void> {
+        // Input messages are handled in a special way
+        // In order to link input requests to their responses
+        // An ID is required to make the connection
+        // The message must be read in the worker to not stall the main thread
+        const onInput = (e: PapyrosEvent): string => {
+            const inputData = parseEventData(e);
+            const messageId = uuidv4();
+            inputData.messageId = messageId;
+            e.data = JSON.stringify(inputData);
+            e.contentType = "text/json";
+            onEvent(e);
+            return readMessage(channel, messageId);
+        };
         this.onEvent = (e: PapyrosEvent) => {
             e.runId = this.runId;
             if (e.type === "input") {
-                e.content = uuidv4();
-            }
-            onEvent(e);
-            if (e.type === "input") {
-                return readMessage(channel, e.content!);
+                return onInput(e);
+            } else {
+                return onEvent(e);
             }
         };
         return Promise.resolve();
@@ -55,18 +67,25 @@ export abstract class Backend {
      */
     async runCode(code: string, runId: number): Promise<void> {
         this.runId = runId;
-        papyrosLog(LogType.Debug, "Running code in worker: ", code);
         try {
             const data = await this._runCodeInternal(code);
-            papyrosLog(LogType.Debug, "ran code: " + code + " and received: ", data);
-            return this.onEvent({ type: "success", data: JSON.stringify(data), runId: runId });
+            return this.onEvent(
+                {
+                    type: "success",
+                    data: JSON.stringify(data),
+                    runId: runId,
+                    contentType: "text/json"
+                }
+            );
         } catch (error: any) {
-            const errorString =
-                typeof (error) !== "string" && "toString" in error ?
-                    error.toString() :
-                    JSON.stringify(error);
+            const errorString = JSON.stringify(error);
             papyrosLog(LogType.Error, "Error during execution: ", error, errorString);
-            return this.onEvent({ type: "error", data: errorString, runId: runId });
+            return this.onEvent({
+                type: "error",
+                data: errorString,
+                runId: runId,
+                contentType: "text/json"
+            });
         }
     }
 }

@@ -34,7 +34,7 @@ class Papyros(python_runner.PatchedStdinRunner):
             # encode to a base64 str
             img = base64.b64encode(buf.read()).decode('utf-8')
             matplotlib.pyplot.clf()
-            self.output("img", img)
+            self.output("img", img, contentType="img/png;base64")
 
         matplotlib.pyplot.show = show
 
@@ -103,23 +103,23 @@ def init_papyros(eventCallback):
     global papyros
     def runner_callback(event_type, data):
         def cb(typ, dat, **kwargs):
-            return eventCallback(to_js(dict(type=typ, data=dat, **kwargs)))
+            return eventCallback(to_js(dict(type=typ, data=dat, depth=0, **kwargs)))
 
         # Translate python_runner events to papyros events
         if event_type == "output":
             for part in data["parts"]:
                 if part["type"] in ["stderr", "traceback", "syntax_error"]:
-                    cb("error", part["text"])
+                    cb("error", part["text"], contentType="text/json")
                 elif part["type"] == "stdout":
-                    cb("output", part["text"])
+                    cb("output", part["text"], contentType="text/plain")
                 elif part["type"] == "img":
-                    cb("output", part["text"], content="img")
+                    cb("output", part["text"], contentType=part["contentType"])
                 elif part["type"] in ["input", "input_prompt"]:
                     continue
                 else:
                     raise ValueError(f"Unknown output part type {part['type']}")
         elif event_type == "input":
-            return cb("input", data["prompt"])
+            return cb("input", json.dumps(dict(prompt=data["prompt"])), contentType="text/json")
         else:
             raise ValueError(f"Unknown event type {event_type}")
 

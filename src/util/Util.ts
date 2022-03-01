@@ -1,5 +1,7 @@
 import I18n from "i18n-js";
+import { PapyrosEvent } from "../PapyrosEvent";
 import { TRANSLATIONS } from "../Translations";
+import { LogType, papyrosLog } from "./Logging";
 
 // Shorthand for ease of use
 export const t = I18n.t;
@@ -167,4 +169,41 @@ export function renderWithOptions(
         parent.replaceChildren(content);
     }
     return parent;
+}
+
+export function parseEventData(e: PapyrosEvent): any {
+    const data = e.data;
+    const [baseType, specificType] = e.contentType.split("/");
+    switch (baseType) {
+        case "text": {
+            switch (specificType) {
+                case "plain": {
+                    return data;
+                }
+                case "json": {
+                    return JSON.parse(data);
+                }
+                default: {
+                    break;
+                }
+            }
+            break;
+        }
+        case "img": {
+            switch (specificType) {
+                case "png;base64": {
+                    return data;
+                }
+                default: {
+                    break;
+                }
+            }
+            break;
+        }
+        default: {
+            break;
+        }
+    }
+    papyrosLog(LogType.Important, `Unhandled content type: ${e.contentType}`);
+    return data;
 }

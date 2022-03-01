@@ -6,7 +6,10 @@ import {
 } from "./Constants";
 import { PapyrosEvent } from "./PapyrosEvent";
 import { papyrosLog, LogType } from "./util/Logging";
-import { addListener, renderButton, RenderOptions, renderWithOptions } from "./util/Util";
+import {
+    addListener, renderButton, parseEventData,
+    RenderOptions, renderWithOptions
+} from "./util/Util";
 import { Channel, makeChannel, writeMessage } from "sync-message";
 
 export enum InputMode {
@@ -15,6 +18,11 @@ export enum InputMode {
 }
 
 export const INPUT_MODES = [InputMode.Batch, InputMode.Interactive];
+
+export interface InputData {
+    prompt: string;
+    messageId: string;
+}
 
 interface InputSession {
     lineNr: number;
@@ -162,15 +170,18 @@ export class InputManager {
 
     async onInput(e?: PapyrosEvent): Promise<void> {
         papyrosLog(LogType.Debug, "Handling send Input in Papyros");
-        if (e?.content) {
-            this.messageId = e.content;
+        let prompt = "";
+        if (e?.data) {
+            const data = parseEventData(e) as InputData;
+            this.messageId = data.messageId;
+            prompt = data.prompt;
         }
         if (await this.sendLine()) {
             this.setWaiting(false);
             this.onSend();
         } else {
             papyrosLog(LogType.Debug, "Had no input to send, still waiting!");
-            this.setWaiting(true, e?.data);
+            this.setWaiting(true, prompt);
         }
     }
 

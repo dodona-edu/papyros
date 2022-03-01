@@ -1,7 +1,7 @@
 import escapeHTML from "escape-html";
 import { PapyrosEvent } from "./PapyrosEvent";
 import { inCircle } from "./util/HTMLShapes";
-import { RenderOptions, renderWithOptions, t } from "./util/Util";
+import { parseEventData, RenderOptions, renderWithOptions, t } from "./util/Util";
 
 export interface FriendlyError {
     name: string;
@@ -35,24 +35,21 @@ export class OutputManager {
     }
 
     showOutput(output: PapyrosEvent): void {
-        if (output.content === "img") {
-            this.renderNextElement(`<img src="data:image/png;base64, ${output.data}"></img>`);
+        const data = parseEventData(output);
+        if (output.contentType === "img/png;base64") {
+            this.renderNextElement(`<img src="data:image/png;base64, ${data}"></img>`);
         } else {
-            this.renderNextElement(this.spanify(output.data, false));
+            this.renderNextElement(this.spanify(data, false));
         }
     }
 
-    showError(error: FriendlyError | string): void {
+    showError(error: PapyrosEvent): void {
         let errorHTML = "";
-        let errorObject = {} as FriendlyError;
-        if (typeof (error) === "string") {
-            try {
-                errorObject = JSON.parse(error) as FriendlyError;
-            } catch (_) {
-                errorHTML = this.spanify(error);
-            }
-        }
-        if (Object.keys(errorObject).length > 0) {
+        const errorData = parseEventData(error);
+        if (typeof (errorData) === "string") {
+            errorHTML = this.spanify(errorData);
+        } else {
+            const errorObject = errorData as FriendlyError;
             let shortTraceback = (errorObject.where || "").trim();
             // Prepend a bit of indentation, so every part has indentation
             if (shortTraceback) {

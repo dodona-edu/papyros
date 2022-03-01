@@ -204,7 +204,7 @@ export class Papyros {
 
     onError(e: PapyrosEvent): void {
         papyrosLog(LogType.Debug, "Got error in Papyros: ", e);
-        this.outputManager.showError(e.data);
+        this.outputManager.showError(e);
     }
 
     async onInput(e: PapyrosEvent): Promise<void> {
