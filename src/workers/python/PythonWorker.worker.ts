@@ -66,6 +66,7 @@ class PythonWorker extends Backend {
     }
 }
 
-expose(new PythonWorker());
 // Default export to be recognized as a TS module
-export default null as any;
+export default {} as any;
+// Expose handles the actual export
+expose(new PythonWorker());

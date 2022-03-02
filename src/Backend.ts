@@ -1,5 +1,4 @@
 import { PapyrosEvent } from "./PapyrosEvent";
-import { LogType, papyrosLog } from "./util/Logging";
 import { Channel, readMessage, uuidv4 } from "sync-message";
 import { parseEventData } from "./util/Util";
 
