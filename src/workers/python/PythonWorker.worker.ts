@@ -51,6 +51,8 @@ class PythonWorker extends Backend {
     override async _runCodeInternal(code: string): Promise<any> {
         if (this.initialized) {
             try {
+                // Sometimes a SyntaxError can cause imports to fail
+                // We want the SyntaxError to be handled by process_code as well
                 await this.pyodide.loadPackagesFromImports(code);
             } catch (e) {
                 papyrosLog(LogType.Debug, "Something went wrong while loading imports: ", e);
