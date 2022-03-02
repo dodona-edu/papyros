@@ -65,27 +65,8 @@ export abstract class Backend {
      * @param {string} runId The uuid for this execution
      * @return {Promise<void>} Promise of execution
      */
-    async runCode(code: string, runId: number): Promise<void> {
+    async runCode(code: string, runId: number): Promise<any> {
         this.runId = runId;
-        try {
-            const data = await this._runCodeInternal(code);
-            return this.onEvent(
-                {
-                    type: "success",
-                    data: JSON.stringify(data),
-                    runId: runId,
-                    contentType: "text/json"
-                }
-            );
-        } catch (error: any) {
-            const errorString = JSON.stringify(error);
-            papyrosLog(LogType.Error, "Error during execution: ", error, errorString);
-            return this.onEvent({
-                type: "error",
-                data: errorString,
-                runId: runId,
-                contentType: "text/json"
-            });
-        }
+        return await this._runCodeInternal(code);
     }
 }

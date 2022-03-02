@@ -27,6 +27,7 @@ xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
  * @return {string} A string representation of the circle with content
  */
 export const inCircle = (content: string, title: string, color: string): string => {
-    return `<span title="${title}" class="display-block font-bold text-center
+    const htmlTitle = title ? `title="${title}"`: "";
+    return `<span ${htmlTitle} class="display-block font-bold text-center
     w-10 h-10 rounded-full px-1 text-${color} bg-white-500 border-${color} border-2">${content}</span>`;
 };

@@ -7,7 +7,12 @@ import { Backend } from "../../Backend";
  * by using eval and overriding some builtins
  */
 class JavaScriptWorker extends Backend {
-    private stringify(...args: any[]): string {
+    /**
+     * Convert varargs to a string, similar to how the console does it
+     * @param {any[]} args The values to join into a string
+     * @return {string} The string representation
+     */
+    private static stringify(...args: any[]): string {
         const asString = args.map(a => {
             if (Array.isArray(a)) {
                 return JSON.stringify(a);
@@ -28,28 +33,41 @@ class JavaScriptWorker extends Backend {
         return asString;
     }
 
+    /**
+     * Prompt the user for input with a message
+     * @param {string} text The message to show when asking for input
+     * @return {string} The value the user gave
+     */
     private prompt(text = ""): string {
         return this.onEvent({
             type: "input",
-            data: this.stringify({ prompt: text }),
+            data: JavaScriptWorker.stringify({ prompt: text }),
             contentType: "text/json",
             runId: this.runId
         });
     }
 
+    /**
+     * Print values to the output screen
+     * @param {any[]} args The values to log
+     */
     private consoleLog(...args: any[]): void {
         this.onEvent({
             type: "output",
-            data: this.stringify(...args) + "\n",
+            data: JavaScriptWorker.stringify(...args) + "\n",
             runId: this.runId,
             contentType: "text/plain"
         });
     }
 
+    /**
+     * Print values to the error screen
+     * @param {any[]} args The error values to log
+     */
     private consoleError(...args: any[]): void {
         this.onEvent({
             type: "error",
-            data: this.stringify(...args) + "\n",
+            data: JavaScriptWorker.stringify(...args) + "\n",
             contentType: "text/plain",
             runId: this.runId
         });
@@ -59,42 +77,42 @@ class JavaScriptWorker extends Backend {
      * @inheritdoc
      */
     override _runCodeInternal(code: string): Promise<any> {
-        const newBody = []; // Lines of code forming the body of the code to run
-
         // Builtins to store before execution and restore afterwards
-        const toRestore = new Map([
-            ["console.log", "__builtin_console_log"],
-            ["console.error", "__builtin_console_error"]
-        ]);
+        // Workers do not have access to prompt
+        const oldContent = {
+            "console.log": console.log,
+            "console.error": console.error
+        };
 
-        const restoreBuiltins = []; // overriden functions to restore at the end
-        for (const [fn, backup] of toRestore.entries()) {
-            // First save the originals
-            newBody.push(`${backup} = ${fn}`);
-            // Restore them, but add to function body later
-            restoreBuiltins.push(`${fn} = ${backup}`);
-        }
-        // Arguments for the new function
+        // Overrides for the builtins
         const newContext = {
             "prompt": this.prompt.bind(this),
             "console.log": this.consoleLog.bind(this),
             "console.error": this.consoleError.bind(this)
         };
-        // Unpack them to make them easily available
-        for (const k of Object.keys(newContext)) {
-            newBody.push(`${k} = ctx['${k}']`);
+        // Override the builtins
+        new Function("ctx",
+            Object.keys(newContext).map(k => `${k} = ctx['${k}'];`).join("\n")
+        )(newContext);
+        try { // run the user's code
+            return Promise.resolve(eval(code));
+        } catch (error: any) { // try to create a friendly traceback
+            Error.captureStackTrace(error);
+            return Promise.resolve(this.onEvent({
+                type: "error",
+                runId: this.runId,
+                contentType: "text/json",
+                data: JSON.stringify({
+                    name: error.constructor.name,
+                    what: error.message,
+                    traceback: error.stack
+                })
+            }));
+        } finally { // restore the old builtins
+            new Function("ctx",
+                Object.keys(oldContent).map(k => `${k} = ctx['${k}'];`).join("\n")
+            )(oldContent);
         }
-        // Run the code, restoring builtins at the end
-        newBody.push(`
-try {
-${code}
-} finally {
-${restoreBuiltins.join("\n")}
-}
-        `);
-        const fnBody = newBody.join("\n");
-        // eslint-disable-next-line no-new-func
-        return Promise.resolve(new Function("ctx", fnBody)(newContext));
     }
 }
 
