@@ -17,6 +17,7 @@ os.environ['MPLBACKEND'] = 'AGG'
 import sys
 sys.setrecursionlimit(500)
 
+# Global Papyros instance
 papyros = None
 
 
@@ -58,17 +59,20 @@ class Papyros(python_runner.PatchedStdinRunner):
                 raise
     
     def serialize_syntax_error(self, exc, source_code):
-        raise # Rethrow to ensure library is imported correctly
+        raise # Rethrow to ensure FriendlyTraceback library is imported correctly
 
     def serialize_traceback(self, exc, source_code):
         import friendly_traceback # Delay import for faster startup
         from friendly_traceback.core import FriendlyTraceback
 
+        # Allow friendly_traceback to inspect the code
         friendly_traceback.source_cache.cache.add(self.filename, source_code)
 
+        # Initialize traceback
         fr = FriendlyTraceback(type(exc), exc, exc.__traceback__)
         fr.assign_generic()
         fr.assign_cause()
+        # Translate properties to FriendlyError interface
         tb = fr.info.get("shortened_traceback", "")
         info = fr.info.get("generic", "")
         why = fr.info.get("cause", "")
@@ -85,6 +89,7 @@ class Papyros(python_runner.PatchedStdinRunner):
         while user_end < len(tb_lines) and name not in tb_lines[user_end]:
             user_end += 1
         where = "\n".join(tb_lines[user_start:user_end]) or ""
+        # Format for callback
         return dict(
             text=json.dumps(
                 dict(
@@ -99,11 +104,11 @@ class Papyros(python_runner.PatchedStdinRunner):
         )
 
 
-def init_papyros(eventCallback):
+def init_papyros(event_callback):
     global papyros
     def runner_callback(event_type, data):
         def cb(typ, dat, **kwargs):
-            return eventCallback(to_js(dict(type=typ, data=dat, depth=0, **kwargs)))
+            return event_callback(to_js(dict(type=typ, data=dat, depth=0, **kwargs)))
 
         # Translate python_runner events to papyros events
         if event_type == "output":
@@ -136,6 +141,7 @@ async def process_code(code, filename="my_code.py"):
     except ModuleNotFoundError:
         pass
     else:
+        # Only override matplotlib when required by the code
         papyros.override_matplotlib()
 
     await papyros.run_async(code)

@@ -7,14 +7,15 @@ import { Channel } from "sync-message";
 /* eslint-disable-next-line */
 const initPythonString = require("!!raw-loader!./init.py").default;
 
-// Worker specific import
-declare function importScripts(...urls: string[]): void;
 // Load in the Pyodide initialization script
 importScripts(PYODIDE_JS_URL);
 // Now loadPyodide is available
 declare function loadPyodide(args: { indexURL: string; fullStdLib: boolean }): Promise<Pyodide>;
 
-
+/**
+ * Implementation of a Python backend for Papyros
+ * Powered by Pyodide (https://pyodide.org/)
+ */
 class PythonWorker extends Backend {
     pyodide: Pyodide;
     initialized: boolean;
@@ -26,20 +27,23 @@ class PythonWorker extends Backend {
     }
 
     override async launch(
-      onEvent: (e: PapyrosEvent) => void,
-      channel: Channel,
+        onEvent: (e: PapyrosEvent) => void,
+        channel: Channel
     ): Promise<void> {
         await super.launch(onEvent, channel);
         this.pyodide = await loadPyodide({
             indexURL: PYODIDE_INDEX_URL,
             fullStdLib: false
         });
-        await this.runCode(initPythonString, 0);
-        // Python calls our function with a dict, which must be converted to a PapyrosEvent
+        // Load our own modules to connect Papyros and Pyodide
+        await this._runCodeInternal(initPythonString);
+        // Python calls our function with a PyProxy dict or a Js Map,
+        // These must be converted to a PapyrosEvent (JS Object) to allow message passing
         const eventCallback = (data: any): void => {
             const jsEvent: PapyrosEvent = "toJs" in data ? data.toJs() : Object.fromEntries(data);
             return this.onEvent(jsEvent);
         };
+        // Initialize our loaded Papyros module with the callback
         this.pyodide.globals.get("init_papyros")(eventCallback);
         this.initialized = true;
     }
