@@ -2,7 +2,7 @@ import { APPLICATION_STATE_TEXT_ID, STATE_SPINNER_ID } from "./Constants";
 import { svgCircle } from "./util/HTMLShapes";
 import {
     addListener, ButtonOptions, renderButton,
-    RenderOptions, renderWithOptions
+    RenderOptions, renderWithOptions, getElement,
 } from "./util/Util";
 
 interface DynamicButton {
@@ -11,6 +11,9 @@ interface DynamicButton {
     onClick: () => void;
 }
 
+/**
+ * Component to display the status and useful buttons for Papyros
+ */
 export class StatusPanel {
     buttons: Array<DynamicButton>;
 
@@ -33,14 +36,27 @@ export class StatusPanel {
         return document.getElementById(APPLICATION_STATE_TEXT_ID) as HTMLElement;
     }
 
+    /**
+     * Show or hide the spinning circle, representing a running animation
+     * @param {boolean} show Whether to show the spinner
+     */
     showSpinner(show: boolean): void {
-        this.statusSpinner.style.display = show ? "" : "none";
+        getElement(STATE_SPINNER_ID).style.display = show ? "" : "none";
     }
 
+    /**
+     * Display some text in the panel for the user
+     * @param {string} status The text to display
+     */
     setStatus(status: string): void {
-        this.statusText.innerText = status;
+        getElement(APPLICATION_STATE_TEXT_ID).innerText = status;
     }
 
+    /**
+     * Render the panel with the given options
+     * @param {RenderOptions} options Options for rendering 
+     * @return {HTMLElement} The rendered panel
+     */
     render(options: RenderOptions): HTMLElement {
         const rendered = renderWithOptions(options, `
 <div class="grid grid-cols-2 items-center">
