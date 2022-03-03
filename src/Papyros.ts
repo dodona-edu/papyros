@@ -3,7 +3,7 @@ import "./Papyros.css";
 import { proxy, Remote } from "comlink";
 import I18n from "i18n-js";
 import { Backend } from "./Backend";
-import { getBackend, stopBackend } from "./BackendManager";
+import { startBackend, stopBackend } from "./BackendManager";
 import { CodeEditor } from "./CodeEditor";
 import {
     EDITOR_WRAPPER_ID, PROGRAMMING_LANGUAGE_SELECT_ID, OUTPUT_TA_ID,
@@ -182,7 +182,7 @@ export class Papyros {
 
     async startBackend(): Promise<void> {
         this.stateManager.setState(PapyrosState.Loading);
-        const backend = getBackend(this.codeState.programmingLanguage);
+        const backend = startBackend(this.codeState.programmingLanguage);
         await backend.launch(proxy(e => this.onMessage(e)), this.inputManager.channel);
         this.codeState.backend = backend;
         this.stateManager.setState(PapyrosState.Ready);

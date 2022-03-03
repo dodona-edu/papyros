@@ -12,7 +12,12 @@ const CREATE_WORKER_MAP: Map<ProgrammingLanguage, () => Worker> = new Map([
     [ProgrammingLanguage.JavaScript, () => new JavaScriptWorker()]
 ]);
 
-export function getBackend(language: ProgrammingLanguage): Remote<Backend> {
+/**
+ * Start a backend for the given language, while storing the worker
+ * @param {ProgrammingLanguage} language The programming language supported by the backend
+ * @return {Remote<Backend>} A Comlink proxy for the Backend
+ */
+export function startBackend(language: ProgrammingLanguage): Remote<Backend> {
     if (CREATE_WORKER_MAP.has(language)) {
         const worker = CREATE_WORKER_MAP.get(language)!();
         const backend = wrap<Backend>(worker);
@@ -24,6 +29,10 @@ export function getBackend(language: ProgrammingLanguage): Remote<Backend> {
     }
 }
 
+/**
+ * Stop a backend by terminating the worker and releasing memory
+ * @param {Remote<Backend>} backend The proxy for the backend to stop
+ */
 export function stopBackend(backend: Remote<Backend>): void {
     if (BACKEND_MAP.has(backend)) {
         const toStop = BACKEND_MAP.get(backend)!;
