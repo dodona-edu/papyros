@@ -22,6 +22,7 @@ import { StatusPanel } from "./StatusPanel";
 import { getCodeForExample, getExampleNames } from "./examples/Examples";
 import { OutputManager } from "./OutputManager";
 import { makeChannel } from "sync-message";
+import { RunListener } from "./RunListener";
 
 enum PapyrosState {
     Loading = "loading",
@@ -111,6 +112,7 @@ export class Papyros {
     codeState: PapyrosCodeState;
     inputManager: InputManager;
     outputManager: OutputManager;
+    runListeners: Array<RunListener>;
 
     constructor(config: PapyrosConfig) {
         this.config = config;
@@ -131,6 +133,21 @@ export class Papyros {
         const statusPanel = new StatusPanel();
         this.stateManager = new PapyrosStateManager(statusPanel, () => this.runCode(), () => this.stop());
         this.inputManager = new InputManager(() => this.stateManager.setState(PapyrosState.Running), inputMode);
+        this.runListeners = [];
+        this.addRunListener(this.inputManager);
+        this.addRunListener(this.outputManager);
+    }
+
+    addRunListener(listener: RunListener): void {
+        this.runListeners.push(listener);
+    }
+
+    notifyListeners(start: boolean): void {
+        if (start) {
+            this.runListeners.forEach(l => l.onRunStart());
+        } else {
+            this.runListeners.forEach(l => l.onRunEnd());
+        }
     }
 
     get state(): PapyrosState {
@@ -235,8 +252,7 @@ export class Papyros {
         }
         this.codeState.runId += 1;
         this.stateManager.setState(PapyrosState.Running);
-        this.inputManager.onRunStart();
-        this.outputManager.onRunStart();
+        this.notifyListeners(true);
         papyrosLog(LogType.Debug, "Running code in Papyros, sending to backend");
         const start = new Date().getTime();
         try {
@@ -247,8 +263,7 @@ export class Papyros {
         } finally {
             const end = new Date().getTime();
             this.stateManager.setState(PapyrosState.Ready, t("Papyros.finished", { time: (end - start) / 1000 }));
-            this.inputManager.onRunEnd();
-            this.outputManager.onRunEnd();
+            this.notifyListeners(false);
         }
     }
 
@@ -260,6 +275,7 @@ export class Papyros {
         papyrosLog(LogType.Debug, "Stopping backend!");
         this.codeState.runId += 1; // ignore messages coming from last run
         this.stateManager.setState(PapyrosState.Stopping);
+        this.notifyListeners(false);
         stopBackend(this.codeState.backend);
         return this.startBackend();
     }

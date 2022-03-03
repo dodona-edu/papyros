@@ -1,5 +1,6 @@
 import escapeHTML from "escape-html";
 import { PapyrosEvent } from "./PapyrosEvent";
+import { RunListener } from "./RunListener";
 import { inCircle } from "./util/HTMLShapes";
 import { parseEventData, RenderOptions, renderWithOptions, t } from "./util/Util";
 
@@ -12,7 +13,7 @@ export interface FriendlyError {
     where?: string;
 }
 
-export class OutputManager {
+export class OutputManager implements RunListener {
     outputAreaId = "";
     options: RenderOptions = { parentElementId: "" };
 
