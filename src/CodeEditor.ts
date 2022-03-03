@@ -1,3 +1,4 @@
+/* eslint-disable valid-jsdoc */
 import { indentWithTab } from "@codemirror/commands";
 import { javascript } from "@codemirror/lang-javascript";
 import { indentUnit, LanguageSupport } from "@codemirror/language";
@@ -27,16 +28,40 @@ import { lintKeymap } from "@codemirror/lint";
 import { showPanel } from "@codemirror/panel";
 import { RenderOptions, renderWithOptions } from "./util/Util";
 
-
+/**
+ * Component that provides useful features to users writing code
+ */
 export class CodeEditor {
+    /**
+     * Reference to the user interface of the editor
+     */
     editorView: EditorView;
+    /**
+     * Compartment to change language at runtime
+     */
     languageCompartment: Compartment;
+    /**
+     * Compartment to configure indentation level at runtime
+     */
     indentCompartment: Compartment;
+    /**
+     * Compartment to configure the placeholder at runtime
+     */
     placeholderCompartment: Compartment;
+    /**
+    * Compartment to configure the panel at runtime
+     */
     panelCompartment: Compartment;
 
+    /**
+     * Construct a new CodeEditor
+     * @param {ProgrammingLanguage} language The used programming language
+     * @param {string} editorPlaceHolder The placeholder for the editor
+     * @param {string} initialCode The initial code to display
+     * @param {number} indentLength The length in spaces for the indent unit
+     */
     constructor(language: ProgrammingLanguage,
-        editorPlaceHolder: string, initialCode?: string, indentLength = 4) {
+        editorPlaceHolder: string, initialCode = "", indentLength = 4) {
         this.languageCompartment = new Compartment();
         this.indentCompartment = new Compartment();
         this.placeholderCompartment = new Compartment();
@@ -60,6 +85,12 @@ export class CodeEditor {
             });
     }
 
+    /**
+     * Render the editor with the given options and panel
+     * @param {RenderOptions} options Options for rendering
+     * @param {HTMLElement} panel The panel to display at the bottom
+     * @return {HTMLElement} The rendered element
+     */
     render(options: RenderOptions, panel?: HTMLElement): HTMLElement {
         if (panel) {
             this.setPanel(panel);
@@ -70,6 +101,11 @@ export class CodeEditor {
         return renderWithOptions(options, this.editorView.dom);
     }
 
+    /**
+     * Set the language that is currently used, with a corresponding placeholder
+     * @param {ProgrammingLanguage} language The language to use
+     * @param {string} editorPlaceHolder Placeholder when empty
+     */
     setLanguage(language: ProgrammingLanguage, editorPlaceHolder: string): void {
         this.editorView.dispatch({
             effects: [
@@ -79,6 +115,10 @@ export class CodeEditor {
         });
     }
 
+    /**
+     * Set the length in spaces of the indentation unit
+     * @param {number} indentLength The number of spaces to use
+     */
     setIndentLength(indentLength: number): void {
         this.editorView.dispatch({
             effects: this.indentCompartment.reconfigure(
@@ -87,32 +127,53 @@ export class CodeEditor {
         });
     }
 
+    /**
+     * Set the panel that is displayed at the bottom of the editor
+     * @param {HTMLElement} panel The panel to display
+     */
     setPanel(panel: HTMLElement): void {
         this.editorView.dispatch({
-            effects: [this.panelCompartment.reconfigure(showPanel.of(() => {
+            effects: this.panelCompartment.reconfigure(showPanel.of(() => {
                 return { dom: panel };
-            }))]
+            }))
         });
     }
 
+    /**
+     * @return {string} The code within the editor
+     */
     getCode(): string {
         return this.editorView.state.doc.toString();
     }
 
+    /**
+     * @param {string} code The new code to be shown in the editor
+     */
     setCode(code: string): void {
         this.editorView.dispatch(
             { changes: { from: 0, to: this.getCode().length, insert: code } }
         );
     }
 
+    /**
+     * Put focus on the CodeEditor
+     */
     focus(): void {
         this.editorView.focus();
     }
 
+    /**
+     * @param {number} indentLength The amount of spaces to use
+     * @return {string} The indentation unit to use
+     */
     static getIndentUnit(indentLength: number): string {
         return new Array(indentLength).fill(" ").join("");
     }
 
+    /**
+     * @param  {ProgrammingLanguage} language The language to support
+     * @return {LanguageSupport} CodeMirror LanguageSupport for the language
+     */
     static getLanguageSupport(language: ProgrammingLanguage): LanguageSupport {
         switch (language) {
             case ProgrammingLanguage.Python: {
@@ -127,7 +188,7 @@ export class CodeEditor {
         }
     }
 
-    /*
+    /**
     *  - [syntax highlighting depending on the language](#getLanguageSupport)
     *  - [line numbers](#gutter.lineNumbers)
     *  - [special character highlighting](#view.highlightSpecialChars)
@@ -150,6 +211,7 @@ export class CodeEditor {
     *  - [commenting](#comment.commentKeymap)
     *  - [linting](#lint.lintKeymap)
     *  - [indenting with tab](#commands.indentWithTab)
+    *  @return {Array<Extension} Default extensions to use
     */
     static getExtensions(): Array<Extension> {
         return [

@@ -256,8 +256,7 @@ export class Papyros {
         papyrosLog(LogType.Debug, "Running code in Papyros, sending to backend");
         const start = new Date().getTime();
         try {
-            await this.codeState.backend.runCode(
-                this.codeState.editor.getCode(), this.codeState.runId);
+            await this.codeState.backend.runCode(this.getCode(), this.codeState.runId);
         } catch (error: any) {
             this.onError(error);
         } finally {
