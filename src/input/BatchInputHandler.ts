@@ -40,16 +40,22 @@ export class BatchInputHandler extends UserInputHandler {
      * @return {Array<string>} The entered lines
      */
     private get lines(): Array<string> {
-        return this.inputArea.value.split("\n");
+        const l = this.inputArea.value.split("\n");
+        if (!l[l.length - 1]) { // last line is empty
+            l.splice(l.length - 1); // do not consider it valid input
+        }
+        return l;
     }
 
     hasNext(): boolean {
+        console.log("Called hasNext, lineNr: " + this.lineNr + " and lines: " + this.lines);
         return this.lineNr < this.lines.length;
     }
 
     next(): string {
         const nextLine = this.lines[this.lineNr];
         this.lineNr += 1;
+        console.log("Sending next line: " + nextLine + ", lineNr is now: " + this.lineNr);
         return nextLine;
     }
 
@@ -65,13 +71,11 @@ export class BatchInputHandler extends UserInputHandler {
         const rendered = renderWithOptions(options, `
 <textarea id="${this.inputAreaId}" 
 class="border-2 h-auto w-full max-h-1/4 px-1 overflow-auto
-rows="5" focus:outline-none focus:ring-1 focus:ring-blue-500>
+focus:outline-none focus:ring-1 focus:ring-blue-500" rows="5">
 </textarea>`);
         this.inputArea.addEventListener("keydown", (ev: KeyboardEvent) => {
             if (this.waiting && ev.key.toLowerCase() === "enter") {
-                console.log("Enter down, current data: ",
-                    this.lineNr, this.lines, this.lines.length);
-                if (this.lines.length <= this.lineNr) {
+                if (this.lines.length < this.lineNr) {
                     this.lineNr = this.lines.length - 1;
                 }
                 this.onInput();
