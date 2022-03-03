@@ -53,7 +53,7 @@ export abstract class Backend {
 
     /**
      * Internal helper method that actually executes the code
-     * This yields a result or an error, which is then processed in runCode
+     * Results or Errors must be passed by using the onEvent-callback
      * @param code The code to run
      */
     protected abstract _runCodeInternal(code: string): Promise<any>;

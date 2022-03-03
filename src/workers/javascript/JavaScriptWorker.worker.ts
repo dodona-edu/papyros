@@ -73,9 +73,6 @@ class JavaScriptWorker extends Backend {
         });
     }
 
-    /**
-     * @inheritdoc
-     */
     override _runCodeInternal(code: string): Promise<any> {
         // Builtins to store before execution and restore afterwards
         // Workers do not have access to prompt
