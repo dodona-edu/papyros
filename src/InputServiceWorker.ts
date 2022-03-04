@@ -4,7 +4,9 @@
 import { InputWorker } from "./workers/input/InputWorker";
 
 // Impport service worker provided by the Papyros-package
-const inputHandler = new InputWorker(location.host);
+let domain = location.href;
+domain = domain.slice(0, domain.lastIndexOf("/")+1);
+const inputHandler = new InputWorker(domain);
 
 addEventListener("fetch", async function (event: FetchEvent) {
     if (!await inputHandler.handleInputRequest(event)) {
