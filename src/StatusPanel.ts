@@ -54,7 +54,7 @@ export class StatusPanel {
 
     /**
      * Render the panel with the given options
-     * @param {RenderOptions} options Options for rendering 
+     * @param {RenderOptions} options Options for rendering
      * @return {HTMLElement} The rendered panel
      */
     render(options: RenderOptions): HTMLElement {

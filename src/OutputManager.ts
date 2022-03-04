@@ -88,7 +88,7 @@ export class OutputManager implements RunListener {
 
     /**
      * Display an error to the user
-     * @param {PapyrosEvent} error Event containing the error data 
+     * @param {PapyrosEvent} error Event containing the error data
      */
     showError(error: PapyrosEvent): void {
         let errorHTML = "";
