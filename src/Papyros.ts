@@ -195,11 +195,12 @@ export class Papyros {
                     papyrosLog(LogType.Important, "Unable to register service worker. Please specify all required parameters and ensure service workers are supported.");
                     return false;
                 }
-                papyrosLog(LogType.Important, "Registering service worker.");
-                // Store that we are reloading, to prevent the next load from doing all this again
-                await window.navigator.serviceWorker.register(new URL(serviceWorkerName, serviceWorkerRoot));
-                this.inputManager.channel = makeChannel({ serviceWorker: { scope: serviceWorkerRoot + "/" } })!;
-                if (allowReload) {
+                const rootWithSlash = serviceWorkerRoot.endsWith("/") ? serviceWorkerRoot : serviceWorkerRoot + "/";
+                const serviceWorkerUrl = rootWithSlash + serviceWorkerName;
+                papyrosLog(LogType.Important, `Registering service worker: ${serviceWorkerUrl}`);
+                await window.navigator.serviceWorker.register(serviceWorkerUrl);
+                this.inputManager.channel = makeChannel({ serviceWorker: { scope: rootWithSlash } })!;
+                if (allowReload) { // Store that we are reloading, to prevent the next load from doing all this again
                     window.localStorage.setItem(RELOAD_STORAGE_KEY, RELOAD_STORAGE_KEY);
                     // service worker adds new headers that may allow SharedArrayBuffers to be used
                     window.location.reload();

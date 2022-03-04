@@ -3,8 +3,8 @@
  */
 import { InputWorker } from "./workers/input/InputWorker";
 
-const papyrosHost = location.host;
-const inputHandler = new InputWorker(papyrosHost);
+// Impport service worker provided by the Papyros-package
+const inputHandler = new InputWorker(location.host);
 
 addEventListener("fetch", async function (event: FetchEvent) {
     if (!await inputHandler.handleInputRequest(event)) {
