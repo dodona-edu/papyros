@@ -14,9 +14,10 @@ import { PapyrosEvent } from "./PapyrosEvent";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import { LogType, papyrosLog } from "./util/Logging";
 import {
-    addListener, renderSelect, getSelectOptions, removeSelection,
-    getLocales, t, loadTranslations,
-    RenderOptions, renderWithOptions, ButtonOptions
+    t, loadTranslations, getLocales,
+    getSelectOptions, renderSelect, removeSelection,
+    RenderOptions, renderWithOptions,
+    getElement, addListener, ButtonOptions
 } from "./util/Util";
 import { StatusPanel } from "./StatusPanel";
 import { getCodeForExample, getExampleNames } from "./examples/Examples";
@@ -24,6 +25,9 @@ import { OutputManager } from "./OutputManager";
 import { makeChannel } from "sync-message";
 import { RunListener } from "./RunListener";
 
+/**
+ * Enum representing the possible states while processing code
+ */
 enum PapyrosState {
     Loading = "loading",
     Running = "running",
@@ -32,16 +36,19 @@ enum PapyrosState {
     Ready = "ready"
 }
 
+/**
+ * Helper component to manage and visualize the current PapyrosState
+ */
 class PapyrosStateManager {
     state: PapyrosState;
     statusPanel: StatusPanel;
 
     get runButton(): HTMLButtonElement {
-        return document.getElementById(RUN_BTN_ID) as HTMLButtonElement;
+        return getElement<HTMLButtonElement>(RUN_BTN_ID);
     }
 
     get stopButton(): HTMLButtonElement {
-        return document.getElementById(STOP_BTN_ID) as HTMLButtonElement;
+        return getElement<HTMLButtonElement>(STOP_BTN_ID);
     }
 
     constructor(statusPanel: StatusPanel, onRunClicked: () => void, onStopClicked: () => void) {
