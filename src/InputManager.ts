@@ -6,7 +6,7 @@ import {
 } from "./Constants";
 import { PapyrosEvent } from "./PapyrosEvent";
 import { papyrosLog, LogType } from "./util/Logging";
-import { addListener, RenderOptions, renderWithOptions } from "./util/Util";
+import { addListener, renderButton, RenderOptions, renderWithOptions } from "./util/Util";
 import { Channel, makeChannel, writeMessage } from "sync-message";
 
 export enum InputMode {
@@ -63,17 +63,18 @@ export class InputManager {
             rows="5"></textarea>`;
             otherMode = InputMode.Interactive;
         } else {
+            const sendButton = renderButton({
+                id: SEND_INPUT_BTN_ID,
+                buttonText: t("Papyros.enter"),
+                extraClasses: "text-black bg-white"
+            });
             inputArea = `
             <div class="flex flex-row">
                 <input id="${INPUT_TA_ID}" type="text"
                 class="border border-transparent w-full ${focusStyleClasses} mr-0.5 px-1
                 disabled:cursor-not-allowed">
                 </input>
-                <button id="${SEND_INPUT_BTN_ID}" type="button"
-                class="text-black bg-white border-2 px-4
-                    disabled:opacity-50 disabled:cursor-wait">
-                    ${t("Papyros.enter")}
-                </button>
+                ${sendButton}
             </div>`;
             otherMode = InputMode.Batch;
         }

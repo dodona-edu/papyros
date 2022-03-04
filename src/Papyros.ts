@@ -13,7 +13,11 @@ import { InputManager, InputMode } from "./InputManager";
 import { PapyrosEvent } from "./PapyrosEvent";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import { LogType, papyrosLog } from "./util/Logging";
-import { addListener, getLocales, getSelectOptions, t, loadTranslations, renderSelect, removeSelection, RenderOptions, renderWithOptions } from "./util/Util";
+import {
+    addListener, renderSelect, getSelectOptions, removeSelection,
+    getLocales, t, loadTranslations,
+    RenderOptions, renderWithOptions, ButtonOptions
+} from "./util/Util";
 import { StatusPanel } from "./StatusPanel";
 import { getCodeForExample, getExampleNames } from "./examples/Examples";
 import { OutputManager } from "./OutputManager";
@@ -39,9 +43,19 @@ class PapyrosStateManager {
         return document.getElementById(STOP_BTN_ID) as HTMLButtonElement;
     }
 
-    constructor(statusPanel: StatusPanel) {
-        this.statusPanel = statusPanel;
+    constructor(statusPanel: StatusPanel, onRunClicked: () => void, onStopClicked: () => void) {
         this.state = PapyrosState.Ready;
+        this.statusPanel = statusPanel;
+        this.statusPanel.addButton({
+            id: RUN_BTN_ID,
+            buttonText: t("Papyros.run"),
+            extraClasses: "text-white bg-blue-500"
+        }, onRunClicked);
+        this.statusPanel.addButton({
+            id: STOP_BTN_ID,
+            buttonText: t("Papyros.stop"),
+            extraClasses: "text-white bg-red-500"
+        }, onStopClicked);
     }
 
     setState(state: PapyrosState, message?: string): void {
@@ -108,7 +122,7 @@ export class Papyros {
             runId: 0
         };
         const statusPanel = new StatusPanel();
-        this.stateManager = new PapyrosStateManager(statusPanel);
+        this.stateManager = new PapyrosStateManager(statusPanel, () => this.runCode(), () => this.stop());
         this.inputManager = new InputManager(() => this.stateManager.setState(PapyrosState.Running), inputMode);
     }
 
@@ -117,8 +131,6 @@ export class Papyros {
     }
 
     async launch(): Promise<Papyros> {
-        this.stateManager.runButton.addEventListener("click", () => this.runCode());
-        this.stateManager.stopButton.addEventListener("click", () => this.stop());
         const start = new Date().getTime();
         await this.startBackend();
         papyrosLog(LogType.Important, `Finished loading backend after ${new Date().getTime() - start} ms`);
@@ -338,6 +350,10 @@ export class Papyros {
         );
         this.codeState.editor.render(Object.assign({ parentElementId: EDITOR_WRAPPER_ID }, renderOptions.code), panel);
         this.outputManager.render(Object.assign({ parentElementId: OUTPUT_TA_ID }, renderOptions.output));
+    }
+
+    addButton(options: ButtonOptions, onClick: () => void): void {
+        this.stateManager.statusPanel.addButton(options, onClick);
     }
 
     static supportsProgrammingLanguage(language: string): boolean {
