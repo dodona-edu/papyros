@@ -2,7 +2,7 @@ import escapeHTML from "escape-html";
 import { PapyrosEvent } from "./PapyrosEvent";
 import { RunListener } from "./RunListener";
 import { inCircle } from "./util/HTMLShapes";
-import { parseEventData, RenderOptions, renderWithOptions, t } from "./util/Util";
+import { getElement, parseEventData, RenderOptions, renderWithOptions, t } from "./util/Util";
 
 /**
  * Shape of Error objects that are easy to interpret
@@ -45,7 +45,7 @@ export class OutputManager implements RunListener {
      * Retrieve the parent element containing all output parts
      */
     get outputArea(): HTMLElement {
-        return document.getElementById(this.options.parentElementId) as HTMLElement;
+        return getElement(this.options.parentElementId);
     }
 
     /**
