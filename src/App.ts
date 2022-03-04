@@ -11,12 +11,14 @@ async function startPapyros(): Promise<void> {
     const language = Papyros.toProgrammingLanguage(urlParams.get("language") ||
         DEFAULT_PROGRAMMING_LANGUAGE)!;
     const locale = urlParams.get("locale") || DEFAULT_LOCALE;
-    const papyros = Papyros.fromElement({
+    const config = {
         standAlone: true,
         programmingLanguage: language,
         locale: locale,
-        inputMode: InputMode.Interactive,
-    }, {
+        inputMode: InputMode.Interactive
+    };
+    const papyros = new Papyros(config);
+    papyros.render({
         papyros: {
             parentElementId: "root"
         }

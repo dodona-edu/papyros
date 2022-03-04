@@ -106,12 +106,19 @@ interface PapyrosRenderOptions {
 }
 
 export class Papyros {
+    config: PapyrosConfig;
     stateManager: PapyrosStateManager;
     codeState: PapyrosCodeState;
     inputManager: InputManager;
     outputManager: OutputManager;
 
-    constructor(programmingLanguage: ProgrammingLanguage, inputMode: InputMode) {
+    constructor(config: PapyrosConfig) {
+        this.config = config;
+        const {
+            programmingLanguage, inputMode, locale
+        } = this.config;
+        loadTranslations();
+        I18n.locale = locale;
         this.outputManager = new OutputManager();
         this.codeState = {
             programmingLanguage: programmingLanguage,
@@ -162,35 +169,6 @@ export class Papyros {
         await backend.launch(proxy(e => this.onMessage(e)), this.inputManager.channel);
         this.codeState.backend = backend;
         this.stateManager.setState(PapyrosState.Ready);
-    }
-
-    static fromElement(config: PapyrosConfig, renderOptions: PapyrosRenderOptions): Papyros {
-        loadTranslations();
-        I18n.locale = config.locale;
-        const papyros = new Papyros(config.programmingLanguage, config.inputMode);
-        papyros.render(config.standAlone, config.programmingLanguage, config.locale, renderOptions);
-
-        if (config.standAlone) {
-            addListener<ProgrammingLanguage>(
-                PROGRAMMING_LANGUAGE_SELECT_ID, pl => {
-                    papyros.setProgrammingLanguage(pl);
-                    document.getElementById(EXAMPLE_SELECT_ID)!.innerHTML = getSelectOptions(getExampleNames(pl), name => name);
-                    removeSelection(EXAMPLE_SELECT_ID);
-                    // Modify search query params without reloading page
-                    history.pushState(null, "", `?locale=${I18n.locale}&language=${pl}`);
-                }
-            );
-            addListener(LOCALE_SELECT_ID, locale => {
-                document.location.href = `?locale=${locale}&language=${papyros.codeState.programmingLanguage}`;
-            });
-            addListener(EXAMPLE_SELECT_ID, name => {
-                const code = getCodeForExample(papyros.codeState.programmingLanguage, name);
-                papyros.setCode(code);
-            }, "input");
-            // Ensure there is no initial selection
-            removeSelection(EXAMPLE_SELECT_ID);
-        }
-        return papyros;
     }
 
     async configureInput(allowReload: boolean,
@@ -286,8 +264,10 @@ export class Papyros {
         return this.startBackend();
     }
 
-    render(standAlone: boolean, programmingLanguage: ProgrammingLanguage, locale: string,
-        renderOptions: PapyrosRenderOptions): void {
+    render(renderOptions: PapyrosRenderOptions): void {
+        const {
+            locale, programmingLanguage, standAlone
+        } = this.config;
         if (standAlone) {
             const programmingLanguageSelect =
                 renderSelect(PROGRAMMING_LANGUAGE_SELECT_ID, new Array(...LANGUAGE_MAP.values()),
@@ -296,14 +276,15 @@ export class Papyros {
                 renderSelect(EXAMPLE_SELECT_ID, getExampleNames(programmingLanguage),
                     name => name, undefined, t("Papyros.examples"));
             const locales = [locale, ...getLocales().filter(l => l != locale)];
-            const localeSelect =
-                `<div class="flex flex-row-reverse">
+            const localeSelect = `
+            <div class="flex flex-row-reverse">
                 <!-- row-reverse to start at the right, so put elements in order of display -->
                 ${renderSelect(LOCALE_SELECT_ID, locales, l => t(`Papyros.locales.${l}`), locale)}
                 <i class="mdi mdi-web text-4xl text-white"></i>
             </div>
             `;
-            const navBar = `<div class="bg-blue-500 text-white text-lg p-4 grid grid-cols-8 items-center max-h-1/5">
+            const navBar = `
+            <div class="bg-blue-500 text-white text-lg p-4 grid grid-cols-8 items-center max-h-1/5">
                 <div class="col-span-6">
                     ${t("Papyros.Papyros")}
                 </div>
@@ -312,13 +293,14 @@ export class Papyros {
                 </div>
             </div>
             `;
-            const header = `<!-- Header -->
+            const header = `
+            <!-- Header -->
             <div class="flex flex-row items-center">
                 ${programmingLanguageSelect}
                 ${exampleSelect}
             </div>`;
-            renderWithOptions(renderOptions.papyros!,
-                `<div id="papyros" class="max-h-screen h-full overflow-y-hidden">
+            renderWithOptions(renderOptions.papyros!, `
+    <div id="papyros" class="max-h-screen h-full overflow-y-hidden">
         ${navBar}
         <div class="m-10">
             ${header}
@@ -341,6 +323,24 @@ export class Papyros {
         </div>
     </div>
     `);
+            addListener<ProgrammingLanguage>(
+                PROGRAMMING_LANGUAGE_SELECT_ID, pl => {
+                    this.setProgrammingLanguage(pl);
+                    document.getElementById(EXAMPLE_SELECT_ID)!.innerHTML = getSelectOptions(getExampleNames(pl), name => name);
+                    removeSelection(EXAMPLE_SELECT_ID);
+                    // Modify search query params without reloading page
+                    history.pushState(null, "", `?locale=${I18n.locale}&language=${pl}`);
+                }
+            );
+            addListener(LOCALE_SELECT_ID, locale => {
+                document.location.href = `?locale=${locale}&language=${this.codeState.programmingLanguage}`;
+            });
+            addListener(EXAMPLE_SELECT_ID, name => {
+                const code = getCodeForExample(this.codeState.programmingLanguage, name);
+                this.setCode(code);
+            }, "input");
+            // Ensure there is no initial selection
+            removeSelection(EXAMPLE_SELECT_ID);
         }
         this.inputManager.render(
             Object.assign({ parentElementId: INPUT_AREA_WRAPPER_ID }, renderOptions.input)
