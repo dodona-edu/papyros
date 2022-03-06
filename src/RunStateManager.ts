@@ -27,7 +27,13 @@ export enum RunState {
  * Helper component to manage and visualize the current RunState
  */
 export class RunStateManager {
+    /**
+     * Current state of the program
+     */
     state: RunState;
+    /**
+     * Buttons managed by this component
+     */
     buttons: Array<DynamicButton>;
 
     /**

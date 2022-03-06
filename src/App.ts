@@ -23,14 +23,15 @@ async function startPapyros(): Promise<void> {
     };
     const papyros = new Papyros(config);
     papyros.render({
-        papyros: {
+        standAloneOptions: {
             parentElementId: "root"
         }
     });
     // Try to configure synchronous input mechanism
-    if (!await papyros.configureInput(false, location.href, DEFAULT_SERVICE_WORKER)) {
+    if (!await papyros.configureInput(location.href, DEFAULT_SERVICE_WORKER, true)) {
         getElement(MAIN_APP_ID).innerHTML =
-"Your browser is unsupported. Please use a modern version of Chrome, Safari, Firefox, ...";
+            "Your browser is unsupported.\n" +
+            "Please use a modern version of Chrome, Safari, Firefox, ...";
     } else { // Start actual application
         papyros.launch();
     }
