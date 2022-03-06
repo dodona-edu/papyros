@@ -26,8 +26,8 @@ class PythonWorker extends Backend {
     }
 
     override async launch(
-      onEvent: (e: PapyrosEvent) => void,
-      channel: Channel,
+        onEvent: (e: PapyrosEvent) => void,
+        channel: Channel
     ): Promise<void> {
         await super.launch(onEvent, channel);
         this.pyodide = await loadPyodide({
