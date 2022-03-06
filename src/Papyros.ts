@@ -326,11 +326,6 @@ export class Papyros {
     }
 
     static toProgrammingLanguage(language: string): ProgrammingLanguage | undefined {
-        const langLC = language.toLowerCase();
-        if (LANGUAGE_MAP.has(langLC)) {
-            return LANGUAGE_MAP.get(langLC)!;
-        } else {
-            return undefined;
-        }
+        return LANGUAGE_MAP.get(language.toLowerCase());
     }
 }
