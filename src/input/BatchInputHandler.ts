@@ -48,14 +48,12 @@ export class BatchInputHandler extends UserInputHandler {
     }
 
     hasNext(): boolean {
-        console.log("Called hasNext, lineNr: " + this.lineNr + " and lines: " + this.lines);
         return this.lineNr < this.lines.length;
     }
 
     next(): string {
         const nextLine = this.lines[this.lineNr];
         this.lineNr += 1;
-        console.log("Sending next line: " + nextLine + ", lineNr is now: " + this.lineNr);
         return nextLine;
     }
 
@@ -75,6 +73,7 @@ focus:outline-none focus:ring-1 focus:ring-blue-500" rows="5">
 </textarea>`);
         this.inputArea.addEventListener("keydown", (ev: KeyboardEvent) => {
             if (this.waiting && ev.key.toLowerCase() === "enter") {
+                // If user replaced lines, use them
                 if (this.lines.length < this.lineNr) {
                     this.lineNr = this.lines.length - 1;
                 }

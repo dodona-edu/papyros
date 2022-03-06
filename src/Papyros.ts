@@ -17,7 +17,7 @@ import {
     t, loadTranslations, getLocales,
     getSelectOptions, renderSelect, removeSelection,
     RenderOptions, renderWithOptions,
-    addListener, ButtonOptions
+    addListener, ButtonOptions, getElement
 } from "./util/Util";
 import { RunState, RunStateManager } from "./RunStateManager";
 import { getCodeForExample, getExampleNames } from "./examples/Examples";
@@ -286,7 +286,8 @@ export class Papyros {
             addListener<ProgrammingLanguage>(
                 PROGRAMMING_LANGUAGE_SELECT_ID, pl => {
                     this.setProgrammingLanguage(pl);
-                    document.getElementById(EXAMPLE_SELECT_ID)!.innerHTML = getSelectOptions(getExampleNames(pl), name => name);
+                    getElement<HTMLSelectElement>(EXAMPLE_SELECT_ID).innerHTML =
+                        getSelectOptions(getExampleNames(pl), name => name);
                     removeSelection(EXAMPLE_SELECT_ID);
                     // Modify search query params without reloading page
                     history.pushState(null, "", `?locale=${I18n.locale}&language=${pl}`);

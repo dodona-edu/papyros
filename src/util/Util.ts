@@ -66,12 +66,29 @@ export function renderSelect<T>(selectId: string,
     `;
 }
 
+/**
+ * Interface for options to use while rendering a button element
+ */
 export interface ButtonOptions {
+    /**
+     * The HTML id of the button
+     */
     id: string;
+    /**
+     * The text to display in the button, can also be HTML
+     */
     buttonText: string;
+    /**
+     * Optional classes to apply to the button
+     */
     extraClasses?: string;
 }
 
+/**
+ * Construct a HTML button string from the given options
+ * @param {ButtonOptions} options The options for the button
+ * @return {string} HTML string for the button
+ */
 export function renderButton(options: ButtonOptions): string {
     if (options.extraClasses) {
         // Prepend space to use in HTML
@@ -84,7 +101,9 @@ export function renderButton(options: ButtonOptions): string {
     ${options.buttonText}
 </button>`;
 }
-
+/**
+ * Helper type to access a HTML element, either via its id or the element itself
+ */
 type ElementIdentifier = string | HTMLElement;
 
 /**
@@ -171,6 +190,12 @@ export function renderWithOptions(
     return parent;
 }
 
+/**
+ * Parse the data contained within a PapyrosEvent using its contentType
+ * Supported content types are: text/plain, text/json, img/png;base64
+ * @param {PapyrosEvent} e Event containing data
+ * @return {any} The parsed data
+ */
 export function parseEventData(e: PapyrosEvent): any {
     const data = e.data;
     const [baseType, specificType] = e.contentType.split("/");
@@ -183,9 +208,6 @@ export function parseEventData(e: PapyrosEvent): any {
                 case "json": {
                     return JSON.parse(data);
                 }
-                default: {
-                    break;
-                }
             }
             break;
         }
@@ -194,13 +216,7 @@ export function parseEventData(e: PapyrosEvent): any {
                 case "png;base64": {
                     return data;
                 }
-                default: {
-                    break;
-                }
             }
-            break;
-        }
-        default: {
             break;
         }
     }
