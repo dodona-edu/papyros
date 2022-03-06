@@ -3,16 +3,19 @@ import { InputManager, InputMode } from "./InputManager";
 import { OutputManager } from "./OutputManager";
 import { Papyros } from "./Papyros";
 import { PapyrosEvent } from "./PapyrosEvent";
-import { StatusPanel } from "./StatusPanel";
+import { RunStateManager, RunState } from "./RunStateManager";
+import { InputWorker } from "./workers/input/InputWorker";
 
 export * from "./ProgrammingLanguage";
 export type { PapyrosEvent };
 export {
     Papyros,
     CodeEditor,
-    StatusPanel,
+    RunState,
+    RunStateManager,
     InputManager,
     InputMode,
     OutputManager,
+    InputWorker
 };
 
