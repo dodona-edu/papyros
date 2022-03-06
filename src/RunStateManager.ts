@@ -30,10 +30,38 @@ export class RunStateManager {
     state: RunState;
     buttons: Array<DynamicButton>;
 
+    /**
+     * Construct a new RunStateManager with the given listeners
+     * @param {function} onRunClicked Callback for when the run button is clicked
+     * @param {function} onStopClicked Callback for when the stop button is clicked
+     * @param {RunState} state The initial state
+     */
+    constructor(onRunClicked: () => void, onStopClicked: () => void, state = RunState.Ready) {
+        this.buttons = [];
+        this.addButton({
+            id: RUN_BTN_ID,
+            buttonText: t("Papyros.run"),
+            extraClasses: "text-white bg-blue-500"
+        }, onRunClicked);
+        this.addButton({
+            id: STOP_BTN_ID,
+            buttonText: t("Papyros.stop"),
+            extraClasses: "text-white bg-red-500"
+        }, onStopClicked);
+        this.state = state;
+        this.setState(state);
+    }
+
+    /**
+     * Get the button to run the code
+     */
     get runButton(): HTMLButtonElement {
         return getElement<HTMLButtonElement>(RUN_BTN_ID);
     }
 
+    /**
+     * Get the button to interrupt the code
+     */
     get stopButton(): HTMLButtonElement {
         return getElement<HTMLButtonElement>(STOP_BTN_ID);
     }
@@ -46,37 +74,31 @@ export class RunStateManager {
         getElement(STATE_SPINNER_ID).style.display = show ? "" : "none";
     }
 
-    constructor(onRunClicked: () => void, onStopClicked: () => void, state = RunState.Ready) {
-        this.state = state;
-        this.buttons = [];
-        this.addButton({
-            id: RUN_BTN_ID,
-            buttonText: t("Papyros.run"),
-            extraClasses: "text-white bg-blue-500"
-        }, onRunClicked);
-        this.addButton({
-            id: STOP_BTN_ID,
-            buttonText: t("Papyros.stop"),
-            extraClasses: "text-white bg-red-500"
-        }, onStopClicked);
-    }
 
+    /**
+     * Show the current state of the program to the user
+     * @param {RunState} state The current state of the run
+     * @param {string} message Optional message to indicate the state
+     */
     setState(state: RunState, message?: string): void {
-        if (state !== this.state) {
-            this.state = state;
-            this.stopButton.disabled = [RunState.Ready, RunState.Loading].includes(state);
-            if (state === RunState.Ready) {
-                this.showSpinner(false);
-                this.runButton.disabled = false;
-            } else {
-                this.showSpinner(true);
-                this.runButton.disabled = true;
-            }
-            getElement(APPLICATION_STATE_TEXT_ID).innerText =
-                message || t(`Papyros.states.${state}`);
+        this.state = state;
+        this.stopButton.disabled = [RunState.Ready, RunState.Loading].includes(state);
+        if (state === RunState.Ready) {
+            this.showSpinner(false);
+            this.runButton.disabled = false;
+        } else {
+            this.showSpinner(true);
+            this.runButton.disabled = true;
         }
+        getElement(APPLICATION_STATE_TEXT_ID).innerText =
+            message || t(`Papyros.states.${state}`);
     }
 
+    /**
+     * Add a button to display to the user
+     * @param {ButtonOptions} options Options for rendering the button
+     * @param {function} onClick Listener for click events on the button
+     */
     addButton(options: ButtonOptions, onClick: () => void): void {
         this.buttons.push({
             id: options.id,
@@ -101,6 +123,7 @@ export class RunStateManager {
         ${svgCircle(STATE_SPINNER_ID, "red")}
     </div>
 </div>`);
+        // Buttons are freshly added to the DOM, so attach listeners now
         this.buttons.forEach(b => addListener(b.id, b.onClick, "click"));
         return rendered;
     }
