@@ -40,8 +40,8 @@ export class InteractiveInputHandler extends UserInputHandler {
         return value;
     }
 
-    setWaiting(waiting: boolean, prompt?: string): void {
-        super.setWaiting(waiting, prompt);
+    waitWithPrompt(waiting: boolean, prompt?: string): void {
+        super.waitWithPrompt(waiting, prompt);
         this.sendButton.disabled = !waiting;
         this.inputArea.disabled = !waiting;
         if (this.inputArea.disabled) {

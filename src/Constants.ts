@@ -13,6 +13,7 @@ export const MAIN_APP_ID = addPapyrosPrefix("papyros");
 export const OUTPUT_TA_ID = addPapyrosPrefix("code-output-area");
 export const INPUT_AREA_WRAPPER_ID = addPapyrosPrefix("code-input-area-wrapper");
 export const INPUT_TA_ID = addPapyrosPrefix("code-input-area");
+export const USER_INPUT_WRAPPER_ID = addPapyrosPrefix("user-input-wrapper");
 export const EDITOR_WRAPPER_ID = addPapyrosPrefix("code-area");
 export const PANEL_WRAPPER_ID = addPapyrosPrefix("code-status-panel");
 export const STATE_SPINNER_ID = addPapyrosPrefix("state-spinner");

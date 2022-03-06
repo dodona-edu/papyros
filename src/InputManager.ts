@@ -1,7 +1,7 @@
 import { t } from "i18n-js";
 import {
     SWITCH_INPUT_MODE_A_ID,
-    INPUT_TA_ID, SEND_INPUT_BTN_ID
+    INPUT_TA_ID, SEND_INPUT_BTN_ID, USER_INPUT_WRAPPER_ID
 } from "./Constants";
 import { PapyrosEvent } from "./PapyrosEvent";
 import { papyrosLog, LogType } from "./util/Logging";
@@ -13,6 +13,7 @@ import { Channel, makeChannel, writeMessage } from "sync-message";
 import { InteractiveInputHandler } from "./input/InteractiveInputHandler";
 import { UserInputHandler } from "./input/UserInputHandler";
 import { BatchInputHandler } from "./input/BatchInputHandler";
+import { RunListener } from "./RunListener";
 
 export enum InputMode {
     Interactive = "interactive",
@@ -26,23 +27,22 @@ export interface InputData {
     messageId: string;
 }
 
-export class InputManager {
+export class InputManager implements RunListener {
     private _inputMode: InputMode;
     private inputHandlers: Map<InputMode, UserInputHandler>;
     private renderOptions: RenderOptions;
-    waiting: boolean;
+    _waiting: boolean;
     prompt: string;
 
     onSend: () => void;
     channel: Channel;
     messageId = "";
-    static USER_INPUT_WRAPPER_ID = "user-input-wrapper"
 
     constructor(onSend: () => void, inputMode: InputMode) {
         this._inputMode = inputMode;
         this.channel = makeChannel()!; // by default we try to use Atomics
         this.onSend = onSend;
-        this.waiting = false;
+        this._waiting = false;
         this.prompt = "";
         this.inputHandlers = this.buildInputHandlerMap();
         this.renderOptions = {} as RenderOptions;
@@ -79,7 +79,7 @@ export class InputManager {
         const otherMode = this.inputMode === InputMode.Interactive ?
             InputMode.Batch : InputMode.Interactive;
         renderWithOptions(options, `
-<div id="${InputManager.USER_INPUT_WRAPPER_ID}">
+<div id="${USER_INPUT_WRAPPER_ID}">
 </div>
 <a id="${SWITCH_INPUT_MODE_A_ID}" data-value="${otherMode}"
 class="flex flex-row-reverse hover:cursor-pointer text-blue-500">
@@ -87,13 +87,13 @@ class="flex flex-row-reverse hover:cursor-pointer text-blue-500">
 </a>`);
         addListener<InputMode>(SWITCH_INPUT_MODE_A_ID, im => this.inputMode = im,
             "click", "data-value");
-        this.inputHandler.render({ parentElementId: InputManager.USER_INPUT_WRAPPER_ID });
-        this.inputHandler.setWaiting(this.waiting, this.prompt);
+        this.inputHandler.render({ parentElementId: USER_INPUT_WRAPPER_ID });
+        this.inputHandler.waitWithPrompt(this._waiting, this.prompt);
     }
 
-    setWaiting(waiting: boolean): void {
-        this.waiting = waiting;
-        this.inputHandler.setWaiting(waiting, this.prompt);
+    set waiting(waiting: boolean) {
+        this._waiting = waiting;
+        this.inputHandler.waitWithPrompt(waiting, this.prompt);
     }
 
     async sendLine(): Promise<void> {
@@ -101,14 +101,19 @@ class="flex flex-row-reverse hover:cursor-pointer text-blue-500">
             const line = this.inputHandler.next();
             papyrosLog(LogType.Debug, "Sending input to user: " + line);
             await writeMessage(this.channel, line, this.messageId);
-            this.setWaiting(false);
+            this.waiting = false;
             this.onSend();
         } else {
             papyrosLog(LogType.Debug, "Had no input to send, still waiting!");
-            this.setWaiting(true);
+            this.waiting = true;
         }
     }
 
+    /**
+     * Asynchronously handle an input request by prompting the user for input
+     * @param {PapyrosEvent} e Event containing the input data
+     * @return {Promise<void>} Promise of handling the request
+     */
     async onInput(e: PapyrosEvent): Promise<void> {
         papyrosLog(LogType.Debug, "Handling input request in Papyros");
         const data = parseEventData(e) as InputData;
@@ -118,13 +123,13 @@ class="flex flex-row-reverse hover:cursor-pointer text-blue-500">
     }
 
     onRunStart(): void {
-        this.setWaiting(false);
+        this.waiting = false;
         this.inputHandler.onRunStart();
     }
 
     onRunEnd(): void {
         this.prompt = "";
         this.inputHandler.onRunEnd();
-        this.setWaiting(false);
+        this.waiting = false;
     }
 }

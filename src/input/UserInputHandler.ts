@@ -70,11 +70,11 @@ export abstract class UserInputHandler implements RunListener {
     }
 
     /**
-     * Set the waiting state of the input handler with a message
+     * Wait for input of the user for a certain prompt
      * @param {boolean} waiting Whether we are waiting for input
      * @param {string} prompt Optional message to display if waiting
      */
-    setWaiting(waiting: boolean, prompt = ""): void {
+    waitWithPrompt(waiting: boolean, prompt = ""): void {
         this.waiting = waiting;
         this.inputArea.setAttribute("placeholder",
             prompt || t(`Papyros.input_placeholder.${this.getInputMode()}`));
