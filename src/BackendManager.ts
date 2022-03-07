@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { releaseProxy, Remote, wrap } from "comlink";
 import { Backend } from "./Backend";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
