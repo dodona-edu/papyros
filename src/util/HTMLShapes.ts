@@ -11,8 +11,8 @@ xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
     </path>
 </svg>`);
 };
-export const svgTriangle = "";
-export const inCircle = (content: string, title?: string): string => {
+
+export const inCircle = (content: string, title: string, color: string): string => {
     return `<span title="${title}" class="display-block font-bold text-center
-    w-10 h-10 rounded-full px-1 text-blue-500 bg-white-500 border-blue-500 border-2">${content}</span>`;
+    w-10 h-10 rounded-full px-1 text-${color} bg-white-500 border-${color} border-2">${content}</span>`;
 };

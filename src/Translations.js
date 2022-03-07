@@ -82,9 +82,9 @@ const DUTCH_TRANSLATION = {
     "examples": "Voorbeelden"
 };
 
-// JS exports to allow use in TS and JS files
-// eslint-disable-next-line no-undef
-module.exports = {
+const TRANSLATIONS = {
     en: { "Papyros": ENGLISH_TRANSLATION },
     nl: { "Papyros": DUTCH_TRANSLATION }
 };
+// JS exports to allow use in TS and JS files
+module.exports.TRANSLATIONS = TRANSLATIONS;

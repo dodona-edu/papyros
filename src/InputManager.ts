@@ -2,12 +2,12 @@ import { t } from "i18n-js";
 import {
     SWITCH_INPUT_MODE_A_ID,
     INPUT_AREA_WRAPPER_ID,
-    INPUT_RELATIVE_URL, INPUT_TA_ID, SEND_INPUT_BTN_ID
+    INPUT_TA_ID, SEND_INPUT_BTN_ID
 } from "./Constants";
 import { PapyrosEvent } from "./PapyrosEvent";
 import { papyrosLog, LogType } from "./util/Logging";
-import { addListener } from "./util/Util";
-
+import { addListener, renderButton, RenderOptions, renderWithOptions } from "./util/Util";
+import { Channel, makeChannel, writeMessage } from "sync-message";
 
 export enum InputMode {
     Interactive = "interactive",
@@ -21,39 +21,24 @@ interface InputSession {
 }
 
 export class InputManager {
-    inputWrapper: HTMLElement;
+    renderOptions: RenderOptions;
     inputMode: InputMode;
     waiting: boolean;
     batchInput: string;
     onSend: () => void;
     session: InputSession;
 
-    inputTextArray?: Uint8Array;
-    inputMetaData?: Int32Array;
-    textEncoder: TextEncoder;
+    channel: Channel;
+    messageId = "";
 
     constructor(onSend: () => void, inputMode: InputMode) {
-        this.inputWrapper = document.getElementById(INPUT_AREA_WRAPPER_ID) as HTMLElement;
         this.inputMode = inputMode;
         this.session = { lineNr: 0 };
         this.batchInput = "";
-        this.textEncoder = new TextEncoder();
-        if (typeof SharedArrayBuffer !== "undefined") {
-            papyrosLog(LogType.Important, "Using SharedArrayBuffers");
-            // shared memory
-            this.inputTextArray = new Uint8Array(
-                new SharedArrayBuffer(Uint8Array.BYTES_PER_ELEMENT * 1024));
-            // 2 Int32s:
-            // index 0 indicates whether data is written
-            // index 1 denotes length of the string
-            this.inputMetaData = new Int32Array(
-                new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * 2));
-        } else {
-            papyrosLog(LogType.Important, "Using serviceWorker for input");
-        }
+        this.channel = makeChannel()!; // by default we try to use Atomics
         this.onSend = onSend;
-        this.waiting = false; // prevent TS error from no initializer
-        this.setInputMode(this.inputMode);
+        this.waiting = false;
+        this.renderOptions = { parentElementId: INPUT_AREA_WRAPPER_ID };
     }
 
     get enterButton(): HTMLButtonElement {
@@ -64,8 +49,11 @@ export class InputManager {
         return document.getElementById(INPUT_TA_ID) as HTMLInputElement;
     }
 
-    buildInputArea(): void {
-        const focusStyleClasses = " focus:outline-none focus:ring-1 focus:ring-blue-500";
+    render(options?: RenderOptions): void {
+        if (options) {
+            this.renderOptions = options;
+        }
+        const focusStyleClasses = "focus:outline-none focus:ring-1 focus:ring-blue-500";
         let inputArea = "";
         let otherMode: InputMode;
         if (this.inputMode === InputMode.Batch) {
@@ -75,17 +63,18 @@ export class InputManager {
             rows="5"></textarea>`;
             otherMode = InputMode.Interactive;
         } else {
+            const sendButton = renderButton({
+                id: SEND_INPUT_BTN_ID,
+                buttonText: t("Papyros.enter"),
+                extraClasses: "text-black bg-white"
+            });
             inputArea = `
             <div class="flex flex-row">
                 <input id="${INPUT_TA_ID}" type="text"
                 class="border border-transparent w-full ${focusStyleClasses} mr-0.5 px-1
                 disabled:cursor-not-allowed">
                 </input>
-                <button id="${SEND_INPUT_BTN_ID}" type="button"
-                class="text-black bg-white border-2 px-4
-                    disabled:opacity-50 disabled:cursor-wait">
-                    ${t("Papyros.enter")}
-                </button>
+                ${sendButton}
             </div>`;
             otherMode = InputMode.Batch;
         }
@@ -95,10 +84,10 @@ export class InputManager {
                 ${t(`Papyros.input_modes.switch_to_${otherMode}`)}
             </a>
         `;
-        this.inputWrapper.innerHTML = `
+        renderWithOptions(this.renderOptions, `
         ${inputArea}
         ${switchMode}
-        `;
+        `);
         addListener<InputMode>(SWITCH_INPUT_MODE_A_ID, im => this.setInputMode(im),
             "click", "data-value");
         if (this.inputMode === InputMode.Interactive) {
@@ -111,6 +100,7 @@ export class InputManager {
                 await this.onInput();
             }
         };
+        this.setWaiting(this.waiting);
     }
 
     setInputMode(inputMode: InputMode): void {
@@ -120,8 +110,7 @@ export class InputManager {
             this.batchInput = this.inputArea.value;
         }
         this.inputMode = inputMode;
-        this.buildInputArea();
-        this.setWaiting(this.waiting);
+        this.render();
         if (this.inputMode === InputMode.Batch) {
             // Set previous batch
             this.inputArea.value = this.batchInput;
@@ -163,18 +152,7 @@ export class InputManager {
         }
         if (line) {
             papyrosLog(LogType.Debug, "Sending input to user: " + line);
-            if (!this.inputMetaData || !this.inputTextArray) {
-                await fetch(INPUT_RELATIVE_URL,
-                    {
-                        method: "POST",
-                        body: JSON.stringify({ "input": line })
-                    });
-            } else {
-                const encoded = this.textEncoder.encode(line);
-                this.inputTextArray.set(encoded);
-                Atomics.store(this.inputMetaData, 1, encoded.length);
-                Atomics.store(this.inputMetaData, 0, 1);
-            }
+            await writeMessage(this.channel, line, this.messageId);
             this.session.lineNr += 1;
             return true;
         } else {
@@ -184,6 +162,9 @@ export class InputManager {
 
     async onInput(e?: PapyrosEvent): Promise<void> {
         papyrosLog(LogType.Debug, "Handling send Input in Papyros");
+        if (e?.content) {
+            this.messageId = e.content;
+        }
         if (await this.sendLine()) {
             this.setWaiting(false);
             this.onSend();

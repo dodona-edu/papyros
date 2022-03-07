@@ -1,23 +1,22 @@
-/* eslint-disable max-len */
 import { releaseProxy, Remote, wrap } from "comlink";
 import { Backend } from "./Backend";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
-
+import PythonWorker from "./workers/python/PythonWorker.worker";
+import JavaScriptWorker from "./workers/javascript/JavaScriptWorker.worker";
 // Store Worker per Backend as Comlink proxy has no explicit reference to the Worker
 // We need the Worker itself to be able to terminate it (@see stopBackend)
 const BACKEND_MAP: Map<Remote<Backend>, Worker> = new Map();
-
 export function getBackend(language: ProgrammingLanguage): Remote<Backend> {
     let worker;
     switch (language) {
         // Requires switch to have actual string constants and make webpack bundle the workers
         case ProgrammingLanguage.Python: {
-            worker = new Worker(new URL("./workers/python/PythonWorker.worker.ts", import.meta.url));
+            worker = new PythonWorker();
             break;
         }
 
         case ProgrammingLanguage.JavaScript: {
-            worker = new Worker(new URL("./workers/javascript/JavaScriptWorker.worker.ts", import.meta.url));
+            worker = new JavaScriptWorker();
             break;
         }
 

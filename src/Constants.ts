@@ -6,6 +6,7 @@ export const OUTPUT_TA_ID = "code-output-area";
 export const INPUT_AREA_WRAPPER_ID = "code-input-area-wrapper";
 export const INPUT_TA_ID = "code-input-area";
 export const EDITOR_WRAPPER_ID = "code-area";
+export const PANEL_WRAPPER_ID = "code-status-panel";
 
 export const STATE_SPINNER_ID = "state-spinner";
 export const APPLICATION_STATE_TEXT_ID = "application-state-text";
@@ -22,5 +23,4 @@ export const EXAMPLE_SELECT_ID = "example-select";
 export const LOCALE_SELECT_ID = "locale-select";
 export const DEFAULT_LOCALE = "nl";
 
-export const INPUT_RELATIVE_URL = "/__papyros_input";
-
+export const DEFAULT_SERVICE_WORKER = "inputServiceWorker.js";

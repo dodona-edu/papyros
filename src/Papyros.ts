@@ -7,80 +7,21 @@ import { getBackend, stopBackend } from "./BackendManager";
 import { CodeEditor } from "./CodeEditor";
 import {
     EDITOR_WRAPPER_ID, PROGRAMMING_LANGUAGE_SELECT_ID, OUTPUT_TA_ID,
-    RUN_BTN_ID, STOP_BTN_ID, LOCALE_SELECT_ID, INPUT_AREA_WRAPPER_ID, EXAMPLE_SELECT_ID
+    RUN_BTN_ID, STOP_BTN_ID, LOCALE_SELECT_ID, INPUT_AREA_WRAPPER_ID, EXAMPLE_SELECT_ID, PANEL_WRAPPER_ID
 } from "./Constants";
 import { InputManager, InputMode } from "./InputManager";
 import { PapyrosEvent } from "./PapyrosEvent";
-import { ProgrammingLanguage, PROGRAMMING_LANGUAGES } from "./ProgrammingLanguage";
+import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import { LogType, papyrosLog } from "./util/Logging";
-import { addListener, getLocales, getSelectOptions, t, loadTranslations, renderSelect, removeSelection } from "./util/Util";
+import {
+    addListener, renderSelect, getSelectOptions, removeSelection,
+    getLocales, t, loadTranslations,
+    RenderOptions, renderWithOptions, ButtonOptions
+} from "./util/Util";
 import { StatusPanel } from "./StatusPanel";
 import { getCodeForExample, getExampleNames } from "./examples/Examples";
 import { OutputManager } from "./OutputManager";
-
-function renderPapyros(parent: HTMLElement, standAlone: boolean,
-    programmingLanguage: ProgrammingLanguage, locale: string): void {
-    const programmingLanguageSelect = standAlone ?
-        renderSelect(PROGRAMMING_LANGUAGE_SELECT_ID, PROGRAMMING_LANGUAGES,
-            l => t(`Papyros.programming_languages.${l}`), programmingLanguage, t("Papyros.programming_language")) :
-        "";
-    const exampleSelect = standAlone ?
-        renderSelect(EXAMPLE_SELECT_ID, getExampleNames(programmingLanguage),
-            name => name, undefined, t("Papyros.examples")) : "";
-    const locales = [locale, ...getLocales().filter(l => l != locale)];
-    const localeSelect = standAlone ?
-        `
-        <div class="flex flex-row-reverse">
-            <!-- row-reverse to start at the right, so put elements in order of display -->
-            ${renderSelect(LOCALE_SELECT_ID, locales, l => t(`Papyros.locales.${l}`), locale)}
-            <i class="mdi mdi-web text-4xl text-white"></i>
-        </div>
-        ` : "";
-
-    const navBar = standAlone ?
-        `
-        <div class="bg-blue-500 text-white text-lg p-4 grid grid-cols-8 items-center max-h-1/5">
-            <div class="col-span-6">
-                ${t("Papyros.Papyros")}
-            </div>
-            <div class="col-span-2 text-black">
-                ${localeSelect}
-            </div>
-        </div>
-        ` : "";
-    parent.innerHTML =
-        `
-    <div id="papyros" class="max-h-screen h-full overflow-y-hidden">
-    ${navBar}
-    <div class="m-10">
-      <!-- Header -->
-      <div class="flex flex-row items-center">
-        ${programmingLanguageSelect}
-        ${exampleSelect}
-      </div>
-
-      <!--Body of the application-->
-      <div class="grid grid-cols-2 gap-4 box-border max-h-full">
-        <!--Left code section-->
-        <div class="col-span-1">
-          <h1>${t("Papyros.code")}:</h1>
-          <div id="${EDITOR_WRAPPER_ID}" class="overflow-auto max-h-9/10 min-h-1/4 border-solid border-gray-200 border-2"></div>
-        </div>
-        <!--Right user input and output section-->
-        <div class="col-span-1">
-          <h1>${t("Papyros.output")}:</h1>
-          <div id="${OUTPUT_TA_ID}" title="${t("Papyros.output_placeholder")}"
-           class="border-2 w-full min-h-1/4 max-h-3/5 overflow-auto px-1 whitespace-pre"></div>
-          <h1>${t("Papyros.input")}:</h1>
-          <div id="${INPUT_AREA_WRAPPER_ID}">
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-    `;
-}
-
+import { makeChannel } from "sync-message";
 
 enum PapyrosState {
     Loading = "loading",
@@ -93,14 +34,28 @@ enum PapyrosState {
 class PapyrosStateManager {
     state: PapyrosState;
     statusPanel: StatusPanel;
-    runButton: HTMLButtonElement;
-    stopButton: HTMLButtonElement;
 
-    constructor(statusPanel: StatusPanel) {
-        this.statusPanel = statusPanel;
-        this.runButton = document.getElementById(RUN_BTN_ID) as HTMLButtonElement;
-        this.stopButton = document.getElementById(STOP_BTN_ID) as HTMLButtonElement;
+    get runButton(): HTMLButtonElement {
+        return document.getElementById(RUN_BTN_ID) as HTMLButtonElement;
+    }
+
+    get stopButton(): HTMLButtonElement {
+        return document.getElementById(STOP_BTN_ID) as HTMLButtonElement;
+    }
+
+    constructor(statusPanel: StatusPanel, onRunClicked: () => void, onStopClicked: () => void) {
         this.state = PapyrosState.Ready;
+        this.statusPanel = statusPanel;
+        this.statusPanel.addButton({
+            id: RUN_BTN_ID,
+            buttonText: t("Papyros.run"),
+            extraClasses: "text-white bg-blue-500"
+        }, onRunClicked);
+        this.statusPanel.addButton({
+            id: STOP_BTN_ID,
+            buttonText: t("Papyros.stop"),
+            extraClasses: "text-white bg-red-500"
+        }, onStopClicked);
     }
 
     setState(state: PapyrosState, message?: string): void {
@@ -117,43 +72,64 @@ class PapyrosStateManager {
             this.statusPanel.setStatus(message || t(`Papyros.states.${state}`));
         }
     }
+
+    render(options: RenderOptions): HTMLElement {
+        return this.statusPanel.render(options);
+    }
 }
+
+const LANGUAGE_MAP = new Map([
+    ["python", ProgrammingLanguage.Python],
+    ["javascript", ProgrammingLanguage.JavaScript]
+]);
 
 interface PapyrosCodeState {
     programmingLanguage: ProgrammingLanguage;
     editor: CodeEditor;
     backend: Remote<Backend>;
     runId: number;
-    outputArea: HTMLInputElement;
 }
 
 interface PapyrosConfig {
     standAlone: boolean;
     programmingLanguage: ProgrammingLanguage;
     locale: string;
-    inputMode: InputMode
+    inputMode: InputMode;
+}
+
+interface PapyrosRenderOptions {
+    papyros?: RenderOptions;
+    code?: RenderOptions;
+    panel?: RenderOptions;
+    input?: RenderOptions;
+    output?: RenderOptions
 }
 
 export class Papyros {
+    config: PapyrosConfig;
     stateManager: PapyrosStateManager;
     codeState: PapyrosCodeState;
     inputManager: InputManager;
     outputManager: OutputManager;
 
-    constructor(programmingLanguage: ProgrammingLanguage, inputMode: InputMode) {
-        this.outputManager = new OutputManager(OUTPUT_TA_ID);
-        const statusPanel = new StatusPanel();
+    constructor(config: PapyrosConfig) {
+        this.config = config;
+        const {
+            programmingLanguage, inputMode, locale
+        } = this.config;
+        loadTranslations();
+        I18n.locale = locale;
+        this.outputManager = new OutputManager();
         this.codeState = {
             programmingLanguage: programmingLanguage,
             editor: new CodeEditor(
-                document.getElementById(EDITOR_WRAPPER_ID) as HTMLInputElement,
-                programmingLanguage, statusPanel.render(document.createElement("div")),
+                programmingLanguage,
                 t("Papyros.code_placeholder", { programmingLanguage })),
             backend: {} as Remote<Backend>,
-            outputArea: document.getElementById(OUTPUT_TA_ID) as HTMLInputElement,
             runId: 0
         };
-        this.stateManager = new PapyrosStateManager(statusPanel);
+        const statusPanel = new StatusPanel();
+        this.stateManager = new PapyrosStateManager(statusPanel, () => this.runCode(), () => this.stop());
         this.inputManager = new InputManager(() => this.stateManager.setState(PapyrosState.Running), inputMode);
     }
 
@@ -162,8 +138,6 @@ export class Papyros {
     }
 
     async launch(): Promise<Papyros> {
-        this.stateManager.runButton.addEventListener("click", () => this.runCode());
-        this.stateManager.stopButton.addEventListener("click", () => this.stop());
         const start = new Date().getTime();
         await this.startBackend();
         papyrosLog(LogType.Important, `Finished loading backend after ${new Date().getTime() - start} ms`);
@@ -176,7 +150,7 @@ export class Papyros {
             stopBackend(this.codeState.backend);
             this.codeState.programmingLanguage = programmingLanguage;
             this.codeState.editor.setLanguage(programmingLanguage, t("Papyros.code_placeholder", { programmingLanguage }));
-            this.codeState.outputArea.value = "";
+            this.outputManager.reset();
             await this.startBackend();
         }
     }
@@ -185,39 +159,47 @@ export class Papyros {
         this.codeState.editor.setCode(code);
     }
 
+    getCode(): string {
+        return this.codeState.editor.getCode();
+    }
+
     async startBackend(): Promise<void> {
         this.stateManager.setState(PapyrosState.Loading);
         const backend = getBackend(this.codeState.programmingLanguage);
-        await backend.launch(proxy(e => this.onMessage(e)), this.inputManager.inputTextArray, this.inputManager.inputMetaData);
+        await backend.launch(proxy(e => this.onMessage(e)), this.inputManager.channel);
         this.codeState.backend = backend;
         this.stateManager.setState(PapyrosState.Ready);
     }
 
-    static fromElement(parent: HTMLElement, config: PapyrosConfig): Promise<Papyros> {
-        loadTranslations();
-        I18n.locale = config.locale;
-        renderPapyros(parent, config.standAlone, config.programmingLanguage, config.locale);
-        const papyros = new Papyros(config.programmingLanguage, config.inputMode);
-        if (config.standAlone) {
-            addListener<ProgrammingLanguage>(
-                PROGRAMMING_LANGUAGE_SELECT_ID, pl => {
-                    papyros.setProgrammingLanguage(pl);
-                    document.getElementById(EXAMPLE_SELECT_ID)!.innerHTML = getSelectOptions(getExampleNames(pl), name => name);
-                    removeSelection(EXAMPLE_SELECT_ID);
-                    // Modify search query params without reloading page
-                    history.pushState(null, "", `?locale=${I18n.locale}&language=${pl}`);
+    async configureInput(allowReload: boolean,
+        serviceWorkerRoot?: string, serviceWorkerName?: string): Promise<boolean> {
+        const RELOAD_STORAGE_KEY = "__papyros_reloading";
+        if (allowReload && window.localStorage.getItem(RELOAD_STORAGE_KEY)) {
+            // We are the result of the page reload, so we can start
+            window.localStorage.removeItem(RELOAD_STORAGE_KEY);
+            return true;
+        } else {
+            if (typeof SharedArrayBuffer === "undefined") {
+                papyrosLog(LogType.Important, "SharedArrayBuffers are not available. ");
+                if (!serviceWorkerRoot || !serviceWorkerName || !("serviceWorker" in navigator)) {
+                    papyrosLog(LogType.Important, "Unable to register service worker. Please specify all required parameters and ensure service workers are supported.");
+                    return false;
                 }
-            );
-            addListener(LOCALE_SELECT_ID, locale => {
-                document.location.href = `?locale=${locale}&language=${papyros.codeState.programmingLanguage}`;
-            });
-            addListener(EXAMPLE_SELECT_ID, name => {
-                const code = getCodeForExample(papyros.codeState.programmingLanguage, name);
-                papyros.setCode(code);
-            }, "input");
-            removeSelection(EXAMPLE_SELECT_ID);
+                const rootWithSlash = serviceWorkerRoot.endsWith("/") ? serviceWorkerRoot : serviceWorkerRoot + "/";
+                const serviceWorkerUrl = rootWithSlash + serviceWorkerName;
+                papyrosLog(LogType.Important, `Registering service worker: ${serviceWorkerUrl}`);
+                await window.navigator.serviceWorker.register(serviceWorkerUrl);
+                this.inputManager.channel = makeChannel({ serviceWorker: { scope: rootWithSlash } })!;
+                if (allowReload) { // Store that we are reloading, to prevent the next load from doing all this again
+                    window.localStorage.setItem(RELOAD_STORAGE_KEY, RELOAD_STORAGE_KEY);
+                    // service worker adds new headers that may allow SharedArrayBuffers to be used
+                    window.location.reload();
+                }
+                return true;
+            } else {
+                return true;
+            }
         }
-        return papyros.launch();
     }
 
     onError(e: PapyrosEvent): void {
@@ -255,7 +237,6 @@ export class Papyros {
         this.stateManager.setState(PapyrosState.Running);
         this.inputManager.onRunStart();
         this.outputManager.onRunStart();
-        this.codeState.outputArea.value = "";
         papyrosLog(LogType.Debug, "Running code in Papyros, sending to backend");
         const start = new Date().getTime();
         try {
@@ -281,5 +262,110 @@ export class Papyros {
         this.stateManager.setState(PapyrosState.Stopping);
         stopBackend(this.codeState.backend);
         return this.startBackend();
+    }
+
+    render(renderOptions: PapyrosRenderOptions): void {
+        const {
+            locale, programmingLanguage, standAlone
+        } = this.config;
+        if (standAlone) {
+            const programmingLanguageSelect =
+                renderSelect(PROGRAMMING_LANGUAGE_SELECT_ID, new Array(...LANGUAGE_MAP.values()),
+                    l => t(`Papyros.programming_languages.${l}`), programmingLanguage, t("Papyros.programming_language"));
+            const exampleSelect =
+                renderSelect(EXAMPLE_SELECT_ID, getExampleNames(programmingLanguage),
+                    name => name, undefined, t("Papyros.examples"));
+            const locales = [locale, ...getLocales().filter(l => l != locale)];
+            const localeSelect = `
+            <div class="flex flex-row-reverse">
+                <!-- row-reverse to start at the right, so put elements in order of display -->
+                ${renderSelect(LOCALE_SELECT_ID, locales, l => t(`Papyros.locales.${l}`), locale)}
+                <i class="mdi mdi-web text-4xl text-white"></i>
+            </div>
+            `;
+            const navBar = `
+            <div class="bg-blue-500 text-white text-lg p-4 grid grid-cols-8 items-center max-h-1/5">
+                <div class="col-span-6">
+                    ${t("Papyros.Papyros")}
+                </div>
+                <div class="col-span-2 text-black">
+                    ${localeSelect}
+                </div>
+            </div>
+            `;
+            const header = `
+            <!-- Header -->
+            <div class="flex flex-row items-center">
+                ${programmingLanguageSelect}
+                ${exampleSelect}
+            </div>`;
+            renderWithOptions(renderOptions.papyros!, `
+    <div id="papyros" class="max-h-screen h-full overflow-y-hidden">
+        ${navBar}
+        <div class="m-10">
+            ${header}
+            <!--Body of the application-->
+            <div class="grid grid-cols-2 gap-4 box-border max-h-full">
+                <!-- Code section-->
+                <div>
+                    <h1>${t("Papyros.code")}:</h1>
+                    <div id="${EDITOR_WRAPPER_ID}"></div>
+                    <div id="${PANEL_WRAPPER_ID}"></div>
+                </div>
+                <!-- User input and output section-->
+                <div>
+                    <h1>${t("Papyros.output")}:</h1>
+                    <div id="${OUTPUT_TA_ID}"></div>
+                    <h1>${t("Papyros.input")}:</h1>
+                    <div id="${INPUT_AREA_WRAPPER_ID}"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    `);
+            addListener<ProgrammingLanguage>(
+                PROGRAMMING_LANGUAGE_SELECT_ID, pl => {
+                    this.setProgrammingLanguage(pl);
+                    document.getElementById(EXAMPLE_SELECT_ID)!.innerHTML = getSelectOptions(getExampleNames(pl), name => name);
+                    removeSelection(EXAMPLE_SELECT_ID);
+                    // Modify search query params without reloading page
+                    history.pushState(null, "", `?locale=${I18n.locale}&language=${pl}`);
+                }
+            );
+            addListener(LOCALE_SELECT_ID, locale => {
+                document.location.href = `?locale=${locale}&language=${this.codeState.programmingLanguage}`;
+            });
+            addListener(EXAMPLE_SELECT_ID, name => {
+                const code = getCodeForExample(this.codeState.programmingLanguage, name);
+                this.setCode(code);
+            }, "input");
+            // Ensure there is no initial selection
+            removeSelection(EXAMPLE_SELECT_ID);
+        }
+        this.inputManager.render(
+            Object.assign({ parentElementId: INPUT_AREA_WRAPPER_ID }, renderOptions.input)
+        );
+        const panel = this.stateManager.render(
+            Object.assign({ parentElementId: PANEL_WRAPPER_ID }, renderOptions.panel)
+        );
+        this.codeState.editor.render(Object.assign({ parentElementId: EDITOR_WRAPPER_ID }, renderOptions.code), panel);
+        this.outputManager.render(Object.assign({ parentElementId: OUTPUT_TA_ID }, renderOptions.output));
+    }
+
+    addButton(options: ButtonOptions, onClick: () => void): void {
+        this.stateManager.statusPanel.addButton(options, onClick);
+    }
+
+    static supportsProgrammingLanguage(language: string): boolean {
+        return Papyros.toProgrammingLanguage(language) !== undefined;
+    }
+
+    static toProgrammingLanguage(language: string): ProgrammingLanguage | undefined {
+        const langLC = language.toLowerCase();
+        if (LANGUAGE_MAP.has(langLC)) {
+            return LANGUAGE_MAP.get(langLC)!;
+        } else {
+            return undefined;
+        }
     }
 }

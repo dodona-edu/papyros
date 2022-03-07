@@ -2,19 +2,17 @@ import { expose } from "comlink";
 import { Backend } from "../../Backend";
 import { PapyrosEvent } from "../../PapyrosEvent";
 import { LogType, papyrosLog } from "../../util/Logging";
+import { Pyodide, PYODIDE_INDEX_URL, PYODIDE_JS_URL } from "./Pyodide";
+import { Channel } from "sync-message";
+/* eslint-disable-next-line */
 const initPythonString = require("!!raw-loader!./init.py").default;
 
-interface Pyodide {
-    runPython: (code: string, globals?: any) => any;
-    runPythonAsync: (code: string) => Promise<void>;
-    loadPackagesFromImports: (code: string) => Promise<void>;
-    loadPackage: (names: string | string[]) => Promise<void>;
-    globals: Map<string, any>;
-}
+// Worker specific import
 declare function importScripts(...urls: string[]): void;
+// Load in the Pyodide initialization script
+importScripts(PYODIDE_JS_URL);
+// Now loadPyodide is available
 declare function loadPyodide(args: { indexURL: string; fullStdLib: boolean }): Promise<Pyodide>;
-
-importScripts("https://cdn.jsdelivr.net/pyodide/v0.18.1/full/pyodide.js");
 
 
 class PythonWorker extends Backend {
@@ -27,11 +25,13 @@ class PythonWorker extends Backend {
         this.initialized = false;
     }
 
-    override async launch(onEvent: (e: PapyrosEvent) => void,
-        inputTextArray?: Uint8Array, inputMetaData?: Int32Array): Promise<void> {
-        await super.launch(onEvent, inputTextArray, inputMetaData);
+    override async launch(
+        onEvent: (e: PapyrosEvent) => void,
+        channel: Channel
+    ): Promise<void> {
+        await super.launch(onEvent, channel);
         this.pyodide = await loadPyodide({
-            indexURL: "https://cdn.jsdelivr.net/pyodide/v0.18.1/full/",
+            indexURL: PYODIDE_INDEX_URL,
             fullStdLib: false
         });
         await this.runCode(initPythonString, 0);
@@ -61,3 +61,5 @@ class PythonWorker extends Backend {
 }
 
 expose(new PythonWorker());
+// Default export to be recognized as a TS module
+export default null as any;

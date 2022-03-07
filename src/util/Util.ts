@@ -1,5 +1,6 @@
 import I18n from "i18n-js";
-import * as TRANSLATIONS from "../Translations";
+import { TRANSLATIONS } from "../Translations";
+
 export const t = I18n.t;
 
 export function loadTranslations(): void {
@@ -44,6 +45,25 @@ export function renderSelect<T>(selectId: string,
     `;
 }
 
+export interface ButtonOptions {
+    id: string;
+    buttonText: string;
+    extraClasses?: string;
+}
+
+export function renderButton(options: ButtonOptions): string {
+    if (options.extraClasses) {
+        // Prepend space to use in HTML
+        options.extraClasses = ` ${options.extraClasses}`;
+    }
+    return `
+<button id="${options.id}" type="button"
+    class="border-2 m-1 px-4 inset-y-2 rounded-lg
+    disabled:opacity-50 disabled:cursor-wait${options.extraClasses}">
+    ${options.buttonText}
+</button>`;
+}
+
 export function addListener<T extends string>(
     elementId: string, onEvent: (e: T) => void, eventType = "change", attribute = "value"
 ): void {
@@ -55,4 +75,38 @@ export function addListener<T extends string>(
 
 export function removeSelection(selectId: string): void {
     (document.getElementById(selectId) as HTMLSelectElement).selectedIndex = -1;
+}
+
+export interface RenderOptions {
+    parentElementId: string;
+    classNames?: string;
+    attributes?: Map<string, string>;
+}
+
+export function getElement(element: string | HTMLElement): HTMLElement {
+    if (typeof element === "string") {
+        return document.getElementById(element) as HTMLElement;
+    } else {
+        return element;
+    }
+}
+
+export function renderWithOptions(
+    options: RenderOptions, content: string | HTMLElement
+): HTMLElement {
+    const parent = document.getElementById(options.parentElementId) as HTMLElement;
+    if (options.classNames) {
+        parent.classList.add(...options.classNames.split(" "));
+    }
+    if (options.attributes) {
+        for (const [attr, value] of options.attributes.entries()) {
+            parent.setAttribute(attr, value);
+        }
+    }
+    if (typeof content === "string") {
+        parent.innerHTML = content;
+    } else {
+        parent.replaceChildren(content);
+    }
+    return parent;
 }

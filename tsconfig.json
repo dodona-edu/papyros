@@ -20,9 +20,12 @@
     "noEmit": false,
     "isolatedModules": true,
     "downlevelIteration": true,
-	  "sourceMap": true
+	  "sourceMap": true,
+    "outDir": "./dist",
+    "declaration": true
   },
   "include": [
     "src"
-  ]
+  ],
+  "exclude": ["node_modules"]
 }

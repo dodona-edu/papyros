@@ -1,6 +1,7 @@
 import escapeHTML from "escape-html";
 import { PapyrosEvent } from "./PapyrosEvent";
 import { inCircle } from "./util/HTMLShapes";
+import { RenderOptions, renderWithOptions, t } from "./util/Util";
 
 export interface FriendlyError {
     name: string;
@@ -12,9 +13,11 @@ export interface FriendlyError {
 }
 
 export class OutputManager {
-    outputArea: HTMLElement;
-    constructor(outputWrapperId: string) {
-        this.outputArea = document.getElementById(outputWrapperId) as HTMLElement;
+    outputAreaId = "";
+    options: RenderOptions = { parentElementId: "" };
+
+    get outputArea(): HTMLElement {
+        return document.getElementById(this.outputAreaId) as HTMLElement;
     }
 
     renderNextElement(html: string): void {
@@ -24,8 +27,6 @@ export class OutputManager {
     spanify(text: string, ignoreEmpty = false): string {
         let spanText = text;
         if (spanText.includes("\n") && spanText !== "\n") {
-            spanText = spanText.endsWith("\n") ?
-                spanText.substring(0, spanText.length - 1) : spanText;
             spanText = spanText.split("\n")
                 .filter(line => !ignoreEmpty || line.trim().length > 0)
                 .join("\n");
@@ -42,7 +43,6 @@ export class OutputManager {
     }
 
     showError(error: FriendlyError | string): void {
-        console.log("Got friendly error: ", error);
         let errorHTML = "";
         let errorObject = {} as FriendlyError;
         if (typeof (error) === "string") {
@@ -53,12 +53,17 @@ export class OutputManager {
             }
         }
         if (Object.keys(errorObject).length > 0) {
-            let shortTraceback = (errorObject.where || errorObject.traceback || "").trim();
+            let shortTraceback = (errorObject.where || "").trim();
             // Prepend a bit of indentation, so every part has indentation
-            shortTraceback = this.spanify("  " + shortTraceback, true);
+            if (shortTraceback) {
+                shortTraceback = this.spanify("  " + shortTraceback, true);
+            }
             errorHTML += "<div class=\"text-red-500 text-bold\">";
-            errorHTML += `${inCircle("?", errorObject.info)}${errorObject.name} traceback:\n`;
-            errorHTML += shortTraceback + "</div>\n";
+            const infoQM = inCircle("?", escapeHTML(errorObject.info), "blue-500");
+            const tracebackEM = inCircle("!", escapeHTML(errorObject.traceback), "red-500");
+            errorHTML += `${infoQM}${errorObject.name} traceback:${tracebackEM}\n`;
+            errorHTML += shortTraceback;
+            errorHTML += "</div>\n";
             if (errorObject.what) {
                 errorHTML += this.spanify(errorObject.what.trim(), true) + "\n";
             }
@@ -70,8 +75,25 @@ export class OutputManager {
         this.renderNextElement(errorHTML);
     }
 
+    render(options: RenderOptions): HTMLElement {
+        this.outputAreaId = options.parentElementId;
+        options.attributes = new Map([
+            ["data-placeholder", t("Papyros.output_placeholder")],
+            ...(options.attributes || [])
+        ]);
+        const initialClassNames = options.classNames ? options.classNames + " " : "";
+        // eslint-disable-next-line max-len
+        options.classNames = `${initialClassNames}border-2 w-full min-h-1/4 max-h-3/5 overflow-auto py-1 px-2 whitespace-pre with-placeholder`;
+        this.options = options;
+        return renderWithOptions(options, "");
+    }
+
+    reset(): void {
+        this.render(this.options);
+    }
+
     onRunStart(): void {
-        this.outputArea.textContent = "";
+        this.reset();
     }
 
     onRunEnd(): void {

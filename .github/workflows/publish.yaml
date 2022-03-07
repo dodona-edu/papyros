@@ -1,0 +1,23 @@
+name: Publish on NPM
+
+on:
+  release:
+    types: [created]
+  workflow_dispatch:
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.3.1
+      - name: Install and Build 🔧
+        run: |
+          yarn install
+          yarn build:package
+      - name: Publish @dodona/papyros to NPM
+        uses: JS-DevTools/npm-publish@v1
+        with:
+          token: ${{ secrets.NPM_AUTH_TOKEN }}
+          check-version: true
+          access: public
