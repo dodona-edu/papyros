@@ -2,7 +2,7 @@
 import "./Papyros.css";
 import { proxy, Remote } from "comlink";
 import I18n from "i18n-js";
-import { Backend } from "./Backend";
+import { Backend, WorkerAutocompleteContext } from "./Backend";
 import { startBackend, stopBackend } from "./BackendManager";
 import { CodeEditor } from "./CodeEditor";
 import {
@@ -24,6 +24,7 @@ import { getCodeForExample, getExampleNames } from "./examples/Examples";
 import { OutputManager } from "./OutputManager";
 import { makeChannel } from "sync-message";
 import { RunListener } from "./RunListener";
+import { CompletionContext } from "@codemirror/autocomplete";
 
 const LANGUAGE_MAP = new Map([
     ["python", ProgrammingLanguage.Python],
@@ -203,6 +204,22 @@ export class Papyros {
     }
 
     /**
+     * Converts the context to a cloneable object containing useful properties
+     * to generate autocompletion suggestions with
+     * @param {CompletionContext} context Current context to autocomplete for
+     * @param {RegExp} expr Expression to match the previous token with
+     * @return {WorkerAutocompleteContext} Completion context that can be passed as a message
+     */
+    private convertCompletionContext(context: CompletionContext, expr = /\w*/): WorkerAutocompleteContext {
+        return {
+            explicit: context.explicit,
+            before: context.matchBefore(expr),
+            pos: context.pos,
+            text: context.state.doc.toString()
+        };
+    }
+
+    /**
      * Set the used programming language to the given one to allow editing and running code
      * @param {ProgrammingLanguage} programmingLanguage The language to use
      */
@@ -210,7 +227,6 @@ export class Papyros {
         if (this.codeState.programmingLanguage !== programmingLanguage) { // Expensive, so ensure it is needed
             stopBackend(this.codeState.backend);
             this.codeState.programmingLanguage = programmingLanguage;
-            this.codeState.editor.setLanguage(programmingLanguage, t("Papyros.code_placeholder", { programmingLanguage }));
             await this.startBackend();
         }
     }
@@ -233,11 +249,16 @@ export class Papyros {
      * Start up the backend for the current programming language
      */
     private async startBackend(): Promise<void> {
+        const programmingLanguage = this.codeState.programmingLanguage;
         this.stateManager.setState(RunState.Loading);
-        const backend = startBackend(this.codeState.programmingLanguage);
+        const backend = startBackend(programmingLanguage);
         // Allow passing messages between worker and main thread
         await backend.launch(proxy(e => this.onMessage(e)), this.inputManager.channel);
         this.codeState.backend = backend;
+        this.codeState.editor.setLanguage(programmingLanguage,
+            async context => await this.codeState.backend.autocomplete(this.convertCompletionContext(context)),
+            t("Papyros.code_placeholder", { programmingLanguage })
+        );
         this.stateManager.setState(RunState.Ready);
     }
 

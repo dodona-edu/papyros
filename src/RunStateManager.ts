@@ -40,9 +40,8 @@ export class RunStateManager {
      * Construct a new RunStateManager with the given listeners
      * @param {function} onRunClicked Callback for when the run button is clicked
      * @param {function} onStopClicked Callback for when the stop button is clicked
-     * @param {RunState} state The initial state
      */
-    constructor(onRunClicked: () => void, onStopClicked: () => void, state = RunState.Ready) {
+    constructor(onRunClicked: () => void, onStopClicked: () => void) {
         this.buttons = [];
         this.addButton({
             id: RUN_BTN_ID,
@@ -54,8 +53,7 @@ export class RunStateManager {
             buttonText: t("Papyros.stop"),
             extraClasses: "text-white bg-red-500"
         }, onStopClicked);
-        this.state = state;
-        this.setState(state);
+        this.state = RunState.Ready;
     }
 
     /**

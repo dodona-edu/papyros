@@ -20,7 +20,7 @@ import { defaultKeymap } from "@codemirror/commands";
 import { bracketMatching } from "@codemirror/matchbrackets";
 import { closeBrackets, closeBracketsKeymap } from "@codemirror/closebrackets";
 import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
-import { autocompletion, completionKeymap } from "@codemirror/autocomplete";
+import { autocompletion, completionKeymap, CompletionSource } from "@codemirror/autocomplete";
 import { commentKeymap } from "@codemirror/comment";
 import { rectangularSelection } from "@codemirror/rectangular-selection";
 import { defaultHighlightStyle } from "@codemirror/highlight";
@@ -39,19 +39,23 @@ export class CodeEditor {
     /**
      * Compartment to change language at runtime
      */
-    languageCompartment: Compartment;
+    languageCompartment: Compartment = new Compartment();
     /**
      * Compartment to configure indentation level at runtime
      */
-    indentCompartment: Compartment;
+    indentCompartment: Compartment = new Compartment();
     /**
      * Compartment to configure the placeholder at runtime
      */
-    placeholderCompartment: Compartment;
+    placeholderCompartment: Compartment = new Compartment();
     /**
     * Compartment to configure the panel at runtime
      */
-    panelCompartment: Compartment;
+    panelCompartment: Compartment = new Compartment();
+    /**
+     * Compartment to configure the autocompletion at runtime
+     */
+    autocompletionCompartment: Compartment = new Compartment();
 
     /**
      * Construct a new CodeEditor
@@ -62,10 +66,6 @@ export class CodeEditor {
      */
     constructor(language: ProgrammingLanguage,
         editorPlaceHolder: string, initialCode = "", indentLength = 4) {
-        this.languageCompartment = new Compartment();
-        this.indentCompartment = new Compartment();
-        this.placeholderCompartment = new Compartment();
-        this.panelCompartment = new Compartment();
         this.editorView = new EditorView(
             {
                 state: EditorState.create({
@@ -73,6 +73,9 @@ export class CodeEditor {
                     extensions:
                         [
                             this.languageCompartment.of(CodeEditor.getLanguageSupport(language)),
+                            this.autocompletionCompartment.of(
+                                autocompletion()
+                            ),
                             this.indentCompartment.of(
                                 indentUnit.of(CodeEditor.getIndentUnit(indentLength))
                             ),
@@ -104,12 +107,17 @@ export class CodeEditor {
     /**
      * Set the language that is currently used, with a corresponding placeholder
      * @param {ProgrammingLanguage} language The language to use
+     * @param {CompletionSource} completionSource Function to generate autocomplete results
      * @param {string} editorPlaceHolder Placeholder when empty
      */
-    setLanguage(language: ProgrammingLanguage, editorPlaceHolder: string): void {
+    setLanguage(language: ProgrammingLanguage, completionSource: CompletionSource,
+        editorPlaceHolder: string): void {
         this.editorView.dispatch({
             effects: [
                 this.languageCompartment.reconfigure(CodeEditor.getLanguageSupport(language)),
+                this.autocompletionCompartment.reconfigure(
+                    autocompletion({ override: [completionSource] })
+                ),
                 this.placeholderCompartment.reconfigure(placeholder(editorPlaceHolder))
             ]
         });

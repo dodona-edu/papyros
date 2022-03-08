@@ -1,9 +1,10 @@
 import { expose } from "comlink";
-import { Backend } from "../../Backend";
+import { Backend, WorkerAutocompleteContext } from "../../Backend";
 import { PapyrosEvent } from "../../PapyrosEvent";
 import { LogType, papyrosLog } from "../../util/Logging";
 import { Pyodide, PYODIDE_INDEX_URL, PYODIDE_JS_URL } from "./Pyodide";
 import { Channel } from "sync-message";
+import { CompletionResult } from "@codemirror/autocomplete";
 /* eslint-disable-next-line */
 const initPythonString = require("!!raw-loader!./init.py").default;
 
@@ -63,6 +64,11 @@ class PythonWorker extends Backend {
             await this.pyodide.loadPackage("micropip");
             return this.pyodide.runPythonAsync(code);
         }
+    }
+
+    override async autocomplete(context: WorkerAutocompleteContext):
+        Promise<CompletionResult | null> {
+        return Promise.resolve(null);
     }
 }
 

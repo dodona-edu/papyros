@@ -1,6 +1,18 @@
 import { PapyrosEvent } from "./PapyrosEvent";
 import { Channel, readMessage, uuidv4 } from "sync-message";
 import { parseEventData } from "./util/Util";
+import { CompletionResult } from "@codemirror/autocomplete";
+
+export interface WorkerAutocompleteContext {
+    explicit: boolean;
+    pos: number;
+    text: string;
+    before: {
+        from: number;
+        to: number;
+        text: string;
+    } | null;
+}
 
 export abstract class Backend {
     protected onEvent: (e: PapyrosEvent) => any;
@@ -68,4 +80,10 @@ export abstract class Backend {
         this.runId = runId;
         return await this._runCodeInternal(code);
     }
+
+    /**
+     * Generate autocompletion suggestions for the given context
+     * @param {WorkerAutocompleteContext} context Context to autcomplete in
+     */
+    abstract autocomplete(context: WorkerAutocompleteContext): Promise<CompletionResult | null>;
 }

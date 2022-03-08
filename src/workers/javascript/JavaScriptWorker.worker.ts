@@ -1,6 +1,7 @@
 import { expose } from "comlink";
-import { Backend } from "../../Backend";
-
+import { Backend, WorkerAutocompleteContext } from "../../Backend";
+import { CompletionResult } from "@codemirror/autocomplete";
+import { javascriptLanguage } from "@codemirror/lang-javascript";
 
 /**
  * Implementation of a JavaScript backend for Papyros
@@ -71,6 +72,54 @@ class JavaScriptWorker extends Backend {
             contentType: "text/plain",
             runId: this.runId
         });
+    }
+
+    override async autocomplete(context: WorkerAutocompleteContext):
+        Promise<CompletionResult | null> {
+        console.log("Called autocomplete with context: ", context);
+        const completePropertyAfter = ["PropertyName", ".", "?."];
+        const dontCompleteIn = ["TemplateString", "LineComment", "BlockComment",
+            "VariableDefinition", "PropertyDefinition"];
+        const nodeBefore = javascriptLanguage.parser.parse(context.text)
+            .resolveInner(context.pos, -1);
+        const globalWindow = self as any;
+        console.log("Global Window is: ", globalWindow, Object.keys(globalWindow));
+        if (completePropertyAfter.includes(nodeBefore.name) &&
+            nodeBefore.parent?.name == "MemberExpression") {
+            const object = nodeBefore.parent.getChild("Expression");
+            if (object?.name == "VariableName") {
+                const from = /\./.test(nodeBefore.name) ? nodeBefore.to : nodeBefore.from;
+                const variableName = context.text.slice(object.from, object.to);
+                if (typeof globalWindow[variableName] == "object") {
+                    return JavaScriptWorker.completeProperties(from, globalWindow);
+                }
+            }
+        } else if (nodeBefore.name == "VariableName") {
+            return JavaScriptWorker.completeProperties(nodeBefore.from, globalWindow);
+        } else if (context.explicit && !dontCompleteIn.includes(nodeBefore.name)) {
+            return JavaScriptWorker.completeProperties(context.pos, globalWindow);
+        }
+        return null;
+    }
+
+    /**
+     * Helper method to generate suggestions based on properties in an object
+     * @param {number} from Where in the document the autocompletion starts
+     * @param {any} object Object with properties that might be relevant
+     * @return {CompletionResult} Autocompletion suggestions
+     */
+    private static completeProperties(from: number, object: any): CompletionResult {
+        const options = Object.keys(object).map(name => {
+            return {
+                label: name,
+                type: typeof object[name] === "function" ? "function" : "variable"
+            };
+        });
+        return {
+            from,
+            options,
+            span: /^[\w$]*$/
+        };
     }
 
     override _runCodeInternal(code: string): Promise<any> {
