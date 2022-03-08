@@ -8,10 +8,10 @@ from pyodide import to_js
 await micropip.install("python_runner")
 import python_runner
 
-ft = micropip.install('friendly_traceback')
-
+ft = micropip.install("friendly_traceback")
+jedi_install = micropip.install("jedi")
 # Otherwise `import matplotlib` fails while assuming a browser backend
-os.environ['MPLBACKEND'] = 'AGG'
+os.environ["MPLBACKEND"] = "AGG"
 
 # Code is executed in a worker with less resources than ful environment
 import sys
@@ -30,10 +30,10 @@ class Papyros(python_runner.PatchedStdinRunner):
 
         def show():
             buf = BytesIO()
-            matplotlib.pyplot.savefig(buf, format='png')
+            matplotlib.pyplot.savefig(buf, format="png")
             buf.seek(0)
             # encode to a base64 str
-            img = base64.b64encode(buf.read()).decode('utf-8')
+            img = base64.b64encode(buf.read()).decode("utf-8")
             matplotlib.pyplot.clf()
             self.output("img", img, contentType="img/png;base64")
 
@@ -42,7 +42,7 @@ class Papyros(python_runner.PatchedStdinRunner):
     async def run_async(self, source_code, mode="exec", top_level_await=True):
         """
         Mostly a copy of the parent `run_async` with `await ft` in case of an exception,
-        because `serialize_traceback` isn't async.
+        because `serialize_traceback` isn"t async.
         """
         with self._execute_context(source_code):
             try:
@@ -108,21 +108,22 @@ def init_papyros(event_callback):
     global papyros
     def runner_callback(event_type, data):
         def cb(typ, dat, **kwargs):
-            return event_callback(to_js(dict(type=typ, data=dat, depth=0, **kwargs)))
+            return event_callback(to_js(dict(type=typ, data=dat, **kwargs)))
 
         # Translate python_runner events to papyros events
         if event_type == "output":
             for part in data["parts"]:
-                if part["type"] in ["stderr", "traceback", "syntax_error"]:
+                typ = part["type"]
+                if typ in ["stderr", "traceback", "syntax_error"]:
                     cb("error", part["text"], contentType="text/json")
-                elif part["type"] == "stdout":
+                elif typ == "stdout":
                     cb("output", part["text"], contentType="text/plain")
-                elif part["type"] == "img":
+                elif typ == "img":
                     cb("output", part["text"], contentType=part["contentType"])
-                elif part["type"] in ["input", "input_prompt"]:
+                elif typ in ["input", "input_prompt"]:
                     continue
                 else:
-                    raise ValueError(f"Unknown output part type {part['type']}")
+                    raise ValueError(f"Unknown output part type {typ}")
         elif event_type == "input":
             return cb("input", json.dumps(dict(prompt=data["prompt"])), contentType="text/json")
         else:
@@ -145,3 +146,14 @@ async def process_code(code, filename="my_code.py"):
         papyros.override_matplotlib()
 
     await papyros.run_async(code)
+
+async def autocomplete(context):
+    context = context.to_py()
+    await jedi_install
+    import jedi
+    s = jedi.Script(context["text"])
+    r = [json.dumps(dict(type=c.type, label=c.name_with_symbols)) for c in s.complete()]
+    print("Completions: " + str(r))
+    results = dict(options=r)
+    results["from"] = context["before"]["from"]
+    return to_js(results)

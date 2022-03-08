@@ -27,6 +27,14 @@ class PythonWorker extends Backend {
         this.initialized = false;
     }
 
+    private convert(data: any): any {
+        let converted = data;
+        if ("toJs" in data) {
+            converted = data.toJs();
+        }
+        return Object.fromEntries(converted);
+    }
+
     override async launch(
         onEvent: (e: PapyrosEvent) => void,
         channel: Channel
@@ -41,8 +49,7 @@ class PythonWorker extends Backend {
         // Python calls our function with a PyProxy dict or a Js Map,
         // These must be converted to a PapyrosEvent (JS Object) to allow message passing
         const eventCallback = (data: any): void => {
-            const jsEvent: PapyrosEvent = "toJs" in data ? data.toJs() : Object.fromEntries(data);
-            return this.onEvent(jsEvent);
+            return this.onEvent(this.convert(data));
         };
         // Initialize our loaded Papyros module with the callback
         this.pyodide.globals.get("init_papyros")(eventCallback);
@@ -68,7 +75,12 @@ class PythonWorker extends Backend {
 
     override async autocomplete(context: WorkerAutocompleteContext):
         Promise<CompletionResult | null> {
-        return Promise.resolve(null);
+        console.log("Obtaining autocompletion for context: ", context);
+        const result = this.convert(await this.pyodide.globals.get("autocomplete")(context));
+        result.options = result.options.map((r: any) => JSON.parse(r));
+        result.span = /^[\w$]*$/;
+        console.log("Result in PythonWorker after toJs: ", result);
+        return result;
     }
 }
 

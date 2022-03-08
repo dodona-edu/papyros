@@ -211,10 +211,16 @@ export class Papyros {
      * @return {WorkerAutocompleteContext} Completion context that can be passed as a message
      */
     private convertCompletionContext(context: CompletionContext, expr = /\w*/): WorkerAutocompleteContext {
+        const [row, column] = context.state.selection.ranges.map(range => {
+            const line = context.state.doc.lineAt(range.head);
+            return [line.number, (range.head - line.from)];
+        })[0];
         return {
             explicit: context.explicit,
             before: context.matchBefore(expr),
             pos: context.pos,
+            col: column,
+            row: row,
             text: context.state.doc.toString()
         };
     }

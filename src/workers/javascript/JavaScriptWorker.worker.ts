@@ -83,7 +83,6 @@ class JavaScriptWorker extends Backend {
         const nodeBefore = javascriptLanguage.parser.parse(context.text)
             .resolveInner(context.pos, -1);
         const globalWindow = self as any;
-        console.log("Global Window is: ", globalWindow, Object.keys(globalWindow));
         if (completePropertyAfter.includes(nodeBefore.name) &&
             nodeBefore.parent?.name == "MemberExpression") {
             const object = nodeBefore.parent.getChild("Expression");

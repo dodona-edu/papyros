@@ -6,6 +6,8 @@ import { CompletionResult } from "@codemirror/autocomplete";
 export interface WorkerAutocompleteContext {
     explicit: boolean;
     pos: number;
+    row: number;
+    col: number;
     text: string;
     before: {
         from: number;
