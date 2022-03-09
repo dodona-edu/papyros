@@ -5,6 +5,7 @@ import { LogType, papyrosLog } from "../../util/Logging";
 import { Pyodide, PYODIDE_INDEX_URL, PYODIDE_JS_URL } from "./Pyodide";
 import { Channel } from "sync-message";
 import { CompletionResult } from "@codemirror/autocomplete";
+import { parseData } from "../../util/Util";
 /* eslint-disable-next-line */
 const initPythonString = require("!!raw-loader!./init.py").default;
 
@@ -75,11 +76,12 @@ class PythonWorker extends Backend {
 
     override async autocomplete(context: WorkerAutocompleteContext):
         Promise<CompletionResult | null> {
-        console.log("Obtaining autocompletion for context: ", context);
+        // Do not await as not strictly required to compute autocompletions
+        this.pyodide.loadPackagesFromImports(context.text);
         const result = this.convert(await this.pyodide.globals.get("autocomplete")(context));
-        result.options = result.options.map((r: any) => JSON.parse(r));
+        result.options = parseData(result.options, result.contentType);
+        delete result.contentType;
         result.span = /^[\w$]*$/;
-        console.log("Result in PythonWorker after toJs: ", result);
         return result;
     }
 }

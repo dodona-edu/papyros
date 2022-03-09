@@ -2,7 +2,7 @@
 import "./Papyros.css";
 import { proxy, Remote } from "comlink";
 import I18n from "i18n-js";
-import { Backend, WorkerAutocompleteContext } from "./Backend";
+import { Backend } from "./Backend";
 import { startBackend, stopBackend } from "./BackendManager";
 import { CodeEditor } from "./CodeEditor";
 import {
@@ -24,7 +24,6 @@ import { getCodeForExample, getExampleNames } from "./examples/Examples";
 import { OutputManager } from "./OutputManager";
 import { makeChannel } from "sync-message";
 import { RunListener } from "./RunListener";
-import { CompletionContext } from "@codemirror/autocomplete";
 
 const LANGUAGE_MAP = new Map([
     ["python", ProgrammingLanguage.Python],
@@ -204,28 +203,6 @@ export class Papyros {
     }
 
     /**
-     * Converts the context to a cloneable object containing useful properties
-     * to generate autocompletion suggestions with
-     * @param {CompletionContext} context Current context to autocomplete for
-     * @param {RegExp} expr Expression to match the previous token with
-     * @return {WorkerAutocompleteContext} Completion context that can be passed as a message
-     */
-    private convertCompletionContext(context: CompletionContext, expr = /\w*/): WorkerAutocompleteContext {
-        const [row, column] = context.state.selection.ranges.map(range => {
-            const line = context.state.doc.lineAt(range.head);
-            return [line.number, (range.head - line.from)];
-        })[0];
-        return {
-            explicit: context.explicit,
-            before: context.matchBefore(expr),
-            pos: context.pos,
-            col: column,
-            row: row,
-            text: context.state.doc.toString()
-        };
-    }
-
-    /**
      * Set the used programming language to the given one to allow editing and running code
      * @param {ProgrammingLanguage} programmingLanguage The language to use
      */
@@ -262,7 +239,7 @@ export class Papyros {
         await backend.launch(proxy(e => this.onMessage(e)), this.inputManager.channel);
         this.codeState.backend = backend;
         this.codeState.editor.setLanguage(programmingLanguage,
-            async context => await this.codeState.backend.autocomplete(this.convertCompletionContext(context)),
+            async context => await this.codeState.backend.autocomplete(Backend.convertCompletionContext(context)),
             t("Papyros.code_placeholder", { programmingLanguage })
         );
         this.stateManager.setState(RunState.Ready);

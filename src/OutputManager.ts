@@ -2,7 +2,10 @@ import escapeHTML from "escape-html";
 import { PapyrosEvent } from "./PapyrosEvent";
 import { RunListener } from "./RunListener";
 import { inCircle } from "./util/HTMLShapes";
-import { getElement, parseEventData, RenderOptions, renderWithOptions, t } from "./util/Util";
+import {
+    getElement, parseData,
+    RenderOptions, renderWithOptions, t
+} from "./util/Util";
 
 /**
  * Shape of Error objects that are easy to interpret
@@ -78,7 +81,7 @@ export class OutputManager implements RunListener {
      * @param {PapyrosEvent} output Event containing the output data
      */
     showOutput(output: PapyrosEvent): void {
-        const data = parseEventData(output);
+        const data = parseData(output.data, output.contentType);
         if (output.contentType === "img/png;base64") {
             this.renderNextElement(`<img src="data:image/png;base64, ${data}"></img>`);
         } else {
@@ -92,9 +95,9 @@ export class OutputManager implements RunListener {
      */
     showError(error: PapyrosEvent): void {
         let errorHTML = "";
-        const errorData = parseEventData(error);
+        const errorData = parseData(error.data, error.contentType);
         if (typeof (errorData) === "string") {
-            errorHTML = this.spanify(errorData);
+            errorHTML = this.spanify(errorData, false, "text-red-500");
         } else {
             const errorObject = errorData as FriendlyError;
             let shortTraceback = (errorObject.where || "").trim();

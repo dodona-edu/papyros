@@ -1,13 +1,14 @@
 import { PapyrosEvent } from "./PapyrosEvent";
 import { Channel, readMessage, uuidv4 } from "sync-message";
-import { parseEventData } from "./util/Util";
-import { CompletionResult } from "@codemirror/autocomplete";
+import { parseData } from "./util/Util";
+import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
+import { LogType, papyrosLog } from "./util/Logging";
 
 export interface WorkerAutocompleteContext {
     explicit: boolean;
     pos: number;
-    row: number;
-    col: number;
+    line: number;
+    column: number;
     text: string;
     before: {
         from: number;
@@ -46,7 +47,7 @@ export abstract class Backend {
         // An ID is required to make the connection
         // The message must be read in the worker to not stall the main thread
         const onInput = (e: PapyrosEvent): string => {
-            const inputData = parseEventData(e);
+            const inputData = parseData(e.data, e.contentType);
             const messageId = uuidv4();
             inputData.messageId = messageId;
             e.data = JSON.stringify(inputData);
@@ -81,6 +82,32 @@ export abstract class Backend {
     async runCode(code: string, runId: number): Promise<any> {
         this.runId = runId;
         return await this._runCodeInternal(code);
+    }
+
+    /**
+     * Converts the context to a cloneable object containing useful properties
+     * to generate autocompletion suggestions with
+     * @param {CompletionContext} context Current context to autocomplete for
+     * @param {RegExp} expr Expression to match the previous token with
+     * @return {WorkerAutocompleteContext} Completion context that can be passed as a message
+     */
+    static convertCompletionContext(context: CompletionContext, expr = /\w*(\.)?/):
+        WorkerAutocompleteContext {
+        const [lineNr, column] = context.state.selection.ranges.map(range => {
+            const line = context.state.doc.lineAt(range.head);
+            return [line.number, (range.head - line.from)];
+        })[0];
+        const beforeMatch = context.matchBefore(expr);
+        const ret = {
+            explicit: context.explicit,
+            before: beforeMatch,
+            pos: context.pos,
+            column: column,
+            line: lineNr,
+            text: context.state.doc.toString()
+        };
+        papyrosLog(LogType.Debug, "Worker completion context:", ret);
+        return ret;
     }
 
     /**

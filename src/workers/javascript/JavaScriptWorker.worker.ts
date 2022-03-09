@@ -76,7 +76,6 @@ class JavaScriptWorker extends Backend {
 
     override async autocomplete(context: WorkerAutocompleteContext):
         Promise<CompletionResult | null> {
-        console.log("Called autocomplete with context: ", context);
         const completePropertyAfter = ["PropertyName", ".", "?."];
         const dontCompleteIn = ["TemplateString", "LineComment", "BlockComment",
             "VariableDefinition", "PropertyDefinition"];
@@ -114,11 +113,12 @@ class JavaScriptWorker extends Backend {
                 type: typeof object[name] === "function" ? "function" : "variable"
             };
         });
-        return {
+        const ret = {
             from,
             options,
             span: /^[\w$]*$/
         };
+        return ret;
     }
 
     override _runCodeInternal(code: string): Promise<any> {

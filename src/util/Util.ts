@@ -1,5 +1,4 @@
 import I18n from "i18n-js";
-import { PapyrosEvent } from "../PapyrosEvent";
 import { TRANSLATIONS } from "../Translations";
 import { LogType, papyrosLog } from "./Logging";
 
@@ -193,12 +192,12 @@ export function renderWithOptions(
 /**
  * Parse the data contained within a PapyrosEvent using its contentType
  * Supported content types are: text/plain, text/json, img/png;base64
- * @param {PapyrosEvent} e Event containing data
+ * @param {unknown} data The data to parse
+ * @param {string} contentType The content type of the data
  * @return {any} The parsed data
  */
-export function parseEventData(e: PapyrosEvent): any {
-    const data = e.data;
-    const [baseType, specificType] = e.contentType.split("/");
+export function parseData(data: unknown, contentType: string): any {
+    const [baseType, specificType] = contentType.split("/");
     switch (baseType) {
         case "text": {
             switch (specificType) {
@@ -206,7 +205,7 @@ export function parseEventData(e: PapyrosEvent): any {
                     return data;
                 }
                 case "json": {
-                    return JSON.parse(data);
+                    return JSON.parse(data as string);
                 }
             }
             break;
@@ -220,6 +219,6 @@ export function parseEventData(e: PapyrosEvent): any {
             break;
         }
     }
-    papyrosLog(LogType.Important, `Unhandled content type: ${e.contentType}`);
+    papyrosLog(LogType.Important, `Unhandled content type: ${contentType}`);
     return data;
 }

@@ -6,7 +6,7 @@ import {
 import { PapyrosEvent } from "./PapyrosEvent";
 import { papyrosLog, LogType } from "./util/Logging";
 import {
-    addListener, parseEventData,
+    addListener, parseData,
     RenderOptions, renderWithOptions
 } from "./util/Util";
 import { Channel, makeChannel, writeMessage } from "sync-message";
@@ -116,7 +116,7 @@ class="flex flex-row-reverse hover:cursor-pointer text-blue-500">
      */
     async onInput(e: PapyrosEvent): Promise<void> {
         papyrosLog(LogType.Debug, "Handling input request in Papyros");
-        const data = parseEventData(e) as InputData;
+        const data = parseData(e.data, e.contentType) as InputData;
         this.messageId = data.messageId;
         this.prompt = data.prompt;
         return this.sendLine();
