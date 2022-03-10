@@ -149,6 +149,16 @@ async def process_code(code, filename="my_code.py"):
 
     await papyros.run_async(code)
 
+def convert_completion(completion, index):
+    converted = dict(type=completion.type, label=completion.name_with_symbols)
+    if completion.get_signatures():
+        converted["detail"] = completion.get_signatures()[0].description
+    if completion.type != "keyword":
+        # Keywords have obvious meanings yet non-useful docstrings
+        converted["info"] = completion.docstring().replace("\n", "\r\n")
+    # Jedi does sorting, so give earlier element highest boost
+    converted["boost"] = -index
+    return converted
 
 async def autocomplete(context):
     context = context.to_py()
@@ -168,8 +178,8 @@ async def autocomplete(context):
         import jedi
         s = jedi.Script(context["text"])
         # Convert Jedi completions to CodeMirror objects
-        options = [dict(type=c.type, label=c.name_with_symbols)
-                   for c in s.complete(line=context["line"], column=context["column"])]
+        options = [convert_completion(c, i)
+                   for (i, c) in enumerate(s.complete(line=context["line"], column=context["column"]))]
         if "." in before["text"]:
             complete_from = before["to"]
     results = dict(options=json.dumps(options), contentType="text/json")
