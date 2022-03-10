@@ -151,8 +151,9 @@ async def process_code(code, filename="my_code.py"):
 
 def convert_completion(completion, index):
     converted = dict(type=completion.type, label=completion.name_with_symbols)
-    if completion.get_signatures():
-        converted["detail"] = completion.get_signatures()[0].description
+    # if completion.get_signatures():
+    #     converted["detail"] = completion.get_signatures()[0].description
+    # converted["detail"] = f"{completion.parent().name} ({completion.type})" 
     if completion.type != "keyword":
         # Keywords have obvious meanings yet non-useful docstrings
         converted["info"] = completion.docstring().replace("\n", "\r\n")
