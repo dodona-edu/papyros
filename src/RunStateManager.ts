@@ -74,6 +74,13 @@ export class RunStateManager {
     }
 
     /**
+     * Get the button to debug the code
+     */
+    get debugButton(): HTMLButtonElement {
+        return getElement<HTMLButtonElement>(DEBUG_BTN_ID);
+    }
+
+    /**
      * Get the button to interrupt the code
      */
     get stopButton(): HTMLButtonElement {
@@ -100,9 +107,11 @@ export class RunStateManager {
         if (state === RunState.Ready) {
             this.showSpinner(false);
             this.runButton.disabled = false;
+            this.debugButton.disabled = false;
         } else {
             this.showSpinner(true);
             this.runButton.disabled = true;
+            this.debugButton.disabled = true;
         }
         getElement(APPLICATION_STATE_TEXT_ID).innerText =
             message || t(`Papyros.states.${state}`);

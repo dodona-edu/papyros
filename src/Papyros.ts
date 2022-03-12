@@ -235,13 +235,13 @@ export class Papyros {
         const programmingLanguage = this.codeState.programmingLanguage;
         this.stateManager.setState(RunState.Loading);
         const backend = startBackend(programmingLanguage);
-        // Allow passing messages between worker and main thread
-        await backend.launch(proxy(e => this.onMessage(e)), this.inputManager.channel);
         this.codeState.backend = backend;
         this.codeState.editor.setLanguage(programmingLanguage,
             async context => await this.codeState.backend.autocomplete(Backend.convertCompletionContext(context)),
             t("Papyros.code_placeholder", { programmingLanguage })
         );
+        // Allow passing messages between worker and main thread
+        await backend.launch(proxy(e => this.onMessage(e)), this.inputManager.channel);
         this.stateManager.setState(RunState.Ready);
     }
 
