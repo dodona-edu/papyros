@@ -10,6 +10,7 @@ export declare const STATE_SPINNER_ID: string;
 export declare const APPLICATION_STATE_TEXT_ID: string;
 export declare const RUN_BTN_ID: string;
 export declare const STOP_BTN_ID: string;
+export declare const DEBUG_BTN_ID: string;
 export declare const SEND_INPUT_BTN_ID: string;
 export declare const SWITCH_INPUT_MODE_A_ID: string;
 export declare const EXAMPLE_SELECT_ID: string;

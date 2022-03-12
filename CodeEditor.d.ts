@@ -33,6 +33,10 @@ export declare class CodeEditor {
      */
     autocompletionCompartment: Compartment;
     /**
+     * Indices of lines in the editor that have breakpoints
+     */
+    readonly breakpointLines: Set<number>;
+    /**
      * Construct a new CodeEditor
      * @param {ProgrammingLanguage} language The used programming language
      * @param {string} editorPlaceHolder The placeholder for the editor
@@ -40,6 +44,12 @@ export declare class CodeEditor {
      * @param {number} indentLength The length in spaces for the indent unit
      */
     constructor(language: ProgrammingLanguage, editorPlaceHolder: string, initialCode?: string, indentLength?: number);
+    /**
+     * Update the breakpoint status of the given line
+     * @param {number} lineNr The index of the line
+     * @param {boolean} active Whether the line has a breakpoint
+     */
+    toggleBreakpoint(lineNr: number, active: boolean): void;
     /**
      * Render the editor with the given options and panel
      * @param {RenderOptions} options Options for rendering
@@ -111,5 +121,5 @@ export declare class CodeEditor {
     *  - [indenting with tab](#commands.indentWithTab)
     *  @return {Array<Extension} Default extensions to use
     */
-    static getExtensions(): Array<Extension>;
+    static getDefaultExtensions(): Array<Extension>;
 }
