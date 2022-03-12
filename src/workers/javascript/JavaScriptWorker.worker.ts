@@ -121,7 +121,7 @@ class JavaScriptWorker extends Backend {
         return ret;
     }
 
-    override _runCodeInternal(code: string): Promise<any> {
+    override runCodeInternal(code: string): Promise<any> {
         // Builtins to store before execution and restore afterwards
         // Workers do not have access to prompt
         const oldContent = {
@@ -158,6 +158,10 @@ class JavaScriptWorker extends Backend {
                 Object.keys(oldContent).map(k => `${k} = ctx['${k}'];`).join("\n")
             )(oldContent);
         }
+    }
+
+    protected debugCodeInternal(code: string): Promise<any> {
+        return this.runCodeInternal(code);
     }
 }
 

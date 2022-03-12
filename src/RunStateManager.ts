@@ -1,4 +1,7 @@
-import { APPLICATION_STATE_TEXT_ID, RUN_BTN_ID, STATE_SPINNER_ID, STOP_BTN_ID } from "./Constants";
+import {
+    APPLICATION_STATE_TEXT_ID, RUN_BTN_ID,
+    STATE_SPINNER_ID, STOP_BTN_ID, DEBUG_BTN_ID
+} from "./Constants";
 import { svgCircle } from "./util/HTMLShapes";
 import {
     addListener, ButtonOptions, renderButton,
@@ -40,8 +43,10 @@ export class RunStateManager {
      * Construct a new RunStateManager with the given listeners
      * @param {function} onRunClicked Callback for when the run button is clicked
      * @param {function} onStopClicked Callback for when the stop button is clicked
+     * @param {function} onDebugClicked Callback for when the debug button is clicked
      */
-    constructor(onRunClicked: () => void, onStopClicked: () => void) {
+    constructor(onRunClicked: () => void, onStopClicked: () => void,
+        onDebugClicked: () => void) {
         this.buttons = [];
         this.addButton({
             id: RUN_BTN_ID,
@@ -53,6 +58,11 @@ export class RunStateManager {
             buttonText: t("Papyros.stop"),
             extraClasses: "text-white bg-red-500"
         }, onStopClicked);
+        this.addButton({
+            id: DEBUG_BTN_ID,
+            buttonText: t("Papyros.debug"),
+            extraClasses: "text-white bg-green-500"
+        }, onDebugClicked);
         this.state = RunState.Ready;
     }
 

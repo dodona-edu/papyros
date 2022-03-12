@@ -17,6 +17,7 @@ const ENGLISH_TRANSLATION = {
     "output_placeholder": "The output of your code will appear here",
     "run": "Run",
     "stop": "Stop",
+    "debug": "Debug",
     "finished": "Code executed in %{time} s",
     "states": {
         "running": "Running",
@@ -57,6 +58,7 @@ const DUTCH_TRANSLATION = {
     "output_placeholder": "Hier komt de uitvoer van je code",
     "run": "Run",
     "stop": "Stop",
+    "debug": "Debug",
     "states": {
         "running": "Aan het uitvoeren",
         "stopping": "Aan het stoppen",

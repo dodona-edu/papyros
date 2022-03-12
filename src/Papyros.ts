@@ -155,7 +155,7 @@ export class Papyros {
             runId: 0
         };
         this.outputManager = new OutputManager();
-        this.stateManager = new RunStateManager(() => this.runCode(), () => this.stop());
+        this.stateManager = new RunStateManager(() => this.runCode(false), () => this.stop(), () => this.runCode(true));
         this.inputManager = new InputManager(() => this.stateManager.setState(RunState.Running), config.inputMode);
         this.addRunListener(this.inputManager);
         this.addRunListener(this.outputManager);
@@ -327,9 +327,10 @@ export class Papyros {
 
     /**
      * Run the code that is currently present in the editor
+     * @param {boolean} debug Whether the run happens in debug mode
      * @return {Promise<void>} Promise of running the code
      */
-    async runCode(): Promise<void> {
+    async runCode(debug: boolean): Promise<void> {
         if (this.state !== RunState.Ready) {
             papyrosLog(LogType.Error, `Run code called from invalid state: ${this.state}`);
             return;
@@ -342,7 +343,17 @@ export class Papyros {
         papyrosLog(LogType.Debug, "Running code in Papyros, sending to backend");
         const start = new Date().getTime();
         try {
-            await this.codeState.backend.runCode(this.getCode(), this.codeState.runId);
+            const {
+                backend,
+                runId,
+                editor
+            } = this.codeState;
+            if (debug) {
+                console.log("Breakpoints are: ", editor.breakpointLines);
+                await backend.debugCode(this.getCode(), runId, editor.breakpointLines);
+            } else {
+                await backend.runCode(this.getCode(), runId);
+            }
         } catch (error: any) {
             this.onError(error);
         } finally {

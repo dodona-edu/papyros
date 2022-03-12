@@ -46,7 +46,7 @@ class PythonWorker extends Backend {
             fullStdLib: false
         });
         // Load our own modules to connect Papyros and Pyodide
-        await this._runCodeInternal(initPythonString);
+        await this.runCodeInternal(initPythonString);
         // Python calls our function with a PyProxy dict or a Js Map,
         // These must be converted to a PapyrosEvent (JS Object) to allow message passing
         const eventCallback = (data: any): void => {
@@ -57,7 +57,7 @@ class PythonWorker extends Backend {
         this.initialized = true;
     }
 
-    override async _runCodeInternal(code: string): Promise<any> {
+    override async runCodeInternal(code: string): Promise<any> {
         if (this.initialized) {
             try {
                 // Sometimes a SyntaxError can cause imports to fail
@@ -72,6 +72,22 @@ class PythonWorker extends Backend {
             await this.pyodide.loadPackage("micropip");
             return this.pyodide.runPythonAsync(code);
         }
+    }
+
+    protected debugCodeInternal(code: string, breakpoints: Set<number>): Promise<any> {
+        if (breakpoints.size === 0) {
+            return this.runCodeInternal(code);
+        }
+        const pdbCode = code.split("\n").reduce(
+            (acc: Array<string>, current: string, currentIndex: number) => {
+                if (breakpoints.has(currentIndex)) {
+                    // extra lines for PDB to know when to halt
+                    acc.push("breakpoint()");
+                }
+                acc.push(current);
+                return acc;
+            }, []).join("\n");
+        return this.runCodeInternal(pdbCode);
     }
 
     override async autocomplete(context: WorkerAutocompleteContext):
