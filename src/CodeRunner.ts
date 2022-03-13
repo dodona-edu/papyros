@@ -1,7 +1,11 @@
+import { Remote } from "comlink";
+import { Backend } from "./Backend";
+import { CodeEditor } from "./CodeEditor";
 import {
     APPLICATION_STATE_TEXT_ID, RUN_BTN_ID,
     STATE_SPINNER_ID, STOP_BTN_ID, DEBUG_BTN_ID
 } from "./Constants";
+import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import { svgCircle } from "./util/HTMLShapes";
 import {
     addListener, ButtonOptions, renderButton,
@@ -27,9 +31,36 @@ export enum RunState {
 }
 
 /**
+ * All listeners that should be configured externally
+ */
+interface ExternalClickListeners {
+    /* Callback for when the run button is clicked */
+    onRunClicked: () => void;
+    /* onStopClicked Callback for when the stop button is clicked */
+    onStopClicked: () => void;
+    /*  onDebugClicked Callback for when the debug button is clicked */
+    onDebugClicked: () => void;
+}
+/**
  * Helper component to manage and visualize the current RunState
  */
-export class RunStateManager {
+export class CodeRunner {
+    /**
+     * The currently used programming language
+     */
+    programmingLanguage: ProgrammingLanguage;
+    /**
+     * The editor in which the code is written
+     */
+    readonly editor: CodeEditor;
+    /**
+     * The backend that executes the code asynchronously
+     */
+    backend: Remote<Backend>;
+    /**
+     * The identifier for the current run
+     */
+    runId: number;
     /**
      * Current state of the program
      */
@@ -41,29 +72,42 @@ export class RunStateManager {
 
     /**
      * Construct a new RunStateManager with the given listeners
+     * @param {ProgrammingLanguage} programmingLanguage The language to use
+     * @param {Object} clickListeners
      * @param {function} onRunClicked Callback for when the run button is clicked
      * @param {function} onStopClicked Callback for when the stop button is clicked
      * @param {function} onDebugClicked Callback for when the debug button is clicked
      */
-    constructor(onRunClicked: () => void, onStopClicked: () => void,
-        onDebugClicked: () => void) {
+    constructor(programmingLanguage: ProgrammingLanguage,
+        clickListeners: ExternalClickListeners) {
+        this.programmingLanguage = programmingLanguage;
+        this.editor = new CodeEditor();
+        this.backend = {} as Remote<Backend>;
+        this.runId = 0;
         this.buttons = [];
         this.addButton({
             id: RUN_BTN_ID,
             buttonText: t("Papyros.run"),
             extraClasses: "text-white bg-blue-500"
-        }, onRunClicked);
+        }, clickListeners.onRunClicked);
         this.addButton({
             id: STOP_BTN_ID,
             buttonText: t("Papyros.stop"),
             extraClasses: "text-white bg-red-500"
-        }, onStopClicked);
+        }, clickListeners.onStopClicked);
         this.addButton({
             id: DEBUG_BTN_ID,
             buttonText: t("Papyros.debug"),
             extraClasses: "text-white bg-green-500"
-        }, onDebugClicked);
+        }, clickListeners.onDebugClicked);
         this.state = RunState.Ready;
+    }
+
+    async setProgrammingLanguage(programmingLanguage: ProgrammingLanguage): Promise<void> {
+        this.editor.setLanguage(programmingLanguage,
+            async context => await this.backend.autocomplete(
+                Backend.convertCompletionContext(context)
+            ));
     }
 
     /**
@@ -94,7 +138,6 @@ export class RunStateManager {
     showSpinner(show: boolean): void {
         getElement(STATE_SPINNER_ID).style.display = show ? "" : "none";
     }
-
 
     /**
      * Show the current state of the program to the user

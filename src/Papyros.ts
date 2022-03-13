@@ -19,7 +19,7 @@ import {
     RenderOptions, renderWithOptions,
     addListener, ButtonOptions, getElement
 } from "./util/Util";
-import { RunState, RunStateManager } from "./RunStateManager";
+import { RunState, CodeRunner } from "./CodeRunner";
 import { getCodeForExample, getExampleNames } from "./examples/Examples";
 import { OutputManager } from "./OutputManager";
 import { makeChannel } from "sync-message";
@@ -111,7 +111,7 @@ export class Papyros {
     /**
      * Component to manage and visualize the state of the program
      */
-    stateManager: RunStateManager;
+    stateManager: CodeRunner;
     /**
      * Component to request and handle input from the user
      */
@@ -148,14 +148,16 @@ export class Papyros {
         const { programmingLanguage } = this.config;
         this.codeState = {
             programmingLanguage: programmingLanguage,
-            editor: new CodeEditor(
-                programmingLanguage,
-                t("Papyros.code_placeholder", { programmingLanguage })),
+            editor: new CodeEditor(),
             backend: {} as Remote<Backend>,
             runId: 0
         };
         this.outputManager = new OutputManager();
-        this.stateManager = new RunStateManager(() => this.runCode(false), () => this.stop(), () => this.runCode(true));
+        this.stateManager = new CodeRunner(programmingLanguage, {
+            onRunClicked: () => this.runCode(false),
+            onStopClicked: () => this.stop(),
+            onDebugClicked: () => this.runCode(true)
+        });
         this.inputManager = new InputManager(() => this.stateManager.setState(RunState.Running), config.inputMode);
         this.addRunListener(this.inputManager);
         this.addRunListener(this.outputManager);
@@ -237,9 +239,7 @@ export class Papyros {
         const backend = startBackend(programmingLanguage);
         this.codeState.backend = backend;
         this.codeState.editor.setLanguage(programmingLanguage,
-            async context => await this.codeState.backend.autocomplete(Backend.convertCompletionContext(context)),
-            t("Papyros.code_placeholder", { programmingLanguage })
-        );
+            async context => await this.codeState.backend.autocomplete(Backend.convertCompletionContext(context)));
         // Allow passing messages between worker and main thread
         await backend.launch(proxy(e => this.onMessage(e)), this.inputManager.channel);
         this.stateManager.setState(RunState.Ready);

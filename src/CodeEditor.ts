@@ -26,7 +26,7 @@ import { rectangularSelection } from "@codemirror/rectangular-selection";
 import { defaultHighlightStyle } from "@codemirror/highlight";
 import { lintKeymap } from "@codemirror/lint";
 import { showPanel } from "@codemirror/panel";
-import { RenderOptions, renderWithOptions } from "./util/Util";
+import { RenderOptions, renderWithOptions, t } from "./util/Util";
 import { breakpoints } from "./extensions/Breakpoints";
 /**
  * Component that provides useful features to users writing code
@@ -63,13 +63,10 @@ export class CodeEditor {
 
     /**
      * Construct a new CodeEditor
-     * @param {ProgrammingLanguage} language The used programming language
-     * @param {string} editorPlaceHolder The placeholder for the editor
      * @param {string} initialCode The initial code to display
      * @param {number} indentLength The length in spaces for the indent unit
      */
-    constructor(language: ProgrammingLanguage,
-        editorPlaceHolder: string, initialCode = "", indentLength = 4) {
+    constructor(initialCode = "", indentLength = 4) {
         this.breakpointLines = new Set();
         this.editorView = new EditorView(
             {
@@ -79,7 +76,7 @@ export class CodeEditor {
                         [
                             breakpoints((lineNr: number, active: boolean) =>
                                 this.toggleBreakpoint(lineNr, active)),
-                            this.languageCompartment.of(CodeEditor.getLanguageSupport(language)),
+                            this.languageCompartment.of([]),
                             this.autocompletionCompartment.of(
                                 autocompletion()
                             ),
@@ -87,7 +84,7 @@ export class CodeEditor {
                                 indentUnit.of(CodeEditor.getIndentUnit(indentLength))
                             ),
                             keymap.of([indentWithTab]),
-                            this.placeholderCompartment.of(placeholder(editorPlaceHolder)),
+                            this.placeholderCompartment.of([]),
                             this.panelCompartment.of(showPanel.of(null)),
                             ...CodeEditor.getDefaultExtensions()
                         ]
@@ -130,15 +127,15 @@ export class CodeEditor {
      * @param {CompletionSource} completionSource Function to generate autocomplete results
      * @param {string} editorPlaceHolder Placeholder when empty
      */
-    setLanguage(language: ProgrammingLanguage, completionSource: CompletionSource,
-        editorPlaceHolder: string): void {
+    setLanguage(language: ProgrammingLanguage, completionSource: CompletionSource): void {
         this.editorView.dispatch({
             effects: [
                 this.languageCompartment.reconfigure(CodeEditor.getLanguageSupport(language)),
                 this.autocompletionCompartment.reconfigure(
                     autocompletion({ override: [completionSource] })
                 ),
-                this.placeholderCompartment.reconfigure(placeholder(editorPlaceHolder))
+                this.placeholderCompartment.reconfigure(placeholder(t("Papyros.code_placeholder",
+                    { programmingLanguage: language })))
             ]
         });
     }
