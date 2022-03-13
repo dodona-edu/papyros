@@ -1,7 +1,7 @@
 /**
  * Default service worker to process user input using HTTP requests
  */
-// Impport service worker provided by the Papyros-package
+// Import service worker provided by the Papyros-package
 import { InputWorker } from "./workers/input/InputWorker";
 
 // Strip away the filename of the script to obtain the scope
