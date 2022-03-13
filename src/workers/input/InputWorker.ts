@@ -15,9 +15,9 @@ export class InputWorker {
 
     /**
      * Create a worker for a specific domain
-     * @param {string} hostName The name of the host domain
+     * @param {string} hostName Optional name of the host domain
      */
-    constructor(hostName: string) {
+    constructor(hostName = "") {
         this.hostName = hostName;
         this.syncMessageListener = serviceWorkerFetchListener();
     }
@@ -32,9 +32,8 @@ export class InputWorker {
         if (this.syncMessageListener(event)) {
             return true;
         }
-
         const url = event.request.url;
-        if (url.includes(this.hostName)) { // requests to our own domain
+        if (this.hostName && url.includes(this.hostName)) { // requests to our own domain
             event.respondWith(
                 fetch(event.request)
                     .then(response => {
