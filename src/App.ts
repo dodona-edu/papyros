@@ -28,7 +28,7 @@ async function startPapyros(): Promise<void> {
         }
     });
     // Try to configure synchronous input mechanism
-    if (!await papyros.configureInput(location.href, DEFAULT_SERVICE_WORKER, true)) {
+    if (!await papyros.configureInput(location.href, DEFAULT_SERVICE_WORKER, false)) {
         getElement(MAIN_APP_ID).innerHTML =
             "Your browser is unsupported.\n" +
             "Please use a modern version of Chrome, Safari, Firefox, ...";

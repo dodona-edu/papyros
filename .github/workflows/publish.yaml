@@ -17,7 +17,7 @@ jobs:
       - name: Install and Build 🔧
         run: |
           yarn install
-          yarn build:package
+          yarn build
       - name: Publish @dodona/papyros to NPM
         uses: JS-DevTools/npm-publish@v1
         with:

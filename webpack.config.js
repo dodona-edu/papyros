@@ -1,4 +1,6 @@
 const path = require("path");
+const glob = require("glob");
+const TerserPlugin = require('terser-webpack-plugin');
 
 const PUBLIC_DIR = "public";
 const LIBRARY_DIR = "dist";
@@ -10,13 +12,12 @@ module.exports = function (webpackEnv) {
 	// In development, the bundle is loaded from the public folder
 	// In production, node_modules typically use the dist folder
 	const outFolder = mode === "development" ? PUBLIC_DIR : LIBRARY_DIR;
-	const entry = webpackEnv["entry"] || DEFAULT_ENTRY_POINT;
+	// const entry = webpackEnv["entry"] || DEFAULT_ENTRY_POINT;
 	return {
-		entry: {
-			// webpack output usually starts with lower case letter
-			index: entry,
-			inputServiceWorker: DEFAULT_SERVICE_WORKER_ENTRY_POINT
-		},
+		entry: glob.sync("./src/**.ts").concat(glob.sync("./src/**.js")).filter(n => !n.includes(".d.ts")).reduce(function (obj, el) {
+			obj[path.parse(el).name] = el;
+			return obj;
+		}, {}),
 		module: {
 			rules: [
 				// Inline bundle worker-scripts to prevent bundle resolving errors
@@ -58,6 +59,20 @@ module.exports = function (webpackEnv) {
 		},
 		mode: mode,
 		target: "web",
+		// Prevent [name].js.LICENSE.txt from being generated
+		optimization: {
+			minimize: true,
+			minimizer: [
+				new TerserPlugin({
+					extractComments: false,
+					terserOptions: {
+						format: {
+							comments: false,
+						},
+					},
+				}),
+			],
+		},
 		devServer: {
 			static: path.join(__dirname, PUBLIC_DIR),
 			port: DEVELOPMENT_PORT,
