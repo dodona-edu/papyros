@@ -30,9 +30,8 @@ export declare class RunStateManager {
      * Construct a new RunStateManager with the given listeners
      * @param {function} onRunClicked Callback for when the run button is clicked
      * @param {function} onStopClicked Callback for when the stop button is clicked
-     * @param {function} onDebugClicked Callback for when the debug button is clicked
      */
-    constructor(onRunClicked: () => void, onStopClicked: () => void, onDebugClicked: () => void);
+    constructor(onRunClicked: () => void, onStopClicked: () => void);
     /**
      * Get the button to run the code
      */

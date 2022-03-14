@@ -178,10 +178,9 @@ export declare class Papyros {
     onMessage(e: PapyrosEvent): void;
     /**
      * Run the code that is currently present in the editor
-     * @param {boolean} debug Whether the run happens in debug mode
      * @return {Promise<void>} Promise of running the code
      */
-    runCode(debug: boolean): Promise<void>;
+    runCode(): Promise<void>;
     /**
      * Interrupt the currently running code
      * @return {Promise<void>} Promise of stopping
