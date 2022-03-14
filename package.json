@@ -1,6 +1,6 @@
 {
   "name": "@dodona/papyros",
-  "version": "0.1.831",
+  "version": "0.1.9",
   "private": false,
   "homepage": ".",
   "devDependencies": {
@@ -83,6 +83,6 @@
   "bugs": {
     "url": "https://github.com/dodona-edu/papyros/issues"
   },
-  "main": "./dist/Papyros.js",
+  "main": "./dist/Library.js",
   "types": "./dist/Library.d.ts"
 }
