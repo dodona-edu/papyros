@@ -14,7 +14,7 @@ module.exports = function (webpackEnv) {
 	const outFolder = mode === "development" ? PUBLIC_DIR : LIBRARY_DIR;
 	// const entry = webpackEnv["entry"] || DEFAULT_ENTRY_POINT;
 	return {
-		entry: glob.sync("./src/**.ts").concat(glob.sync("./src/**.js")).filter(n => !n.includes(".d.ts")).reduce(function (obj, el) {
+		entry: glob.sync("./src/**/*.{ts,js}").filter(n => !n.includes(".d.ts")).reduce(function (obj, el) {
 			obj[path.parse(el).name] = el;
 			return obj;
 		}, {}),
