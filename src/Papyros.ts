@@ -3,123 +3,149 @@ import "./Papyros.css";
 import { proxy, Remote } from "comlink";
 import I18n from "i18n-js";
 import { Backend } from "./Backend";
-import { getBackend, stopBackend } from "./BackendManager";
+import { startBackend, stopBackend } from "./BackendManager";
 import { CodeEditor } from "./CodeEditor";
 import {
     EDITOR_WRAPPER_ID, PROGRAMMING_LANGUAGE_SELECT_ID, OUTPUT_TA_ID,
-    RUN_BTN_ID, STOP_BTN_ID, LOCALE_SELECT_ID, INPUT_AREA_WRAPPER_ID, EXAMPLE_SELECT_ID, PANEL_WRAPPER_ID
+    LOCALE_SELECT_ID, INPUT_AREA_WRAPPER_ID, EXAMPLE_SELECT_ID, PANEL_WRAPPER_ID
 } from "./Constants";
 import { InputManager, InputMode } from "./InputManager";
 import { PapyrosEvent } from "./PapyrosEvent";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import { LogType, papyrosLog } from "./util/Logging";
 import {
-    addListener, renderSelect, getSelectOptions, removeSelection,
-    getLocales, t, loadTranslations,
-    RenderOptions, renderWithOptions, ButtonOptions
+    t, loadTranslations, getLocales,
+    getSelectOptions, renderSelect, removeSelection,
+    RenderOptions, renderWithOptions,
+    addListener, ButtonOptions, getElement
 } from "./util/Util";
-import { StatusPanel } from "./StatusPanel";
+import { RunState, RunStateManager } from "./RunStateManager";
 import { getCodeForExample, getExampleNames } from "./examples/Examples";
 import { OutputManager } from "./OutputManager";
 import { makeChannel } from "sync-message";
-
-enum PapyrosState {
-    Loading = "loading",
-    Running = "running",
-    AwaitingInput = "awaiting_input",
-    Stopping = "stopping",
-    Ready = "ready"
-}
-
-class PapyrosStateManager {
-    state: PapyrosState;
-    statusPanel: StatusPanel;
-
-    get runButton(): HTMLButtonElement {
-        return document.getElementById(RUN_BTN_ID) as HTMLButtonElement;
-    }
-
-    get stopButton(): HTMLButtonElement {
-        return document.getElementById(STOP_BTN_ID) as HTMLButtonElement;
-    }
-
-    constructor(statusPanel: StatusPanel, onRunClicked: () => void, onStopClicked: () => void) {
-        this.state = PapyrosState.Ready;
-        this.statusPanel = statusPanel;
-        this.statusPanel.addButton({
-            id: RUN_BTN_ID,
-            buttonText: t("Papyros.run"),
-            extraClasses: "text-white bg-blue-500"
-        }, onRunClicked);
-        this.statusPanel.addButton({
-            id: STOP_BTN_ID,
-            buttonText: t("Papyros.stop"),
-            extraClasses: "text-white bg-red-500"
-        }, onStopClicked);
-    }
-
-    setState(state: PapyrosState, message?: string): void {
-        if (state !== this.state) {
-            this.state = state;
-            this.stopButton.disabled = [PapyrosState.Ready, PapyrosState.Loading].includes(state);
-            if (state === PapyrosState.Ready) {
-                this.statusPanel.showSpinner(false);
-                this.runButton.disabled = false;
-            } else {
-                this.statusPanel.showSpinner(true);
-                this.runButton.disabled = true;
-            }
-            this.statusPanel.setStatus(message || t(`Papyros.states.${state}`));
-        }
-    }
-
-    render(options: RenderOptions): HTMLElement {
-        return this.statusPanel.render(options);
-    }
-}
+import { RunListener } from "./RunListener";
 
 const LANGUAGE_MAP = new Map([
     ["python", ProgrammingLanguage.Python],
     ["javascript", ProgrammingLanguage.JavaScript]
 ]);
 
+/**
+ * Groups values related to running code
+ */
 interface PapyrosCodeState {
+    /**
+     * The currently used programming language
+     */
     programmingLanguage: ProgrammingLanguage;
+    /**
+     * The editor in which the code is written
+     */
     editor: CodeEditor;
+    /**
+     * The backend that executes the code asynchronously
+     */
     backend: Remote<Backend>;
+    /**
+     * The identifier for the current run
+     */
     runId: number;
 }
 
+/**
+ * Configuration options for this instance of Papyros
+ */
 interface PapyrosConfig {
+    /**
+     * Whether Papyros is run in standAlone mode or embedded in an application
+     */
     standAlone: boolean;
+    /**
+     * The programming language to use
+     */
     programmingLanguage: ProgrammingLanguage;
+    /**
+     * The language to use
+     */
     locale: string;
+    /**
+     * The InputMode to use
+     */
     inputMode: InputMode;
 }
 
+/**
+ * Options for rendering Papyros
+ */
 interface PapyrosRenderOptions {
-    papyros?: RenderOptions;
-    code?: RenderOptions;
-    panel?: RenderOptions;
-    input?: RenderOptions;
-    output?: RenderOptions
+    /**
+     * Options to render Papyros itself, only used in standAlone mode
+     */
+    standAloneOptions?: RenderOptions;
+    /**
+     * RenderOptions for the code editor
+     */
+    codeEditorOptions?: RenderOptions;
+    /**
+     * RenderOptions for the status panel in the editor
+     */
+    statusPanelOptions?: RenderOptions;
+    /**
+     * RenderOptions for the input field
+     */
+    inputOptions?: RenderOptions;
+    /**
+     * RenderOptions for the output field
+     */
+    outputOptions?: RenderOptions
 }
 
+/**
+ * Class that manages multiple components to form a coding scratchpad
+ */
 export class Papyros {
+    /**
+     * Config used to initialize Papyros
+     */
     config: PapyrosConfig;
-    stateManager: PapyrosStateManager;
-    codeState: PapyrosCodeState;
+    /**
+     * Component to manage and visualize the state of the program
+     */
+    stateManager: RunStateManager;
+    /**
+     * Component to request and handle input from the user
+     */
     inputManager: InputManager;
+    /**
+     * Component to handle output generated by the user's code
+     */
     outputManager: OutputManager;
+    /**
+     * Groups all internal properties related to running code
+     */
+    codeState: PapyrosCodeState;
+    /**
+     * Listeners to changes in the running state
+     */
+    runListeners: Array<RunListener>;
+    /**
+     * Whether this instance has been launched
+     */
+    private launched: boolean;
 
+    /**
+     * Construct a new Papyros instance
+     * @param {PapyrosConfig} config Properties to configure this instance
+     */
     constructor(config: PapyrosConfig) {
+        this.launched = false;
+        this.runListeners = [];
         this.config = config;
-        const {
-            programmingLanguage, inputMode, locale
-        } = this.config;
+        // Load translations as other components depend on them
         loadTranslations();
-        I18n.locale = locale;
-        this.outputManager = new OutputManager();
+        I18n.locale = config.locale;
+
+        const { programmingLanguage } = this.config;
         this.codeState = {
             programmingLanguage: programmingLanguage,
             editor: new CodeEditor(
@@ -128,51 +154,106 @@ export class Papyros {
             backend: {} as Remote<Backend>,
             runId: 0
         };
-        const statusPanel = new StatusPanel();
-        this.stateManager = new PapyrosStateManager(statusPanel, () => this.runCode(), () => this.stop());
-        this.inputManager = new InputManager(() => this.stateManager.setState(PapyrosState.Running), inputMode);
+        this.outputManager = new OutputManager();
+        this.stateManager = new RunStateManager(() => this.runCode(), () => this.stop());
+        this.inputManager = new InputManager(() => this.stateManager.setState(RunState.Running), config.inputMode);
+        this.addRunListener(this.inputManager);
+        this.addRunListener(this.outputManager);
     }
 
-    get state(): PapyrosState {
+    /**
+     * Register a listener to be notified when code runs start or end
+     * @param {RunListener} listener The new listener
+     */
+    addRunListener(listener: RunListener): void {
+        this.runListeners.push(listener);
+    }
+
+    /**
+     * Inform the listeners about the current run
+     * @param {boolean} start Whether the run started or ended
+     */
+    private notifyListeners(start: boolean): void {
+        if (start) {
+            this.runListeners.forEach(l => l.onRunStart());
+        } else {
+            this.runListeners.forEach(l => l.onRunEnd());
+        }
+    }
+
+    /**
+     * Getter for the current state of the program
+     */
+    get state(): RunState {
         return this.stateManager.state;
     }
 
+    /**
+     * Launch this instance of Papyros, making it ready to run code
+     * @return {Promise<Papyros>} Promise of launching, chainable
+     */
     async launch(): Promise<Papyros> {
-        const start = new Date().getTime();
-        await this.startBackend();
-        papyrosLog(LogType.Important, `Finished loading backend after ${new Date().getTime() - start} ms`);
-        this.codeState.editor.focus();
+        if (!this.launched) {
+            const start = new Date().getTime();
+            await this.startBackend();
+            papyrosLog(LogType.Important, `Finished loading backend after ${new Date().getTime() - start} ms`);
+            this.codeState.editor.focus();
+        }
         return this;
     }
 
+    /**
+     * Set the used programming language to the given one to allow editing and running code
+     * @param {ProgrammingLanguage} programmingLanguage The language to use
+     */
     async setProgrammingLanguage(programmingLanguage: ProgrammingLanguage): Promise<void> {
-        if (this.codeState.programmingLanguage !== programmingLanguage) {
+        if (this.codeState.programmingLanguage !== programmingLanguage) { // Expensive, so ensure it is needed
             stopBackend(this.codeState.backend);
             this.codeState.programmingLanguage = programmingLanguage;
             this.codeState.editor.setLanguage(programmingLanguage, t("Papyros.code_placeholder", { programmingLanguage }));
-            this.outputManager.reset();
             await this.startBackend();
         }
     }
 
+    /**
+     * @param {string} code The code to use in the editor
+     */
     setCode(code: string): void {
         this.codeState.editor.setCode(code);
     }
 
+    /**
+     * @return {string} The currently written code
+     */
     getCode(): string {
         return this.codeState.editor.getCode();
     }
 
-    async startBackend(): Promise<void> {
-        this.stateManager.setState(PapyrosState.Loading);
-        const backend = getBackend(this.codeState.programmingLanguage);
+    /**
+     * Start up the backend for the current programming language
+     */
+    private async startBackend(): Promise<void> {
+        this.stateManager.setState(RunState.Loading);
+        const backend = startBackend(this.codeState.programmingLanguage);
+        // Allow passing messages between worker and main thread
         await backend.launch(proxy(e => this.onMessage(e)), this.inputManager.channel);
         this.codeState.backend = backend;
-        this.stateManager.setState(PapyrosState.Ready);
+        this.stateManager.setState(RunState.Ready);
     }
 
-    async configureInput(allowReload: boolean,
-        serviceWorkerRoot?: string, serviceWorkerName?: string): Promise<boolean> {
+    /**
+     * Configure how user input is handled within Papyros
+     * By default, we will try to use SharedArrayBuffers
+     * If this option is not available, the optional arguments become relevant
+     * They are needed to register a service worker to handle communication between threads
+     * @param {string} serviceWorkerRoot URL for the directory where the service worker lives
+     * @param {string} serviceWorkerName The name of the file containing the script
+     * @param {boolean} allowReload Whether we are allowed to force a reload of the page
+     * This allows using SharedArrayBuffers without configuring the HTTP headers yourself
+     * @return {Promise<boolean>} Promise of configuring input
+     */
+    async configureInput(serviceWorkerRoot?: string, serviceWorkerName?: string,
+        allowReload = false): Promise<boolean> {
         const RELOAD_STORAGE_KEY = "__papyros_reloading";
         if (allowReload && window.localStorage.getItem(RELOAD_STORAGE_KEY)) {
             // We are the result of the page reload, so we can start
@@ -185,6 +266,7 @@ export class Papyros {
                     papyrosLog(LogType.Important, "Unable to register service worker. Please specify all required parameters and ensure service workers are supported.");
                     return false;
                 }
+                // Ensure there is a slash at the end to allow the script to be resolved
                 const rootWithSlash = serviceWorkerRoot.endsWith("/") ? serviceWorkerRoot : serviceWorkerRoot + "/";
                 const serviceWorkerUrl = rootWithSlash + serviceWorkerName;
                 papyrosLog(LogType.Important, `Registering service worker: ${serviceWorkerUrl}`);
@@ -202,20 +284,31 @@ export class Papyros {
         }
     }
 
-    onError(e: PapyrosEvent): void {
+    /**
+     * Process PapyrosEvents with type="error"
+     * @param {PapyrosEvent} e The error-event
+     */
+    private onError(e: PapyrosEvent): void {
         papyrosLog(LogType.Debug, "Got error in Papyros: ", e);
-        this.outputManager.showError(e.data);
+        this.outputManager.showError(e);
     }
-
-    async onInput(e: PapyrosEvent): Promise<void> {
+    /**
+     * Process PapyrosEvents with type="input"
+     * @param {PapyrosEvent} e The input-event
+     */
+    private async onInput(e: PapyrosEvent): Promise<void> {
         papyrosLog(LogType.Debug, "Received onInput event in Papyros: ", e);
-        this.stateManager.setState(PapyrosState.AwaitingInput);
+        this.stateManager.setState(RunState.AwaitingInput);
         await this.inputManager.onInput(e);
     }
 
+    /**
+     * Generic handler function to pass PapyrosEvents to the relevant method
+     * @param {PapyrosEvent} e The event ro process
+     */
     onMessage(e: PapyrosEvent): void {
         papyrosLog(LogType.Debug, "received event in onMessage", e);
-        if (e.runId === this.codeState.runId) {
+        if (e.runId === this.codeState.runId) { // Only process relevant messages
             if (e.type === "output") {
                 this.outputManager.showOutput(e);
             } else if (e.type === "input") {
@@ -228,47 +321,66 @@ export class Papyros {
         }
     }
 
+    /**
+     * Run the code that is currently present in the editor
+     * @return {Promise<void>} Promise of running the code
+     */
     async runCode(): Promise<void> {
-        if (this.state !== PapyrosState.Ready) {
+        if (this.state !== RunState.Ready) {
             papyrosLog(LogType.Error, `Run code called from invalid state: ${this.state}`);
             return;
         }
+        // Setup pre-run
         this.codeState.runId += 1;
-        this.stateManager.setState(PapyrosState.Running);
-        this.inputManager.onRunStart();
-        this.outputManager.onRunStart();
+        this.stateManager.setState(RunState.Running);
+        this.notifyListeners(true);
+
         papyrosLog(LogType.Debug, "Running code in Papyros, sending to backend");
         const start = new Date().getTime();
         try {
-            await this.codeState.backend.runCode(
-                this.codeState.editor.getCode(), this.codeState.runId);
+            await this.codeState.backend.runCode(this.getCode(), this.codeState.runId);
         } catch (error: any) {
             this.onError(error);
         } finally {
             const end = new Date().getTime();
-            this.stateManager.setState(PapyrosState.Ready, t("Papyros.finished", { time: (end - start) / 1000 }));
-            this.inputManager.onRunEnd();
-            this.outputManager.onRunEnd();
+            this.stateManager.setState(RunState.Ready, t("Papyros.finished", { time: (end - start) / 1000 }));
+            this.notifyListeners(false);
         }
     }
 
+    /**
+     * Interrupt the currently running code
+     * @return {Promise<void>} Promise of stopping
+     */
     async stop(): Promise<void> {
-        if (![PapyrosState.Running, PapyrosState.AwaitingInput].includes(this.state)) {
+        if (![RunState.Running, RunState.AwaitingInput].includes(this.state)) {
             papyrosLog(LogType.Error, `Stop called from invalid state: ${this.state}`);
             return;
         }
         papyrosLog(LogType.Debug, "Stopping backend!");
         this.codeState.runId += 1; // ignore messages coming from last run
-        this.stateManager.setState(PapyrosState.Stopping);
+        this.stateManager.setState(RunState.Stopping);
+        this.notifyListeners(false);
+        // Since we use workers, the old one must be entirely replaced to interrupt it
         stopBackend(this.codeState.backend);
         return this.startBackend();
     }
 
+    /**
+     * Render Papyros with the given options
+     * @param {PapyrosRenderOptions} renderOptions Options to use
+     */
     render(renderOptions: PapyrosRenderOptions): void {
-        const {
-            locale, programmingLanguage, standAlone
-        } = this.config;
-        if (standAlone) {
+        // Set default values for each option
+        renderOptions.inputOptions = Object.assign({ parentElementId: INPUT_AREA_WRAPPER_ID }, renderOptions.inputOptions);
+        renderOptions.statusPanelOptions = Object.assign({ parentElementId: PANEL_WRAPPER_ID }, renderOptions.statusPanelOptions);
+        renderOptions.codeEditorOptions = Object.assign({ parentElementId: EDITOR_WRAPPER_ID }, renderOptions.codeEditorOptions);
+        renderOptions.outputOptions = Object.assign({ parentElementId: OUTPUT_TA_ID }, renderOptions.outputOptions);
+
+        if (this.config.standAlone) {
+            const {
+                locale, programmingLanguage
+            } = this.config;
             const programmingLanguageSelect =
                 renderSelect(PROGRAMMING_LANGUAGE_SELECT_ID, new Array(...LANGUAGE_MAP.values()),
                     l => t(`Papyros.programming_languages.${l}`), programmingLanguage, t("Papyros.programming_language"));
@@ -299,7 +411,7 @@ export class Papyros {
                 ${programmingLanguageSelect}
                 ${exampleSelect}
             </div>`;
-            renderWithOptions(renderOptions.papyros!, `
+            renderWithOptions(renderOptions.standAloneOptions!, `
     <div id="papyros" class="max-h-screen h-full overflow-y-hidden">
         ${navBar}
         <div class="m-10">
@@ -309,15 +421,15 @@ export class Papyros {
                 <!-- Code section-->
                 <div>
                     <h1>${t("Papyros.code")}:</h1>
-                    <div id="${EDITOR_WRAPPER_ID}"></div>
-                    <div id="${PANEL_WRAPPER_ID}"></div>
+                    <div id="${renderOptions.codeEditorOptions.parentElementId}"></div>
+                    <div id="${renderOptions.statusPanelOptions.parentElementId}"></div>
                 </div>
                 <!-- User input and output section-->
                 <div>
                     <h1>${t("Papyros.output")}:</h1>
-                    <div id="${OUTPUT_TA_ID}"></div>
+                    <div id="${renderOptions.outputOptions.parentElementId}"></div>
                     <h1>${t("Papyros.input")}:</h1>
-                    <div id="${INPUT_AREA_WRAPPER_ID}"></div>
+                    <div id="${renderOptions.inputOptions.parentElementId}"></div>
                 </div>
             </div>
         </div>
@@ -326,7 +438,8 @@ export class Papyros {
             addListener<ProgrammingLanguage>(
                 PROGRAMMING_LANGUAGE_SELECT_ID, pl => {
                     this.setProgrammingLanguage(pl);
-                    document.getElementById(EXAMPLE_SELECT_ID)!.innerHTML = getSelectOptions(getExampleNames(pl), name => name);
+                    getElement<HTMLSelectElement>(EXAMPLE_SELECT_ID).innerHTML =
+                        getSelectOptions(getExampleNames(pl), name => name);
                     removeSelection(EXAMPLE_SELECT_ID);
                     // Modify search query params without reloading page
                     history.pushState(null, "", `?locale=${I18n.locale}&language=${pl}`);
@@ -342,30 +455,36 @@ export class Papyros {
             // Ensure there is no initial selection
             removeSelection(EXAMPLE_SELECT_ID);
         }
-        this.inputManager.render(
-            Object.assign({ parentElementId: INPUT_AREA_WRAPPER_ID }, renderOptions.input)
-        );
-        const panel = this.stateManager.render(
-            Object.assign({ parentElementId: PANEL_WRAPPER_ID }, renderOptions.panel)
-        );
-        this.codeState.editor.render(Object.assign({ parentElementId: EDITOR_WRAPPER_ID }, renderOptions.code), panel);
-        this.outputManager.render(Object.assign({ parentElementId: OUTPUT_TA_ID }, renderOptions.output));
+
+        this.inputManager.render(renderOptions.inputOptions);
+        const runStatePanel = this.stateManager.render(renderOptions.statusPanelOptions);
+        this.codeState.editor.render(renderOptions.codeEditorOptions, runStatePanel);
+        this.outputManager.render(renderOptions.outputOptions);
     }
 
+    /**
+     * Add a button to the status panel within Papyros
+     * @param {ButtonOptions} options Options to render the button with
+     * @param {function} onClick Listener for click events on the button
+     */
     addButton(options: ButtonOptions, onClick: () => void): void {
-        this.stateManager.statusPanel.addButton(options, onClick);
+        this.stateManager.addButton(options, onClick);
     }
 
+    /**
+     * @param {ProgrammingLanguage} language The language to check
+     * @return {boolean} Whether Papyros supports this language by default
+     */
     static supportsProgrammingLanguage(language: string): boolean {
         return Papyros.toProgrammingLanguage(language) !== undefined;
     }
 
+    /**
+     * Convert a string to a ProgrammingLanguage
+     * @param {string} language The language to convert
+     * @return {ProgrammingLanguage | undefined} The ProgrammingLanguage, or undefined if not supported
+     */
     static toProgrammingLanguage(language: string): ProgrammingLanguage | undefined {
-        const langLC = language.toLowerCase();
-        if (LANGUAGE_MAP.has(langLC)) {
-            return LANGUAGE_MAP.get(langLC)!;
-        } else {
-            return undefined;
-        }
+        return LANGUAGE_MAP.get(language.toLowerCase());
     }
 }

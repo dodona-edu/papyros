@@ -1,6 +1,22 @@
+/**
+ * Interface for events used for communication between threads
+ */
 export interface PapyrosEvent {
-    type: "input" | "output" | "script" | "success" | "error";
-    data: string;
+    /**
+     * The type of action generating this event
+     */
+    type: "input" | "output" | "success" | "error";
+    /**
+     * The identifier for the run this message is associated with
+     * This allows discarding outdated events that were delayed
+     */
     runId: number;
-    content?: string;
+    /**
+     * The actual data stored in this event
+     */
+    data: string;
+    /**
+     * The format used for the data to help with parsing
+     */
+    contentType: string;
 }

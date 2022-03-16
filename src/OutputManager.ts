@@ -1,62 +1,106 @@
 import escapeHTML from "escape-html";
 import { PapyrosEvent } from "./PapyrosEvent";
+import { RunListener } from "./RunListener";
 import { inCircle } from "./util/HTMLShapes";
-import { RenderOptions, renderWithOptions, t } from "./util/Util";
+import { getElement, parseEventData, RenderOptions, renderWithOptions, t } from "./util/Util";
 
+/**
+ * Shape of Error objects that are easy to interpret
+ */
 export interface FriendlyError {
+    /**
+     * The name of the Error
+     */
     name: string;
+    /**
+     * Traceback for where in the code the Error occurred
+     */
     traceback?: string;
+    /**
+     * General information about this type of Error
+     */
     info?: string;
-    why?: string;
+    /**
+    * Information about what went wrong in this case
+    */
     what?: string;
+    /**
+     * Information about why this is wrong and how to fix it
+     */
+    why?: string;
+    /**
+     * Where specifically in the source code the Error occurred
+     */
     where?: string;
 }
 
-export class OutputManager {
-    outputAreaId = "";
+/**
+ * Component for displaying code output or errors to the user
+ */
+export class OutputManager implements RunListener {
+    // Store options to allow re-rendering
     options: RenderOptions = { parentElementId: "" };
 
+    /**
+     * Retrieve the parent element containing all output parts
+     */
     get outputArea(): HTMLElement {
-        return document.getElementById(this.outputAreaId) as HTMLElement;
+        return getElement(this.options.parentElementId);
     }
 
+    /**
+     * Render an element in the next position of the output area
+     * @param {string} html Safe string version of the next child to render
+     */
     renderNextElement(html: string): void {
         this.outputArea.insertAdjacentHTML("beforeend", html);
     }
 
-    spanify(text: string, ignoreEmpty = false): string {
+    /**
+     * Convert a piece of text to a span element for displaying
+     * @param {string} text The text content for the span
+     * @param {boolean} ignoreEmpty Whether to remove empty lines in the text
+     * @param {string} className Optional class name for the span
+     * @return {string} String version of the created span
+     */
+    spanify(text: string, ignoreEmpty = false, className = ""): string {
         let spanText = text;
         if (spanText.includes("\n") && spanText !== "\n") {
             spanText = spanText.split("\n")
                 .filter(line => !ignoreEmpty || line.trim().length > 0)
                 .join("\n");
         }
-        return `<span>${escapeHTML(spanText)}</span>`;
+        return `<span class="${className}">${escapeHTML(spanText)}</span>`;
     }
 
+    /**
+     * Display output to the user, based on its content type
+     * @param {PapyrosEvent} output Event containing the output data
+     */
     showOutput(output: PapyrosEvent): void {
-        if (output.content === "img") {
-            this.renderNextElement(`<img src="data:image/png;base64, ${output.data}"></img>`);
+        const data = parseEventData(output);
+        if (output.contentType === "img/png;base64") {
+            this.renderNextElement(`<img src="data:image/png;base64, ${data}"></img>`);
         } else {
-            this.renderNextElement(this.spanify(output.data, false));
+            this.renderNextElement(this.spanify(data, false));
         }
     }
 
-    showError(error: FriendlyError | string): void {
+    /**
+     * Display an error to the user
+     * @param {PapyrosEvent} error Event containing the error data
+     */
+    showError(error: PapyrosEvent): void {
         let errorHTML = "";
-        let errorObject = {} as FriendlyError;
-        if (typeof (error) === "string") {
-            try {
-                errorObject = JSON.parse(error) as FriendlyError;
-            } catch (_) {
-                errorHTML = this.spanify(error);
-            }
-        }
-        if (Object.keys(errorObject).length > 0) {
+        const errorData = parseEventData(error);
+        if (typeof (errorData) === "string") {
+            errorHTML = this.spanify(errorData);
+        } else {
+            const errorObject = errorData as FriendlyError;
             let shortTraceback = (errorObject.where || "").trim();
             // Prepend a bit of indentation, so every part has indentation
             if (shortTraceback) {
-                shortTraceback = this.spanify("  " + shortTraceback, true);
+                shortTraceback = this.spanify("  " + shortTraceback, true, "where");
             }
             errorHTML += "<div class=\"text-red-500 text-bold\">";
             const infoQM = inCircle("?", escapeHTML(errorObject.info), "blue-500");
@@ -65,18 +109,21 @@ export class OutputManager {
             errorHTML += shortTraceback;
             errorHTML += "</div>\n";
             if (errorObject.what) {
-                errorHTML += this.spanify(errorObject.what.trim(), true) + "\n";
+                errorHTML += this.spanify(errorObject.what.trim(), true, "what") + "\n";
             }
             if (errorObject.why) {
-                errorHTML += this.spanify(errorObject.why.trim(), true) + "\n";
+                errorHTML += this.spanify(errorObject.why.trim(), true, "why") + "\n";
             }
         }
-
         this.renderNextElement(errorHTML);
     }
 
+    /**
+     * Render the OutputManager with the given options
+     * @param {RenderOptions} options Options for rendering
+     * @return {HTMLElement} The rendered output area
+     */
     render(options: RenderOptions): HTMLElement {
-        this.outputAreaId = options.parentElementId;
         options.attributes = new Map([
             ["data-placeholder", t("Papyros.output_placeholder")],
             ...(options.attributes || [])
@@ -88,6 +135,9 @@ export class OutputManager {
         return renderWithOptions(options, "");
     }
 
+    /**
+     * Clear the contents of the output area
+     */
     reset(): void {
         this.render(this.options);
     }

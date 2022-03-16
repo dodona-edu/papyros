@@ -1,13 +1,19 @@
 import { t } from "i18n-js";
 import {
     SWITCH_INPUT_MODE_A_ID,
-    INPUT_AREA_WRAPPER_ID,
-    INPUT_TA_ID, SEND_INPUT_BTN_ID
+    INPUT_TA_ID, SEND_INPUT_BTN_ID, USER_INPUT_WRAPPER_ID
 } from "./Constants";
 import { PapyrosEvent } from "./PapyrosEvent";
 import { papyrosLog, LogType } from "./util/Logging";
-import { addListener, renderButton, RenderOptions, renderWithOptions } from "./util/Util";
+import {
+    addListener, parseEventData,
+    RenderOptions, renderWithOptions
+} from "./util/Util";
 import { Channel, makeChannel, writeMessage } from "sync-message";
+import { InteractiveInputHandler } from "./input/InteractiveInputHandler";
+import { UserInputHandler } from "./input/UserInputHandler";
+import { BatchInputHandler } from "./input/BatchInputHandler";
+import { RunListener } from "./RunListener";
 
 export enum InputMode {
     Interactive = "interactive",
@@ -16,172 +22,114 @@ export enum InputMode {
 
 export const INPUT_MODES = [InputMode.Batch, InputMode.Interactive];
 
-interface InputSession {
-    lineNr: number;
+export interface InputData {
+    prompt: string;
+    messageId: string;
 }
 
-export class InputManager {
-    renderOptions: RenderOptions;
-    inputMode: InputMode;
-    waiting: boolean;
-    batchInput: string;
-    onSend: () => void;
-    session: InputSession;
+export class InputManager implements RunListener {
+    private _inputMode: InputMode;
+    private inputHandlers: Map<InputMode, UserInputHandler>;
+    private renderOptions: RenderOptions;
+    _waiting: boolean;
+    prompt: string;
 
+    onSend: () => void;
     channel: Channel;
     messageId = "";
 
     constructor(onSend: () => void, inputMode: InputMode) {
-        this.inputMode = inputMode;
-        this.session = { lineNr: 0 };
-        this.batchInput = "";
+        this._inputMode = inputMode;
         this.channel = makeChannel()!; // by default we try to use Atomics
         this.onSend = onSend;
-        this.waiting = false;
-        this.renderOptions = { parentElementId: INPUT_AREA_WRAPPER_ID };
+        this._waiting = false;
+        this.prompt = "";
+        this.inputHandlers = this.buildInputHandlerMap();
+        this.renderOptions = {} as RenderOptions;
     }
 
-    get enterButton(): HTMLButtonElement {
-        return document.getElementById(SEND_INPUT_BTN_ID) as HTMLButtonElement;
+    private buildInputHandlerMap(): Map<InputMode, UserInputHandler> {
+        const interactiveInputHandler: UserInputHandler =
+            new InteractiveInputHandler(() => this.sendLine(), INPUT_TA_ID, SEND_INPUT_BTN_ID);
+        const batchInputHandler: UserInputHandler =
+            new BatchInputHandler(() => this.sendLine(), INPUT_TA_ID);
+        return new Map([
+            [InputMode.Interactive, interactiveInputHandler],
+            [InputMode.Batch, batchInputHandler]
+        ]);
     }
 
-    get inputArea(): HTMLInputElement {
-        return document.getElementById(INPUT_TA_ID) as HTMLInputElement;
+    get inputMode(): InputMode {
+        return this._inputMode;
     }
 
-    render(options?: RenderOptions): void {
-        if (options) {
-            this.renderOptions = options;
-        }
-        const focusStyleClasses = "focus:outline-none focus:ring-1 focus:ring-blue-500";
-        let inputArea = "";
-        let otherMode: InputMode;
-        if (this.inputMode === InputMode.Batch) {
-            inputArea = `
-            <textarea id="${INPUT_TA_ID}" 
-            class="border-2 h-auto w-full max-h-1/4 px-1 overflow-auto ${focusStyleClasses}"
-            rows="5"></textarea>`;
-            otherMode = InputMode.Interactive;
-        } else {
-            const sendButton = renderButton({
-                id: SEND_INPUT_BTN_ID,
-                buttonText: t("Papyros.enter"),
-                extraClasses: "text-black bg-white"
-            });
-            inputArea = `
-            <div class="flex flex-row">
-                <input id="${INPUT_TA_ID}" type="text"
-                class="border border-transparent w-full ${focusStyleClasses} mr-0.5 px-1
-                disabled:cursor-not-allowed">
-                </input>
-                ${sendButton}
-            </div>`;
-            otherMode = InputMode.Batch;
-        }
-        const switchMode = `
-            <a id="${SWITCH_INPUT_MODE_A_ID}" data-value="${otherMode}"
-             class="flex flex-row-reverse hover:cursor-pointer text-blue-500">
-                ${t(`Papyros.input_modes.switch_to_${otherMode}`)}
-            </a>
-        `;
-        renderWithOptions(this.renderOptions, `
-        ${inputArea}
-        ${switchMode}
-        `);
-        addListener<InputMode>(SWITCH_INPUT_MODE_A_ID, im => this.setInputMode(im),
+    set inputMode(inputMode: InputMode) {
+        this.inputHandler.onToggle(false);
+        this._inputMode = inputMode;
+        this.render(this.renderOptions);
+        this.inputHandler.onToggle(true);
+    }
+
+    get inputHandler(): UserInputHandler {
+        return this.inputHandlers.get(this.inputMode)!;
+    }
+
+    render(options: RenderOptions): void {
+        this.renderOptions = options;
+        const otherMode = this.inputMode === InputMode.Interactive ?
+            InputMode.Batch : InputMode.Interactive;
+        renderWithOptions(options, `
+<div id="${USER_INPUT_WRAPPER_ID}">
+</div>
+<a id="${SWITCH_INPUT_MODE_A_ID}" data-value="${otherMode}"
+class="flex flex-row-reverse hover:cursor-pointer text-blue-500">
+   ${t(`Papyros.input_modes.switch_to_${otherMode}`)}
+</a>`);
+        addListener<InputMode>(SWITCH_INPUT_MODE_A_ID, im => this.inputMode = im,
             "click", "data-value");
-        if (this.inputMode === InputMode.Interactive) {
-            addListener(SEND_INPUT_BTN_ID, () => this.sendLine(), "click");
-        }
-        this.inputArea.onkeydown = async e => {
-            if (this.waiting &&
-                e.key.toLowerCase() === "enter") {
-                papyrosLog(LogType.Debug, "Pressed enter! Sending input to user");
-                await this.onInput();
-            }
-        };
-        this.setWaiting(this.waiting);
+        this.inputHandler.render({ parentElementId: USER_INPUT_WRAPPER_ID });
+        this.inputHandler.waitWithPrompt(this._waiting, this.prompt);
     }
 
-    setInputMode(inputMode: InputMode): void {
-        papyrosLog(LogType.Debug, `Switching input mode from ${this.inputMode} to ${inputMode}`);
-        if (this.inputMode === InputMode.Batch) {
-            // store for re-use later
-            this.batchInput = this.inputArea.value;
-        }
-        this.inputMode = inputMode;
-        this.render();
-        if (this.inputMode === InputMode.Batch) {
-            // Set previous batch
-            this.inputArea.value = this.batchInput;
-        }
+    set waiting(waiting: boolean) {
+        this._waiting = waiting;
+        this.inputHandler.waitWithPrompt(waiting, this.prompt);
     }
 
-    setWaiting(waiting: boolean, prompt = ""): void {
-        this.inputArea.setAttribute("placeholder",
-            prompt || t(`Papyros.input_placeholder.${this.inputMode}`));
-        this.inputArea.setAttribute("title", "");
-        this.waiting = waiting;
-        if (waiting) {
-            if (this.inputMode === InputMode.Interactive) {
-                this.enterButton.disabled = false;
-            }
-            this.inputArea.disabled = false;
-            this.inputArea.focus();
-        } else {
-            if (this.inputMode === InputMode.Interactive) {
-                this.inputArea.value = "";
-                this.inputArea.disabled = true;
-                // Remove placeholder as it is disabled
-                this.inputArea.setAttribute("placeholder", "");
-                this.inputArea.setAttribute("title", t("Papyros.input_disabled"));
-                this.enterButton.disabled = true;
-            }
-        }
-    }
-
-    async sendLine(): Promise<boolean> {
-        let line = "";
-        if (this.inputMode === InputMode.Interactive) {
-            line = this.inputArea.value;
-        } else {
-            const lines = this.inputArea.value.split("\n");
-            if (lines.length > this.session.lineNr) {
-                line = lines[this.session.lineNr];
-            }
-        }
-        if (line) {
+    async sendLine(): Promise<void> {
+        if (this.inputHandler.hasNext()) {
+            const line = this.inputHandler.next();
             papyrosLog(LogType.Debug, "Sending input to user: " + line);
             await writeMessage(this.channel, line, this.messageId);
-            this.session.lineNr += 1;
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    async onInput(e?: PapyrosEvent): Promise<void> {
-        papyrosLog(LogType.Debug, "Handling send Input in Papyros");
-        if (e?.content) {
-            this.messageId = e.content;
-        }
-        if (await this.sendLine()) {
-            this.setWaiting(false);
+            this.waiting = false;
             this.onSend();
         } else {
             papyrosLog(LogType.Debug, "Had no input to send, still waiting!");
-            this.setWaiting(true, e?.data);
+            this.waiting = true;
         }
+    }
+
+    /**
+     * Asynchronously handle an input request by prompting the user for input
+     * @param {PapyrosEvent} e Event containing the input data
+     * @return {Promise<void>} Promise of handling the request
+     */
+    async onInput(e: PapyrosEvent): Promise<void> {
+        papyrosLog(LogType.Debug, "Handling input request in Papyros");
+        const data = parseEventData(e) as InputData;
+        this.messageId = data.messageId;
+        this.prompt = data.prompt;
+        return this.sendLine();
     }
 
     onRunStart(): void {
-        if (this.inputMode === InputMode.Interactive) {
-            this.inputArea.value = "";
-        }
-        this.session.lineNr = 0;
+        this.waiting = false;
+        this.inputHandler.onRunStart();
     }
 
     onRunEnd(): void {
-        // currently empty
+        this.prompt = "";
+        this.inputHandler.onRunEnd();
+        this.waiting = false;
     }
 }

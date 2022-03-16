@@ -2,67 +2,118 @@ import { expose } from "comlink";
 import { Backend } from "../../Backend";
 
 
+/**
+ * Implementation of a JavaScript backend for Papyros
+ * by using eval and overriding some builtins
+ */
 class JavaScriptWorker extends Backend {
+    /**
+     * Convert varargs to a string, similar to how the console does it
+     * @param {any[]} args The values to join into a string
+     * @return {string} The string representation
+     */
+    private static stringify(...args: any[]): string {
+        const asString = args.map(a => {
+            if (Array.isArray(a)) {
+                return JSON.stringify(a);
+            } else if (typeof (a) === "string") {
+                return a;
+            } else if (typeof a === "number") {
+                return a + "";
+            } else if (typeof (a) === "object" && "toString" in a) {
+                let aString = (a as any).toString();
+                if (aString === "[object Object]") { // useless toString, so use JSON
+                    aString = JSON.stringify(a);
+                }
+                return aString;
+            } else {
+                return JSON.stringify(args);
+            }
+        }).join(" ");
+        return asString;
+    }
+
+    /**
+     * Prompt the user for input with a message
+     * @param {string} text The message to show when asking for input
+     * @return {string} The value the user gave
+     */
+    private prompt(text = ""): string {
+        return this.onEvent({
+            type: "input",
+            data: JavaScriptWorker.stringify({ prompt: text }),
+            contentType: "text/json",
+            runId: this.runId
+        });
+    }
+
+    /**
+     * Print values to the output screen
+     * @param {any[]} args The values to log
+     */
+    private consoleLog(...args: any[]): void {
+        this.onEvent({
+            type: "output",
+            data: JavaScriptWorker.stringify(...args) + "\n",
+            runId: this.runId,
+            contentType: "text/plain"
+        });
+    }
+
+    /**
+     * Print values to the error screen
+     * @param {any[]} args The error values to log
+     */
+    private consoleError(...args: any[]): void {
+        this.onEvent({
+            type: "error",
+            data: JavaScriptWorker.stringify(...args) + "\n",
+            contentType: "text/plain",
+            runId: this.runId
+        });
+    }
+
     override _runCodeInternal(code: string): Promise<any> {
-        const toRestore = new Map([
-            ["prompt", "__prompt"],
-            ["console.log", "__papyros_log"],
-            ["console.error", "__papyros_error"]
-        ]);
-        const overrideBuiltins = `
-function prompt(text="", defaultText=""){
-    const promptedValue = __onEvent({"type": "input", "data": text});
-    return promptedValue;
-}
-function __stringify(args, addNewline=false){
-    let asString = "";
-    if(Array.isArray(args)){
-        asString = JSON.stringify(args)
-    } else if (typeof(args) === 'string') {
-        asString = args;
-    } else if (typeof(args) === "object" && "toString" in args) {
-        asString = args.toString();
-    } else {
-        asString = JSON.stringify(args);
-    }
-    if(addNewline){
-        asString += "\\n";
-    }
-    return asString;
-}
-console.log = (...args) => {
-    __onEvent({"type": "output", "data": __stringify(...args, true)});
-}
-console.error = (...args) => {
-    __onEvent({"type": "error", "data": __stringify(...args, true)});
-}
-        `;
-        const newContext = {
-            "__onEvent": this.onEvent.bind(this)
+        // Builtins to store before execution and restore afterwards
+        // Workers do not have access to prompt
+        const oldContent = {
+            "console.log": console.log,
+            "console.error": console.error
         };
-        const restoreBuiltins = [];
-        const newBody = [];
-        for (const k of Object.keys(newContext)) {
-            newBody.push(`const ${k} = ctx['${k}'];`);
+
+        // Overrides for the builtins
+        const newContext = {
+            "prompt": this.prompt.bind(this),
+            "console.log": this.consoleLog.bind(this),
+            "console.error": this.consoleError.bind(this)
+        };
+        // Override the builtins
+        new Function("ctx",
+            Object.keys(newContext).map(k => `${k} = ctx['${k}'];`).join("\n")
+        )(newContext);
+        try { // run the user's code
+            return Promise.resolve(eval(code));
+        } catch (error: any) { // try to create a friendly traceback
+            Error.captureStackTrace(error);
+            return Promise.resolve(this.onEvent({
+                type: "error",
+                runId: this.runId,
+                contentType: "text/json",
+                data: JSON.stringify({
+                    name: error.constructor.name,
+                    what: error.message,
+                    traceback: error.stack
+                })
+            }));
+        } finally { // restore the old builtins
+            new Function("ctx",
+                Object.keys(oldContent).map(k => `${k} = ctx['${k}'];`).join("\n")
+            )(oldContent);
         }
-        for (const [fn, backup] of toRestore.entries()) {
-            newBody.push(`${backup} = ${fn}`);
-            restoreBuiltins.push(`${fn} = ${backup}`);
-        }
-        newBody.push(overrideBuiltins);
-        newBody.push(`
-try {
-${code}
-} finally {
-${restoreBuiltins.join("\n")}
-}
-        `);
-        const fnBody = newBody.join("\n");
-        // eslint-disable-next-line no-new-func
-        return Promise.resolve(new Function("ctx", fnBody)(newContext));
     }
 }
 
-expose(new JavaScriptWorker());
 // Default export to be recognized as a TS module
-export default null as any;
+export default {} as any;
+// Expose handles the actual export
+expose(new JavaScriptWorker());

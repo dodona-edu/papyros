@@ -17,6 +17,7 @@ os.environ['MPLBACKEND'] = 'AGG'
 import sys
 sys.setrecursionlimit(500)
 
+# Global Papyros instance
 papyros = None
 
 
@@ -34,7 +35,7 @@ class Papyros(python_runner.PatchedStdinRunner):
             # encode to a base64 str
             img = base64.b64encode(buf.read()).decode('utf-8')
             matplotlib.pyplot.clf()
-            self.output("img", img)
+            self.output("img", img, contentType="img/png;base64")
 
         matplotlib.pyplot.show = show
 
@@ -58,17 +59,20 @@ class Papyros(python_runner.PatchedStdinRunner):
                 raise
     
     def serialize_syntax_error(self, exc, source_code):
-        raise # Rethrow to ensure library is imported correctly
+        raise # Rethrow to ensure FriendlyTraceback library is imported correctly
 
     def serialize_traceback(self, exc, source_code):
         import friendly_traceback # Delay import for faster startup
         from friendly_traceback.core import FriendlyTraceback
 
+        # Allow friendly_traceback to inspect the code
         friendly_traceback.source_cache.cache.add(self.filename, source_code)
 
+        # Initialize traceback
         fr = FriendlyTraceback(type(exc), exc, exc.__traceback__)
         fr.assign_generic()
         fr.assign_cause()
+        # Translate properties to FriendlyError interface
         tb = fr.info.get("shortened_traceback", "")
         info = fr.info.get("generic", "")
         why = fr.info.get("cause", "")
@@ -85,6 +89,7 @@ class Papyros(python_runner.PatchedStdinRunner):
         while user_end < len(tb_lines) and name not in tb_lines[user_end]:
             user_end += 1
         where = "\n".join(tb_lines[user_start:user_end]) or ""
+        # Format for callback
         return dict(
             text=json.dumps(
                 dict(
@@ -99,27 +104,27 @@ class Papyros(python_runner.PatchedStdinRunner):
         )
 
 
-def init_papyros(eventCallback):
+def init_papyros(event_callback):
     global papyros
     def runner_callback(event_type, data):
         def cb(typ, dat, **kwargs):
-            return eventCallback(to_js(dict(type=typ, data=dat, **kwargs)))
+            return event_callback(to_js(dict(type=typ, data=dat, depth=0, **kwargs)))
 
         # Translate python_runner events to papyros events
         if event_type == "output":
             for part in data["parts"]:
                 if part["type"] in ["stderr", "traceback", "syntax_error"]:
-                    cb("error", part["text"])
+                    cb("error", part["text"], contentType="text/json")
                 elif part["type"] == "stdout":
-                    cb("output", part["text"])
+                    cb("output", part["text"], contentType="text/plain")
                 elif part["type"] == "img":
-                    cb("output", part["text"], content="img")
+                    cb("output", part["text"], contentType=part["contentType"])
                 elif part["type"] in ["input", "input_prompt"]:
                     continue
                 else:
                     raise ValueError(f"Unknown output part type {part['type']}")
         elif event_type == "input":
-            return cb("input", data["prompt"])
+            return cb("input", json.dumps(dict(prompt=data["prompt"])), contentType="text/json")
         else:
             raise ValueError(f"Unknown event type {event_type}")
 
@@ -136,6 +141,7 @@ async def process_code(code, filename="my_code.py"):
     except ModuleNotFoundError:
         pass
     else:
+        # Only override matplotlib when required by the code
         papyros.override_matplotlib()
 
     await papyros.run_async(code)

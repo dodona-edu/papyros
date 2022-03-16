@@ -6,30 +6,33 @@ import JavaScriptWorker from "./workers/javascript/JavaScriptWorker.worker";
 // Store Worker per Backend as Comlink proxy has no explicit reference to the Worker
 // We need the Worker itself to be able to terminate it (@see stopBackend)
 const BACKEND_MAP: Map<Remote<Backend>, Worker> = new Map();
-export function getBackend(language: ProgrammingLanguage): Remote<Backend> {
-    let worker;
-    switch (language) {
-        // Requires switch to have actual string constants and make webpack bundle the workers
-        case ProgrammingLanguage.Python: {
-            worker = new PythonWorker();
-            break;
-        }
 
-        case ProgrammingLanguage.JavaScript: {
-            worker = new JavaScriptWorker();
-            break;
-        }
+const CREATE_WORKER_MAP: Map<ProgrammingLanguage, () => Worker> = new Map([
+    [ProgrammingLanguage.Python, () => new PythonWorker()],
+    [ProgrammingLanguage.JavaScript, () => new JavaScriptWorker()]
+]);
 
-        default: {
-            throw new Error(`${language} is not yet supported.`);
-        }
+/**
+ * Start a backend for the given language, while storing the worker
+ * @param {ProgrammingLanguage} language The programming language supported by the backend
+ * @return {Remote<Backend>} A Comlink proxy for the Backend
+ */
+export function startBackend(language: ProgrammingLanguage): Remote<Backend> {
+    if (CREATE_WORKER_MAP.has(language)) {
+        const worker = CREATE_WORKER_MAP.get(language)!();
+        const backend = wrap<Backend>(worker);
+        // store worker itself in the map
+        BACKEND_MAP.set(backend, worker);
+        return backend;
+    } else {
+        throw new Error(`${language} is not yet supported.`);
     }
-    const backend = wrap<Backend>(worker);
-    // store worker itself in the map
-    BACKEND_MAP.set(backend, worker);
-    return backend;
 }
 
+/**
+ * Stop a backend by terminating the worker and releasing memory
+ * @param {Remote<Backend>} backend The proxy for the backend to stop
+ */
 export function stopBackend(backend: Remote<Backend>): void {
     if (BACKEND_MAP.has(backend)) {
         const toStop = BACKEND_MAP.get(backend)!;
