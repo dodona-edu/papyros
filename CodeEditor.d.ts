@@ -2,6 +2,7 @@ import { LanguageSupport } from "@codemirror/language";
 import { Compartment, Extension } from "@codemirror/state";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import { EditorView } from "@codemirror/view";
+import { CompletionSource } from "@codemirror/autocomplete";
 import { RenderOptions } from "./util/Util";
 /**
  * Component that provides useful features to users writing code
@@ -28,6 +29,10 @@ export declare class CodeEditor {
      */
     panelCompartment: Compartment;
     /**
+     * Compartment to configure the autocompletion at runtime
+     */
+    autocompletionCompartment: Compartment;
+    /**
      * Construct a new CodeEditor
      * @param {ProgrammingLanguage} language The used programming language
      * @param {string} editorPlaceHolder The placeholder for the editor
@@ -45,9 +50,10 @@ export declare class CodeEditor {
     /**
      * Set the language that is currently used, with a corresponding placeholder
      * @param {ProgrammingLanguage} language The language to use
+     * @param {CompletionSource} completionSource Function to generate autocomplete results
      * @param {string} editorPlaceHolder Placeholder when empty
      */
-    setLanguage(language: ProgrammingLanguage, editorPlaceHolder: string): void;
+    setLanguage(language: ProgrammingLanguage, completionSource: CompletionSource, editorPlaceHolder: string): void;
     /**
      * Set the length in spaces of the indentation unit
      * @param {number} indentLength The number of spaces to use

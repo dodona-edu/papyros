@@ -1,5 +1,18 @@
 import { PapyrosEvent } from "./PapyrosEvent";
 import { Channel } from "sync-message";
+import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
+export interface WorkerAutocompleteContext {
+    explicit: boolean;
+    pos: number;
+    line: number;
+    column: number;
+    text: string;
+    before: {
+        from: number;
+        to: number;
+        text: string;
+    } | null;
+}
 export declare abstract class Backend {
     protected onEvent: (e: PapyrosEvent) => any;
     protected runId: number;
@@ -29,4 +42,17 @@ export declare abstract class Backend {
      * @return {Promise<void>} Promise of execution
      */
     runCode(code: string, runId: number): Promise<any>;
+    /**
+     * Converts the context to a cloneable object containing useful properties
+     * to generate autocompletion suggestions with
+     * @param {CompletionContext} context Current context to autocomplete for
+     * @param {RegExp} expr Expression to match the previous token with
+     * @return {WorkerAutocompleteContext} Completion context that can be passed as a message
+     */
+    static convertCompletionContext(context: CompletionContext, expr?: RegExp): WorkerAutocompleteContext;
+    /**
+     * Generate autocompletion suggestions for the given context
+     * @param {WorkerAutocompleteContext} context Context to autcomplete in
+     */
+    abstract autocomplete(context: WorkerAutocompleteContext): Promise<CompletionResult | null>;
 }

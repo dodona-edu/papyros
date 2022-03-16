@@ -1,5 +1,4 @@
 import I18n from "i18n-js";
-import { PapyrosEvent } from "../PapyrosEvent";
 export declare const t: typeof I18n.t;
 /**
  * Add the translations for Papyros to the I18n instance
@@ -100,8 +99,9 @@ export declare function renderWithOptions(options: RenderOptions, content: strin
 /**
  * Parse the data contained within a PapyrosEvent using its contentType
  * Supported content types are: text/plain, text/json, img/png;base64
- * @param {PapyrosEvent} e Event containing data
+ * @param {unknown} data The data to parse
+ * @param {string} contentType The content type of the data
  * @return {any} The parsed data
  */
-export declare function parseEventData(e: PapyrosEvent): any;
+export declare function parseData(data: unknown, contentType: string): any;
 export {};
