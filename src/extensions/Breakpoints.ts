@@ -37,7 +37,8 @@ export function breakpoints(onToggle: (pos: number, value: boolean) => void): Ex
         breakpoints.between(pos, pos, () => {
             hasBreakpoint = true;
         });
-        onToggle(pos, !hasBreakpoint);
+        // Internal position uses 0-based indexing, but line numbers start at 1
+        onToggle(pos+1, !hasBreakpoint);
         view.dispatch({
             effects: breakpointEffect.of({ pos, on: !hasBreakpoint })
         });

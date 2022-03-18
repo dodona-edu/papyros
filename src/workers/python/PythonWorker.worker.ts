@@ -53,7 +53,7 @@ class PythonWorker extends Backend {
             return this.onEvent(this.convert(data));
         };
         // Initialize our loaded Papyros module with the callback
-        this.pyodide.globals.get("init_papyros")(eventCallback);
+        await this.pyodide.globals.get("init_papyros")(eventCallback);
         this.initialized = true;
     }
 
@@ -74,20 +74,8 @@ class PythonWorker extends Backend {
         }
     }
 
-    protected debugCodeInternal(code: string, breakpoints: Set<number>): Promise<any> {
-        if (breakpoints.size === 0) {
-            return this.runCodeInternal(code);
-        }
-        const pdbCode = code.split("\n").reduce(
-            (acc: Array<string>, current: string, currentIndex: number) => {
-                if (breakpoints.has(currentIndex)) {
-                    // extra lines for PDB to know when to halt
-                    acc.push("breakpoint()");
-                }
-                acc.push(current);
-                return acc;
-            }, []).join("\n");
-        return this.runCodeInternal(pdbCode);
+    override async debugCodeInternal(code: string, breakpoints: Set<number>): Promise<any> {
+        return await this.pyodide.globals.get("debug_code")(code, breakpoints);
     }
 
     override async autocomplete(context: WorkerAutocompleteContext):

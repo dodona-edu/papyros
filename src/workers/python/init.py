@@ -1,6 +1,8 @@
+import builtins
+import pdb
+import os
 import sys
 import json
-import os
 from collections.abc import Awaitable
 
 import micropip
@@ -9,19 +11,50 @@ from pyodide import to_js
 await micropip.install("python_runner")
 import python_runner
 
+# Install modules asynchronously to use when the user needs them
 ft = micropip.install("friendly_traceback")
 jedi_install = micropip.install("jedi")
-# Otherwise `import matplotlib` fails while assuming a browser backend
-os.environ["MPLBACKEND"] = "AGG"
 
-# Code is executed in a worker with less resources than ful environment
-sys.setrecursionlimit(500)
+
 
 # Global Papyros instance
 papyros = None
 
 
 class Papyros(python_runner.PatchedStdinRunner):
+
+    def __init__(
+        self,
+        *,
+        callback=None,
+        limit=500
+    ):
+        super().__init__(callback=callback)
+        self.limit = limit
+        self.debugger = None
+        self.debugging = False
+        self.override_globals()
+
+    def set_file(self, filename, code):
+        self.filename = os.path.normcase(os.path.abspath(filename))
+        with open(self.filename, "w") as f:
+            f.write(code)
+
+    def override_globals(self):
+        # Code is executed in a worker with less resources than ful environment
+        sys.setrecursionlimit(self.limit)
+        # Otherwise `import matplotlib` fails while assuming a browser backend
+        os.environ["MPLBACKEND"] = "AGG"
+        sys.stdin.readline = self.readline
+        builtins.input = self.input
+        try:
+            import matplotlib
+        except ModuleNotFoundError:
+            pass
+        else:
+            # Only override matplotlib when required by the code
+            self.override_matplotlib()
+
     def override_matplotlib(self):
         # workaround from https://github.com/pyodide/pyodide/issues/1518
         import base64
@@ -38,6 +71,13 @@ class Papyros(python_runner.PatchedStdinRunner):
             self.output("img", img, contentType="img/png;base64")
 
         matplotlib.pyplot.show = show
+
+    def pre_run(self, source_code, mode="exec", top_level_await=False):
+        self.override_globals()
+        return super().pre_run(source_code, mode=mode, top_level_await=top_level_await)
+
+    def execute(self, code_obj, source_code, mode=None):  # noqa
+        return eval(code_obj, self.console.locals)  # noqa
 
     async def run_async(self, source_code, mode="exec", top_level_await=True):
         """
@@ -58,6 +98,21 @@ class Papyros(python_runner.PatchedStdinRunner):
                 # Let `_execute_context` and `serialize_traceback`
                 # handle the exception
                 raise
+    
+    async def debug_code(self, source_code, breakpoints):
+        with self._execute_context(source_code):
+            code_obj = self.pre_run(source_code, "exec", True)
+            if not code_obj:
+                return
+            self.debugger = pdb.Pdb(stdin=sys.stdin, stdout=sys.stdout)
+            for line_nr in breakpoints:
+                self.debugger.set_break(filename=self.filename, lineno=line_nr)
+            self.line = "c\n" # Ensure first interrupt is continued until breakpoint
+            self.debugger.set_trace()
+            result = self.execute(code_obj, source_code, "exec")
+            while isinstance(result, Awaitable):
+                result = await result
+            return result
 
     def serialize_syntax_error(self, exc, source_code):
         raise  # Rethrow to ensure FriendlyTraceback library is imported correctly
@@ -105,7 +160,7 @@ class Papyros(python_runner.PatchedStdinRunner):
         )
 
 
-def init_papyros(event_callback):
+async def init_papyros(event_callback):
     global papyros
 
     def runner_callback(event_type, data):
@@ -133,21 +188,13 @@ def init_papyros(event_callback):
 
     papyros = Papyros(callback=runner_callback)
 
-
 async def process_code(code, filename="my_code.py"):
-    with open(filename, "w") as f:
-        f.write(code)
-    papyros.filename = filename
-
-    try:
-        import matplotlib
-    except ModuleNotFoundError:
-        pass
-    else:
-        # Only override matplotlib when required by the code
-        papyros.override_matplotlib()
-
+    papyros.set_file(filename, code)
     await papyros.run_async(code)
+
+async def debug_code(code, breakpoints, filename="my_code.py"):
+    papyros.set_file(filename, code)
+    await papyros.debug_code(code, breakpoints.to_py())
 
 def convert_completion(completion, index):
     converted = dict(type=completion.type, label=completion.name_with_symbols)
