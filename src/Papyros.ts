@@ -239,7 +239,10 @@ export class Papyros {
         const backend = startBackend(programmingLanguage);
         this.codeState.backend = backend;
         this.codeState.editor.setLanguage(programmingLanguage,
-            async context => await this.codeState.backend.autocomplete(Backend.convertCompletionContext(context)));
+            async context => {
+                const completionContext = Backend.convertCompletionContext(context);
+                return await this.codeState.backend.autocomplete(completionContext);
+            });
         // Allow passing messages between worker and main thread
         await backend.launch(proxy(e => this.onMessage(e)), this.inputManager.channel);
         this.codeRunner.setState(RunState.Ready);
@@ -301,7 +304,7 @@ export class Papyros {
      */
     private async onInput(e: PapyrosEvent): Promise<void> {
         this.codeRunner.setState(RunState.AwaitingInput);
-        await this.inputManager.onInput(e);
+        await this.inputManager.onInputRequest(e);
     }
 
     /**

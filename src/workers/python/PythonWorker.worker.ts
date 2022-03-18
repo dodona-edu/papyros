@@ -6,6 +6,8 @@ import { Pyodide, PYODIDE_INDEX_URL, PYODIDE_JS_URL } from "./Pyodide";
 import { Channel } from "sync-message";
 import { CompletionResult } from "@codemirror/autocomplete";
 import { parseData } from "../../util/Util";
+import { DebuggingInputHandler } from "../../input/DebuggingInputHandler";
+import { PdbInputHandler } from "../../input/PdbInputHandler";
 /* eslint-disable-next-line */
 const initPythonString = require("!!raw-loader!./init.py").default;
 

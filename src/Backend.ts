@@ -3,6 +3,7 @@ import { Channel, readMessage, uuidv4 } from "sync-message";
 import { parseData } from "./util/Util";
 import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
 import { LogType, papyrosLog } from "./util/Logging";
+import { DebuggingInputHandler } from "./input/DebuggingInputHandler";
 
 export interface WorkerAutocompleteContext {
     explicit: boolean;

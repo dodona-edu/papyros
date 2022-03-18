@@ -1,7 +1,7 @@
 import { t } from "i18n-js";
 import {
     SWITCH_INPUT_MODE_A_ID,
-    INPUT_TA_ID, SEND_INPUT_BTN_ID, USER_INPUT_WRAPPER_ID
+    USER_INPUT_WRAPPER_ID
 } from "./Constants";
 import { PapyrosEvent } from "./PapyrosEvent";
 import { papyrosLog, LogType } from "./util/Logging";
@@ -14,8 +14,7 @@ import { InteractiveInputHandler } from "./input/InteractiveInputHandler";
 import { UserInputHandler } from "./input/UserInputHandler";
 import { BatchInputHandler } from "./input/BatchInputHandler";
 import { RunListener } from "./RunListener";
-import { DebuggingInputHandler } from "./input/DebuggingInputHandler";
-import { ProgrammingLanguage } from "./ProgrammingLanguage";
+import { PdbInputHandler } from "./input/PdbInputHandler";
 
 export enum InputMode {
     Interactive = "interactive",
@@ -43,24 +42,24 @@ export class InputManager implements RunListener {
     messageId = "";
 
     constructor(onSend: () => void, inputMode: InputMode) {
+        this.inputHandlers = this.buildInputHandlerMap();
         this._inputMode = inputMode;
+        this.inputHandler.addInputListener(this);
         this.previousInputMode = inputMode;
         this.channel = makeChannel()!; // by default we try to use Atomics
         this.onSend = onSend;
         this._waiting = false;
         this.prompt = "";
-        this.inputHandlers = this.buildInputHandlerMap();
         this.renderOptions = {} as RenderOptions;
     }
 
     private buildInputHandlerMap(): Map<InputMode, UserInputHandler> {
         const interactiveInputHandler: UserInputHandler =
-            new InteractiveInputHandler(() => this.sendLine(), INPUT_TA_ID, SEND_INPUT_BTN_ID);
+            new InteractiveInputHandler();
         const batchInputHandler: UserInputHandler =
-            new BatchInputHandler(() => this.sendLine(), INPUT_TA_ID);
+            new BatchInputHandler();
         const debuggingInputHandler: UserInputHandler =
-            new DebuggingInputHandler(() => this.sendLine(),
-                INPUT_TA_ID, SEND_INPUT_BTN_ID, ProgrammingLanguage.Python);
+            new PdbInputHandler();
         return new Map([
             [InputMode.Interactive, interactiveInputHandler],
             [InputMode.Batch, batchInputHandler],
@@ -77,6 +76,7 @@ export class InputManager implements RunListener {
         this._inputMode = inputMode;
         this.render(this.renderOptions);
         this.inputHandler.onToggle(true);
+        this.inputHandler.addInputListener(this);
     }
 
     get inputHandler(): UserInputHandler {
@@ -112,7 +112,7 @@ ${switchMode}`);
         this.inputHandler.waitWithPrompt(waiting, this.prompt);
     }
 
-    async sendLine(): Promise<void> {
+    async onUserInput(): Promise<void> {
         if (this.inputHandler.hasNext()) {
             const line = this.inputHandler.next();
             papyrosLog(LogType.Debug, "Sending input to user: " + line);
@@ -130,12 +130,12 @@ ${switchMode}`);
      * @param {PapyrosEvent} e Event containing the input data
      * @return {Promise<void>} Promise of handling the request
      */
-    async onInput(e: PapyrosEvent): Promise<void> {
+    async onInputRequest(e: PapyrosEvent): Promise<void> {
         papyrosLog(LogType.Debug, "Handling input request in Papyros");
         const data = parseData(e.data, e.contentType) as InputData;
         this.messageId = data.messageId;
         this.prompt = data.prompt;
-        return this.sendLine();
+        return this.onUserInput();
     }
 
     onRunStart(): void {

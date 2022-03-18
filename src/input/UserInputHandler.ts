@@ -1,6 +1,11 @@
+import { INPUT_TA_ID } from "../Constants";
 import { InputMode } from "../InputManager";
 import { RunListener } from "../RunListener";
 import { getElement, RenderOptions, t } from "../util/Util";
+
+export interface InputListener {
+    onUserInput(): void;
+}
 
 /**
  * Base class for components that handle input from the user
@@ -10,24 +15,23 @@ export abstract class UserInputHandler implements RunListener {
      * Whether we are waiting for the user to input data
      */
     protected waiting: boolean;
-    /**
-     * Callback for when the user has entered a value
-     */
-    protected onInput: () => void;
-    /**
-     * HTML identifier for the used HTML input field
-     */
-    protected inputAreaId: string;
+
+    protected inputListeners: Set<InputListener>;
 
     /**
      * Construct a new UserInputHandler
-     * @param {function()} onInput  Callback for when the user has entered a value
-     * @param {string} inputAreaId HTML identifier for the used HTML input field
      */
-    constructor(onInput: () => void, inputAreaId: string) {
+    constructor() {
         this.waiting = false;
-        this.onInput = onInput;
-        this.inputAreaId = inputAreaId;
+        this.inputListeners = new Set();
+    }
+
+    public addInputListener(listener: InputListener): void {
+        this.inputListeners.add(listener);
+    }
+
+    protected onUserInput(): void {
+        this.inputListeners.forEach(l => l.onUserInput());
     }
     /**
      * Whether this handler has input ready
@@ -66,7 +70,7 @@ export abstract class UserInputHandler implements RunListener {
      * Retrieve the HTMLInputElement for this InputHandler
      */
     get inputArea(): HTMLInputElement {
-        return getElement<HTMLInputElement>(this.inputAreaId);
+        return getElement<HTMLInputElement>(INPUT_TA_ID);
     }
 
     /**
@@ -89,7 +93,7 @@ export abstract class UserInputHandler implements RunListener {
     }
 
     /**
-     * Helper method to reset internal state when needed
+     * Helper method to reset internal state
      */
     protected reset(): void {
         this.inputArea.value = "";

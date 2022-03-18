@@ -1,76 +1,107 @@
 import { DEBUGGING_INTERACTIVE_WRAPPER_ID } from "../Constants";
 import { InputMode } from "../InputManager";
-import { ProgrammingLanguage } from "../ProgrammingLanguage";
 import {
     addListener,
     renderButton, RenderOptions, renderWithOptions, t
 } from "../util/Util";
 import { InteractiveInputHandler } from "./InteractiveInputHandler";
 
+/**
+ * Enum representing commands the user can give during an interactive debugging session
+ */
 export enum DebuggingCommand {
+    /**
+     * The step over command runs code until the next code line in the source file is reached.
+     * With next line, we mean the actual source code line following the current line
+     * This will not follow function calls or return to callers.
+     */
     StepOver = "step_over",
+    /**
+     * The step into command runs until another line in the source file is executed.
+     * This command will e.g. go into function calls or return back to the caller
+     */
     StepInto = "step_into",
+    /**
+     * This command runs until the next breakpoint in the source file is reached.
+     */
     Continue = "continue"
 }
 const DEBUGGING_COMMANDS = [
     DebuggingCommand.StepOver, DebuggingCommand.StepInto, DebuggingCommand.Continue
 ];
 
-export class DebuggingInputHandler extends InteractiveInputHandler {
-    protected programmingLanguage: ProgrammingLanguage;
-    private commandMap: Map<ProgrammingLanguage, Map<DebuggingCommand, string>>;
+/**
+ * Base class for interactive debugging input handlers
+ * This allows communication between an interactive debugger that uses
+ * textual commands and the user.
+ */
+export abstract class DebuggingInputHandler extends InteractiveInputHandler {
+    /**
+     * Whether we are handling a debugging command or an actual input call
+     */
+    protected debugging: boolean;
+    /**
+     * Maps a command to its textual representation for the debugger
+     * The command does not need to end with \n, this will be added if missing
+     */
+    private commandMap: Map<DebuggingCommand, string>;
+    /**
+     * The command the user picked
+     */
     private command: DebuggingCommand | undefined;
 
-    getInputMode(): InputMode {
+    /**
+     * Construct a new DebuggingInputHandler
+     */
+    constructor() {
+        super();
+        this.commandMap = this.buildCommandMap();
+        this.command = undefined;
+        this.debugging = false;
+    }
+
+    override getInputMode(): InputMode {
         return InputMode.Debugging;
     }
+
     /**
-     * Construct a new InteractiveInputHandler
-     * @param {function()} onInput  Callback for when the user has entered a value
-     * @param {string} inputAreaId HTML identifier for the used HTML input field
-     * @param {string} sendButtonId HTML identifier for the used HTML button
-     * @param {ProgrammingLanguage} programmingLanguage The currently used language
+     * Build the map to convert DebuggingCommands to strings
      */
-    constructor(onInput: () => void, inputAreaId: string,
-        sendButtonId: string, programmingLanguage: ProgrammingLanguage) {
-        super(onInput, inputAreaId, sendButtonId);
-        this.programmingLanguage = programmingLanguage;
-        this.commandMap = DebuggingInputHandler.buildCommandMap();
-        this.command = undefined;
+    protected abstract buildCommandMap(): Map<DebuggingCommand, string>;
+
+    override hasNext(): boolean {
+        return (this.debugging && this.command !== undefined) ||
+            super.hasNext();
     }
 
-    static buildCommandMap(): Map<ProgrammingLanguage, Map<DebuggingCommand, string>> {
-        const commandMap = new Map();
-        commandMap.set(ProgrammingLanguage.Python, new Map([
-            [DebuggingCommand.StepInto, "s\n"],
-            [DebuggingCommand.StepOver, "n\n"],
-            [DebuggingCommand.Continue, "c\n"]
-        ]));
-        commandMap.set(ProgrammingLanguage.JavaScript, new Map());
-        return commandMap;
-    }
-
-    hasNext(): boolean {
-        return this.command !== undefined || this.inputArea.value !== "";
-    }
-
-    next(): string {
+    override next(): string {
         let nextValue = "";
-        if (this.command) {
-            const m = this.commandMap.get(this.programmingLanguage) || new Map();
-            nextValue = m.get(this.command) || "";
-        } else {
-            nextValue = this.inputArea.value;
+        if (this.command) { // Process debugging command
+            nextValue = this.commandMap.get(this.command) || "";
+            if (!nextValue.endsWith("\n")) {
+                nextValue += "\n";
+            }
+            this.reset();
+        } else { // Process regular input prompt
+            nextValue = super.next();
         }
-        this.reset();
         return nextValue;
     }
 
-    protected reset(): void {
-        if (this.command !== undefined) {
-            this.command = undefined;
-        } else {
-            super.reset();
+    protected override reset(): void {
+        this.command = undefined;
+        this.debugging = false;
+        super.reset();
+    }
+
+    /**
+     * Callback for when a specific command button is clicked
+     * @param {DebuggingCommand} command The command attached to the button
+     */
+    protected onCommandButtonClicked(command: DebuggingCommand): void {
+        if (this.debugging) {
+            this.command = command;
+            this.onUserInput();
         }
     }
 
@@ -88,11 +119,9 @@ export class DebuggingInputHandler extends InteractiveInputHandler {
         <div id="${DEBUGGING_INTERACTIVE_WRAPPER_ID}">
         </div>`);
         super.render({ parentElementId: DEBUGGING_INTERACTIVE_WRAPPER_ID });
+        // Add listeners after buttons are rendered
         DEBUGGING_COMMANDS.forEach(command => {
-            addListener(command, () => {
-                this.command = command;
-                this.onInput();
-            }, "click");
+            addListener(command, () => this.onCommandButtonClicked(command), "click");
         });
         return rendered;
     }
