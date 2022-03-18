@@ -35,7 +35,8 @@ const checks = [
             "Papyros.locales.*",
             "Papyros.states.*",
             "Papyros.input_modes.switch_to_*",
-            "Papyros.input_placeholder.*"
+            "Papyros.input_placeholder.*",
+            "Papyros.debugging_command.*"
         ]
     }
 ];

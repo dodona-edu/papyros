@@ -109,9 +109,9 @@ export class Papyros {
      */
     config: PapyrosConfig;
     /**
-     * Component to manage and visualize the state of the program
+     * Component to run code entered by the user
      */
-    stateManager: CodeRunner;
+    codeRunner: CodeRunner;
     /**
      * Component to request and handle input from the user
      */
@@ -153,12 +153,12 @@ export class Papyros {
             runId: 0
         };
         this.outputManager = new OutputManager();
-        this.stateManager = new CodeRunner(programmingLanguage, {
+        this.codeRunner = new CodeRunner(programmingLanguage, {
             onRunClicked: () => this.runCode(false),
             onStopClicked: () => this.stop(),
             onDebugClicked: () => this.runCode(true)
         });
-        this.inputManager = new InputManager(() => this.stateManager.setState(RunState.Running), config.inputMode);
+        this.inputManager = new InputManager(() => this.codeRunner.setState(RunState.Running), config.inputMode);
         this.addRunListener(this.inputManager);
         this.addRunListener(this.outputManager);
     }
@@ -187,7 +187,7 @@ export class Papyros {
      * Getter for the current state of the program
      */
     get state(): RunState {
-        return this.stateManager.state;
+        return this.codeRunner.state;
     }
 
     /**
@@ -235,14 +235,14 @@ export class Papyros {
      */
     private async startBackend(): Promise<void> {
         const programmingLanguage = this.codeState.programmingLanguage;
-        this.stateManager.setState(RunState.Loading);
+        this.codeRunner.setState(RunState.Loading);
         const backend = startBackend(programmingLanguage);
         this.codeState.backend = backend;
         this.codeState.editor.setLanguage(programmingLanguage,
             async context => await this.codeState.backend.autocomplete(Backend.convertCompletionContext(context)));
         // Allow passing messages between worker and main thread
         await backend.launch(proxy(e => this.onMessage(e)), this.inputManager.channel);
-        this.stateManager.setState(RunState.Ready);
+        this.codeRunner.setState(RunState.Ready);
     }
 
     /**
@@ -293,7 +293,6 @@ export class Papyros {
      * @param {PapyrosEvent} e The error-event
      */
     private onError(e: PapyrosEvent): void {
-        papyrosLog(LogType.Debug, "Got error in Papyros: ", e);
         this.outputManager.showError(e);
     }
     /**
@@ -301,8 +300,7 @@ export class Papyros {
      * @param {PapyrosEvent} e The input-event
      */
     private async onInput(e: PapyrosEvent): Promise<void> {
-        papyrosLog(LogType.Debug, "Received onInput event in Papyros: ", e);
-        this.stateManager.setState(RunState.AwaitingInput);
+        this.codeRunner.setState(RunState.AwaitingInput);
         await this.inputManager.onInput(e);
     }
 
@@ -337,7 +335,7 @@ export class Papyros {
         }
         // Setup pre-run
         this.codeState.runId += 1;
-        this.stateManager.setState(RunState.Running);
+        this.codeRunner.setState(RunState.Running);
         this.notifyListeners(true);
 
         papyrosLog(LogType.Debug, "Running code in Papyros, sending to backend");
@@ -349,7 +347,7 @@ export class Papyros {
                 editor
             } = this.codeState;
             if (debug) {
-                console.log("Breakpoints are: ", editor.breakpointLines);
+                this.inputManager.inputMode = InputMode.Debugging;
                 await backend.debugCode(this.getCode(), runId, editor.breakpointLines);
             } else {
                 await backend.runCode(this.getCode(), runId);
@@ -358,7 +356,7 @@ export class Papyros {
             this.onError(error);
         } finally {
             const end = new Date().getTime();
-            this.stateManager.setState(RunState.Ready, t("Papyros.finished", { time: (end - start) / 1000 }));
+            this.codeRunner.setState(RunState.Ready, t("Papyros.finished", { time: (end - start) / 1000 }));
             this.notifyListeners(false);
         }
     }
@@ -368,13 +366,8 @@ export class Papyros {
      * @return {Promise<void>} Promise of stopping
      */
     async stop(): Promise<void> {
-        if (![RunState.Running, RunState.AwaitingInput].includes(this.state)) {
-            papyrosLog(LogType.Error, `Stop called from invalid state: ${this.state}`);
-            return;
-        }
-        papyrosLog(LogType.Debug, "Stopping backend!");
         this.codeState.runId += 1; // ignore messages coming from last run
-        this.stateManager.setState(RunState.Stopping);
+        this.codeRunner.setState(RunState.Stopping);
         this.notifyListeners(false);
         // Since we use workers, the old one must be entirely replaced to interrupt it
         stopBackend(this.codeState.backend);
@@ -458,21 +451,21 @@ export class Papyros {
                     removeSelection(EXAMPLE_SELECT_ID);
                     // Modify search query params without reloading page
                     history.pushState(null, "", `?locale=${I18n.locale}&language=${pl}`);
-                }
+                }, "change", "value"
             );
             addListener(LOCALE_SELECT_ID, locale => {
                 document.location.href = `?locale=${locale}&language=${this.codeState.programmingLanguage}`;
-            });
+            }, "change", "value");
             addListener(EXAMPLE_SELECT_ID, name => {
                 const code = getCodeForExample(this.codeState.programmingLanguage, name);
                 this.setCode(code);
-            }, "input");
+            }, "change", "value");
             // Ensure there is no initial selection
             removeSelection(EXAMPLE_SELECT_ID);
         }
 
         this.inputManager.render(renderOptions.inputOptions);
-        const runStatePanel = this.stateManager.render(renderOptions.statusPanelOptions);
+        const runStatePanel = this.codeRunner.render(renderOptions.statusPanelOptions);
         this.codeState.editor.render(renderOptions.codeEditorOptions, runStatePanel);
         this.outputManager.render(renderOptions.outputOptions);
     }
@@ -483,7 +476,7 @@ export class Papyros {
      * @param {function} onClick Listener for click events on the button
      */
     addButton(options: ButtonOptions, onClick: () => void): void {
-        this.stateManager.addButton(options, onClick);
+        this.codeRunner.addButton(options, onClick);
     }
 
     /**

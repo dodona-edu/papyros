@@ -14,10 +14,13 @@ import { InteractiveInputHandler } from "./input/InteractiveInputHandler";
 import { UserInputHandler } from "./input/UserInputHandler";
 import { BatchInputHandler } from "./input/BatchInputHandler";
 import { RunListener } from "./RunListener";
+import { DebuggingInputHandler } from "./input/DebuggingInputHandler";
+import { ProgrammingLanguage } from "./ProgrammingLanguage";
 
 export enum InputMode {
     Interactive = "interactive",
-    Batch = "batch"
+    Batch = "batch",
+    Debugging = "debugging"
 }
 
 export const INPUT_MODES = [InputMode.Batch, InputMode.Interactive];
@@ -28,6 +31,7 @@ export interface InputData {
 }
 
 export class InputManager implements RunListener {
+    private previousInputMode: InputMode;
     private _inputMode: InputMode;
     private inputHandlers: Map<InputMode, UserInputHandler>;
     private renderOptions: RenderOptions;
@@ -40,6 +44,7 @@ export class InputManager implements RunListener {
 
     constructor(onSend: () => void, inputMode: InputMode) {
         this._inputMode = inputMode;
+        this.previousInputMode = inputMode;
         this.channel = makeChannel()!; // by default we try to use Atomics
         this.onSend = onSend;
         this._waiting = false;
@@ -53,9 +58,13 @@ export class InputManager implements RunListener {
             new InteractiveInputHandler(() => this.sendLine(), INPUT_TA_ID, SEND_INPUT_BTN_ID);
         const batchInputHandler: UserInputHandler =
             new BatchInputHandler(() => this.sendLine(), INPUT_TA_ID);
+        const debuggingInputHandler: UserInputHandler =
+            new DebuggingInputHandler(() => this.sendLine(),
+                INPUT_TA_ID, SEND_INPUT_BTN_ID, ProgrammingLanguage.Python);
         return new Map([
             [InputMode.Interactive, interactiveInputHandler],
-            [InputMode.Batch, batchInputHandler]
+            [InputMode.Batch, batchInputHandler],
+            [InputMode.Debugging, debuggingInputHandler]
         ]);
     }
 
@@ -76,17 +85,24 @@ export class InputManager implements RunListener {
 
     render(options: RenderOptions): void {
         this.renderOptions = options;
-        const otherMode = this.inputMode === InputMode.Interactive ?
-            InputMode.Batch : InputMode.Interactive;
+        let switchMode = "";
+        if (this.inputMode !== InputMode.Debugging) {
+            const otherMode = this.inputMode === InputMode.Interactive ?
+                InputMode.Batch : InputMode.Interactive;
+            switchMode = `<a id="${SWITCH_INPUT_MODE_A_ID}" data-value="${otherMode}"
+            class="flex flex-row-reverse hover:cursor-pointer text-blue-500">
+               ${t(`Papyros.input_modes.switch_to_${otherMode}`)}
+            </a>`;
+        }
+
         renderWithOptions(options, `
 <div id="${USER_INPUT_WRAPPER_ID}">
 </div>
-<a id="${SWITCH_INPUT_MODE_A_ID}" data-value="${otherMode}"
-class="flex flex-row-reverse hover:cursor-pointer text-blue-500">
-   ${t(`Papyros.input_modes.switch_to_${otherMode}`)}
-</a>`);
-        addListener<InputMode>(SWITCH_INPUT_MODE_A_ID, im => this.inputMode = im,
-            "click", "data-value");
+${switchMode}`);
+        if (this.inputMode !== InputMode.Debugging) {
+            addListener<InputMode>(SWITCH_INPUT_MODE_A_ID, im => this.inputMode = im,
+                "click", "data-value");
+        }
         this.inputHandler.render({ parentElementId: USER_INPUT_WRAPPER_ID });
         this.inputHandler.waitWithPrompt(this._waiting, this.prompt);
     }
@@ -124,6 +140,7 @@ class="flex flex-row-reverse hover:cursor-pointer text-blue-500">
 
     onRunStart(): void {
         this.waiting = false;
+        this.previousInputMode = this.inputMode;
         this.inputHandler.onRunStart();
     }
 
@@ -131,5 +148,8 @@ class="flex flex-row-reverse hover:cursor-pointer text-blue-500">
         this.prompt = "";
         this.inputHandler.onRunEnd();
         this.waiting = false;
+        if (this.previousInputMode !== this.inputMode) {
+            this.inputMode = this.previousInputMode;
+        }
     }
 }

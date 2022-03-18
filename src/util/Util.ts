@@ -115,11 +115,14 @@ type ElementIdentifier = string | HTMLElement;
  * @param {string} attribute The attribute affected by the event
  */
 export function addListener<T extends string>(
-    elementId: ElementIdentifier, onEvent: (e: T) => void, eventType = "change", attribute = "value"
+    elementId: ElementIdentifier, onEvent: (e: T) => void, eventType: string, attribute?: string
 ): void {
     const element = getElement(elementId);
     element.addEventListener(eventType, () => {
-        onEvent((element as any)[attribute] || element.getAttribute(attribute) as T);
+        const value = attribute ?
+            ((element as any)[attribute] || element.getAttribute(attribute) as T) :
+            "";
+        onEvent(value);
     });
 }
 

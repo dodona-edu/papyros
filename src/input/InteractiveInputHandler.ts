@@ -6,7 +6,7 @@ export class InteractiveInputHandler extends UserInputHandler {
     /**
      * HTML identifier for the used HTML button
      */
-    private sendButtonId: string;
+    protected sendButtonId: string;
     /**
      * Construct a new InteractiveInputHandler
      * @param {function()} onInput  Callback for when the user has entered a value

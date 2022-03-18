@@ -104,7 +104,7 @@ class Papyros(python_runner.PatchedStdinRunner):
             code_obj = self.pre_run(source_code, "exec", True)
             if not code_obj:
                 return
-            self.debugger = pdb.Pdb(stdin=sys.stdin, stdout=sys.stdout)
+            self.debugger = pdb.Pdb()
             for line_nr in breakpoints:
                 self.debugger.set_break(filename=self.filename, lineno=line_nr)
             self.line = "c\n" # Ensure first interrupt is continued until breakpoint
