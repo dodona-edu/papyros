@@ -5,7 +5,7 @@ export interface PapyrosEvent {
     /**
      * The type of action generating this event
      */
-    type: "input" | "output" | "success" | "error";
+    type: "input" | "output" | "success" | "error" | "debug";
     /**
      * The identifier for the run this message is associated with
      * This allows discarding outdated events that were delayed

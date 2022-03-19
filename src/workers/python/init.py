@@ -3,6 +3,7 @@ import pdb
 import os
 import sys
 import json
+import re
 from collections.abc import Awaitable
 
 import micropip
@@ -15,7 +16,7 @@ import python_runner
 ft = micropip.install("friendly_traceback")
 jedi_install = micropip.install("jedi")
 
-
+SYS_RECURSION_LIMIT = 500
 
 # Global Papyros instance
 papyros = None
@@ -27,13 +28,55 @@ class Papyros(python_runner.PatchedStdinRunner):
         self,
         *,
         callback=None,
-        limit=500
+        limit=SYS_RECURSION_LIMIT
     ):
-        super().__init__(callback=callback)
+        super().__init__()
         self.limit = limit
         self.debugger = None
         self.debugging = False
         self.override_globals()
+        self.set_event_callback(callback)
+
+    def process_debugging_message(self, message):
+        if self.filename not in message:
+            return None
+        nr_match = re.search("\((\d+)\)", message)
+        if nr_match:
+            return dict(action="highlight", line_nr=nr_match.group(1))
+        return dict(action="unknown", data="No action specified yet for message: " + message)
+
+    def set_event_callback(self, event_callback):
+        if event_callback is None:
+            raise ValueError("Event callback must not be None")
+
+        def runner_callback(event_type, data):
+            def cb(typ, dat, **kwargs):
+                return event_callback(to_js(dict(type=typ, data=dat, **kwargs)))
+
+            # Translate python_runner events to papyros events
+            if event_type == "output":
+                for part in data["parts"]:
+                    typ = part["type"]
+                    if typ in ["stderr", "traceback", "syntax_error"]:
+                        cb("error", part["text"], contentType="text/json")
+                    elif typ == "stdout":
+                        if self.debugging and re.search("> .*\(\)", part["text"]):
+                            data = self.process_debugging_message(part["text"])
+                            if data:
+                                cb("debug", json.dumps(data), contentType="text/json")
+                        else:
+                            cb("output", part["text"], contentType="text/plain")
+                    elif typ == "img":
+                        cb("output", part["text"], contentType=part["contentType"])
+                    elif typ in ["input", "input_prompt"]:
+                        continue
+                    else:
+                        raise ValueError(f"Unknown output part type {typ}")
+            elif event_type == "input":
+                return cb("input", json.dumps(dict(prompt=data["prompt"])), contentType="text/json")
+            else:
+                raise ValueError(f"Unknown event type {event_type}")
+        self.set_callback(runner_callback)
 
     def set_file(self, filename, code):
         self.filename = os.path.normcase(os.path.abspath(filename))
@@ -107,11 +150,13 @@ class Papyros(python_runner.PatchedStdinRunner):
             self.debugger = pdb.Pdb()
             for line_nr in breakpoints:
                 self.debugger.set_break(filename=self.filename, lineno=line_nr)
+            self.debugging = True
             self.line = "c\n" # Ensure first interrupt is continued until breakpoint
             self.debugger.set_trace()
             result = self.execute(code_obj, source_code, "exec")
             while isinstance(result, Awaitable):
                 result = await result
+            self.debugging = False
             return result
 
     def serialize_syntax_error(self, exc, source_code):
@@ -160,33 +205,9 @@ class Papyros(python_runner.PatchedStdinRunner):
         )
 
 
-async def init_papyros(event_callback):
+async def init_papyros(event_callback, limit=SYS_RECURSION_LIMIT):
     global papyros
-
-    def runner_callback(event_type, data):
-        def cb(typ, dat, **kwargs):
-            return event_callback(to_js(dict(type=typ, data=dat, **kwargs)))
-
-        # Translate python_runner events to papyros events
-        if event_type == "output":
-            for part in data["parts"]:
-                typ = part["type"]
-                if typ in ["stderr", "traceback", "syntax_error"]:
-                    cb("error", part["text"], contentType="text/json")
-                elif typ == "stdout":
-                    cb("output", part["text"], contentType="text/plain")
-                elif typ == "img":
-                    cb("output", part["text"], contentType=part["contentType"])
-                elif typ in ["input", "input_prompt"]:
-                    continue
-                else:
-                    raise ValueError(f"Unknown output part type {typ}")
-        elif event_type == "input":
-            return cb("input", json.dumps(dict(prompt=data["prompt"])), contentType="text/json")
-        else:
-            raise ValueError(f"Unknown event type {event_type}")
-
-    papyros = Papyros(callback=runner_callback)
+    papyros = Papyros(callback=event_callback, limit=limit)
 
 async def process_code(code, filename="my_code.py"):
     papyros.set_file(filename, code)

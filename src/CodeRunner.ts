@@ -73,10 +73,7 @@ export class CodeRunner {
     /**
      * Construct a new RunStateManager with the given listeners
      * @param {ProgrammingLanguage} programmingLanguage The language to use
-     * @param {Object} clickListeners
-     * @param {function} onRunClicked Callback for when the run button is clicked
-     * @param {function} onStopClicked Callback for when the stop button is clicked
-     * @param {function} onDebugClicked Callback for when the debug button is clicked
+     * @param {Object} clickListeners Callbacks for the standard buttons
      */
     constructor(programmingLanguage: ProgrammingLanguage,
         clickListeners: ExternalClickListeners) {

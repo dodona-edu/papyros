@@ -109,7 +109,8 @@ export abstract class DebuggingInputHandler extends InteractiveInputHandler {
         const buttons = DEBUGGING_COMMANDS.map(command => {
             return renderButton({
                 id: command,
-                buttonText: t(`Papyros.debugging_command.${command}`)
+                buttonText: t(`Papyros.debugging_command.${command}`),
+                extraClasses: `btn-debugging-${command.replaceAll("_", "-")}`
             });
         }).join("\n");
         const rendered = renderWithOptions(options, `

@@ -320,6 +320,8 @@ export class Papyros {
                 this.onInput(e);
             } else if (e.type === "error") {
                 this.onError(e);
+            } else if (e.type === "debug") {
+                console.log("Got debug message:", e);
             }
         } else {
             papyrosLog(LogType.Debug, "Received event with outdated runId: ", e);
