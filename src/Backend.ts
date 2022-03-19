@@ -1,9 +1,8 @@
-import { PapyrosEvent } from "./PapyrosEvent";
+import { BackendEvent } from "./BackendEvent";
 import { Channel, readMessage, uuidv4 } from "sync-message";
 import { parseData } from "./util/Util";
 import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
 import { LogType, papyrosLog } from "./util/Logging";
-import { DebuggingInputHandler } from "./input/DebuggingInputHandler";
 
 export interface WorkerAutocompleteContext {
     explicit: boolean;
@@ -19,7 +18,7 @@ export interface WorkerAutocompleteContext {
 }
 
 export abstract class Backend {
-    protected onEvent: (e: PapyrosEvent) => any;
+    protected onEvent: (e: BackendEvent) => any;
     protected runId: number;
 
     /**
@@ -35,19 +34,19 @@ export abstract class Backend {
 
     /**
      * Initialize the backend by doing all setup-related work
-     * @param {function(PapyrosEvent):void} onEvent Callback for when events occur
+     * @param {function(BackendEvent):void} onEvent Callback for when events occur
      * @param {Channel} channel for communication with the main thread
      * @return {Promise<void>} Promise of launching
      */
     launch(
-        onEvent: (e: PapyrosEvent) => void,
+        onEvent: (e: BackendEvent) => void,
         channel: Channel
     ): Promise<void> {
         // Input messages are handled in a special way
         // In order to link input requests to their responses
         // An ID is required to make the connection
         // The message must be read in the worker to not stall the main thread
-        const onInput = (e: PapyrosEvent): string => {
+        const onInput = (e: BackendEvent): string => {
             const inputData = parseData(e.data, e.contentType);
             const messageId = uuidv4();
             inputData.messageId = messageId;
@@ -56,7 +55,7 @@ export abstract class Backend {
             onEvent(e);
             return readMessage(channel, messageId);
         };
-        this.onEvent = (e: PapyrosEvent) => {
+        this.onEvent = (e: BackendEvent) => {
             e.runId = this.runId;
             if (e.type === "input") {
                 return onInput(e);

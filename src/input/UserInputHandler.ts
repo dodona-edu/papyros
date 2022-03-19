@@ -1,6 +1,5 @@
 import { INPUT_TA_ID } from "../Constants";
 import { InputMode } from "../InputManager";
-import { RunListener } from "../RunListener";
 import { getElement, RenderOptions, t } from "../util/Util";
 
 export interface InputListener {
@@ -10,7 +9,7 @@ export interface InputListener {
 /**
  * Base class for components that handle input from the user
  */
-export abstract class UserInputHandler implements RunListener {
+export abstract class UserInputHandler {
     /**
      * Whether we are waiting for the user to input data
      */

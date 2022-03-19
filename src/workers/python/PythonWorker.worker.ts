@@ -1,6 +1,6 @@
 import { expose } from "comlink";
 import { Backend, WorkerAutocompleteContext } from "../../Backend";
-import { PapyrosEvent } from "../../PapyrosEvent";
+import { BackendEvent } from "../../BackendEvent";
 import { LogType, papyrosLog } from "../../util/Logging";
 import { Pyodide, PYODIDE_INDEX_URL, PYODIDE_JS_URL } from "./Pyodide";
 import { Channel } from "sync-message";
@@ -39,7 +39,7 @@ class PythonWorker extends Backend {
     }
 
     override async launch(
-        onEvent: (e: PapyrosEvent) => void,
+        onEvent: (e: BackendEvent) => void,
         channel: Channel
     ): Promise<void> {
         await super.launch(onEvent, channel);

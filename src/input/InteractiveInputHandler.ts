@@ -66,7 +66,7 @@ export class InteractiveInputHandler extends UserInputHandler {
 </div>`);
         addListener(SEND_INPUT_BTN_ID, () => this.onUserInput(), "click");
         this.inputArea.addEventListener("keydown", (ev: KeyboardEvent) => {
-            if (this.waiting && ev.key.toLowerCase() === "enter") {
+            if (this.waiting && ev.key && ev.key.toLowerCase() === "enter") {
                 this.onUserInput();
             }
         });

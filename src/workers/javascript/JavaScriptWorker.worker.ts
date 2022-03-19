@@ -2,6 +2,7 @@ import { expose } from "comlink";
 import { Backend, WorkerAutocompleteContext } from "../../Backend";
 import { CompletionResult } from "@codemirror/autocomplete";
 import { javascriptLanguage } from "@codemirror/lang-javascript";
+import { BackendEventType } from "../../BackendEvent";
 
 /**
  * Implementation of a JavaScript backend for Papyros
@@ -41,7 +42,7 @@ class JavaScriptWorker extends Backend {
      */
     private prompt(text = ""): string {
         return this.onEvent({
-            type: "input",
+            type: BackendEventType.Input,
             data: JavaScriptWorker.stringify({ prompt: text }),
             contentType: "text/json",
             runId: this.runId
@@ -54,7 +55,7 @@ class JavaScriptWorker extends Backend {
      */
     private consoleLog(...args: any[]): void {
         this.onEvent({
-            type: "output",
+            type: BackendEventType.Output,
             data: JavaScriptWorker.stringify(...args) + "\n",
             runId: this.runId,
             contentType: "text/plain"
@@ -67,7 +68,7 @@ class JavaScriptWorker extends Backend {
      */
     private consoleError(...args: any[]): void {
         this.onEvent({
-            type: "error",
+            type: BackendEventType.Error,
             data: JavaScriptWorker.stringify(...args) + "\n",
             contentType: "text/plain",
             runId: this.runId
@@ -144,7 +145,7 @@ class JavaScriptWorker extends Backend {
         } catch (error: any) { // try to create a friendly traceback
             Error.captureStackTrace(error);
             return Promise.resolve(this.onEvent({
-                type: "error",
+                type: BackendEventType.Error,
                 runId: this.runId,
                 contentType: "text/json",
                 data: JSON.stringify({

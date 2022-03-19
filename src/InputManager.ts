@@ -3,7 +3,7 @@ import {
     SWITCH_INPUT_MODE_A_ID,
     USER_INPUT_WRAPPER_ID
 } from "./Constants";
-import { PapyrosEvent } from "./PapyrosEvent";
+import { BackendEvent, BackendEventType } from "./BackendEvent";
 import { papyrosLog, LogType } from "./util/Logging";
 import {
     addListener, parseData,
@@ -13,8 +13,8 @@ import { Channel, makeChannel, writeMessage } from "sync-message";
 import { InteractiveInputHandler } from "./input/InteractiveInputHandler";
 import { UserInputHandler } from "./input/UserInputHandler";
 import { BatchInputHandler } from "./input/BatchInputHandler";
-import { RunListener } from "./RunListener";
 import { PdbInputHandler } from "./input/PdbInputHandler";
+import { BackendManager } from "./BackendManager";
 
 export enum InputMode {
     Interactive = "interactive",
@@ -29,7 +29,7 @@ export interface InputData {
     messageId: string;
 }
 
-export class InputManager implements RunListener {
+export class InputManager {
     private previousInputMode: InputMode;
     private _inputMode: InputMode;
     private inputHandlers: Map<InputMode, UserInputHandler>;
@@ -41,16 +41,19 @@ export class InputManager implements RunListener {
     channel: Channel;
     messageId = "";
 
-    constructor(onSend: () => void, inputMode: InputMode) {
+    constructor(onSend: () => void) {
         this.inputHandlers = this.buildInputHandlerMap();
-        this._inputMode = inputMode;
+        this._inputMode = InputMode.Interactive;
         this.inputHandler.addInputListener(this);
-        this.previousInputMode = inputMode;
+        this.previousInputMode = this._inputMode;
         this.channel = makeChannel()!; // by default we try to use Atomics
         this.onSend = onSend;
         this._waiting = false;
         this.prompt = "";
         this.renderOptions = {} as RenderOptions;
+        BackendManager.subscribe(BackendEventType.Start, () => this.onRunStart());
+        BackendManager.subscribe(BackendEventType.End, () => this.onRunEnd());
+        BackendManager.subscribe(BackendEventType.Input, e => this.onInputRequest(e));
     }
 
     private buildInputHandlerMap(): Map<InputMode, UserInputHandler> {
@@ -127,10 +130,10 @@ ${switchMode}`);
 
     /**
      * Asynchronously handle an input request by prompting the user for input
-     * @param {PapyrosEvent} e Event containing the input data
+     * @param {BackendEvent} e Event containing the input data
      * @return {Promise<void>} Promise of handling the request
      */
-    async onInputRequest(e: PapyrosEvent): Promise<void> {
+    async onInputRequest(e: BackendEvent): Promise<void> {
         papyrosLog(LogType.Debug, "Handling input request in Papyros");
         const data = parseData(e.data, e.contentType) as InputData;
         this.messageId = data.messageId;
