@@ -14,13 +14,19 @@ import { LogType, papyrosLog } from "./util/Logging";
 import {
     addListener, ButtonOptions, renderButton,
     RenderOptions, renderWithOptions, getElement,
-    t
+    t,
+    parseData
 } from "./util/Util";
 
 interface DynamicButton {
     id: string;
     buttonHTML: string;
     onClick: () => void;
+}
+
+interface DebugAction {
+    action: string;
+    data: string;
 }
 
 /**
@@ -94,6 +100,8 @@ export class CodeRunner {
         }, () => this.runCode(true));
         BackendManager.subscribe(BackendEventType.Input,
             () => this.setState(RunState.AwaitingInput));
+        BackendManager.subscribe(BackendEventType.Debug,
+            e => this.onDebug(e));
         this.state = RunState.Ready;
     }
 
@@ -291,6 +299,13 @@ export class CodeRunner {
                 runId: this.runId,
                 data: endMessage, contentType: "text/plain"
             });
+        }
+    }
+
+    onDebug(e: BackendEvent): void {
+        const data: DebugAction = parseData(e.data, e.contentType);
+        if (data.action === "highlight") {
+            this.editor.highlight(parseInt(data.data));
         }
     }
 }

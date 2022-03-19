@@ -106,6 +106,18 @@ export class CodeEditor {
     }
 
     /**
+     * Highlight the given line
+     * @param {number} lineNr The 1-based number of the line to highlight
+     */
+    highlight(lineNr: number): void {
+        this.editorView.dispatch(
+            {
+                selection: { anchor: this.editorView.state.doc.line(lineNr).from }
+            }
+        );
+    }
+
+    /**
      * Render the editor with the given options and panel
      * @param {RenderOptions} options Options for rendering
      * @param {HTMLElement} panel The panel to display at the bottom
