@@ -59,7 +59,7 @@ declare type ElementIdentifier = string | HTMLElement;
  * @param {string} eventType The type of the event
  * @param {string} attribute The attribute affected by the event
  */
-export declare function addListener<T extends string>(elementId: ElementIdentifier, onEvent: (e: T) => void, eventType?: string, attribute?: string): void;
+export declare function addListener<T extends string>(elementId: ElementIdentifier, onEvent: (e: T) => void, eventType: string, attribute?: string): void;
 /**
  * Unset the selected item of a select element to prevent a default selection
  * @param {ElementIdentifier} selectId Identifier for the select element

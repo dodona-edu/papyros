@@ -10,9 +10,9 @@ export declare class InputWorker {
     private syncMessageListener;
     /**
      * Create a worker for a specific domain
-     * @param {string} hostName Optional name of the host domain
+     * @param {string} hostName The name of the host domain
      */
-    constructor(hostName?: string);
+    constructor(hostName: string);
     /**
      * Process and potentially handle a fetch request from the application
      * @param {FetchEvent} event The event denoting a request to a url

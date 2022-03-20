@@ -1,28 +1,23 @@
 import { InputMode } from "../InputManager";
-import { RunListener } from "../RunListener";
 import { RenderOptions } from "../util/Util";
+export interface InputListener {
+    onUserInput(): void;
+}
 /**
  * Base class for components that handle input from the user
  */
-export declare abstract class UserInputHandler implements RunListener {
+export declare abstract class UserInputHandler {
     /**
      * Whether we are waiting for the user to input data
      */
     protected waiting: boolean;
-    /**
-     * Callback for when the user has entered a value
-     */
-    protected onInput: () => void;
-    /**
-     * HTML identifier for the used HTML input field
-     */
-    protected inputAreaId: string;
+    protected inputListeners: Set<InputListener>;
     /**
      * Construct a new UserInputHandler
-     * @param {function()} onInput  Callback for when the user has entered a value
-     * @param {string} inputAreaId HTML identifier for the used HTML input field
      */
-    constructor(onInput: () => void, inputAreaId: string);
+    constructor();
+    addInputListener(listener: InputListener): void;
+    protected onUserInput(): void;
     /**
      * Whether this handler has input ready
      */
@@ -64,7 +59,7 @@ export declare abstract class UserInputHandler implements RunListener {
      */
     waitWithPrompt(waiting: boolean, prompt?: string): void;
     /**
-     * Helper method to reset internal state when needed
+     * Helper method to reset internal state
      */
     protected reset(): void;
 }

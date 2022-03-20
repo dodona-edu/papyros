@@ -8,4 +8,5 @@ export declare const PYTHON_EXAMPLES: {
     Unicode: string;
     Files: string;
     Matplotlib: string;
+    Debugging: string;
 };

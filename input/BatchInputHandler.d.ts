@@ -14,16 +14,15 @@ export declare class BatchInputHandler extends UserInputHandler {
     /**
      * Construct a new BatchInputHandler
      * @param {function()} onInput  Callback for when the user has entered a value
-     * @param {string} inputAreaId HTML identifier for the used HTML input field
      */
-    constructor(onInput: () => void, inputAreaId: string);
+    constructor();
     onToggle(active: boolean): void;
     getInputMode(): InputMode;
     /**
      * Retrieve the lines of input that the user has given so far
      * @return {Array<string>} The entered lines
      */
-    private get lines();
+    protected get lines(): Array<string>;
     hasNext(): boolean;
     next(): string;
     onRunStart(): void;

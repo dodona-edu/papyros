@@ -1,5 +1,4 @@
-import { PapyrosEvent } from "./PapyrosEvent";
-import { RunListener } from "./RunListener";
+import { BackendEvent } from "./BackendEvent";
 import { RenderOptions } from "./util/Util";
 /**
  * Shape of Error objects that are easy to interpret
@@ -33,8 +32,9 @@ export interface FriendlyError {
 /**
  * Component for displaying code output or errors to the user
  */
-export declare class OutputManager implements RunListener {
+export declare class OutputManager {
     options: RenderOptions;
+    constructor();
     /**
      * Retrieve the parent element containing all output parts
      */
@@ -54,14 +54,14 @@ export declare class OutputManager implements RunListener {
     spanify(text: string, ignoreEmpty?: boolean, className?: string): string;
     /**
      * Display output to the user, based on its content type
-     * @param {PapyrosEvent} output Event containing the output data
+     * @param {BackendEvent} output Event containing the output data
      */
-    showOutput(output: PapyrosEvent): void;
+    showOutput(output: BackendEvent): void;
     /**
      * Display an error to the user
-     * @param {PapyrosEvent} error Event containing the error data
+     * @param {BackendEvent} error Event containing the error data
      */
-    showError(error: PapyrosEvent): void;
+    showError(error: BackendEvent): void;
     /**
      * Render the OutputManager with the given options
      * @param {RenderOptions} options Options for rendering
@@ -72,6 +72,4 @@ export declare class OutputManager implements RunListener {
      * Clear the contents of the output area
      */
     reset(): void;
-    onRunStart(): void;
-    onRunEnd(): void;
 }

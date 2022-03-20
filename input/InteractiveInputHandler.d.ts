@@ -1,18 +1,10 @@
 import { InputMode } from "../InputManager";
 import { RenderOptions } from "../util/Util";
 import { UserInputHandler } from "./UserInputHandler";
+/**
+ * Input handler that takes input from the user in an interactive fashion
+ */
 export declare class InteractiveInputHandler extends UserInputHandler {
-    /**
-     * HTML identifier for the used HTML button
-     */
-    private sendButtonId;
-    /**
-     * Construct a new InteractiveInputHandler
-     * @param {function()} onInput  Callback for when the user has entered a value
-     * @param {string} inputAreaId HTML identifier for the used HTML input field
-     * @param {string} sendButtonId HTML identifier for the used HTML button
-     */
-    constructor(onInput: () => void, inputAreaId: string, sendButtonId: string);
     /**
      * Retrieve the button that users can click to send their input
      */
