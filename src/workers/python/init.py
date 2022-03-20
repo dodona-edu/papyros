@@ -27,6 +27,7 @@ class PdbOutputStream(python_runner.output.SysStream):
         super().__init__("debug", output_buffer)
 
 class Papyros(python_runner.PatchedStdinRunner):
+    DEFAULT_PDB_MESSAGES = ["--Return--", "--Call--", "--KeyboardInterrupt--"]
     def __init__(
         self,
         *,
@@ -36,17 +37,33 @@ class Papyros(python_runner.PatchedStdinRunner):
         super().__init__()
         self.limit = limit
         self.debugger = None
-        self.debugging = False
+        self.last_highlight = None
         self.override_globals()
         self.set_event_callback(callback)
 
     def process_debugging_message(self, message):
-        if self.filename not in message:
-            return None, dict(action="unknown", data="No action specified yet for different file: " + message)
-        nr_match = re.search("\((\d+)\)", message)
-        if nr_match:
-            return None, dict(action="highlight", data=nr_match.group(1))
-        return None, dict(action="unknown", data="No action specified yet for message: " + message)
+        message = message.rstrip()
+        if not message:
+            return None
+        # Pdb file position starts with >, followed by a file name without brackets
+        # Then line number between brackets, followed by a module name without brackets
+        # And ends with another set of brackets. We capture the line number
+        line_nr_match = re.search("> [^\(\)]*\((\d+)[\(\)]*\)", message)
+        if line_nr_match:
+            line_nr = int(line_nr_match.group(1))
+            if self.filename in message:
+                if self.last_highlight != line_nr:
+                    self.last_highlight = line_nr
+                    return dict(action="highlight", data=line_nr)
+                else: # Highlighting same line twice means Pdb reached the end of the file
+                    self.last_highlight = None
+                    self.debugger.set_quit()
+            else:
+                return dict(action="unknown", data="No action specified yet for different file: " + message)
+        elif message not in self.DEFAULT_PDB_MESSAGES:
+            return dict(action="print", data=message)
+        else: # Currently just ignore default messages
+            return None
 
     def set_event_callback(self, event_callback):
         if event_callback is None:
@@ -63,15 +80,13 @@ class Papyros(python_runner.PatchedStdinRunner):
                     if typ in ["stderr", "traceback", "syntax_error"]:
                         cb("error", part["text"], contentType="text/json")
                     elif typ == "stdout":
-                        cb("output", part["text"], contentType="text/plain", debugging=str(self.debugging), matched=str(bool(re.search("> .*\(\)", part["text"]))))
+                        cb("output", part["text"], contentType="text/plain")
                     elif typ == "img":
                         cb("output", part["text"], contentType=part["contentType"])
                     elif typ in ["input", "input_prompt"]:
                         continue
                     elif typ == "debug":
-                        output, debug = self.process_debugging_message(part["text"])
-                        if output:
-                            cb("output", output, contentType="text/plain")
+                        debug = self.process_debugging_message(part["text"])
                         if debug:
                             cb("debug", json.dumps(debug), contentType="text/json")
                     else:
@@ -80,6 +95,7 @@ class Papyros(python_runner.PatchedStdinRunner):
                 return cb("input", json.dumps(dict(prompt=data["prompt"])), contentType="text/json")
             else:
                 raise ValueError(f"Unknown event type {event_type}")
+
         self.set_callback(runner_callback)
 
     def set_file(self, filename, code):
@@ -128,8 +144,10 @@ class Papyros(python_runner.PatchedStdinRunner):
 
     async def run_async(self, source_code, mode="exec", top_level_await=True):
         """
-        Mostly a copy of the parent `run_async` with `await ft` in case of an exception,
-        because `serialize_traceback` isn't async.
+        Mostly a copy of the parent `run_async` with some key differences
+        We use `await ft` in case of an exception, because `serialize_traceback` isn't async.
+        We call pre_run within to handle its exceptions within this try-block too
+        As it will rethrow the SyntaxError (@see serialize_syntax_error)
         """
         with self._execute_context(source_code):
             try:
@@ -151,21 +169,19 @@ class Papyros(python_runner.PatchedStdinRunner):
         if not code_obj:
             return
         with self._execute_context(source_code):
-                self.debugger = pdb.Pdb(stdout=PdbOutputStream(self.output_buffer))
-                self.debugger.use_rawinput = True
-                for line_nr in breakpoints:
-                    self.debugger.set_break(filename=self.filename, lineno=line_nr)
-                self.debugging = True
-                self.line = "c\n" # Ensure first interrupt is continued until breakpoint
-                self.debugger.set_trace()
-                self.output_buffer.flush_length = 1
-                result = self.execute(code_obj, source_code, "exec")
-                while isinstance(result, Awaitable):
-                    result = await result
-                self.debugger.set_quit()
-                self.debugger.clear_all_breaks()
-                self.debugging = False
-                return result
+            self.debugger = pdb.Pdb(stdout=PdbOutputStream(self.output_buffer))
+            self.debugger.use_rawinput = True
+            for line_nr in breakpoints:
+                self.debugger.set_break(filename=self.filename, lineno=line_nr)
+            self.line = "c\n" # Ensure first interrupt is continued until breakpoint
+            self.debugger.set_trace()
+            self.output_buffer.flush_length = 1
+            result = self.execute(code_obj, source_code, "exec")
+            while isinstance(result, Awaitable):
+                result = await result
+            self.debugger.set_quit()
+            self.debugger.clear_all_breaks()
+            return result
 
     def serialize_syntax_error(self, exc, source_code):
         raise  # Rethrow to ensure FriendlyTraceback library is imported correctly

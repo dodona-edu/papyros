@@ -6,8 +6,8 @@ import { DebuggingCommand, DebuggingInputHandler } from "./DebuggingInputHandler
 export class PdbInputHandler extends DebuggingInputHandler {
     protected override buildCommandMap(): Map<DebuggingCommand, string> {
         return new Map([
-            [DebuggingCommand.StepInto, "s"],
             [DebuggingCommand.StepOver, "n"],
+            [DebuggingCommand.StepInto, "s"],
             [DebuggingCommand.Continue, "c"]
         ]);
     }

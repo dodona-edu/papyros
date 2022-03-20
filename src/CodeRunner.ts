@@ -307,6 +307,16 @@ export class CodeRunner {
         const data: DebugAction = parseData(e.data, e.contentType);
         if (data.action === "highlight") {
             this.editor.highlight(parseInt(data.data));
+        } else if (data.action === "print") {
+            if (!data.data.endsWith("\n")) {
+                data.data += "\n";
+            }
+            this.publishEvent({
+                type: BackendEventType.Output,
+                runId: this.runId,
+                data: data.data,
+                contentType: "text/plain"
+            });
         }
     }
 }

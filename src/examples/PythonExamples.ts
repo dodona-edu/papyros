@@ -128,5 +128,12 @@ x = np.linspace(0, 10, 1000)
 plt.plot(x, np.sin(x));
 
 plt.show()
-`
+`,
+    "Debugging": `def fibonacci(n):
+    if n <= 1:
+        return n
+    else:
+        return fibonacci(n-2) + fibonacci(n-1)
+        
+print(fibonacci(3))`
 };
