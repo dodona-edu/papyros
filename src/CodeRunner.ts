@@ -284,6 +284,7 @@ export class CodeRunner {
                 await this.backend.runCode(this.editor.getCode(), this.runId);
             }
         } catch (error: any) {
+            papyrosLog(LogType.Error, error);
             this.publishEvent({
                 type: BackendEventType.Error,
                 data: JSON.stringify(error),

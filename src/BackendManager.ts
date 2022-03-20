@@ -5,6 +5,7 @@ import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import PythonWorker from "./workers/python/PythonWorker.worker";
 import JavaScriptWorker from "./workers/javascript/JavaScriptWorker.worker";
 import { BackendEvent, BackendEventType } from "./BackendEvent";
+import { LogType, papyrosLog } from "./util/Logging";
 
 /**
  * Callback type definition for subscribers
@@ -84,6 +85,7 @@ export abstract class BackendManager {
      * @param {BackendEventType} e The event to publish
      */
     static publish(e: BackendEvent): void {
+        papyrosLog(LogType.Debug, "Publishing event: ", e);
         if (this.subscriberMap.has(e.type)) {
             this.subscriberMap.get(e.type)!.forEach(cb => cb(e));
         }

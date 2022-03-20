@@ -21,9 +21,12 @@ SYS_RECURSION_LIMIT = 500
 # Global Papyros instance
 papyros = None
 
+# Helper output stream to capture Pdb output
+class PdbOutputStream(python_runner.output.SysStream):
+    def __init__(self, output_buffer):
+        super().__init__("debug", output_buffer)
 
 class Papyros(python_runner.PatchedStdinRunner):
-
     def __init__(
         self,
         *,
@@ -39,11 +42,11 @@ class Papyros(python_runner.PatchedStdinRunner):
 
     def process_debugging_message(self, message):
         if self.filename not in message:
-            return None
+            return None, dict(action="unknown", data="No action specified yet for different file: " + message)
         nr_match = re.search("\((\d+)\)", message)
         if nr_match:
-            return dict(action="highlight", line_nr=nr_match.group(1))
-        return dict(action="unknown", data="No action specified yet for message: " + message)
+            return None, dict(action="highlight", data=nr_match.group(1))
+        return None, dict(action="unknown", data="No action specified yet for message: " + message)
 
     def set_event_callback(self, event_callback):
         if event_callback is None:
@@ -60,16 +63,17 @@ class Papyros(python_runner.PatchedStdinRunner):
                     if typ in ["stderr", "traceback", "syntax_error"]:
                         cb("error", part["text"], contentType="text/json")
                     elif typ == "stdout":
-                        if self.debugging and re.search("> .*\(\)", part["text"]):
-                            data = self.process_debugging_message(part["text"])
-                            if data:
-                                cb("debug", json.dumps(data), contentType="text/json")
-                        else:
-                            cb("output", part["text"], contentType="text/plain")
+                        cb("output", part["text"], contentType="text/plain", debugging=str(self.debugging), matched=str(bool(re.search("> .*\(\)", part["text"]))))
                     elif typ == "img":
                         cb("output", part["text"], contentType=part["contentType"])
                     elif typ in ["input", "input_prompt"]:
                         continue
+                    elif typ == "debug":
+                        output, debug = self.process_debugging_message(part["text"])
+                        if output:
+                            cb("output", output, contentType="text/plain")
+                        if debug:
+                            cb("debug", json.dumps(debug), contentType="text/json")
                     else:
                         raise ValueError(f"Unknown output part type {typ}")
             elif event_type == "input":
@@ -143,21 +147,25 @@ class Papyros(python_runner.PatchedStdinRunner):
                 raise
     
     async def debug_code(self, source_code, breakpoints):
+        code_obj = self.pre_run(source_code, "exec", True)
+        if not code_obj:
+            return
         with self._execute_context(source_code):
-            code_obj = self.pre_run(source_code, "exec", True)
-            if not code_obj:
-                return
-            self.debugger = pdb.Pdb()
-            for line_nr in breakpoints:
-                self.debugger.set_break(filename=self.filename, lineno=line_nr)
-            self.debugging = True
-            self.line = "c\n" # Ensure first interrupt is continued until breakpoint
-            self.debugger.set_trace()
-            result = self.execute(code_obj, source_code, "exec")
-            while isinstance(result, Awaitable):
-                result = await result
-            self.debugging = False
-            return result
+                self.debugger = pdb.Pdb(stdout=PdbOutputStream(self.output_buffer))
+                self.debugger.use_rawinput = True
+                for line_nr in breakpoints:
+                    self.debugger.set_break(filename=self.filename, lineno=line_nr)
+                self.debugging = True
+                self.line = "c\n" # Ensure first interrupt is continued until breakpoint
+                self.debugger.set_trace()
+                self.output_buffer.flush_length = 1
+                result = self.execute(code_obj, source_code, "exec")
+                while isinstance(result, Awaitable):
+                    result = await result
+                self.debugger.set_quit()
+                self.debugger.clear_all_breaks()
+                self.debugging = False
+                return result
 
     def serialize_syntax_error(self, exc, source_code):
         raise  # Rethrow to ensure FriendlyTraceback library is imported correctly

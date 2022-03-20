@@ -200,26 +200,29 @@ export function renderWithOptions(
  * @return {any} The parsed data
  */
 export function parseData(data: unknown, contentType: string): any {
-    const [baseType, specificType] = contentType.split("/");
-    switch (baseType) {
-        case "text": {
-            switch (specificType) {
-                case "plain": {
-                    return data;
+    const typeParts = contentType ? contentType.split("/") : [];
+    if (typeParts.length === 2) {
+        const [baseType, specificType] = typeParts;
+        switch (baseType) {
+            case "text": {
+                switch (specificType) {
+                    case "plain": {
+                        return data;
+                    }
+                    case "json": {
+                        return JSON.parse(data as string);
+                    }
                 }
-                case "json": {
-                    return JSON.parse(data as string);
-                }
+                break;
             }
-            break;
-        }
-        case "img": {
-            switch (specificType) {
-                case "png;base64": {
-                    return data;
+            case "img": {
+                switch (specificType) {
+                    case "png;base64": {
+                        return data;
+                    }
                 }
+                break;
             }
-            break;
         }
     }
     papyrosLog(LogType.Important, `Unhandled content type: ${contentType}`);
