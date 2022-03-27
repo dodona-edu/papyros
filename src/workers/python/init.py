@@ -1,6 +1,7 @@
 import sys
 import json
 import os
+import builtins
 from collections.abc import Awaitable
 
 import micropip
@@ -11,17 +12,90 @@ import python_runner
 
 ft = micropip.install("friendly_traceback")
 jedi_install = micropip.install("jedi")
-# Otherwise `import matplotlib` fails while assuming a browser backend
-os.environ["MPLBACKEND"] = "AGG"
+flake8_install = micropip.install("flake8")
 
 # Code is executed in a worker with less resources than ful environment
-sys.setrecursionlimit(500)
+SYS_RECURSION_LIMIT=500
 
 # Global Papyros instance
 papyros = None
 
 
 class Papyros(python_runner.PatchedStdinRunner):
+    def __init__(
+        self,
+        *,
+        callback=None,
+        limit=SYS_RECURSION_LIMIT
+    ):
+        super().__init__()
+        self.limit = limit
+        self.debugger = None
+        self.linter = None
+        self.last_highlight = None
+        self.override_globals()
+        self.set_event_callback(callback)
+
+    def set_event_callback(self, event_callback):
+        if event_callback is None:
+            raise ValueError("Event callback must not be None")
+
+        def runner_callback(event_type, data):
+            def cb(typ, dat, **kwargs):
+                return event_callback(to_js(dict(type=typ, data=dat, **kwargs)))
+
+            # Translate python_runner events to papyros events
+            if event_type == "output":
+                for part in data["parts"]:
+                    typ = part["type"]
+                    if typ in ["stderr", "traceback", "syntax_error"]:
+                        cb("error", part["text"], contentType="text/json")
+                    elif typ == "stdout":
+                        cb("output", part["text"], contentType="text/plain")
+                    elif typ == "img":
+                        cb("output", part["text"], contentType=part["contentType"])
+                    elif typ in ["input", "input_prompt"]:
+                        continue
+                    else:
+                        raise ValueError(f"Unknown output part type {typ}")
+            elif event_type == "input":
+                return cb("input", json.dumps(dict(prompt=data["prompt"])), contentType="text/json")
+            else:
+                raise ValueError(f"Unknown event type {event_type}")
+
+        self.set_callback(runner_callback)
+
+    def set_file(self, filename, code):
+        self.filename = os.path.normcase(os.path.abspath(filename))
+        with open(self.filename, "w") as f:
+            f.write(code)
+
+    def override_globals(self):
+        # Code is executed in a worker with less resources than ful environment
+        sys.setrecursionlimit(self.limit)
+        # Otherwise `import matplotlib` fails while assuming a browser backend
+        os.environ["MPLBACKEND"] = "AGG"
+        sys.stdin.readline = self.readline
+        builtins.input = self.input
+        self.override_flake()
+        try:
+            import matplotlib
+        except ModuleNotFoundError:
+            pass
+        else:
+            # Only override matplotlib when required by the code
+            self.override_matplotlib()
+
+    def override_flake():
+        """
+        Flake8 linter imports multiprocessing library, which is not fully supported in Pyodide
+        These patches allow the imports to work so we can access the parts we need
+        """
+        import multiprocessing
+        sys.modules["multiprocessing"].pool = multiprocessing.Pool
+        # Importing multiprocessing.pool imports "_multiprocessing", so patch that too
+        sys.modules["_multiprocessing"] = multiprocessing
+
     def override_matplotlib(self):
         # workaround from https://github.com/pyodide/pyodide/issues/1518
         import base64
@@ -58,6 +132,15 @@ class Papyros(python_runner.PatchedStdinRunner):
                 # Let `_execute_context` and `serialize_traceback`
                 # handle the exception
                 raise
+
+    async def lint_code(self, code, lint_output_file="__papyros_output.txt"):
+        if self.linter is None:
+            await flake8_install
+            from flake8.main import application
+            self.linter = application.Application()
+        self.linter.run(["--jobs", "1", "--output-file", lint_output_file, self.filename])
+        self.process_linting_output()
+        os.remove(lint_output_file)
 
     def serialize_syntax_error(self, exc, source_code):
         raise  # Rethrow to ensure FriendlyTraceback library is imported correctly
@@ -107,47 +190,17 @@ class Papyros(python_runner.PatchedStdinRunner):
 
 def init_papyros(event_callback):
     global papyros
-
-    def runner_callback(event_type, data):
-        def cb(typ, dat, **kwargs):
-            return event_callback(to_js(dict(type=typ, data=dat, **kwargs)))
-
-        # Translate python_runner events to papyros events
-        if event_type == "output":
-            for part in data["parts"]:
-                typ = part["type"]
-                if typ in ["stderr", "traceback", "syntax_error"]:
-                    cb("error", part["text"], contentType="text/json")
-                elif typ == "stdout":
-                    cb("output", part["text"], contentType="text/plain")
-                elif typ == "img":
-                    cb("output", part["text"], contentType=part["contentType"])
-                elif typ in ["input", "input_prompt"]:
-                    continue
-                else:
-                    raise ValueError(f"Unknown output part type {typ}")
-        elif event_type == "input":
-            return cb("input", json.dumps(dict(prompt=data["prompt"])), contentType="text/json")
-        else:
-            raise ValueError(f"Unknown event type {event_type}")
-
-    papyros = Papyros(callback=runner_callback)
+    papyros = Papyros(callback=event_callback, limit=SYS_RECURSION_LIMIT)
 
 
 async def process_code(code, filename="my_code.py"):
-    with open(filename, "w") as f:
-        f.write(code)
-    papyros.filename = filename
-
-    try:
-        import matplotlib
-    except ModuleNotFoundError:
-        pass
-    else:
-        # Only override matplotlib when required by the code
-        papyros.override_matplotlib()
-
+    papyros.set_file(filename, code)
     await papyros.run_async(code)
+
+async def lint_code(code, filename="my_code.py"):
+    papyros.set_file(filename, code)
+    await flake8_install
+    await papyros.lint_code(code)
 
 def convert_completion(completion, index):
     converted = dict(type=completion.type, label=completion.name_with_symbols)
