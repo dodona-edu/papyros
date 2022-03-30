@@ -8,7 +8,7 @@ import { ProgrammingLanguage } from "./ProgrammingLanguage";
 function addPapyrosPrefix(s: string): string {
     return `__papyros-${s}`;
 }
-/* Default HT%M ids for various elements */
+/* Default HTML ids for various elements */
 export const MAIN_APP_ID = addPapyrosPrefix("papyros");
 export const OUTPUT_TA_ID = addPapyrosPrefix("code-output-area");
 export const INPUT_AREA_WRAPPER_ID = addPapyrosPrefix("code-input-area-wrapper");
