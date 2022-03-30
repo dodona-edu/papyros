@@ -184,8 +184,8 @@ export class Papyros {
                 const serviceWorkerUrl = rootWithSlash + serviceWorkerName;
                 papyrosLog(LogType.Important, `Registering service worker: ${serviceWorkerUrl}`);
                 await window.navigator.serviceWorker.register(serviceWorkerUrl);
-                this.codeRunner.inputManager.channel =
-                    makeChannel({ serviceWorker: { scope: rootWithSlash } })!;
+                this.codeRunner.inputManager.setChannel(
+                    makeChannel({ serviceWorker: { scope: rootWithSlash } })!);
                 if (allowReload) {
                     // Store that we are reloading
                     // to prevent the next load from doing all this again

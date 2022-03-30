@@ -1,6 +1,6 @@
 import escapeHTML from "escape-html";
-import { BackendEvent } from "./BackendEvent";
-import { RunListener } from "./RunListener";
+import { BackendEvent, BackendEventType } from "./BackendEvent";
+import { BackendManager } from "./BackendManager";
 import { inCircle } from "./util/HTMLShapes";
 import {
     getElement, parseData,
@@ -40,9 +40,16 @@ export interface FriendlyError {
 /**
  * Component for displaying code output or errors to the user
  */
-export class OutputManager implements RunListener {
+export class OutputManager {
     // Store options to allow re-rendering
-    options: RenderOptions = { parentElementId: "" };
+    options: RenderOptions;
+
+    constructor() {
+        BackendManager.subscribe(BackendEventType.Start, () => this.reset());
+        BackendManager.subscribe(BackendEventType.Output, e => this.showOutput(e));
+        BackendManager.subscribe(BackendEventType.Error, e => this.showError(e));
+        this.options = { parentElementId: "" };
+    }
 
     /**
      * Retrieve the parent element containing all output parts
@@ -143,13 +150,5 @@ export class OutputManager implements RunListener {
      */
     reset(): void {
         this.render(this.options);
-    }
-
-    onRunStart(): void {
-        this.reset();
-    }
-
-    onRunEnd(): void {
-        // currently empty
     }
 }

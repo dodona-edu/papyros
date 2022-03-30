@@ -104,7 +104,7 @@ export class CodeRunner {
                 return await this.backend.autocomplete(completionContext);
             });
         // Allow passing messages between worker and main thread
-        await this.backend.launch(proxy(e => this.publishEvent(e)), this.inputManager.channel);
+        await this.backend.launch(proxy(e => this.publishEvent(e)), this.inputManager.getChannel());
         this.editor.focus();
         this.setState(RunState.Ready);
     }
