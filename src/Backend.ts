@@ -1,7 +1,8 @@
-import { PapyrosEvent } from "./PapyrosEvent";
 import { Channel, readMessage, uuidv4 } from "sync-message";
 import { parseData } from "./util/Util";
 import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
+import { BackendEvent } from "./BackendEvent";
+import { papyrosLog, LogType } from "./util/Logging";
 
 /**
  * Interface to represent the CodeMirror CompletionContext in a worker
@@ -38,7 +39,7 @@ export interface WorkerAutocompleteContext {
 }
 
 export abstract class Backend {
-    protected onEvent: (e: PapyrosEvent) => any;
+    protected onEvent: (e: BackendEvent) => any;
     protected runId: number;
 
     /**
@@ -54,19 +55,19 @@ export abstract class Backend {
 
     /**
      * Initialize the backend by doing all setup-related work
-     * @param {function(PapyrosEvent):void} onEvent Callback for when events occur
+     * @param {function(BackendEvent):void} onEvent Callback for when events occur
      * @param {Channel} channel for communication with the main thread
      * @return {Promise<void>} Promise of launching
      */
     launch(
-        onEvent: (e: PapyrosEvent) => void,
+        onEvent: (e: BackendEvent) => void,
         channel: Channel
     ): Promise<void> {
         // Input messages are handled in a special way
         // In order to link input requests to their responses
         // An ID is required to make the connection
         // The message must be read in the worker to not stall the main thread
-        const onInput = (e: PapyrosEvent): string => {
+        const onInput = (e: BackendEvent): string => {
             const inputData = parseData(e.data, e.contentType);
             const messageId = uuidv4();
             inputData.messageId = messageId;
@@ -75,7 +76,7 @@ export abstract class Backend {
             onEvent(e);
             return readMessage(channel, messageId);
         };
-        this.onEvent = (e: PapyrosEvent) => {
+        this.onEvent = (e: BackendEvent) => {
             e.runId = this.runId;
             if (e.type === "input") {
                 return onInput(e);
@@ -91,7 +92,7 @@ export abstract class Backend {
      * Results or Errors must be passed by using the onEvent-callback
      * @param code The code to run
      */
-    protected abstract _runCodeInternal(code: string): Promise<any>;
+    protected abstract runCodeInternal(code: string): Promise<void>;
 
     /**
      * Executes the given code
@@ -99,18 +100,16 @@ export abstract class Backend {
      * @param {string} runId The uuid for this execution
      * @return {Promise<void>} Promise of execution
      */
-    async runCode(code: string, runId: number): Promise<any> {
+    async runCode(code: string, runId: number): Promise<void> {
         this.runId = runId;
-        return await this._runCodeInternal(code);
+        return await this.runCodeInternal(code);
     }
 
     /**
      * Converts the context to a cloneable object containing useful properties
      * to generate autocompletion suggestions with
-     * Class instances are not passable to workers, so we extract the useful infromation
      * @param {CompletionContext} context Current context to autocomplete for
      * @param {RegExp} expr Expression to match the previous token with
-     * default a word with an optional dot to represent property access
      * @return {WorkerAutocompleteContext} Completion context that can be passed as a message
      */
     static convertCompletionContext(context: CompletionContext, expr = /\w*(\.)?/):
@@ -120,7 +119,7 @@ export abstract class Backend {
             return [line.number, (range.head - line.from)];
         })[0];
         const beforeMatch = context.matchBefore(expr);
-        return {
+        const ret = {
             explicit: context.explicit,
             before: beforeMatch,
             pos: context.pos,
@@ -128,6 +127,8 @@ export abstract class Backend {
             line: lineNr,
             text: context.state.doc.toString()
         };
+        papyrosLog(LogType.Debug, "Worker completion context:", ret);
+        return ret;
     }
 
     /**

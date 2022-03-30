@@ -3,7 +3,7 @@ import {
     SWITCH_INPUT_MODE_A_ID,
     INPUT_TA_ID, SEND_INPUT_BTN_ID, USER_INPUT_WRAPPER_ID
 } from "./Constants";
-import { PapyrosEvent } from "./PapyrosEvent";
+import { BackendEvent } from "./BackendEvent";
 import { papyrosLog, LogType } from "./util/Logging";
 import {
     addListener, parseData,
@@ -111,10 +111,10 @@ class="flex flex-row-reverse hover:cursor-pointer text-blue-500">
 
     /**
      * Asynchronously handle an input request by prompting the user for input
-     * @param {PapyrosEvent} e Event containing the input data
+     * @param {BackendEvent} e Event containing the input data
      * @return {Promise<void>} Promise of handling the request
      */
-    async onInput(e: PapyrosEvent): Promise<void> {
+    async onInput(e: BackendEvent): Promise<void> {
         papyrosLog(LogType.Debug, "Handling input request in Papyros");
         const data = parseData(e.data, e.contentType) as InputData;
         this.messageId = data.messageId;

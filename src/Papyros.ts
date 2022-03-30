@@ -10,7 +10,7 @@ import {
     LOCALE_SELECT_ID, INPUT_AREA_WRAPPER_ID, EXAMPLE_SELECT_ID, PANEL_WRAPPER_ID
 } from "./Constants";
 import { InputManager, InputMode } from "./InputManager";
-import { PapyrosEvent } from "./PapyrosEvent";
+import { BackendEvent } from "./BackendEvent";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import { LogType, papyrosLog } from "./util/Logging";
 import {
@@ -289,28 +289,28 @@ export class Papyros {
     }
 
     /**
-     * Process PapyrosEvents with type="error"
-     * @param {PapyrosEvent} e The error-event
+     * Process BackendEvents with type="error"
+     * @param {BackendEvent} e The error-event
      */
-    private onError(e: PapyrosEvent): void {
+    private onError(e: BackendEvent): void {
         papyrosLog(LogType.Debug, "Got error in Papyros: ", e);
         this.outputManager.showError(e);
     }
     /**
-     * Process PapyrosEvents with type="input"
-     * @param {PapyrosEvent} e The input-event
+     * Process BackendEvents with type="input"
+     * @param {BackendEvent} e The input-event
      */
-    private async onInput(e: PapyrosEvent): Promise<void> {
+    private async onInput(e: BackendEvent): Promise<void> {
         papyrosLog(LogType.Debug, "Received onInput event in Papyros: ", e);
         this.stateManager.setState(RunState.AwaitingInput);
         await this.inputManager.onInput(e);
     }
 
     /**
-     * Generic handler function to pass PapyrosEvents to the relevant method
-     * @param {PapyrosEvent} e The event ro process
+     * Generic handler function to pass BackendEvents to the relevant method
+     * @param {BackendEvent} e The event ro process
      */
-    onMessage(e: PapyrosEvent): void {
+    onMessage(e: BackendEvent): void {
         papyrosLog(LogType.Debug, "received event in onMessage", e);
         if (e.runId === this.codeState.runId) { // Only process relevant messages
             if (e.type === "output") {

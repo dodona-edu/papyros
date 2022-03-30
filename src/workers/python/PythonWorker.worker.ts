@@ -1,11 +1,11 @@
 import { expose } from "comlink";
 import { Backend, WorkerAutocompleteContext } from "../../Backend";
-import { PapyrosEvent } from "../../PapyrosEvent";
 import { LogType, papyrosLog } from "../../util/Logging";
 import { Pyodide, PYODIDE_INDEX_URL, PYODIDE_JS_URL } from "./Pyodide";
 import { Channel } from "sync-message";
 import { CompletionResult } from "@codemirror/autocomplete";
 import { parseData } from "../../util/Util";
+import { BackendEvent } from "../../BackendEvent";
 /* eslint-disable-next-line */
 const initPythonString = require("!!raw-loader!./init.py").default;
 
@@ -37,7 +37,7 @@ class PythonWorker extends Backend {
     }
 
     override async launch(
-        onEvent: (e: PapyrosEvent) => void,
+        onEvent: (e: BackendEvent) => void,
         channel: Channel
     ): Promise<void> {
         await super.launch(onEvent, channel);
@@ -46,18 +46,18 @@ class PythonWorker extends Backend {
             fullStdLib: false
         });
         // Load our own modules to connect Papyros and Pyodide
-        await this._runCodeInternal(initPythonString);
+        await this.runCodeInternal(initPythonString);
         // Python calls our function with a PyProxy dict or a Js Map,
         // These must be converted to a PapyrosEvent (JS Object) to allow message passing
         const eventCallback = (data: any): void => {
             return this.onEvent(this.convert(data));
         };
         // Initialize our loaded Papyros module with the callback
-        this.pyodide.globals.get("init_papyros")(eventCallback);
+        await this.pyodide.globals.get("init_papyros")(eventCallback);
         this.initialized = true;
     }
 
-    override async _runCodeInternal(code: string): Promise<any> {
+    override async runCodeInternal(code: string): Promise<any> {
         if (this.initialized) {
             try {
                 // Sometimes a SyntaxError can cause imports to fail

@@ -1,5 +1,5 @@
 import escapeHTML from "escape-html";
-import { PapyrosEvent } from "./PapyrosEvent";
+import { BackendEvent } from "./BackendEvent";
 import { RunListener } from "./RunListener";
 import { inCircle } from "./util/HTMLShapes";
 import {
@@ -78,9 +78,9 @@ export class OutputManager implements RunListener {
 
     /**
      * Display output to the user, based on its content type
-     * @param {PapyrosEvent} output Event containing the output data
+     * @param {BackendEvent} output Event containing the output data
      */
-    showOutput(output: PapyrosEvent): void {
+    showOutput(output: BackendEvent): void {
         const data = parseData(output.data, output.contentType);
         if (output.contentType === "img/png;base64") {
             this.renderNextElement(`<img src="data:image/png;base64, ${data}"></img>`);
@@ -91,9 +91,9 @@ export class OutputManager implements RunListener {
 
     /**
      * Display an error to the user
-     * @param {PapyrosEvent} error Event containing the error data
+     * @param {BackendEvent} error Event containing the error data
      */
-    showError(error: PapyrosEvent): void {
+    showError(error: BackendEvent): void {
         let errorHTML = "";
         const errorData = parseData(error.data, error.contentType);
         if (typeof (errorData) === "string") {
