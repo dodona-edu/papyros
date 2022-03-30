@@ -6,6 +6,7 @@ import PythonWorker from "./workers/python/PythonWorker.worker";
 import JavaScriptWorker from "./workers/javascript/JavaScriptWorker.worker";
 import { BackendEvent, BackendEventType } from "./BackendEvent";
 import { LogType, papyrosLog } from "./util/Logging";
+import { Channel, makeChannel } from "sync-message";
 
 /**
  * Callback type definition for subscribers
@@ -27,6 +28,7 @@ export abstract class BackendManager {
         [ProgrammingLanguage.Python, () => new PythonWorker()],
         [ProgrammingLanguage.JavaScript, () => new JavaScriptWorker()]
     ]);
+    static channel: Channel = makeChannel()!;
     /**
      * Map an event type to interested subscribers
      * Uses an Array to maintain order of subscription

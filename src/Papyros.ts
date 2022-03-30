@@ -18,6 +18,7 @@ import { RunState, CodeRunner } from "./CodeRunner";
 import { getCodeForExample, getExampleNames } from "./examples/Examples";
 import { OutputManager } from "./OutputManager";
 import { makeChannel } from "sync-message";
+import { BackendManager } from "./BackendManager";
 
 const LANGUAGE_MAP = new Map([
     ["python", ProgrammingLanguage.Python],
@@ -153,6 +154,28 @@ export class Papyros {
     }
 
     /**
+     * Helper method to perform the service worker related checks and initialisation
+     * @param {string} serviceWorkerRoot URL for the directory where the service worker lives
+     * @param {string} serviceWorkerName The name of the file containing the script
+     * @return {Promise<boolean>} Whether registration was successful
+     */
+    private async registerServiceWorker(serviceWorkerRoot?: string, serviceWorkerName?: string): Promise<boolean> {
+        if (!serviceWorkerRoot || !serviceWorkerName || !("serviceWorker" in window.navigator)) {
+            papyrosLog(LogType.Important,
+                "Unable to register service worker. Please specify all required parameters and ensure service workers are supported.");
+            return false;
+        }
+        // Ensure there is a slash at the end to allow the script to be resolved
+        const rootWithSlash = serviceWorkerRoot.endsWith("/") ?
+            serviceWorkerRoot : serviceWorkerRoot + "/";
+        const serviceWorkerUrl = rootWithSlash + serviceWorkerName;
+        papyrosLog(LogType.Important, `Registering service worker: ${serviceWorkerUrl}`);
+        await window.navigator.serviceWorker.register(serviceWorkerUrl);
+        BackendManager.channel = makeChannel({ serviceWorker: { scope: rootWithSlash } })!;
+        return true;
+    }
+
+    /**
      * Configure how user input is handled within Papyros
      * By default, we will try to use SharedArrayBuffers
      * If this option is not available, the optional arguments become relevant
@@ -169,23 +192,12 @@ export class Papyros {
         if (allowReload && window.localStorage.getItem(RELOAD_STORAGE_KEY)) {
             // We are the result of the page reload, so we can start
             window.localStorage.removeItem(RELOAD_STORAGE_KEY);
-            return true;
-        } else {
             if (typeof SharedArrayBuffer === "undefined") {
-                papyrosLog(LogType.Important, "SharedArrayBuffers are not available. ");
-                if (!serviceWorkerRoot || !serviceWorkerName || !("serviceWorker" in navigator)) {
-                    papyrosLog(LogType.Important,
-                        "Unable to register service worker. Please specify all required parameters and ensure service workers are supported.");
-                    return false;
-                }
-                // Ensure there is a slash at the end to allow the script to be resolved
-                const rootWithSlash = serviceWorkerRoot.endsWith("/") ?
-                    serviceWorkerRoot : serviceWorkerRoot + "/";
-                const serviceWorkerUrl = rootWithSlash + serviceWorkerName;
-                papyrosLog(LogType.Important, `Registering service worker: ${serviceWorkerUrl}`);
-                await window.navigator.serviceWorker.register(serviceWorkerUrl);
-                this.codeRunner.inputManager.setChannel(
-                    makeChannel({ serviceWorker: { scope: rootWithSlash } })!);
+                return await this.registerServiceWorker(serviceWorkerRoot, serviceWorkerName);
+            }
+            return true;
+        } else if (typeof SharedArrayBuffer === "undefined") {
+            if (await this.registerServiceWorker(serviceWorkerRoot, serviceWorkerName)) {
                 if (allowReload) {
                     // Store that we are reloading
                     // to prevent the next load from doing all this again
@@ -194,10 +206,9 @@ export class Papyros {
                     window.location.reload();
                 }
                 return true;
-            } else {
-                return true;
             }
         }
+        return false;
     }
 
     /**

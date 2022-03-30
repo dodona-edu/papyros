@@ -9,7 +9,7 @@ import {
     addListener, parseData,
     RenderOptions, renderWithOptions
 } from "./util/Util";
-import { Channel, makeChannel, writeMessage } from "sync-message";
+import { writeMessage } from "sync-message";
 import { InteractiveInputHandler } from "./input/InteractiveInputHandler";
 import { UserInputHandler } from "./input/UserInputHandler";
 import { BatchInputHandler } from "./input/BatchInputHandler";
@@ -35,14 +35,12 @@ export class InputManager {
     private prompt: string;
 
     private onSend: () => void;
-    private channel: Channel;
     private messageId = "";
 
     constructor(onSend: () => void) {
         this.inputHandlers = this.buildInputHandlerMap();
         this.inputMode = InputMode.Interactive;
         this.inputHandler.addInputListener(this);
-        this.channel = makeChannel()!; // by default we try to use Atomics
         this.onSend = onSend;
         this.waiting = false;
         this.prompt = "";
@@ -110,7 +108,7 @@ ${switchMode}`);
         if (this.inputHandler.hasNext()) {
             const line = this.inputHandler.next();
             papyrosLog(LogType.Debug, "Sending input to user: " + line);
-            await writeMessage(this.channel, line, this.messageId);
+            await writeMessage(BackendManager.channel, line, this.messageId);
             this.waitWithPrompt(false);
             this.onSend();
         } else {
@@ -140,13 +138,5 @@ ${switchMode}`);
     onRunEnd(): void {
         this.inputHandler.onRunEnd();
         this.waitWithPrompt(false);
-    }
-
-    getChannel(): Channel {
-        return this.channel;
-    }
-
-    setChannel(channel: Channel): void {
-        this.channel = channel;
     }
 }
