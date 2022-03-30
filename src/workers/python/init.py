@@ -1,6 +1,7 @@
+import builtins
+import os
 import sys
 import json
-import os
 from collections.abc import Awaitable
 
 import micropip
@@ -9,19 +10,77 @@ from pyodide import to_js
 await micropip.install("python_runner")
 import python_runner
 
+# Install modules asynchronously to use when the user needs them
 ft = micropip.install("friendly_traceback")
 jedi_install = micropip.install("jedi")
-# Otherwise `import matplotlib` fails while assuming a browser backend
-os.environ["MPLBACKEND"] = "AGG"
 
-# Code is executed in a worker with less resources than ful environment
-sys.setrecursionlimit(500)
+SYS_RECURSION_LIMIT = 500
 
 # Global Papyros instance
 papyros = None
 
-
 class Papyros(python_runner.PatchedStdinRunner):
+    DEFAULT_PDB_MESSAGES = ["--Return--", "--Call--", "--KeyboardInterrupt--"]
+    def __init__(
+        self,
+        *,
+        callback=None,
+        limit=SYS_RECURSION_LIMIT
+    ):
+        super().__init__()
+        self.limit = limit
+        self.override_globals()
+        self.set_event_callback(callback)
+
+    def set_event_callback(self, event_callback):
+        if event_callback is None:
+            raise ValueError("Event callback must not be None")
+
+        def runner_callback(event_type, data):
+            def cb(typ, dat, **kwargs):
+                return event_callback(to_js(dict(type=typ, data=dat, **kwargs)))
+
+            # Translate python_runner events to papyros events
+            if event_type == "output":
+                for part in data["parts"]:
+                    typ = part["type"]
+                    if typ in ["stderr", "traceback", "syntax_error"]:
+                        cb("error", part["text"], contentType="text/json")
+                    elif typ == "stdout":
+                        cb("output", part["text"], contentType="text/plain")
+                    elif typ == "img":
+                        cb("output", part["text"], contentType=part["contentType"])
+                    elif typ in ["input", "input_prompt"]:
+                        continue
+                    else:
+                        raise ValueError(f"Unknown output part type {typ}")
+            elif event_type == "input":
+                return cb("input", json.dumps(dict(prompt=data["prompt"])), contentType="text/json")
+            else:
+                raise ValueError(f"Unknown event type {event_type}")
+
+        self.set_callback(runner_callback)
+
+    def set_file(self, filename, code):
+        self.filename = os.path.normcase(os.path.abspath(filename))
+        with open(self.filename, "w") as f:
+            f.write(code)
+
+    def override_globals(self):
+        # Code is executed in a worker with less resources than ful environment
+        sys.setrecursionlimit(self.limit)
+        # Otherwise `import matplotlib` fails while assuming a browser backend
+        os.environ["MPLBACKEND"] = "AGG"
+        sys.stdin.readline = self.readline
+        builtins.input = self.input
+        try:
+            import matplotlib
+        except ModuleNotFoundError:
+            pass
+        else:
+            # Only override matplotlib when required by the code
+            self.override_matplotlib()
+
     def override_matplotlib(self):
         # workaround from https://github.com/pyodide/pyodide/issues/1518
         import base64
@@ -39,10 +98,19 @@ class Papyros(python_runner.PatchedStdinRunner):
 
         matplotlib.pyplot.show = show
 
+    def pre_run(self, source_code, mode="exec", top_level_await=False):
+        self.override_globals()
+        return super().pre_run(source_code, mode=mode, top_level_await=top_level_await)
+
+    def execute(self, code_obj, source_code, mode=None):  # noqa
+        return eval(code_obj, self.console.locals)  # noqa
+
     async def run_async(self, source_code, mode="exec", top_level_await=True):
         """
-        Mostly a copy of the parent `run_async` with `await ft` in case of an exception,
-        because `serialize_traceback` isn't async.
+        Mostly a copy of the parent `run_async` with some key differences
+        We use `await ft` in case of an exception, because `serialize_traceback` isn't async.
+        We call pre_run within to handle its exceptions within this try-block too
+        As it will rethrow the SyntaxError (@see serialize_syntax_error)
         """
         with self._execute_context(source_code):
             try:
@@ -105,48 +173,12 @@ class Papyros(python_runner.PatchedStdinRunner):
         )
 
 
-def init_papyros(event_callback):
+async def init_papyros(event_callback, limit=SYS_RECURSION_LIMIT):
     global papyros
-
-    def runner_callback(event_type, data):
-        def cb(typ, dat, **kwargs):
-            return event_callback(to_js(dict(type=typ, data=dat, **kwargs)))
-
-        # Translate python_runner events to papyros events
-        if event_type == "output":
-            for part in data["parts"]:
-                typ = part["type"]
-                if typ in ["stderr", "traceback", "syntax_error"]:
-                    cb("error", part["text"], contentType="text/json")
-                elif typ == "stdout":
-                    cb("output", part["text"], contentType="text/plain")
-                elif typ == "img":
-                    cb("output", part["text"], contentType=part["contentType"])
-                elif typ in ["input", "input_prompt"]:
-                    continue
-                else:
-                    raise ValueError(f"Unknown output part type {typ}")
-        elif event_type == "input":
-            return cb("input", json.dumps(dict(prompt=data["prompt"])), contentType="text/json")
-        else:
-            raise ValueError(f"Unknown event type {event_type}")
-
-    papyros = Papyros(callback=runner_callback)
-
+    papyros = Papyros(callback=event_callback, limit=limit)
 
 async def process_code(code, filename="my_code.py"):
-    with open(filename, "w") as f:
-        f.write(code)
-    papyros.filename = filename
-
-    try:
-        import matplotlib
-    except ModuleNotFoundError:
-        pass
-    else:
-        # Only override matplotlib when required by the code
-        papyros.override_matplotlib()
-
+    papyros.set_file(filename, code)
     await papyros.run_async(code)
 
 def convert_completion(completion, index):
