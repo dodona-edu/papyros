@@ -3,7 +3,7 @@ import { CodeEditor } from "./CodeEditor";
 import { InputManager, InputMode } from "./InputManager";
 import { OutputManager } from "./OutputManager";
 import { Papyros } from "./Papyros";
-import { RunStateManager, RunState } from "./RunStateManager";
+import { CodeRunner, RunState } from "./CodeRunner";
 import { InputWorker } from "./workers/input/InputWorker";
 
 export * from "./ProgrammingLanguage";
@@ -12,7 +12,7 @@ export {
     Papyros,
     CodeEditor,
     RunState,
-    RunStateManager,
+    CodeRunner,
     InputManager,
     InputMode,
     OutputManager,
