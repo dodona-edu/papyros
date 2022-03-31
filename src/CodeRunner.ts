@@ -119,9 +119,8 @@ export class CodeRunner {
             type: BackendEventType.End,
             data: "User cancelled run", contentType: "text/plain"
         });
-        // Since we use workers, the old one must be entirely replaced to interrupt it
-        this.backend.interrupt();
-        return this.start();
+        await this.backend.interrupt();
+        this.setState(RunState.Ready);
     }
 
     /**

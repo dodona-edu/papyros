@@ -57,7 +57,9 @@ class Papyros(python_runner.PyodideRunner):
             elif event_type == "input":
                 return cb("input", data["prompt"], contentType="text/plain")
             elif event_type == "sleep":
-                return cb("sleep", str(data["seconds"]*1000), contentType="text/integer")
+                return cb("sleep", str(data["seconds"]*1000), contentType="text/float")
+            elif event_type == "interrupt":
+                return cb("interrupt", data["data"], contentType="text/plain")
             else:
                 raise ValueError(f"Unknown event type {event_type}")
 
@@ -115,20 +117,23 @@ class Papyros(python_runner.PyodideRunner):
         We call pre_run within to handle its exceptions within this try-block too
         As it will rethrow the SyntaxError (@see serialize_syntax_error)
         """
-        with self._execute_context(source_code):
-            try:
-                code_obj = self.pre_run(
-                    source_code, mode, top_level_await=top_level_await)
-                if code_obj:
-                    result = self.execute(code_obj, source_code, mode)
-                    while isinstance(result, Awaitable):
-                        result = await result
-                    return result
-            except:
-                await ft
-                # Let `_execute_context` and `serialize_traceback`
-                # handle the exception
-                raise
+        try:
+            with self._execute_context(source_code):
+                try:
+                    code_obj = self.pre_run(
+                        source_code, mode, top_level_await=top_level_await)
+                    if code_obj:
+                        result = self.execute(code_obj, source_code, mode)
+                        while isinstance(result, Awaitable):
+                            result = await result
+                        return result
+                except:
+                    await ft
+                    # Let `_execute_context` and `serialize_traceback`
+                    # handle the exception
+                    raise
+        except KeyboardInterrupt:
+            self.callback("interrupt", data="KeyBoardInterrupt", contentType="text/plain")
 
     def serialize_syntax_error(self, exc, source_code):
         raise  # Rethrow to ensure FriendlyTraceback library is imported correctly

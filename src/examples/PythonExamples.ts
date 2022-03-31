@@ -130,8 +130,8 @@ plt.plot(x, np.sin(x));
 plt.show()
 `,
     "Sleep": `import time
-print("See you in a second!")
-time.sleep(1)
+print("See you in a few seconds!")
+time.sleep(3)
 print("Good to see you again!")
 `
 };
