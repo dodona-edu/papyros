@@ -1,7 +1,7 @@
 import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
 import { BackendEvent, BackendEventType } from "./BackendEvent";
 import { papyrosLog, LogType } from "./util/Logging";
-import { SyncExtras } from "comsync";
+import { syncExpose, SyncExtras } from "comsync";
 
 /**
  * Interface to represent the CodeMirror CompletionContext in a worker
@@ -40,16 +40,28 @@ export interface WorkerAutocompleteContext {
 export abstract class Backend {
     protected syncExtras: SyncExtras;
     protected onEvent: (e: BackendEvent) => any;
-
     /**
      *  Constructor is limited as it is meant to be used as a WebWorker
      *  These are then exposed via Comlink. Proper initialization occurs
      *  in the launch method when the worker is started
+     * @param {Array<string>} syncMethods The methods to expose
      */
-    constructor() {
+    constructor(syncMethods = ["runCode"]) {
         this.syncExtras = {} as SyncExtras;
         // eslint-disable-next-line @typescript-eslint/no-empty-function
         this.onEvent = () => { };
+        this.exposeMethods(Array.from(syncMethods));
+    }
+
+    protected syncExpose(): any {
+        return syncExpose;
+    }
+
+    protected exposeMethods(syncMethods: Array<string>): void {
+        syncMethods.forEach(m => {
+            const method = (this as any)[m];
+            (this as any)[m] = this.syncExpose()(method.bind(this));
+        });
     }
 
     /**

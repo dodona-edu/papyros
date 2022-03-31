@@ -3,7 +3,7 @@ import { Backend, WorkerAutocompleteContext } from "../../Backend";
 import { CompletionResult } from "@codemirror/autocomplete";
 import { javascriptLanguage } from "@codemirror/lang-javascript";
 import { BackendEventType } from "../../BackendEvent";
-import { syncExpose, SyncExtras } from "comsync";
+import { SyncExtras } from "comsync";
 
 /**
  * Implementation of a JavaScript backend for Papyros
@@ -121,7 +121,6 @@ class JavaScriptWorker extends Backend {
     }
 
     override runCode(extras: SyncExtras, code: string): Promise<any> {
-        console.log("Running code in JS", extras, code);
         this.syncExtras = extras;
         // Builtins to store before execution and restore afterwards
         // Workers do not have access to prompt
@@ -164,7 +163,5 @@ class JavaScriptWorker extends Backend {
 // Default export to be recognized as a TS module
 export default {} as any;
 
-// Expose handles the actual export
-const jw = new JavaScriptWorker();
-(jw as any).runCode = syncExpose(jw.runCode.bind(jw));
-Comlink.expose(jw);
+// Comlink and Comsync handle the actual export
+Comlink.expose(new JavaScriptWorker());

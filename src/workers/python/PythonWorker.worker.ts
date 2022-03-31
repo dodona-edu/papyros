@@ -15,6 +15,18 @@ importScripts(PYODIDE_JS_URL);
 // Now loadPyodide is available
 declare function loadPyodide(args: { indexURL: string; fullStdLib: boolean }): Promise<Pyodide>;
 
+let pyodidePromise: Pyodide | Promise<Pyodide> | null = null;
+export async function getPyodide(): Promise<Pyodide> {
+    if (pyodidePromise === null) {
+        pyodidePromise = loadPyodide({
+            indexURL: PYODIDE_INDEX_URL,
+            fullStdLib: false
+        });
+    }
+    pyodidePromise = await pyodidePromise;
+    return Promise.resolve(pyodidePromise);
+}
+
 /**
  * Implementation of a Python backend for Papyros
  * Powered by Pyodide (https://pyodide.org/)
@@ -38,11 +50,15 @@ class PythonWorker extends Backend {
         return converted;
     }
 
+    protected override syncExpose(): any {
+        return (f: any) => pyodideExpose(getPyodide(), f);
+    }
+
     override async launch(
         onEvent: (e: BackendEvent) => void
     ): Promise<void> {
         await super.launch(onEvent);
-        this.pyodide = await pyodidePromise;
+        this.pyodide = await getPyodide();
         initPyodide(this.pyodide);
         await this.pyodide.loadPackage("micropip");
         await this.pyodide.runPythonAsync(initPythonString);
@@ -54,7 +70,6 @@ class PythonWorker extends Backend {
 
     async runCode(syncExtras: SyncExtras, code: string): Promise<any> {
         this.syncExtras = syncExtras;
-        console.log("Running code in python worker: ", syncExtras, code);
         try {
             // Sometimes a SyntaxError can cause imports to fail
             // We want the SyntaxError to be handled by process_code as well
@@ -80,15 +95,5 @@ class PythonWorker extends Backend {
 // Default export to be recognized as a TS module
 export default {} as any;
 
-
-const w = new PythonWorker();
-const pyodidePromise = loadPyodide({
-    indexURL: PYODIDE_INDEX_URL,
-    fullStdLib: false
-});
-(w as any).runCode = pyodideExpose(
-    pyodidePromise,
-    w.runCode.bind(w)
-);
-// Expose handles the actual export
-Comlink.expose(w);
+// Comlink and Comsync handle the actual export
+Comlink.expose(new PythonWorker());
