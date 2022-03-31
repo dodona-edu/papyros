@@ -97,14 +97,14 @@ export class CodeRunner {
     async start(): Promise<void> {
         this.setState(RunState.Loading);
         this.backend = BackendManager.startBackend(this.programmingLanguage);
-        this.editor.setLanguage(this.programmingLanguage,
-            async context => {
-                const completionContext = Backend.convertCompletionContext(context);
-                return await this.backend.workerProxy.autocomplete(completionContext);
-            });
+        this.editor.setLanguage(this.programmingLanguage);
         // Allow passing messages between worker and main thread
         await (this.backend.workerProxy as Remote<Backend>)
             .launch(proxy((e: BackendEvent) => BackendManager.publish(e)));
+        this.editor.setCompletionSource(async context => {
+            const completionContext = Backend.convertCompletionContext(context);
+            return await this.backend.workerProxy.autocomplete(completionContext);
+        });
         this.editor.focus();
         this.setState(RunState.Ready);
     }

@@ -104,21 +104,29 @@ export class CodeEditor {
     }
 
     /**
-     * Set the language that is currently used, with a corresponding placeholder
+     * Set the language that is currently used
      * @param {ProgrammingLanguage} language The language to use
-     * @param {CompletionSource} completionSource Function to generate autocomplete results
-     * @param {string} editorPlaceHolder Placeholder when empty
      */
-    setLanguage(language: ProgrammingLanguage, completionSource: CompletionSource)
+    setLanguage(language: ProgrammingLanguage)
         : void {
         this.editorView.dispatch({
             effects: [
                 this.languageCompartment.reconfigure(CodeEditor.getLanguageSupport(language)),
-                this.autocompletionCompartment.reconfigure(
-                    autocompletion({ override: [completionSource] })
-                ),
                 this.placeholderCompartment.reconfigure(placeholder(t("Papyros.code_placeholder",
                     { programmingLanguage: language })))
+            ]
+        });
+    }
+
+    /**
+     * @param {CompletionSource} completionSource Function to obtain autocomplete results
+     */
+    setCompletionSource(completionSource: CompletionSource): void {
+        this.editorView.dispatch({
+            effects: [
+                this.autocompletionCompartment.reconfigure(
+                    autocompletion({ override: [completionSource] })
+                )
             ]
         });
     }
