@@ -1,8 +1,9 @@
-import { expose } from "comlink";
+import * as Comlink from "comlink";
 import { Backend, WorkerAutocompleteContext } from "../../Backend";
 import { CompletionResult } from "@codemirror/autocomplete";
 import { javascriptLanguage } from "@codemirror/lang-javascript";
 import { BackendEventType } from "../../BackendEvent";
+import { syncExpose, SyncExtras } from "comsync";
 
 /**
  * Implementation of a JavaScript backend for Papyros
@@ -43,9 +44,8 @@ class JavaScriptWorker extends Backend {
     private prompt(text = ""): string {
         return this.onEvent({
             type: BackendEventType.Input,
-            data: JavaScriptWorker.stringify({ prompt: text }),
-            contentType: "text/json",
-            runId: this.runId
+            data: text,
+            contentType: "text/plain"
         });
     }
 
@@ -57,7 +57,6 @@ class JavaScriptWorker extends Backend {
         this.onEvent({
             type: BackendEventType.Output,
             data: JavaScriptWorker.stringify(...args) + "\n",
-            runId: this.runId,
             contentType: "text/plain"
         });
     }
@@ -70,8 +69,7 @@ class JavaScriptWorker extends Backend {
         this.onEvent({
             type: BackendEventType.Error,
             data: JavaScriptWorker.stringify(...args) + "\n",
-            contentType: "text/plain",
-            runId: this.runId
+            contentType: "text/plain"
         });
     }
 
@@ -122,7 +120,9 @@ class JavaScriptWorker extends Backend {
         return ret;
     }
 
-    override runCodeInternal(code: string): Promise<any> {
+    override runCode(extras: SyncExtras, code: string): Promise<any> {
+        console.log("Running code in JS", extras, code);
+        this.syncExtras = extras;
         // Builtins to store before execution and restore afterwards
         // Workers do not have access to prompt
         const oldContent = {
@@ -146,7 +146,6 @@ class JavaScriptWorker extends Backend {
             Error.captureStackTrace(error);
             return Promise.resolve(this.onEvent({
                 type: BackendEventType.Error,
-                runId: this.runId,
                 contentType: "text/json",
                 data: JSON.stringify({
                     name: error.constructor.name,
@@ -164,5 +163,8 @@ class JavaScriptWorker extends Backend {
 
 // Default export to be recognized as a TS module
 export default {} as any;
+
 // Expose handles the actual export
-expose(new JavaScriptWorker());
+const jw = new JavaScriptWorker();
+(jw as any).runCode = syncExpose(jw.runCode.bind(jw));
+Comlink.expose(jw);
