@@ -1093,7 +1093,7 @@
   resolved "https://registry.yarnpkg.com/@types/range-parser/-/range-parser-1.2.4.tgz#cd667bcfdd025213aafb7ca5915a932590acdcdc"
   integrity sha512-EEhsLsD6UsDM1yFhAvy0Cjr6VwmpMWqFBCb9w07wVugF7w9nfajxLuVmngTIpgS6svCnm6Vaw+MZhoDCKnOfsw==
 
-"@types/retry@^0.12.0":
+"@types/retry@^0.12.0", "@types/retry@^0.12.1":
   version "0.12.1"
   resolved "https://registry.yarnpkg.com/@types/retry/-/retry-0.12.1.tgz#d8f1c0d0dc23afad6dc16a9e993a0865774b4065"
   integrity sha512-xoDlM2S4ortawSWORYqsdU+2rxdh4LRW9ytc3zmT37RIKQh6IHyKwwtKhKis9ah8ol07DCkZxPt8BBvPjC6v4g==
@@ -2062,6 +2062,11 @@ compression@^1.7.4:
     on-headers "~1.0.2"
     safe-buffer "5.1.2"
     vary "~1.1.2"
+
+comsync@^0.0.6:
+  version "0.0.6"
+  resolved "https://registry.yarnpkg.com/comsync/-/comsync-0.0.6.tgz#5827ae89d4b590967051c56935260d4d157c3a52"
+  integrity sha512-K9Ml9bFj6l7UCAw951gEQyegk7dEDWanSpPKoUUoDj3l4+2oR0OMHzpNu1RaON+gBzOnNNfl1GBzSqhAOCZ3Xg==
 
 concat-map@0.0.1:
   version "0.0.1"
@@ -4617,6 +4622,14 @@ p-retry@^4.5.0:
     "@types/retry" "^0.12.0"
     retry "^0.13.1"
 
+p-retry@^5.0.0:
+  version "5.1.0"
+  resolved "https://registry.yarnpkg.com/p-retry/-/p-retry-5.1.0.tgz#a436926f54a15d833e3c39bbee9a73036716cfd4"
+  integrity sha512-zh8em2ciphCu4eZYzatLp4bTYkAhyi8PwMIOyQyh1b5bxunYNe6nwumHPkUBtvmEfIfnTYzhOq1+vWf46Qii+w==
+  dependencies:
+    "@types/retry" "^0.12.1"
+    retry "^0.13.1"
+
 p-try@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/p-try/-/p-try-1.0.0.tgz#cbc79cdbaf8fd4228e13f621f2b1a237c1b207b3"
@@ -4902,6 +4915,14 @@ purgecss@^4.0.3:
     glob "^7.1.7"
     postcss "^8.3.5"
     postcss-selector-parser "^6.0.6"
+
+pyodide-worker-runner@^0.0.7:
+  version "0.0.7"
+  resolved "https://registry.yarnpkg.com/pyodide-worker-runner/-/pyodide-worker-runner-0.0.7.tgz#8435d924646cb4e59c28cec795986c049c4d75d1"
+  integrity sha512-nRyGYi7b8Qy3I4hh8Z5eU0SpWe0o+/TeKHSfPHukRtqhDDyMfMQ+SDyaQIWe3C8hKXKUDpE82XyGhlW6CbwA1g==
+  dependencies:
+    comsync "^0.0.6"
+    p-retry "^5.0.0"
 
 qs@6.9.7:
   version "6.9.7"
@@ -5497,10 +5518,10 @@ symbol-tree@^3.2.4:
   resolved "https://registry.yarnpkg.com/symbol-tree/-/symbol-tree-3.2.4.tgz#430637d248ba77e078883951fb9aa0eed7c63fa2"
   integrity sha512-9QNk5KwDF+Bvz+PyObkmSYjI5ksVUYtjW7AU22r2NKcfLJcXp96hkDWU3+XndOsUb+AQ9QhfzfCT2O+CNWT5Tw==
 
-sync-message@^0.0.8:
-  version "0.0.8"
-  resolved "https://registry.yarnpkg.com/sync-message/-/sync-message-0.0.8.tgz#ca20723cd85fe819284ce82de3797ca108b02659"
-  integrity sha512-2DiQIfLgf6OnBU2cNEqV38UZyMD9nUkXyaWXUPFIykdbfpXl3V5x9VmJH4s7M66IK5G1C7wY6KB9W/44E+vVvQ==
+sync-message@^0.0.9:
+  version "0.0.9"
+  resolved "https://registry.yarnpkg.com/sync-message/-/sync-message-0.0.9.tgz#8da80c1103b5eb688729e22d9480b8a59c83aa5d"
+  integrity sha512-mA7WltTNV+kHaM8SkDExirvwH7/+IXPR8+2JSYa2ahKdP+mdatO9/vZuuTKMiBcPAk9zQ5gfAcbSOFwKQeQEIA==
 
 table@^6.0.9:
   version "6.8.0"
