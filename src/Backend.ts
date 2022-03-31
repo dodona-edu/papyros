@@ -1,8 +1,7 @@
-import { Channel, readMessage, uuidv4 } from "sync-message";
-import { parseData } from "./util/Util";
 import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
-import { BackendEvent } from "./BackendEvent";
+import { BackendEvent, BackendEventType } from "./BackendEvent";
 import { papyrosLog, LogType } from "./util/Logging";
+import { SyncExtras } from "comsync";
 
 /**
  * Interface to represent the CodeMirror CompletionContext in a worker
@@ -39,8 +38,8 @@ export interface WorkerAutocompleteContext {
 }
 
 export abstract class Backend {
+    protected syncExtras: SyncExtras;
     protected onEvent: (e: BackendEvent) => any;
-    protected runId: number;
 
     /**
      *  Constructor is limited as it is meant to be used as a WebWorker
@@ -48,62 +47,35 @@ export abstract class Backend {
      *  in the launch method when the worker is started
      */
     constructor() {
+        this.syncExtras = {} as SyncExtras;
         // eslint-disable-next-line @typescript-eslint/no-empty-function
         this.onEvent = () => { };
-        this.runId = 0;
     }
 
     /**
      * Initialize the backend by doing all setup-related work
      * @param {function(BackendEvent):void} onEvent Callback for when events occur
-     * @param {Channel} channel for communication with the main thread
      * @return {Promise<void>} Promise of launching
      */
     launch(
-        onEvent: (e: BackendEvent) => void,
-        channel: Channel
+        onEvent: (e: BackendEvent) => void
     ): Promise<void> {
-        // Input messages are handled in a special way
-        // In order to link input requests to their responses
-        // An ID is required to make the connection
-        // The message must be read in the worker to not stall the main thread
-        const onInput = (e: BackendEvent): string => {
-            const inputData = parseData(e.data, e.contentType);
-            const messageId = uuidv4();
-            inputData.messageId = messageId;
-            e.data = JSON.stringify(inputData);
-            e.contentType = "text/json";
-            onEvent(e);
-            return readMessage(channel, messageId);
-        };
         this.onEvent = (e: BackendEvent) => {
-            e.runId = this.runId;
-            if (e.type === "input") {
-                return onInput(e);
-            } else {
-                return onEvent(e);
+            onEvent(e);
+            if (e.type === BackendEventType.Input) {
+                const res = this.syncExtras.readMessage();
+                return res;
             }
         };
         return Promise.resolve();
     }
 
     /**
-     * Internal helper method that actually executes the code
-     * Results or Errors must be passed by using the onEvent-callback
-     * @param code The code to run
-     */
-    protected abstract runCodeInternal(code: string): Promise<void>;
-
-    /**
      * Executes the given code
      * @param {string} code The code to run
-     * @param {string} runId The uuid for this execution
      * @return {Promise<void>} Promise of execution
      */
-    async runCode(code: string, runId: number): Promise<void> {
-        this.runId = runId;
-        return await this.runCodeInternal(code);
-    }
+    abstract runCode(extras: SyncExtras, code: string): Promise<void>;
 
     /**
      * Converts the context to a cloneable object containing useful properties

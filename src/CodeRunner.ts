@@ -1,4 +1,5 @@
 import { proxy, Remote } from "comlink";
+import { SyncClient } from "comsync";
 import { Backend } from "./Backend";
 import { BackendEvent, BackendEventType } from "./BackendEvent";
 import { BackendManager } from "./BackendManager";
@@ -52,11 +53,7 @@ export class CodeRunner {
     /**
      * The backend that executes the code asynchronously
      */
-    private backend: Remote<Backend>;
-    /**
-     * The identifier for the current run
-     */
-    private runId: number;
+    private backend: SyncClient<Backend>;
     /**
      * Current state of the program
      */
@@ -73,9 +70,11 @@ export class CodeRunner {
     constructor(programmingLanguage: ProgrammingLanguage) {
         this.programmingLanguage = programmingLanguage;
         this.editor = new CodeEditor();
-        this.inputManager = new InputManager(() => this.setState(RunState.Running));
-        this.backend = {} as Remote<Backend>;
-        this.runId = 0;
+        this.inputManager = new InputManager((input: string) => {
+            this.backend.writeMessage(input);
+            this.setState(RunState.Running);
+        });
+        this.backend = {} as SyncClient<Backend>;
         this.buttons = [];
         this.addButton({
             id: RUN_BTN_ID,
@@ -101,10 +100,11 @@ export class CodeRunner {
         this.editor.setLanguage(this.programmingLanguage,
             async context => {
                 const completionContext = Backend.convertCompletionContext(context);
-                return await this.backend.autocomplete(completionContext);
+                return await this.backend.workerProxy.autocomplete(completionContext);
             });
         // Allow passing messages between worker and main thread
-        await this.backend.launch(proxy(e => this.publishEvent(e)), this.inputManager.getChannel());
+        await (this.backend.workerProxy as Remote<Backend>)
+            .launch(proxy((e: BackendEvent) => BackendManager.publish(e)));
         this.editor.focus();
         this.setState(RunState.Ready);
     }
@@ -114,34 +114,23 @@ export class CodeRunner {
      * @return {Promise<void>} Promise of stopping
      */
     async stop(): Promise<void> {
-        this.runId += 1; // ignore messages coming from last run
         this.setState(RunState.Stopping);
-        this.publishEvent({
+        BackendManager.publish({
             type: BackendEventType.End,
-            runId: this.runId,
             data: "User cancelled run", contentType: "text/plain"
         });
         // Since we use workers, the old one must be entirely replaced to interrupt it
-        BackendManager.stopBackend(this.backend);
+        this.backend.interrupt();
         return this.start();
     }
 
-    /**
-     * Helper method to publish events, if they are still relevant
-     * @param {BackendEvent} e The event to publish
-     */
-    publishEvent(e: BackendEvent): void {
-        if (e.runId === this.runId) {
-            BackendManager.publish(e);
-        }
-    }
     /**
      * Set the used programming language to the given one to allow editing and running code
      * @param {ProgrammingLanguage} programmingLanguage The language to use
      */
     async setProgrammingLanguage(programmingLanguage: ProgrammingLanguage): Promise<void> {
         if (this.programmingLanguage !== programmingLanguage) { // Expensive, so ensure it is needed
-            BackendManager.stopBackend(this.backend);
+            await this.backend.interrupt();
             this.programmingLanguage = programmingLanguage;
             await this.start();
         }
@@ -242,33 +231,31 @@ export class CodeRunner {
      */
     async runCode(): Promise<void> {
         // Setup pre-run
-        this.runId += 1;
         this.setState(RunState.Running);
-        this.publishEvent({
+        BackendManager.publish({
             type: BackendEventType.Start,
-            runId: this.runId,
             data: "User started run", contentType: "text/plain"
         });
         papyrosLog(LogType.Debug, "Running code in Papyros, sending to backend");
         const start = new Date().getTime();
         let endMessage = "Program finishd normally";
         try {
-            await this.backend.runCode(this.editor.getCode(), this.runId);
+            await this.backend.call(
+                this.backend.workerProxy.runCode, this.editor.getCode()
+            );
         } catch (error: any) {
             papyrosLog(LogType.Error, error);
-            this.publishEvent({
+            BackendManager.publish({
                 type: BackendEventType.Error,
                 data: JSON.stringify(error),
-                runId: this.runId,
                 contentType: "text/json"
             });
             endMessage = "Program terminated due to error: " + error.constructor.name;
         } finally {
             const end = new Date().getTime();
             this.setState(RunState.Ready, t("Papyros.finished", { time: (end - start) / 1000 }));
-            this.publishEvent({
+            BackendManager.publish({
                 type: BackendEventType.End,
-                runId: this.runId,
                 data: endMessage, contentType: "text/plain"
             });
         }

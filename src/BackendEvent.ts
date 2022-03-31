@@ -25,11 +25,6 @@ export interface BackendEvent {
      */
     type: BackendEventType;
     /**
-     * The identifier for the run this message is associated with
-     * This allows discarding outdated events that were delayed
-     */
-    runId: number;
-    /**
      * The actual data stored in this event
      */
     data: string;

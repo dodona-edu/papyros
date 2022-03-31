@@ -1,5 +1,3 @@
-/* eslint-disable valid-jsdoc */ // Some parts are incorrectly marked as functions
-import { releaseProxy, Remote, wrap } from "comlink";
 import { Backend } from "./Backend";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import PythonWorker from "./workers/python/PythonWorker.worker";
@@ -7,62 +5,73 @@ import JavaScriptWorker from "./workers/javascript/JavaScriptWorker.worker";
 import { BackendEvent, BackendEventType } from "./BackendEvent";
 import { LogType, papyrosLog } from "./util/Logging";
 import { Channel, makeChannel } from "sync-message";
-
+import { SyncClient } from "comsync";
+import { PyodideClient } from "pyodide-worker-runner";
 /**
  * Callback type definition for subscribers
  * @param {BackendEvent} e The published event
  */
 type BackendEventListener = (e: BackendEvent) => void;
 
+class Cacheable<T> {
+    private cached: T | null;
+    private createFn: () => T;
+    constructor(createFn: () => T) {
+        this.cached = null;
+        this.createFn = createFn;
+    }
+    public get(): T {
+        if (this.cached === null) {
+            this.cached = this.createFn();
+        }
+        return this.cached;
+    }
+}
+
 /**
  * Abstract class to implement the singleton pattern
  * Static methods group functionality
  */
 export abstract class BackendManager {
-    /**
-     * Store Worker per Backend as Comlink proxy has no explicit reference to the Worker
-     * We need the Worker itself to be able to terminate it (@see stopBackend)
-     */
-    static backendMap: Map<Remote<Backend>, Worker> = new Map();
-    static createWorkerMap: Map<ProgrammingLanguage, () => Worker> = new Map([
-        [ProgrammingLanguage.Python, () => new PythonWorker()],
-        [ProgrammingLanguage.JavaScript, () => new JavaScriptWorker()]
-    ]);
+    static createWorkerMap: Map<ProgrammingLanguage, Cacheable<SyncClient<Backend>>>
+        = BackendManager.buildSyncClientMap();
     static channel: Channel = makeChannel()!;
     /**
      * Map an event type to interested subscribers
      * Uses an Array to maintain order of subscription
      */
     static subscriberMap: Map<BackendEventType, Array<BackendEventListener>> = new Map();
+
+    private static buildSyncClientMap(): Map<ProgrammingLanguage, Cacheable<SyncClient<Backend>>> {
+        const m = new Map();
+        m.set(
+            ProgrammingLanguage.Python, new Cacheable(
+                () => new PyodideClient<Backend>(
+                    () => new PythonWorker(),
+                    BackendManager.channel
+                )
+            )
+        );
+        m.set(
+            ProgrammingLanguage.JavaScript, new Cacheable(
+                () => new SyncClient<Backend>(
+                    () => new JavaScriptWorker(),
+                    BackendManager.channel
+                )
+            )
+        );
+        return m;
+    }
     /**
      * Start a backend for the given language, while storing the worker
      * @param {ProgrammingLanguage} language The programming language supported by the backend
      * @return {Remote<Backend>} A Comlink proxy for the Backend
      */
-    static startBackend(language: ProgrammingLanguage): Remote<Backend> {
+    static startBackend(language: ProgrammingLanguage): SyncClient<Backend> {
         if (this.createWorkerMap.has(language)) {
-            const worker = this.createWorkerMap.get(language)!();
-            const backend = wrap<Backend>(worker);
-            // store worker itself in the map
-            this.backendMap.set(backend, worker);
-            return backend;
+            return this.createWorkerMap.get(language)!.get();
         } else {
             throw new Error(`${language} is not yet supported.`);
-        }
-    }
-
-    /**
-     * Stop a backend by terminating the worker and releasing memory
-     * @param {Remote<Backend>} backend The proxy for the backend to stop
-     */
-    static stopBackend(backend: Remote<Backend>): void {
-        if (this.backendMap.has(backend)) {
-            const toStop = this.backendMap.get(backend)!;
-            toStop.terminate();
-            backend[releaseProxy]();
-            this.backendMap.delete(backend);
-        } else {
-            throw new Error(`Unknown backend supplied for backend ${JSON.stringify(backend)}`);
         }
     }
 
