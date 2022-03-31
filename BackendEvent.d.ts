@@ -7,7 +7,8 @@ export declare enum BackendEventType {
     Input = "input",
     Output = "output",
     Sleep = "sleep",
-    Error = "error"
+    Error = "error",
+    Interrupt = "interrupt"
 }
 /**
  * All possible types for ease of iteration
