@@ -50,6 +50,9 @@ class PythonWorker extends Backend {
         return converted;
     }
 
+    /**
+     * @return {any} Function to expose a method with Pyodide support
+     */
     protected override syncExpose(): any {
         return (f: any) => pyodideExpose(getPyodide(), f);
     }

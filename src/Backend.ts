@@ -53,10 +53,17 @@ export abstract class Backend {
         this.exposeMethods(Array.from(syncMethods));
     }
 
+    /**
+     * @return {any} The function to expose methods for Comsync to allow interrupting
+     */
     protected syncExpose(): any {
         return syncExpose;
     }
 
+    /**
+     * Expose all the methods that should support being interrupted
+     * @param {Array<string>} syncMethods The names of the methods to expose
+     */
     protected exposeMethods(syncMethods: Array<string>): void {
         syncMethods.forEach(m => {
             const method = (this as any)[m];
