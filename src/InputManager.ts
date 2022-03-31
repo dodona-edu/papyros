@@ -9,7 +9,6 @@ import {
     addListener, parseData,
     RenderOptions, renderWithOptions
 } from "./util/Util";
-import { writeMessage } from "sync-message";
 import { InteractiveInputHandler } from "./input/InteractiveInputHandler";
 import { UserInputHandler } from "./input/UserInputHandler";
 import { BatchInputHandler } from "./input/BatchInputHandler";
@@ -22,11 +21,6 @@ export enum InputMode {
 
 export const INPUT_MODES = [InputMode.Batch, InputMode.Interactive];
 
-export interface InputData {
-    prompt: string;
-    messageId: string;
-}
-
 export class InputManager {
     private inputMode: InputMode;
     private inputHandlers: Map<InputMode, UserInputHandler>;
@@ -34,14 +28,12 @@ export class InputManager {
     private waiting: boolean;
     private prompt: string;
 
-    private onSend: () => void;
-    private messageId = "";
+    private sendInput: (input: string) => void;
 
-    constructor(onSend: () => void) {
+    constructor(sendInput: (input: string) => void) {
         this.inputHandlers = this.buildInputHandlerMap();
         this.inputMode = InputMode.Interactive;
-        this.inputHandler.addInputListener(this);
-        this.onSend = onSend;
+        this.sendInput = sendInput;
         this.waiting = false;
         this.prompt = "";
         this.renderOptions = {} as RenderOptions;
@@ -52,9 +44,9 @@ export class InputManager {
 
     private buildInputHandlerMap(): Map<InputMode, UserInputHandler> {
         const interactiveInputHandler: UserInputHandler =
-            new InteractiveInputHandler();
+            new InteractiveInputHandler(() => this.onUserInput());
         const batchInputHandler: UserInputHandler =
-            new BatchInputHandler();
+            new BatchInputHandler(() => this.onUserInput());
         return new Map([
             [InputMode.Interactive, interactiveInputHandler],
             [InputMode.Batch, batchInputHandler]
@@ -70,7 +62,6 @@ export class InputManager {
         this.inputMode = inputMode;
         this.render(this.renderOptions);
         this.inputHandler.onToggle(true);
-        this.inputHandler.addInputListener(this);
     }
 
     get inputHandler(): UserInputHandler {
@@ -108,9 +99,8 @@ ${switchMode}`);
         if (this.inputHandler.hasNext()) {
             const line = this.inputHandler.next();
             papyrosLog(LogType.Debug, "Sending input to user: " + line);
-            await writeMessage(BackendManager.channel, line, this.messageId);
+            this.sendInput(line);
             this.waitWithPrompt(false);
-            this.onSend();
         } else {
             papyrosLog(LogType.Debug, "Had no input to send, still waiting!");
             this.waitWithPrompt(true, this.prompt);
@@ -124,9 +114,7 @@ ${switchMode}`);
      */
     async onInputRequest(e: BackendEvent): Promise<void> {
         papyrosLog(LogType.Debug, "Handling input request in Papyros");
-        const data = parseData(e.data, e.contentType) as InputData;
-        this.messageId = data.messageId;
-        this.prompt = data.prompt;
+        this.prompt = parseData(e.data, e.contentType);
         return await this.onUserInput();
     }
 

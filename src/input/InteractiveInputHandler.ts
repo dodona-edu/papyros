@@ -64,10 +64,10 @@ export class InteractiveInputHandler extends UserInputHandler {
         ${t("Papyros.enter")}
     </button>
 </div>`);
-        addListener(SEND_INPUT_BTN_ID, () => this.onUserInput(), "click");
+        addListener(SEND_INPUT_BTN_ID, () => this.inputCallback(), "click");
         this.inputArea.addEventListener("keydown", (ev: KeyboardEvent) => {
             if (this.waiting && ev.key && ev.key.toLowerCase() === "enter") {
-                this.onUserInput();
+                this.inputCallback();
             }
         });
         return rendered;

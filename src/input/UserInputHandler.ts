@@ -2,10 +2,6 @@ import { INPUT_TA_ID } from "../Constants";
 import { InputMode } from "../InputManager";
 import { getElement, RenderOptions, t } from "../util/Util";
 
-export interface InputListener {
-    onUserInput(): void;
-}
-
 /**
  * Base class for components that handle input from the user
  */
@@ -15,23 +11,17 @@ export abstract class UserInputHandler {
      */
     protected waiting: boolean;
 
-    protected inputListeners: Set<InputListener>;
+    protected inputCallback: () => void;
 
     /**
      * Construct a new UserInputHandler
+     * @param {function()} inputCallback  Callback for when the user has entered a value
      */
-    constructor() {
+    constructor(inputCallback: () => void) {
         this.waiting = false;
-        this.inputListeners = new Set();
+        this.inputCallback = inputCallback;
     }
 
-    public addInputListener(listener: InputListener): void {
-        this.inputListeners.add(listener);
-    }
-
-    protected onUserInput(): void {
-        this.inputListeners.forEach(l => l.onUserInput());
-    }
     /**
      * Whether this handler has input ready
      */

@@ -16,10 +16,10 @@ export class BatchInputHandler extends UserInputHandler {
 
     /**
      * Construct a new BatchInputHandler
-     * @param {function()} onInput  Callback for when the user has entered a value
+     * @param {function()} inputCallback  Callback for when the user has entered a value
      */
-    constructor() {
-        super();
+    constructor(inputCallback: () => void) {
+        super(inputCallback);
         this.lineNr = 0;
         this.previousInput = "";
     }
@@ -77,7 +77,7 @@ focus:outline-none focus:ring-1 focus:ring-blue-500" rows="5">
                 if (this.lines.length < this.lineNr) {
                     this.lineNr = this.lines.length - 1;
                 }
-                this.onUserInput();
+                this.inputCallback();
             }
         });
         return rendered;
