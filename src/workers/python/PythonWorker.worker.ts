@@ -1,11 +1,12 @@
-import { expose } from "comlink";
+import * as Comlink from "comlink";
 import { Backend, WorkerAutocompleteContext } from "../../Backend";
 import { LogType, papyrosLog } from "../../util/Logging";
 import { Pyodide, PYODIDE_INDEX_URL, PYODIDE_JS_URL } from "./Pyodide";
-import { Channel } from "sync-message";
 import { CompletionResult } from "@codemirror/autocomplete";
 import { parseData } from "../../util/Util";
 import { BackendEvent } from "../../BackendEvent";
+import { initPyodide, pyodideExpose } from "pyodide-worker-runner";
+import { SyncExtras } from "comsync";
 /* eslint-disable-next-line */
 const initPythonString = require("!!raw-loader!./init.py").default;
 
@@ -20,58 +21,48 @@ declare function loadPyodide(args: { indexURL: string; fullStdLib: boolean }): P
  */
 class PythonWorker extends Backend {
     pyodide: Pyodide;
-    initialized: boolean;
 
     constructor() {
         super();
         this.pyodide = {} as Pyodide;
-        this.initialized = false;
     }
 
     private convert(data: any): any {
         let converted = data;
-        if ("toJs" in data) {
-            converted = data.toJs();
+        if (data.toJs) {
+            converted = data.toJs({ dict_converter: Object.fromEntries });
         }
-        return Object.fromEntries(converted);
+        if (converted instanceof Map) {
+            converted = Object.fromEntries(converted);
+        }
+        return converted;
     }
 
     override async launch(
-        onEvent: (e: BackendEvent) => void,
-        channel: Channel
+        onEvent: (e: BackendEvent) => void
     ): Promise<void> {
-        await super.launch(onEvent, channel);
-        this.pyodide = await loadPyodide({
-            indexURL: PYODIDE_INDEX_URL,
-            fullStdLib: false
-        });
-        // Load our own modules to connect Papyros and Pyodide
-        await this.runCodeInternal(initPythonString);
+        await super.launch(onEvent);
+        this.pyodide = await pyodidePromise;
+        initPyodide(this.pyodide);
+        await this.pyodide.loadPackage("micropip");
+        await this.pyodide.runPythonAsync(initPythonString);
         // Python calls our function with a PyProxy dict or a Js Map,
         // These must be converted to a PapyrosEvent (JS Object) to allow message passing
-        const eventCallback = (data: any): void => {
-            return this.onEvent(this.convert(data));
-        };
         // Initialize our loaded Papyros module with the callback
-        await this.pyodide.globals.get("init_papyros")(eventCallback);
-        this.initialized = true;
+        await this.pyodide.globals.get("init_papyros")((e: any) => this.onEvent(this.convert(e)));
     }
 
-    override async runCodeInternal(code: string): Promise<any> {
-        if (this.initialized) {
-            try {
-                // Sometimes a SyntaxError can cause imports to fail
-                // We want the SyntaxError to be handled by process_code as well
-                await this.pyodide.loadPackagesFromImports(code);
-            } catch (e) {
-                papyrosLog(LogType.Debug, "Something went wrong while loading imports: ", e);
-            }
-            await this.pyodide.globals.get("process_code")(code);
-        } else {
-            // Don't use loadPackagesFromImports here because it loads matplotlib immediately
-            await this.pyodide.loadPackage("micropip");
-            return this.pyodide.runPythonAsync(code);
+    async runCode(syncExtras: SyncExtras, code: string): Promise<any> {
+        this.syncExtras = syncExtras;
+        console.log("Running code in python worker: ", syncExtras, code);
+        try {
+            // Sometimes a SyntaxError can cause imports to fail
+            // We want the SyntaxError to be handled by process_code as well
+            await this.pyodide.loadPackagesFromImports(code);
+        } catch (e) {
+            papyrosLog(LogType.Debug, "Something went wrong while loading imports: ", e);
         }
+        await this.pyodide.globals.get("process_code")(code);
     }
 
     override async autocomplete(context: WorkerAutocompleteContext):
@@ -88,5 +79,16 @@ class PythonWorker extends Backend {
 
 // Default export to be recognized as a TS module
 export default {} as any;
+
+
+const w = new PythonWorker();
+const pyodidePromise = loadPyodide({
+    indexURL: PYODIDE_INDEX_URL,
+    fullStdLib: false
+});
+(w as any).runCode = pyodideExpose(
+    pyodidePromise,
+    w.runCode.bind(w)
+);
 // Expose handles the actual export
-expose(new PythonWorker());
+Comlink.expose(w);

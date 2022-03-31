@@ -23,6 +23,14 @@ export interface Pyodide {
      * An alias to the global Python namespace.
      */
     globals: Map<string, any>;
+    unpackArchive: (
+        buffer: ArrayBuffer,
+        format: string,
+        extractDir?: string,
+    ) => void;
+    pyimport: (name: string) => any;
+    registerComlink: any;
+    setInterruptBuffer: (buffer: Int32Array) => void;
 }
 // Version and locations of code required to run Pyodide in the browser
 const PYODIDE_VERSION = "v0.19.0";

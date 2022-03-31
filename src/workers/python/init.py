@@ -20,7 +20,6 @@ SYS_RECURSION_LIMIT = 500
 papyros = None
 
 class Papyros(python_runner.PatchedStdinRunner):
-    DEFAULT_PDB_MESSAGES = ["--Return--", "--Call--", "--KeyboardInterrupt--"]
     def __init__(
         self,
         *,
@@ -55,7 +54,7 @@ class Papyros(python_runner.PatchedStdinRunner):
                     else:
                         raise ValueError(f"Unknown output part type {typ}")
             elif event_type == "input":
-                return cb("input", json.dumps(dict(prompt=data["prompt"])), contentType="text/json")
+                return cb("input", data["prompt"], contentType="text/plain")
             else:
                 raise ValueError(f"Unknown event type {event_type}")
 
