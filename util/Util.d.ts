@@ -59,7 +59,7 @@ declare type ElementIdentifier = string | HTMLElement;
  * @param {string} eventType The type of the event
  * @param {string} attribute The attribute affected by the event
  */
-export declare function addListener<T extends string>(elementId: ElementIdentifier, onEvent: (e: T) => void, eventType: string, attribute?: string): void;
+export declare function addListener<T extends string>(elementId: ElementIdentifier, onEvent: (e: T) => void, eventType?: string, attribute?: string): void;
 /**
  * Unset the selected item of a select element to prevent a default selection
  * @param {ElementIdentifier} selectId Identifier for the select element
@@ -99,9 +99,9 @@ export declare function renderWithOptions(options: RenderOptions, content: strin
 /**
  * Parse the data contained within a PapyrosEvent using its contentType
  * Supported content types are: text/plain, text/json, img/png;base64
- * @param {unknown} data The data to parse
+ * @param {string} data The data to parse
  * @param {string} contentType The content type of the data
  * @return {any} The parsed data
  */
-export declare function parseData(data: unknown, contentType: string): any;
+export declare function parseData(data: string, contentType: string): any;
 export {};

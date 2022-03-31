@@ -1,12 +1,33 @@
-import { BackendEvent } from "./BackendEvent";
-import { Channel } from "sync-message";
 import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
+import { BackendEvent } from "./BackendEvent";
+import { SyncExtras } from "comsync";
+/**
+ * Interface to represent the CodeMirror CompletionContext in a worker
+ */
 export interface WorkerAutocompleteContext {
+    /**
+     * Whether the autocompletion was explicitly requested (using keybindings)
+     */
     explicit: boolean;
+    /**
+     * The absolute position in the CodeMirror document
+     */
     pos: number;
+    /**
+     * The line number of the cursor while completing (1-based)
+     */
     line: number;
+    /**
+     * The column number of the cursor while completing (1-based)
+     */
     column: number;
+    /**
+     * The full text to autocomplete for
+     */
     text: string;
+    /**
+     * The match before the cursor (determined by a regex)
+     */
     before: {
         from: number;
         to: number;
@@ -14,51 +35,36 @@ export interface WorkerAutocompleteContext {
     } | null;
 }
 export declare abstract class Backend {
+    protected syncExtras: SyncExtras;
     protected onEvent: (e: BackendEvent) => any;
-    protected runId: number;
     /**
      *  Constructor is limited as it is meant to be used as a WebWorker
      *  These are then exposed via Comlink. Proper initialization occurs
      *  in the launch method when the worker is started
+     * @param {Array<string>} syncMethods The methods to expose
      */
-    constructor();
+    constructor(syncMethods?: string[]);
+    /**
+     * @return {any} The function to expose methods for Comsync to allow interrupting
+     */
+    protected syncExpose(): any;
+    /**
+     * Expose all the methods that should support being interrupted
+     * @param {Array<string>} syncMethods The names of the methods to expose
+     */
+    protected exposeMethods(syncMethods: Array<string>): void;
     /**
      * Initialize the backend by doing all setup-related work
      * @param {function(BackendEvent):void} onEvent Callback for when events occur
-     * @param {Channel} channel for communication with the main thread
      * @return {Promise<void>} Promise of launching
      */
-    launch(onEvent: (e: BackendEvent) => void, channel: Channel): Promise<void>;
-    /**
-     * Internal helper method that actually executes the code
-     * Results or Errors must be passed by using the onEvent-callback
-     * @param code The code to run
-     */
-    protected abstract runCodeInternal(code: string): Promise<void>;
+    launch(onEvent: (e: BackendEvent) => void): Promise<void>;
     /**
      * Executes the given code
      * @param {string} code The code to run
-     * @param {string} runId The uuid for this execution
      * @return {Promise<void>} Promise of execution
      */
-    runCode(code: string, runId: number): Promise<void>;
-    /**
-     * Run a piece of code in debug mode, allowing the user to figure out
-     * why things do or do not work
-     * @param {string} code The code to debug
-     * @param {number} runId The internal identifier for this code run
-     * @param {Set<number>} breakpoints The line numbers where the user put a breakpoint
-     * @return {Promise<void>} Promise of debugging
-     */
-    debugCode(code: string, runId: number, breakpoints: Set<number>): Promise<void>;
-    /**
-     * Internal helper method that actually debugs the code
-     * Communication is done by using the onEvent-callback
-     * @param {string} code The code to debug
-     * @param {Set<number>} breakpoints The line numbers where the user put a breakpoint
-     * @return {Promise<void>} Promise of debugging
-     */
-    protected abstract debugCodeInternal(code: string, breakpoints: Set<number>): Promise<any>;
+    abstract runCode(extras: SyncExtras, code: string): Promise<void>;
     /**
      * Converts the context to a cloneable object containing useful properties
      * to generate autocompletion suggestions with

@@ -1,4 +1,3 @@
-import { BackendEvent } from "./BackendEvent";
 import { CodeEditor } from "./CodeEditor";
 import { InputManager } from "./InputManager";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
@@ -34,10 +33,6 @@ export declare class CodeRunner {
      */
     private backend;
     /**
-     * The identifier for the current run
-     */
-    private runId;
-    /**
      * Current state of the program
      */
     private state;
@@ -60,11 +55,6 @@ export declare class CodeRunner {
      */
     stop(): Promise<void>;
     /**
-     * Helper method to publish events, if they are still relevant
-     * @param {BackendEvent} e The event to publish
-     */
-    publishEvent(e: BackendEvent): void;
-    /**
      * Set the used programming language to the given one to allow editing and running code
      * @param {ProgrammingLanguage} programmingLanguage The language to use
      */
@@ -74,10 +64,6 @@ export declare class CodeRunner {
      * Get the button to run the code
      */
     get runButton(): HTMLButtonElement;
-    /**
-     * Get the button to debug the code
-     */
-    get debugButton(): HTMLButtonElement;
     /**
      * Get the button to interrupt the code
      */
@@ -110,9 +96,7 @@ export declare class CodeRunner {
     render(statusPanelOptions: RenderOptions, inputOptions: RenderOptions, codeEditorOptions: RenderOptions): HTMLElement;
     /**
      * Run the code that is currently present in the editor
-     * @param {boolean} debug Whether the run happens in debug mode
      * @return {Promise<void>} Promise of running the code
      */
-    runCode(debug: boolean): Promise<void>;
-    onDebug(e: BackendEvent): void;
+    runCode(): Promise<void>;
 }

@@ -1,8 +1,5 @@
 import { InputMode } from "../InputManager";
 import { RenderOptions } from "../util/Util";
-export interface InputListener {
-    onUserInput(): void;
-}
 /**
  * Base class for components that handle input from the user
  */
@@ -11,13 +8,12 @@ export declare abstract class UserInputHandler {
      * Whether we are waiting for the user to input data
      */
     protected waiting: boolean;
-    protected inputListeners: Set<InputListener>;
+    protected inputCallback: () => void;
     /**
      * Construct a new UserInputHandler
+     * @param {function()} inputCallback  Callback for when the user has entered a value
      */
-    constructor();
-    addInputListener(listener: InputListener): void;
-    protected onUserInput(): void;
+    constructor(inputCallback: () => void);
     /**
      * Whether this handler has input ready
      */

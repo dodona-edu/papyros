@@ -13,9 +13,9 @@ export declare class BatchInputHandler extends UserInputHandler {
     private previousInput;
     /**
      * Construct a new BatchInputHandler
-     * @param {function()} onInput  Callback for when the user has entered a value
+     * @param {function()} inputCallback  Callback for when the user has entered a value
      */
-    constructor();
+    constructor(inputCallback: () => void);
     onToggle(active: boolean): void;
     getInputMode(): InputMode;
     /**
