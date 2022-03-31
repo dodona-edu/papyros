@@ -128,5 +128,10 @@ x = np.linspace(0, 10, 1000)
 plt.plot(x, np.sin(x));
 
 plt.show()
+`,
+    "Sleep": `import time
+print("See you in a second!")
+time.sleep(1)
+print("Good to see you again!")
 `
 };

@@ -3,18 +3,19 @@
  */
 export enum BackendEventType {
     Start = "start",
+    End = "end",
     Input = "input",
     Output = "output",
-    Error = "error",
-    End = "end"
+    Sleep = "sleep",
+    Error = "error"
 }
 /**
  * All possible types for ease of iteration
  */
 export const BACKEND_EVENT_TYPES = [
-    BackendEventType.Input, BackendEventType.Output,
     BackendEventType.Start, BackendEventType.End,
-    BackendEventType.Error
+    BackendEventType.Input, BackendEventType.Output,
+    BackendEventType.Sleep, BackendEventType.Error
 ];
 /**
  * Interface for events used for communication between threads

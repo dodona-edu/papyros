@@ -1,4 +1,5 @@
 import builtins
+import time
 import os
 import sys
 import json
@@ -19,7 +20,7 @@ SYS_RECURSION_LIMIT = 500
 # Global Papyros instance
 papyros = None
 
-class Papyros(python_runner.PatchedStdinRunner):
+class Papyros(python_runner.PyodideRunner):
     def __init__(
         self,
         *,
@@ -55,6 +56,8 @@ class Papyros(python_runner.PatchedStdinRunner):
                         raise ValueError(f"Unknown output part type {typ}")
             elif event_type == "input":
                 return cb("input", data["prompt"], contentType="text/plain")
+            elif event_type == "sleep":
+                return cb("sleep", str(data["seconds"]*1000), contentType="text/integer")
             else:
                 raise ValueError(f"Unknown event type {event_type}")
 
@@ -72,6 +75,7 @@ class Papyros(python_runner.PatchedStdinRunner):
         os.environ["MPLBACKEND"] = "AGG"
         sys.stdin.readline = self.readline
         builtins.input = self.input
+        time.sleep = self.sleep
         try:
             import matplotlib
         except ModuleNotFoundError:

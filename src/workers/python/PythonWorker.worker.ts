@@ -68,7 +68,10 @@ class PythonWorker extends Backend {
         // Python calls our function with a PyProxy dict or a Js Map,
         // These must be converted to a PapyrosEvent (JS Object) to allow message passing
         // Initialize our loaded Papyros module with the callback
-        await this.pyodide.globals.get("init_papyros")((e: any) => this.onEvent(this.convert(e)));
+        await this.pyodide.globals.get("init_papyros")((e: any) => {
+            const converted = this.convert(e);
+            this.onEvent(converted);
+        });
     }
 
     async runCode(syncExtras: SyncExtras, code: string): Promise<any> {
