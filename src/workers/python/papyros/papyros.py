@@ -4,16 +4,9 @@ import os
 import sys
 import json
 from collections.abc import Awaitable
-
-import micropip
 from pyodide import to_js
 
-await micropip.install("python_runner")
 import python_runner
-
-# Install modules asynchronously to use when the user needs them
-ft = micropip.install("friendly_traceback")
-jedi_install = micropip.install("jedi")
 
 SYS_RECURSION_LIMIT = 500
 
@@ -128,12 +121,11 @@ class Papyros(python_runner.PyodideRunner):
                             result = await result
                         return result
                 except:
-                    await ft
                     # Let `_execute_context` and `serialize_traceback`
                     # handle the exception
                     raise
         except KeyboardInterrupt:
-            self.callback("interrupt", data="KeyBoardInterrupt", contentType="text/plain")
+            self.callback("interrupt", data="KeyboardInterrupt", contentType="text/plain")
 
     def serialize_syntax_error(self, exc, source_code):
         raise  # Rethrow to ensure FriendlyTraceback library is imported correctly
@@ -180,7 +172,6 @@ class Papyros(python_runner.PyodideRunner):
             )
         )
 
-
 async def init_papyros(event_callback, limit=SYS_RECURSION_LIMIT):
     global papyros
     papyros = Papyros(callback=event_callback, limit=limit)
@@ -215,7 +206,6 @@ async def autocomplete(context):
         # If user did not request completions, don't complete for the empty string
         options = []
     else:
-        await jedi_install
         import jedi
         s = jedi.Script(context["text"])
         # Convert Jedi completions to CodeMirror objects
