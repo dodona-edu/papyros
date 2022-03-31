@@ -208,7 +208,7 @@ export class Papyros {
                 return true;
             }
         }
-        return false;
+        return true;
     }
 
     /**
