@@ -1,6 +1,6 @@
 {
   "name": "@dodona/papyros",
-  "version": "0.1.8",
+  "version": "0.1.921-tar",
   "private": false,
   "homepage": ".",
   "devDependencies": {
@@ -61,8 +61,7 @@
   "scripts": {
     "start": "yarn setup && webpack serve --mode development",
     "setup": "bash scripts/setup.sh",
-    "build:package": "webpack build --mode production --env=entry=./src/Library.ts",
-    "build:app": "webpack build --mode production --env=entry=./src/App.ts",
+    "build": "webpack build --mode production",
     "test": "echo No tests defined yet",
     "lint": "eslint  --ext '.js' --ext '.ts' src",
     "validate:translations": "node scripts/ValidateTranslations.js"
@@ -86,6 +85,6 @@
   "bugs": {
     "url": "https://github.com/dodona-edu/papyros/issues"
   },
-  "main": "./dist/index.js",
-  "types": "./dist/library.d.ts"
+  "main": "./dist/Library.js",
+  "types": "./dist/Library.d.ts"
 }
