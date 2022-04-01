@@ -30,4 +30,4 @@ yarn-error.log*
 translationIssues.txt
 
 src/workers/python/package/
-src/workers/python/package.tar
+src/workers/python/python_package.tar.load_by_url
