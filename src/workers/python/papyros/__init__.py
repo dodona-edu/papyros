@@ -1,1 +1,2 @@
-from .papyros import Papyros, init_papyros, autocomplete, process_code
+from .papyros import Papyros, init_papyros, process_code
+from .autocomplete import autocomplete

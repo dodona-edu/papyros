@@ -29,5 +29,5 @@ yarn-error.log*
 # script outputs
 translationIssues.txt
 
-src/workers/python/package/
+src/workers/python/python_package/
 src/workers/python/python_package.tar.load_by_url

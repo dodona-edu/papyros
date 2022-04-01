@@ -8,7 +8,7 @@ import { BackendEvent } from "../../BackendEvent";
 import { pyodideExpose, loadPyodideAndPackage } from "pyodide-worker-runner";
 import { SyncExtras } from "comsync";
 /* eslint-disable-next-line */
-const packageUrl = require("url-loader!./package.tar").default;
+const packageUrl = require("url-loader!./python_package.tar.load_by_url").default;
 
 export async function getPyodide(): Promise<Pyodide> {
     const pyodide = (await loadPyodideAndPackage({ url: packageUrl, format: "tar" })) as Pyodide;
@@ -78,8 +78,10 @@ class PythonWorker extends Backend {
     override async autocomplete(context: WorkerAutocompleteContext):
         Promise<CompletionResult | null> {
         // Do not await as not strictly required to compute autocompletions
-        this.pyodide.loadPackagesFromImports(context.text);
-        const result = this.convert(await this.papyros.autocomplete(context));
+        const result = (await Promise.all([
+            this.pyodide.pyimport("pyodide_worker_runner").install_imports(context.text),
+            this.convert(await this.papyros.autocomplete(context))
+        ]))[1];
         result.options = parseData(result.options, result.contentType);
         delete result.contentType;
         result.span = /^[\w$]*$/;
