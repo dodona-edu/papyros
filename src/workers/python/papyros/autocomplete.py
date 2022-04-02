@@ -1,5 +1,4 @@
 from jedi import Script
-from .util import to_py
 
 def convert_completion(completion, index):
     converted = dict(type=completion.type, label=completion.name_with_symbols)
@@ -11,26 +10,21 @@ def convert_completion(completion, index):
     return converted
 
 async def autocomplete(context):
-    context = to_py(context)
-    await install_imports(context["text"])
-    if context["before"]:
-        before = context["before"]
-    else:
-        before = dict(text=None)
-        before["from"] = context["pos"]
-
+    # Ensure before-match is not None
+    before = context.get("before", {"text": "", "from": context["pos"]})
     complete_from = before["from"]
-    if not context["explicit"] and \
-         (context["before"] is not None and not context["before"]["text"]):
-        # If user did not request completions, don't complete for the empty string
-        options = []
-    else:
-        s = Script(context["text"])
+    if context["explicit"] or before["text"]:
+        completions = Script(context["text"]).complete(line=context["line"], column=context["column"])
         # Convert Jedi completions to CodeMirror objects
         options = [convert_completion(c, i)
-                   for (i, c) in enumerate(s.complete(line=context["line"], column=context["column"]))]
+                   for (i, c) in enumerate(completions)]
         if "." in before["text"]:
+            # Completing a property access, so complete from end of match
             complete_from = before["to"]
-    results = dict(options=options)
-    results["from"] = complete_from
-    return results
+    else:
+        # Don't complete for emptry string unless asked for
+        options = []
+    return {
+        "options": options,
+        "from": complete_from
+    }

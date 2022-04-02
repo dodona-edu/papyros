@@ -101,6 +101,13 @@ class Papyros(python_runner.PyodideRunner):
 
         matplotlib.pyplot.show = show
 
+    async def install_imports(self, source_code, ignore_missing=True):
+        try:
+            await install_imports(source_code)
+        except ValueError:
+            if not ignore_missing:
+                raise
+
     def pre_run(self, source_code, mode="exec", top_level_await=False):
         self.override_globals()
         return super().pre_run(source_code, mode=mode, top_level_await=top_level_await)
@@ -119,7 +126,7 @@ class Papyros(python_runner.PyodideRunner):
         try:
             with self._execute_context(source_code):
                 try:
-                    await install_imports(source_code)
+                    await self.install_imports(source_code, ignore_missing=False)
                     code_obj = self.pre_run(
                         source_code, mode, top_level_await=top_level_await)
                     if code_obj:
@@ -177,5 +184,5 @@ class Papyros(python_runner.PyodideRunner):
 
     async def autocomplete(self, context):
         context = to_py(context)
-        await install_imports(context["text"])
+        await self.install_imports(context["text"], ignore_missing=True)
         return await autocomplete(context)
