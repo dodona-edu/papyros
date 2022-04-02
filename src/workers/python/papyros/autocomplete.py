@@ -1,12 +1,9 @@
-import jedi
-import json
-from pyodide import to_js
+from jedi import Script
+from .util import to_py
+from pyodide_worker_runner import install_imports
 
 def convert_completion(completion, index):
     converted = dict(type=completion.type, label=completion.name_with_symbols)
-    # if completion.get_signatures():
-    #     converted["detail"] = completion.get_signatures()[0].description
-    # converted["detail"] = f"{completion.parent().name} ({completion.type})" 
     if completion.type != "keyword":
         # Keywords have obvious meanings yet non-useful docstrings
         converted["info"] = completion.docstring().replace("\n", "\r\n")
@@ -15,7 +12,8 @@ def convert_completion(completion, index):
     return converted
 
 async def autocomplete(context):
-    context = context.to_py()
+    context = to_py(context)
+    await install_imports(context["text"])
     if context["before"]:
         before = context["before"]
     else:
@@ -28,13 +26,12 @@ async def autocomplete(context):
         # If user did not request completions, don't complete for the empty string
         options = []
     else:
-        import jedi
-        s = jedi.Script(context["text"])
+        s = Script(context["text"])
         # Convert Jedi completions to CodeMirror objects
         options = [convert_completion(c, i)
                    for (i, c) in enumerate(s.complete(line=context["line"], column=context["column"]))]
         if "." in before["text"]:
             complete_from = before["to"]
-    results = dict(options=json.dumps(options), contentType="text/json")
+    results = dict(options=options)
     results["from"] = complete_from
-    return to_js(results)
+    return results

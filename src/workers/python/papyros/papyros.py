@@ -31,7 +31,7 @@ class Papyros(python_runner.PyodideRunner):
 
         def runner_callback(event_type, data):
             def cb(typ, dat, **kwargs):
-                return event_callback(to_js(dict(type=typ, data=dat, **kwargs)))
+                return event_callback(dict(type=typ, data=dat, **kwargs))
 
             # Translate python_runner events to papyros events
             if event_type == "output":

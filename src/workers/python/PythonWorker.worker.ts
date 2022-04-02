@@ -3,7 +3,6 @@ import { Backend, WorkerAutocompleteContext } from "../../Backend";
 import { LogType, papyrosLog } from "../../util/Logging";
 import { Pyodide } from "./Pyodide";
 import { CompletionResult } from "@codemirror/autocomplete";
-import { parseData } from "../../util/Util";
 import { BackendEvent } from "../../BackendEvent";
 import { pyodideExpose, loadPyodideAndPackage } from "pyodide-worker-runner";
 import { SyncExtras } from "comsync";
@@ -77,13 +76,7 @@ class PythonWorker extends Backend {
 
     override async autocomplete(context: WorkerAutocompleteContext):
         Promise<CompletionResult | null> {
-        // Do not await as not strictly required to compute autocompletions
-        const result = (await Promise.all([
-            this.pyodide.pyimport("pyodide_worker_runner").install_imports(context.text),
-            this.papyros.autocomplete(context).then(PythonWorker.convert)
-        ]))[1];
-        result.options = parseData(result.options, result.contentType);
-        delete result.contentType;
+        const result = PythonWorker.convert(await this.papyros.autocomplete(context));
         result.span = /^[\w$]*$/;
         return result;
     }
