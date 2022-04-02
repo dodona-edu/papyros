@@ -196,7 +196,10 @@ export function renderWithOptions(
  * @param {string} contentType The content type of the data
  * @return {any} The parsed data
  */
-export function parseData(data: string, contentType: string): any {
+export function parseData(data: string, contentType?: string): any {
+    if (!contentType) {
+        return data;
+    }
     const [baseType, specificType] = contentType.split("/");
     switch (baseType) {
         case "text": {
@@ -223,6 +226,10 @@ export function parseData(data: string, contentType: string): any {
                 }
             }
             break;
+        }
+        case "application": {
+            // Content such as application/json does not need parsing as it is in the correct shape
+            return data;
         }
     }
     papyrosLog(LogType.Important, `Unhandled content type: ${contentType}`);
