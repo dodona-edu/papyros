@@ -89,8 +89,8 @@ export class OutputManager {
      */
     showOutput(output: BackendEvent): void {
         const data = parseData(output.data, output.contentType);
-        if (output.contentType === "img/png;base64") {
-            this.renderNextElement(`<img src="data:image/png;base64, ${data}"></img>`);
+        if (output.contentType && output.contentType.startsWith("img")) {
+            this.renderNextElement(`<img src="data:${output.contentType}, ${data}"></img>`);
         } else {
             this.renderNextElement(this.spanify(data, false));
         }

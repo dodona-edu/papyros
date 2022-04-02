@@ -145,12 +145,12 @@ class JavaScriptWorker extends Backend {
             Error.captureStackTrace(error);
             return Promise.resolve(this.onEvent({
                 type: BackendEventType.Error,
-                contentType: "text/json",
-                data: JSON.stringify({
+                contentType: "application/json",
+                data: {
                     name: error.constructor.name,
                     what: error.message,
                     traceback: error.stack
-                })
+                }
             }));
         } finally { // restore the old builtins
             new Function("ctx",
