@@ -17,13 +17,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2.3.1
-      - name: Install and Build 🔧 # This example project is built using npm and outputs the result to the 'build' folder. Replace with the commands required to build your project, or remove this step entirely if your site is pre-built.
-        # Ensure public files are available when hosted as a web application
+      - name: Install and Build 🔧
+        # Last step ensures public files are available when hosting the web application
         run: |
-          rm -rf dist/ 
-          cp -r public/ dist
           yarn install
           yarn build
+          cp -r public/ dist
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@4.1.5
         with:
