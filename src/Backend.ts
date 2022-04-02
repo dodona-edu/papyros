@@ -2,7 +2,6 @@ import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
 import { BackendEvent, BackendEventType } from "./BackendEvent";
 import { papyrosLog, LogType } from "./util/Logging";
 import { syncExpose, SyncExtras } from "comsync";
-import { parseData } from "./util/Util";
 
 /**
  * Interface to represent the CodeMirror CompletionContext in a worker
@@ -83,11 +82,9 @@ export abstract class Backend {
         this.onEvent = (e: BackendEvent) => {
             onEvent(e);
             if (e.type === BackendEventType.Sleep) {
-                const ms = parseInt(parseData(e.data, e.contentType));
-                return this.syncExtras.syncSleep(ms);
+                return this.syncExtras.syncSleep(e.data);
             } else if (e.type === BackendEventType.Input) {
-                const res = this.syncExtras.readMessage();
-                return res;
+                return this.syncExtras.readMessage();
             }
         };
         return Promise.resolve();

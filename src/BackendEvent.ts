@@ -30,9 +30,9 @@ export interface BackendEvent {
     /**
      * The actual data stored in this event
      */
-    data: string;
+    data: any;
     /**
      * The format used for the data to help with parsing
      */
-    contentType: string;
+    contentType?: string;
 }
