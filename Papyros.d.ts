@@ -98,13 +98,6 @@ export declare class Papyros {
      */
     getCode(): string;
     /**
-     * Helper method to perform the service worker related checks and initialisation
-     * @param {string} serviceWorkerRoot URL for the directory where the service worker lives
-     * @param {string} serviceWorkerName The name of the file containing the script
-     * @return {Promise<boolean>} Whether registration was successful
-     */
-    private registerServiceWorker;
-    /**
      * Configure how user input is handled within Papyros
      * By default, we will try to use SharedArrayBuffers
      * If this option is not available, the optional arguments become relevant
@@ -115,7 +108,7 @@ export declare class Papyros {
      * This allows using SharedArrayBuffers without configuring the HTTP headers yourself
      * @return {Promise<boolean>} Promise of configuring input
      */
-    configureInput(serviceWorkerRoot?: string, serviceWorkerName?: string, allowReload?: boolean): Promise<boolean>;
+    configureInput(serviceWorkerRoot?: string, serviceWorkerName?: string): Promise<boolean>;
     /**
      * Render Papyros with the given options
      * @param {PapyrosRenderOptions} renderOptions Options to use

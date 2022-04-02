@@ -17,4 +17,4 @@ export declare const LOCALE_SELECT_ID: string;
 export declare const PROGRAMMING_LANGUAGE_SELECT_ID: string;
 export declare const DEFAULT_PROGRAMMING_LANGUAGE = ProgrammingLanguage.Python;
 export declare const DEFAULT_LOCALE = "nl";
-export declare const DEFAULT_SERVICE_WORKER = "inputServiceWorker.js";
+export declare const DEFAULT_SERVICE_WORKER = "InputServiceWorker.js";
