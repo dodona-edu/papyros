@@ -1,5 +1,5 @@
-d=$(pwd)
+#!/bin/bash
+# Expects to be run from the main directory
 rm -rf dist
-source ./scripts/setup.sh
+bash ./scripts/setup.sh
 webpack build --mode production
-
