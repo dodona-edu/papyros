@@ -3,10 +3,16 @@ import time
 import os
 import sys
 import json
-from collections.abc import Awaitable
-from pyodide import to_js
-
 import python_runner
+import friendly_traceback
+
+from friendly_traceback.core import FriendlyTraceback
+from collections.abc import Awaitable
+from pyodide_worker_runner import install_imports
+
+
+from .util import to_py
+from .autocomplete import autocomplete
 
 SYS_RECURSION_LIMIT = 500
 
@@ -20,25 +26,24 @@ class Papyros(python_runner.PyodideRunner):
         callback=None,
         limit=SYS_RECURSION_LIMIT
     ):
+        if callback is None:
+            raise ValueError("Callback must not be None")
         super().__init__()
         self.limit = limit
         self.override_globals()
         self.set_event_callback(callback)
 
     def set_event_callback(self, event_callback):
-        if event_callback is None:
-            raise ValueError("Event callback must not be None")
-
         def runner_callback(event_type, data):
-            def cb(typ, dat, **kwargs):
+            def cb(typ, dat, **kwargs,):
                 return event_callback(dict(type=typ, data=dat, **kwargs))
 
-            # Translate python_runner events to papyros events
+            # Translate python_runner events to Papyros events
             if event_type == "output":
                 for part in data["parts"]:
                     typ = part["type"]
                     if typ in ["stderr", "traceback", "syntax_error"]:
-                        cb("error", part["text"], contentType="text/json")
+                        cb("error", part["text"], contentType=part.get("contentType", "text/plain"))
                     elif typ == "stdout":
                         cb("output", part["text"], contentType="text/plain")
                     elif typ == "img":
@@ -50,7 +55,7 @@ class Papyros(python_runner.PyodideRunner):
             elif event_type == "input":
                 return cb("input", data["prompt"], contentType="text/plain")
             elif event_type == "sleep":
-                return cb("sleep", str(data["seconds"]*1000), contentType="text/float")
+                return cb("sleep", data["seconds"]*1000, contentType="application/number")
             elif event_type == "interrupt":
                 return cb("interrupt", data["data"], contentType="text/plain")
             else:
@@ -103,16 +108,18 @@ class Papyros(python_runner.PyodideRunner):
     def execute(self, code_obj, source_code, mode=None):  # noqa
         return eval(code_obj, self.console.locals)  # noqa
 
-    async def run_async(self, source_code, mode="exec", top_level_await=True):
+    async def run_async(self, source_code, mode="exec", top_level_await=True, filename="my_code.py"):
         """
         Mostly a copy of the parent `run_async` with some key differences
         We use `await ft` in case of an exception, because `serialize_traceback` isn't async.
         We call pre_run within to handle its exceptions within this try-block too
         As it will rethrow the SyntaxError (@see serialize_syntax_error)
         """
+        self.set_file(filename, source_code)
         try:
             with self._execute_context(source_code):
                 try:
+                    await install_imports(source_code)
                     code_obj = self.pre_run(
                         source_code, mode, top_level_await=top_level_await)
                     if code_obj:
@@ -131,9 +138,6 @@ class Papyros(python_runner.PyodideRunner):
         raise  # Rethrow to ensure FriendlyTraceback library is imported correctly
 
     def serialize_traceback(self, exc, source_code):
-        import friendly_traceback  # Delay import for faster startup
-        from friendly_traceback.core import FriendlyTraceback
-
         # Allow friendly_traceback to inspect the code
         friendly_traceback.source_cache.cache.add(self.filename, source_code)
 
@@ -160,22 +164,18 @@ class Papyros(python_runner.PyodideRunner):
         where = "\n".join(tb_lines[user_start:user_end]) or ""
         # Format for callback
         return dict(
-            text=json.dumps(
-                dict(
+            text=json.dumps(dict(
                     name=name,
                     traceback=tb,
                     info=info,
                     why=why,
                     where=where,
                     what=what
-                )
-            )
+                )),
+            contentType="text/json"
         )
 
-async def init_papyros(event_callback, limit=SYS_RECURSION_LIMIT):
-    global papyros
-    papyros = Papyros(callback=event_callback, limit=limit)
-
-async def process_code(code, filename="my_code.py"):
-    papyros.set_file(filename, code)
-    await papyros.run_async(code)
+    async def autocomplete(self, context):
+        context = to_py(context)
+        await install_imports(context["text"])
+        return await autocomplete(context)

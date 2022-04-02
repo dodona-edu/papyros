@@ -1,6 +1,5 @@
 from jedi import Script
 from .util import to_py
-from pyodide_worker_runner import install_imports
 
 def convert_completion(completion, index):
     converted = dict(type=completion.type, label=completion.name_with_symbols)

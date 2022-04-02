@@ -29,14 +29,7 @@ class PythonWorker extends Backend {
     }
 
     private static convert(data: any): any {
-        let converted = data;
-        if (data.toJs) {
-            converted = data.toJs({ dict_converter: Object.fromEntries });
-        }
-        if (converted instanceof Map) {
-            converted = Object.fromEntries(converted);
-        }
-        return converted;
+        return data.toJs ? data.toJs({ dict_converter: Object.fromEntries }) : data;
     }
 
     /**
@@ -53,25 +46,19 @@ class PythonWorker extends Backend {
         this.pyodide = await pyodidePromise;
         // Python calls our function with a PyProxy dict or a Js Map,
         // These must be converted to a PapyrosEvent (JS Object) to allow message passing
-        // Initialize our loaded Papyros module with the callback
-        this.papyros = await this.pyodide.pyimport("papyros");
-        await this.papyros.init_papyros((e: any) => {
-            const converted = PythonWorker.convert(e);
-            return this.onEvent(converted);
-        });
+        this.papyros = await this.pyodide.pyimport("papyros").Papyros.callKwargs(
+            {
+                callback: (e: any) => {
+                    const converted = PythonWorker.convert(e);
+                    return this.onEvent(converted);
+                }
+            }
+        );
     }
 
     async runCode(syncExtras: SyncExtras, code: string): Promise<any> {
         this.syncExtras = syncExtras;
-        try {
-            // Sometimes a SyntaxError can cause imports to fail
-            // We want the SyntaxError to be handled by process_code as well
-            await this.pyodide.pyimport("pyodide_worker_runner")
-                .install_imports(code);
-        } catch (e) {
-            papyrosLog(LogType.Debug, "Something went wrong while loading imports: ", e);
-        }
-        await this.papyros.process_code(code);
+        await this.papyros.run_async(code);
     }
 
     override async autocomplete(context: WorkerAutocompleteContext):
