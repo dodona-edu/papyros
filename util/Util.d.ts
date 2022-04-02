@@ -103,5 +103,5 @@ export declare function renderWithOptions(options: RenderOptions, content: strin
  * @param {string} contentType The content type of the data
  * @return {any} The parsed data
  */
-export declare function parseData(data: string, contentType: string): any;
+export declare function parseData(data: string, contentType?: string): any;
 export {};
