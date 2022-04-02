@@ -6,7 +6,7 @@ import {
 import { BackendEvent, BackendEventType } from "./BackendEvent";
 import { papyrosLog, LogType } from "./util/Logging";
 import {
-    addListener, parseData,
+    addListener,
     RenderOptions, renderWithOptions
 } from "./util/Util";
 import { InteractiveInputHandler } from "./input/InteractiveInputHandler";
@@ -82,7 +82,7 @@ export class InputManager {
 <div id="${USER_INPUT_WRAPPER_ID}">
 </div>
 ${switchMode}`);
-        addListener<InputMode>(SWITCH_INPUT_MODE_A_ID, im => this.inputMode = im,
+        addListener<InputMode>(SWITCH_INPUT_MODE_A_ID, im => this.setInputMode(im),
             "click", "data-value");
 
         this.inputHandler.render({ parentElementId: USER_INPUT_WRAPPER_ID });
@@ -114,7 +114,7 @@ ${switchMode}`);
      */
     async onInputRequest(e: BackendEvent): Promise<void> {
         papyrosLog(LogType.Debug, "Handling input request in Papyros");
-        this.prompt = parseData(e.data, e.contentType);
+        this.prompt = e.data;
         return await this.onUserInput();
     }
 
