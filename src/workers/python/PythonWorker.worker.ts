@@ -29,7 +29,7 @@ class PythonWorker extends Backend {
         this.pyodide = {} as Pyodide;
     }
 
-    private convert(data: any): any {
+    private static convert(data: any): any {
         let converted = data;
         if (data.toJs) {
             converted = data.toJs({ dict_converter: Object.fromEntries });
@@ -57,7 +57,7 @@ class PythonWorker extends Backend {
         // Initialize our loaded Papyros module with the callback
         this.papyros = await this.pyodide.pyimport("papyros");
         await this.papyros.init_papyros((e: any) => {
-            const converted = this.convert(e);
+            const converted = PythonWorker.convert(e);
             return this.onEvent(converted);
         });
     }
@@ -80,7 +80,7 @@ class PythonWorker extends Backend {
         // Do not await as not strictly required to compute autocompletions
         const result = (await Promise.all([
             this.pyodide.pyimport("pyodide_worker_runner").install_imports(context.text),
-            this.convert(await this.papyros.autocomplete(context))
+            this.papyros.autocomplete(context).then(PythonWorker.convert)
         ]))[1];
         result.options = parseData(result.options, result.contentType);
         delete result.contentType;
