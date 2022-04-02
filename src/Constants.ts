@@ -29,4 +29,4 @@ export const PROGRAMMING_LANGUAGE_SELECT_ID = addPapyrosPrefix("programming-lang
 /* Default values for various properties */
 export const DEFAULT_PROGRAMMING_LANGUAGE = ProgrammingLanguage.Python;
 export const DEFAULT_LOCALE = "nl";
-export const DEFAULT_SERVICE_WORKER = "inputServiceWorker.js";
+export const DEFAULT_SERVICE_WORKER = "InputServiceWorker.js";

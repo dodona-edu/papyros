@@ -13,7 +13,7 @@ addEventListener("fetch", async function (event: FetchEvent) {
     if (!await inputHandler.handleInputRequest(event)) {
         // Not a Papyros-specific request
         // Fetch as we would handle a normal request
-        event.respondWith(fetch(event.request));
+        // Default action is to let browser handle it by doing nothing
     }
 });
 // Prevent needing to reload page to have working input
