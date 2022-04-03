@@ -1,5 +1,4 @@
 const path = require("path");
-const glob = require("glob");
 const TerserPlugin = require('terser-webpack-plugin');
 
 const PUBLIC_DIR = "public";
@@ -11,9 +10,12 @@ module.exports = function (webpackEnv) {
 	// In production, node_modules typically use the dist folder
 	let outFolder = "";
 	let entries = {};
-	if(mode === "development"){
+	if (mode === "development") {
 		outFolder = PUBLIC_DIR;
-		entries = Object.fromEntries([["App", "./src/App.ts"]]);
+		entries = Object.fromEntries([
+			["App", "./src/App.ts"],
+			["InputServiceWorker", "./src/InputServiceWorker.ts"]
+		]);
 	} else {
 		outFolder = LIBRARY_DIR;
 		entries = Object.fromEntries([
