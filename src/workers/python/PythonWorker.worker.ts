@@ -3,15 +3,16 @@ import { Backend, WorkerAutocompleteContext } from "../../Backend";
 import { Pyodide } from "./Pyodide";
 import { CompletionResult } from "@codemirror/autocomplete";
 import { BackendEvent } from "../../BackendEvent";
-import { pyodideExpose, loadPyodideAndPackage } from "pyodide-worker-runner";
+import { pyodideExpose, defaultPyodideLoader, initPyodide } from "pyodide-worker-runner";
 import { SyncExtras } from "comsync";
 /* eslint-disable-next-line */
-const packageUrl = require("url-loader!./python_package.tar.load_by_url").default;
+const pythonPackageTar = require("raw-loader!./python_package.tar.load_by_url").default;
 
 export async function getPyodide(): Promise<Pyodide> {
-    const pyodide = (await loadPyodideAndPackage({ url: packageUrl, format: "tar" })) as Pyodide;
-    // pyodide.pyimport("papyros");
-    return pyodide;
+    const pyodide = await defaultPyodideLoader("0.19.1");
+    pyodide.unpackArchive(new TextEncoder().encode(pythonPackageTar), "tar");
+    initPyodide(pyodide);
+    return pyodide as Pyodide;
 }
 const pyodidePromise = getPyodide();
 
