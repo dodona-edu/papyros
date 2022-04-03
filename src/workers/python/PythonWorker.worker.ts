@@ -1,6 +1,5 @@
 import * as Comlink from "comlink";
 import { Backend, WorkerAutocompleteContext } from "../../Backend";
-import { LogType, papyrosLog } from "../../util/Logging";
 import { Pyodide } from "./Pyodide";
 import { CompletionResult } from "@codemirror/autocomplete";
 import { BackendEvent } from "../../BackendEvent";
