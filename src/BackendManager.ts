@@ -48,10 +48,10 @@ export abstract class BackendManager {
 
     /**
      * Start a backend for the given language and cache for reuse
-     * @param {string} language The programming language supported by the backend
+     * @param {ProgrammingLanguage} language The programming language supported by the backend
      * @return {SyncClient<Backend>} A SyncClient for the Backend
      */
-    static startBackend(language: string): SyncClient<Backend> {
+    static startBackend(language: ProgrammingLanguage): SyncClient<Backend> {
         if (this.backendMap.has(language)) { // Cached
             return this.backendMap.get(language)!;
         } else if (this.createBackendMap.has(language)) {

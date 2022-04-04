@@ -6,6 +6,7 @@ import {
     getElement, parseData,
     RenderOptions, renderWithOptions, t
 } from "./util/Util";
+import { LogType, papyrosLog } from "./util/Logging";
 
 /**
  * Shape of Error objects that are easy to interpret
@@ -103,6 +104,7 @@ export class OutputManager {
     showError(error: BackendEvent): void {
         let errorHTML = "";
         const errorData = parseData(error.data, error.contentType);
+        papyrosLog(LogType.Debug, "Showing error: ", errorData);
         if (typeof (errorData) === "string") {
             errorHTML = this.spanify(errorData, false, "text-red-500");
         } else {
