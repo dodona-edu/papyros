@@ -23,12 +23,14 @@ class Papyros(python_runner.PyodideRunner):
     def __init__(
         self,
         *,
+        source_code="",
+        filename="my_program.py",
         callback=None,
         limit=SYS_RECURSION_LIMIT
     ):
         if callback is None:
             raise ValueError("Callback must not be None")
-        super().__init__()
+        super().__init__(source_code=source_code, filename=filename)
         self.limit = limit
         self.override_globals()
         self.set_event_callback(callback)
@@ -56,26 +58,16 @@ class Papyros(python_runner.PyodideRunner):
                 return cb("input", data["prompt"], contentType="text/plain")
             elif event_type == "sleep":
                 return cb("sleep", data["seconds"]*1000, contentType="application/number")
-            elif event_type == "interrupt":
-                return cb("interrupt", data["data"], contentType="text/plain")
             else:
                 raise ValueError(f"Unknown event type {event_type}")
 
         self.set_callback(runner_callback)
-
-    def set_file(self, filename, code):
-        self.filename = os.path.normcase(os.path.abspath(filename))
-        with open(self.filename, "w") as f:
-            f.write(code)
 
     def override_globals(self):
         # Code is executed in a worker with less resources than ful environment
         sys.setrecursionlimit(self.limit)
         # Otherwise `import matplotlib` fails while assuming a browser backend
         os.environ["MPLBACKEND"] = "AGG"
-        sys.stdin.readline = self.readline
-        builtins.input = self.input
-        time.sleep = self.sleep
         try:
             import matplotlib
         except ModuleNotFoundError:
@@ -112,41 +104,22 @@ class Papyros(python_runner.PyodideRunner):
         self.override_globals()
         return super().pre_run(source_code, mode=mode, top_level_await=top_level_await)
 
-    def execute(self, code_obj, source_code, mode=None):  # noqa
-        return eval(code_obj, self.console.locals)  # noqa
+    async def run_async(self, source_code, mode="exec", top_level_await=True):
+        with self._execute_context():
+            await self.install_imports(source_code, ignore_missing=False)
+            code_obj = self.pre_run(source_code, mode=mode, top_level_await=top_level_await)
+            if code_obj:
+                result = self.execute(code_obj, mode)
+                while isinstance(result, Awaitable):
+                    result = await result
+                return result
 
-    async def run_async(self, source_code, mode="exec", top_level_await=True, filename="my_code.py"):
-        """
-        Mostly a copy of the parent `run_async` with some key differences
-        We use `await ft` in case of an exception, because `serialize_traceback` isn't async.
-        We call pre_run within to handle its exceptions within this try-block too
-        As it will rethrow the SyntaxError (@see serialize_syntax_error)
-        """
-        self.set_file(filename, source_code)
-        try:
-            with self._execute_context(source_code):
-                try:
-                    await self.install_imports(source_code, ignore_missing=False)
-                    code_obj = self.pre_run(
-                        source_code, mode, top_level_await=top_level_await)
-                    if code_obj:
-                        result = self.execute(code_obj, source_code, mode)
-                        while isinstance(result, Awaitable):
-                            result = await result
-                        return result
-                except:
-                    # Let `_execute_context` and `serialize_traceback`
-                    # handle the exception
-                    raise
-        except KeyboardInterrupt:
-            self.callback("interrupt", data="KeyboardInterrupt", contentType="text/plain")
-
-    def serialize_syntax_error(self, exc, source_code):
+    def serialize_syntax_error(self, exc):
         raise  # Rethrow to ensure FriendlyTraceback library is imported correctly
 
-    def serialize_traceback(self, exc, source_code):
+    def serialize_traceback(self, exc):
         # Allow friendly_traceback to inspect the code
-        friendly_traceback.source_cache.cache.add(self.filename, source_code)
+        friendly_traceback.source_cache.cache.add(self.filename, self.source_code)
 
         # Initialize traceback
         fr = FriendlyTraceback(type(exc), exc, exc.__traceback__)
