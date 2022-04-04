@@ -1,5 +1,3 @@
-import builtins
-import time
 import os
 import sys
 import json
@@ -37,29 +35,25 @@ class Papyros(python_runner.PyodideRunner):
 
     def set_event_callback(self, event_callback):
         def runner_callback(event_type, data):
-            def cb(typ, dat, **kwargs,):
-                return event_callback(dict(type=typ, data=dat, **kwargs))
+            def cb(typ, dat, contentType=None, **kwargs):
+                return event_callback(dict(type=typ, data=dat, contentType=contentType or "text/plain", **kwargs))
 
-            # Translate python_runner events to Papyros events
             if event_type == "output":
                 for part in data["parts"]:
                     typ = part["type"]
                     if typ in ["stderr", "traceback", "syntax_error"]:
-                        cb("error", part["text"], contentType=part.get("contentType", "text/plain"))
-                    elif typ == "stdout":
-                        cb("output", part["text"], contentType="text/plain")
-                    elif typ == "img":
-                        cb("output", part["text"], contentType=part["contentType"])
+                        cb("error", part["text"], contentType=part.get("contentType"))
                     elif typ in ["input", "input_prompt"]:
+                        # Do not display values entered by user for input
                         continue
                     else:
-                        raise ValueError(f"Unknown output part type {typ}")
+                        cb("output", part["text"], contentType=part.get("contentType"))
             elif event_type == "input":
-                return cb("input", data["prompt"], contentType="text/plain")
+                return cb("input", data["prompt"])
             elif event_type == "sleep":
                 return cb("sleep", data["seconds"]*1000, contentType="application/number")
             else:
-                raise ValueError(f"Unknown event type {event_type}")
+                return cb(event_type, data.get("data", ""), contentType=data.get("contentType"))
 
         self.set_callback(runner_callback)
 
@@ -106,13 +100,16 @@ class Papyros(python_runner.PyodideRunner):
 
     async def run_async(self, source_code, mode="exec", top_level_await=True):
         with self._execute_context():
-            await self.install_imports(source_code, ignore_missing=False)
-            code_obj = self.pre_run(source_code, mode=mode, top_level_await=top_level_await)
-            if code_obj:
-                result = self.execute(code_obj, mode)
-                while isinstance(result, Awaitable):
-                    result = await result
-                return result
+            try:
+                await self.install_imports(source_code, ignore_missing=False)
+                code_obj = self.pre_run(source_code, mode=mode, top_level_await=top_level_await)
+                if code_obj:
+                    result = self.execute(code_obj, mode)
+                    while isinstance(result, Awaitable):
+                        result = await result
+                    return result
+            except KeyboardInterrupt:
+                self.callback("interrupt", data="KeyBoardInterrupt", contentType="text/plain")
 
     def serialize_syntax_error(self, exc):
         raise  # Rethrow to ensure FriendlyTraceback library is imported correctly
