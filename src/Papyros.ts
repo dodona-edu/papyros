@@ -123,10 +123,7 @@ export class Papyros {
      */
     async launch(): Promise<Papyros> {
         if (!this.launched) {
-            const start = new Date().getTime();
             await this.codeRunner.start();
-            papyrosLog(LogType.Important,
-                `Finished loading backend after ${new Date().getTime() - start} ms`);
         }
         return this;
     }
