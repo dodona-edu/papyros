@@ -21,7 +21,7 @@ jobs:
         # Last step ensures public files are available when hosting the web application
         run: |
           yarn install
-          yarn build
+          yarn build:app
           cp -r public/* dist
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@4.1.5

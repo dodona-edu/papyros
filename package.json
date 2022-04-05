@@ -61,7 +61,8 @@
   "scripts": {
     "start": "yarn setup && webpack serve --mode development",
     "setup": "bash scripts/setup.sh",
-    "build": "bash scripts/build_package.sh",
+    "build:app": "bash scripts/build_package.sh development",
+    "build:library": "bash scripts/build_package.sh production",
     "test": "echo No tests defined yet",
     "lint": "eslint  --ext '.js' --ext '.ts' src",
     "validate:translations": "node scripts/ValidateTranslations.js"

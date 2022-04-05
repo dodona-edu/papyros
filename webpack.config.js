@@ -4,8 +4,8 @@ const TerserPlugin = require('terser-webpack-plugin');
 const PUBLIC_DIR = "public";
 const LIBRARY_DIR = "dist";
 const DEVELOPMENT_PORT = 8080;
-module.exports = function (webpackEnv) {
-	const mode = webpackEnv.WEBPACK_SERVE ? 'development' : 'production';
+module.exports = function (webpackEnv, argv) {
+	const mode = argv.mode || webpackEnv.WEBPACK_SERVE ? 'development' : 'production';
 	// In development, the bundle is loaded from the public folder
 	// In production, node_modules typically use the dist folder
 	let outFolder = "";
