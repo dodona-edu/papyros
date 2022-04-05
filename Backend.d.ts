@@ -34,8 +34,8 @@ export interface WorkerAutocompleteContext {
         text: string;
     } | null;
 }
-export declare abstract class Backend {
-    protected syncExtras: SyncExtras;
+export declare abstract class Backend<Extras extends SyncExtras = SyncExtras> {
+    protected extras: Extras;
     protected onEvent: (e: BackendEvent) => any;
     /**
      *  Constructor is limited as it is meant to be used as a WebWorker
@@ -61,10 +61,11 @@ export declare abstract class Backend {
     launch(onEvent: (e: BackendEvent) => void): Promise<void>;
     /**
      * Executes the given code
+     * @param {Extras} extras Helper properties to run code
      * @param {string} code The code to run
      * @return {Promise<void>} Promise of execution
      */
-    abstract runCode(extras: SyncExtras, code: string): Promise<void>;
+    abstract runCode(extras: Extras, code: string): Promise<void>;
     /**
      * Converts the context to a cloneable object containing useful properties
      * to generate autocompletion suggestions with

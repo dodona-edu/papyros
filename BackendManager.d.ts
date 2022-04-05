@@ -8,29 +8,37 @@ import { SyncClient } from "comsync";
  * @param {BackendEvent} e The published event
  */
 declare type BackendEventListener = (e: BackendEvent) => void;
-declare class Cacheable<T> {
-    private cached;
-    private createFn;
-    constructor(createFn: () => T);
-    get(): T;
-}
 /**
  * Abstract class to implement the singleton pattern
  * Static methods group functionality
  */
 export declare abstract class BackendManager {
-    static createWorkerMap: Map<ProgrammingLanguage, Cacheable<SyncClient<Backend>>>;
-    static channel: Channel;
+    /**
+     * Map programming languages to Backend constructors
+     */
+    private static createBackendMap;
+    /**
+     * Map to cache Backends per ProgrammingLanguage
+     */
+    private static backendMap;
     /**
      * Map an event type to interested subscribers
      * Uses an Array to maintain order of subscription
      */
     static subscriberMap: Map<BackendEventType, Array<BackendEventListener>>;
-    private static buildSyncClientMap;
     /**
-     * Start a backend for the given language, while storing the worker
+     * The channel used to communicate with the SyncClients
+     */
+    static channel: Channel;
+    /**
+     * @param {ProgrammingLanguage} language The language to support
+     * @param {Function} backendCreator The constructor for a SyncClient
+     */
+    static registerBackend(language: ProgrammingLanguage, backendCreator: () => SyncClient<Backend>): void;
+    /**
+     * Start a backend for the given language and cache for reuse
      * @param {ProgrammingLanguage} language The programming language supported by the backend
-     * @return {Remote<Backend>} A Comlink proxy for the Backend
+     * @return {SyncClient<Backend>} A SyncClient for the Backend
      */
     static startBackend(language: ProgrammingLanguage): SyncClient<Backend>;
     /**
