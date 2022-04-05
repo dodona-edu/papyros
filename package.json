@@ -52,10 +52,10 @@
     "@codemirror/search": "^0.19.3",
     "@codemirror/state": "^0.19.6",
     "comlink": "^4.3.1",
-    "comsync": "^0.0.6",
+    "comsync": "^0.0.7",
     "escape-html": "^1.0.3",
     "i18n-js": "^3.8.0",
-    "pyodide-worker-runner": "^0.0.7",
+    "pyodide-worker-runner": "^0.0.8",
     "sync-message": "^0.0.9"
   },
   "scripts": {

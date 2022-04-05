@@ -37,8 +37,8 @@ export interface WorkerAutocompleteContext {
     } | null;
 }
 
-export abstract class Backend {
-    protected syncExtras: SyncExtras;
+export abstract class Backend<Extras extends SyncExtras=SyncExtras> {
+    protected extras: Extras;
     protected onEvent: (e: BackendEvent) => any;
     /**
      *  Constructor is limited as it is meant to be used as a WebWorker
@@ -47,7 +47,7 @@ export abstract class Backend {
      * @param {Array<string>} syncMethods The methods to expose
      */
     constructor(syncMethods = ["runCode"]) {
-        this.syncExtras = {} as SyncExtras;
+        this.extras = {} as Extras;
         // eslint-disable-next-line @typescript-eslint/no-empty-function
         this.onEvent = () => { };
         this.exposeMethods(Array.from(syncMethods));
@@ -82,9 +82,9 @@ export abstract class Backend {
         this.onEvent = (e: BackendEvent) => {
             onEvent(e);
             if (e.type === BackendEventType.Sleep) {
-                return this.syncExtras.syncSleep(e.data);
+                return this.extras.syncSleep(e.data);
             } else if (e.type === BackendEventType.Input) {
-                return this.syncExtras.readMessage();
+                return this.extras.readMessage();
             }
         };
         return Promise.resolve();
@@ -92,10 +92,11 @@ export abstract class Backend {
 
     /**
      * Executes the given code
+     * @param {Extras} extras Helper properties to run code
      * @param {string} code The code to run
      * @return {Promise<void>} Promise of execution
      */
-    abstract runCode(extras: SyncExtras, code: string): Promise<void>;
+    abstract runCode(extras: Extras, code: string): Promise<void>;
 
     /**
      * Converts the context to a cloneable object containing useful properties

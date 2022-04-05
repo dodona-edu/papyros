@@ -9,7 +9,7 @@ import { SyncExtras } from "comsync";
  * Implementation of a JavaScript backend for Papyros
  * by using eval and overriding some builtins
  */
-class JavaScriptWorker extends Backend {
+class JavaScriptWorker extends Backend<SyncExtras> {
     /**
      * Convert varargs to a string, similar to how the console does it
      * @param {any[]} args The values to join into a string
@@ -121,7 +121,7 @@ class JavaScriptWorker extends Backend {
     }
 
     override runCode(extras: SyncExtras, code: string): Promise<any> {
-        this.syncExtras = extras;
+        this.extras = extras;
         // Builtins to store before execution and restore afterwards
         // Workers do not have access to prompt
         const oldContent = {

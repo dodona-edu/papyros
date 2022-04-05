@@ -1,18 +1,17 @@
 import * as Comlink from "comlink";
 import { Backend, WorkerAutocompleteContext } from "../../Backend";
-import { Pyodide } from "./Pyodide";
 import { CompletionResult } from "@codemirror/autocomplete";
 import { BackendEvent } from "../../BackendEvent";
-import { pyodideExpose, defaultPyodideLoader, initPyodide } from "pyodide-worker-runner";
-import { SyncExtras } from "comsync";
+import {
+    pyodideExpose, Pyodide,
+    loadPyodideAndPackage,
+    PyodideExtras
+} from "pyodide-worker-runner";
 /* eslint-disable-next-line */
-const pythonPackageTar = require("raw-loader!./python_package.tar.load_by_url").default;
+const pythonPackageUrl = require("!!url-loader!./python_package.tar.gz.load_by_url").default;
 
-export async function getPyodide(): Promise<Pyodide> {
-    const pyodide = await defaultPyodideLoader("0.19.1");
-    pyodide.unpackArchive(new TextEncoder().encode(pythonPackageTar), "tar");
-    initPyodide(pyodide);
-    return pyodide as Pyodide;
+async function getPyodide(): Promise<Pyodide> {
+    return await loadPyodideAndPackage({ url: pythonPackageUrl, format: ".tgz" });
 }
 const pyodidePromise = getPyodide();
 
@@ -20,7 +19,7 @@ const pyodidePromise = getPyodide();
  * Implementation of a Python backend for Papyros
  * Powered by Pyodide (https://pyodide.org/)
  */
-class PythonWorker extends Backend {
+class PythonWorker extends Backend<PyodideExtras> {
     pyodide: Pyodide;
     papyros: any;
     constructor() {
@@ -36,7 +35,7 @@ class PythonWorker extends Backend {
      * @return {any} Function to expose a method with Pyodide support
      */
     protected override syncExpose(): any {
-        return (f: any) => pyodideExpose(pyodidePromise, f);
+        return pyodideExpose;
     }
 
     override async launch(
@@ -56,8 +55,11 @@ class PythonWorker extends Backend {
         );
     }
 
-    async runCode(syncExtras: SyncExtras, code: string): Promise<any> {
-        this.syncExtras = syncExtras;
+    async runCode(extras: PyodideExtras, code: string): Promise<any> {
+        this.extras = extras;
+        if (extras.interruptBuffer) {
+            this.pyodide.setInterruptBuffer(extras.interruptBuffer);
+        }
         await this.papyros.run_async(code);
     }
 
