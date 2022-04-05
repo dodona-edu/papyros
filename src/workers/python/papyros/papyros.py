@@ -108,9 +108,15 @@ class Papyros(python_runner.PyodideRunner):
                     while isinstance(result, Awaitable):
                         result = await result
                     return result
-            except KeyboardInterrupt:
-                self.callback("interrupt", data="KeyBoardInterrupt", contentType="text/plain")
-
+            except Exception as e:
+                # Sometimes KeyboardInterrupt is caught by Pyodide and raised as a PythonError
+                # with a js_error containing the reason
+                js_error = str(getattr(e, "js_error", ""))
+                if isinstance(e, KeyboardInterrupt) or "KeyboardInterrupt" in js_error:
+                    self.callback("interrupt", data="KeyboardInterrupt", contentType="text/plain")
+                else:
+                    raise
+                
     def serialize_syntax_error(self, exc):
         raise  # Rethrow to ensure FriendlyTraceback library is imported correctly
 
