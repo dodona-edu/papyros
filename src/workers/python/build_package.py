@@ -11,8 +11,7 @@ def tarfile_filter(tar_info):
         x in name
         for x in [
             "__pycache__",
-            "friendly_traceback/locales",
-            "dist-info"
+            "friendly_traceback/locales"
         ]
     ) or name.endswith(".pyc"):
         return None
@@ -46,4 +45,4 @@ def check_tar(tarname):
 
 
 if __name__ == "__main__":
-    create_package("python_package", "python-runner friendly_traceback jedi", extra_deps="papyros")
+    create_package("python_package", "python-runner friendly_traceback jedi flake8", extra_deps="papyros")
