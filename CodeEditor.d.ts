@@ -3,6 +3,7 @@ import { Compartment, Extension } from "@codemirror/state";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import { EditorView } from "@codemirror/view";
 import { CompletionSource } from "@codemirror/autocomplete";
+import { Diagnostic } from "@codemirror/lint";
 import { RenderOptions } from "./util/Util";
 /**
  * Component that provides useful features to users writing code
@@ -33,6 +34,10 @@ export declare class CodeEditor {
      */
     autocompletionCompartment: Compartment;
     /**
+     * Compartment to configure linting at runtime
+     */
+    lintCompartment: Compartment;
+    /**
      * Construct a new CodeEditor
      * @param {ProgrammingLanguage} language The used programming language
      * @param {string} editorPlaceHolder The placeholder for the editor
@@ -56,6 +61,7 @@ export declare class CodeEditor {
      * @param {CompletionSource} completionSource Function to obtain autocomplete results
      */
     setCompletionSource(completionSource: CompletionSource): void;
+    setLintingSource(lintSource: (view: EditorView) => readonly Diagnostic[] | Promise<readonly Diagnostic[]>): void;
     /**
      * Set the length in spaces of the indentation unit
      * @param {number} indentLength The number of spaces to use
