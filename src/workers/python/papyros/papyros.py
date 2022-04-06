@@ -171,13 +171,14 @@ class Papyros(python_runner.PyodideRunner):
         await self.install_imports(context["text"], ignore_missing=True)
         return await autocomplete(context)
 
-    async def lint_code(self, code, lint_output_file="__papyros_output.txt"):
+    async def lint_code(self, code, lint_output_file="__papyros_lint_output.txt"):
         self.set_source_code(code)
         if not code:
             return []
         await self.install_imports(code, ignore_missing=True)
         from flake8.main import application # Can only import after correct overrides
         linter = application.Application()
+        # Jobs=1 to ensure no multiprocessing is tried as that is patched to work
         linter.run(["--jobs", "1", "--output-file", lint_output_file, self.filename])
         result = self.process_linting_output(lint_output_file)
         os.remove(lint_output_file)
@@ -186,6 +187,7 @@ class Papyros(python_runner.PyodideRunner):
     def process_linting_output(self, lint_output_file):
         diagnostics = []
         for line in open(lint_output_file, "r"):
+            # file_path:line_number:column_number: error_code short_description
             _, line_nr, column_nr, error = line.rstrip().split(":")
             line_nr = int(line_nr)
             column_nr = int(column_nr)
@@ -193,6 +195,7 @@ class Papyros(python_runner.PyodideRunner):
             first_space = error.index(" ")
             code, message = error[:first_space], error[first_space+1:]
             if "no newline at end of file" in message:
+                # Number indicates where newline should be -> out of bounds in doc, so decrement
                 column_nr -= 1
             severity = "error" if code[0] == "E" else "warning"
             diagnostics.append(
