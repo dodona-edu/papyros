@@ -37,7 +37,14 @@ export interface WorkerAutocompleteContext {
     } | null;
 }
 
-export abstract class Backend<Extras extends SyncExtras=SyncExtras> {
+export interface WorkerDiagnostic {
+    lineNr: number;
+    columnNr: number;
+    severity: "info" | "warning" | "error";
+    message: string;
+}
+
+export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
     protected extras: Extras;
     protected onEvent: (e: BackendEvent) => any;
     /**
@@ -118,4 +125,6 @@ export abstract class Backend<Extras extends SyncExtras=SyncExtras> {
      * @param {WorkerAutocompleteContext} context Context to autcomplete in
      */
     abstract autocomplete(context: WorkerAutocompleteContext): Promise<CompletionResult | null>;
+
+    abstract lintCode(code: string): Promise<Array<WorkerDiagnostic>>;
 }
