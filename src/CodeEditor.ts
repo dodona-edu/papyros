@@ -24,7 +24,7 @@ import { autocompletion, completionKeymap, CompletionSource } from "@codemirror/
 import { commentKeymap } from "@codemirror/comment";
 import { rectangularSelection } from "@codemirror/rectangular-selection";
 import { defaultHighlightStyle } from "@codemirror/highlight";
-import { lintKeymap } from "@codemirror/lint";
+import { lintKeymap, linter, Diagnostic, lintGutter } from "@codemirror/lint";
 import { showPanel } from "@codemirror/panel";
 import { RenderOptions, renderWithOptions, t } from "./util/Util";
 
@@ -56,7 +56,10 @@ export class CodeEditor {
      * Compartment to configure the autocompletion at runtime
      */
     autocompletionCompartment: Compartment = new Compartment();
-
+    /**
+     * Compartment to configure linting at runtime
+     */
+    lintCompartment: Compartment = new Compartment();
     /**
      * Construct a new CodeEditor
      * @param {ProgrammingLanguage} language The used programming language
@@ -75,6 +78,8 @@ export class CodeEditor {
                             this.autocompletionCompartment.of(
                                 autocompletion()
                             ),
+                            this.lintCompartment.of([]),
+                            lintGutter(),
                             this.indentCompartment.of(
                                 indentUnit.of(CodeEditor.getIndentUnit(indentLength))
                             ),
@@ -126,6 +131,18 @@ export class CodeEditor {
             effects: [
                 this.autocompletionCompartment.reconfigure(
                     autocompletion({ override: [completionSource] })
+                )
+            ]
+        });
+    }
+
+    setLintingSource(
+        lintSource: (view: EditorView) => readonly Diagnostic[] | Promise<readonly Diagnostic[]>)
+        : void {
+        this.editorView.dispatch({
+            effects: [
+                this.lintCompartment.reconfigure(
+                    linter(lintSource)
                 )
             ]
         });
