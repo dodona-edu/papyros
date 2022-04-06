@@ -1,5 +1,5 @@
 import * as Comlink from "comlink";
-import { Backend, WorkerAutocompleteContext } from "../../Backend";
+import { Backend, WorkerAutocompleteContext, WorkerDiagnostic } from "../../Backend";
 import { CompletionResult } from "@codemirror/autocomplete";
 import { BackendEvent } from "../../BackendEvent";
 import {
@@ -68,6 +68,10 @@ class PythonWorker extends Backend<PyodideExtras> {
         const result = PythonWorker.convert(await this.papyros.autocomplete(context));
         result.span = /^[\w$]*$/;
         return result;
+    }
+
+    override async lintCode(code: string): Promise<Array<WorkerDiagnostic>> {
+        return PythonWorker.convert(await this.papyros.lint_code(code));
     }
 }
 

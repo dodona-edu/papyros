@@ -59,6 +59,7 @@ class Papyros(python_runner.PyodideRunner):
         sys.setrecursionlimit(self.limit)
         # Otherwise `import matplotlib` fails while assuming a browser backend
         os.environ["MPLBACKEND"] = "AGG"
+        self.override_flake()
         try:
             import matplotlib
         except ModuleNotFoundError:
@@ -83,6 +84,16 @@ class Papyros(python_runner.PyodideRunner):
             self.output("img", img, contentType="img/png;base64")
 
         matplotlib.pyplot.show = show
+
+    def override_flake(self):
+        """
+        Flake8 linter imports multiprocessing library, which is not fully supported in Pyodide
+        These patches allow the imports to work so we can access the parts we need
+        """
+        import multiprocessing
+        sys.modules["multiprocessing"].pool = multiprocessing.Pool
+        # Importing multiprocessing.pool imports "_multiprocessing", so patch that too
+        sys.modules["_multiprocessing"] = multiprocessing
 
     async def install_imports(self, source_code, ignore_missing=True):
         try:
@@ -159,3 +170,32 @@ class Papyros(python_runner.PyodideRunner):
         context = to_py(context)
         await self.install_imports(context["text"], ignore_missing=True)
         return await autocomplete(context)
+
+    async def lint_code(self, code, lint_output_file="__papyros_output.txt"):
+        self.set_source_code(code)
+        if not code:
+            return []
+        await self.install_imports(code, ignore_missing=True)
+        from flake8.main import application # Can only import after correct overrides
+        linter = application.Application()
+        linter.run(["--jobs", "1", "--output-file", lint_output_file, self.filename])
+        result = self.process_linting_output(lint_output_file)
+        os.remove(lint_output_file)
+        return result
+
+    def process_linting_output(self, lint_output_file):
+        diagnostics = []
+        for line in open(lint_output_file, "r"):
+            _, line_nr, column_nr, error = line.rstrip().split(":")
+            line_nr = int(line_nr)
+            column_nr = int(column_nr)
+            error = error.strip()
+            first_space = error.index(" ")
+            code, message = error[:first_space], error[first_space+1:]
+            if "no newline at end of file" in message:
+                column_nr -= 1
+            severity = "error" if code[0] == "E" else "warning"
+            diagnostics.append(
+                {"lineNr": line_nr, "columnNr": column_nr, "severity": severity, "message": message}
+            )
+        return diagnostics
