@@ -41,16 +41,15 @@ export abstract class Backend<Extras extends SyncExtras=SyncExtras> {
     protected extras: Extras;
     protected onEvent: (e: BackendEvent) => any;
     /**
-     *  Constructor is limited as it is meant to be used as a WebWorker
-     *  These are then exposed via Comlink. Proper initialization occurs
-     *  in the launch method when the worker is started
-     * @param {Array<string>} syncMethods The methods to expose
+     * Constructor is limited as it is meant to be used as a WebWorker
+     * Proper initialization occurs in the launch method when the worker is started
+     * Synchronously exposing methods should be done here
      */
-    constructor(syncMethods = ["runCode"]) {
+    constructor() {
         this.extras = {} as Extras;
         // eslint-disable-next-line @typescript-eslint/no-empty-function
         this.onEvent = () => { };
-        this.exposeMethods(Array.from(syncMethods));
+        this.runCode = this.syncExpose()(this.runCode.bind(this));
     }
 
     /**
@@ -58,17 +57,6 @@ export abstract class Backend<Extras extends SyncExtras=SyncExtras> {
      */
     protected syncExpose(): any {
         return syncExpose;
-    }
-
-    /**
-     * Expose all the methods that should support being interrupted
-     * @param {Array<string>} syncMethods The names of the methods to expose
-     */
-    protected exposeMethods(syncMethods: Array<string>): void {
-        syncMethods.forEach(m => {
-            const method = (this as any)[m];
-            (this as any)[m] = this.syncExpose()(method.bind(this));
-        });
     }
 
     /**
