@@ -15,7 +15,8 @@
   white-space: pre;
   overflow: scroll;
   resize: both;
-  max-width: none !important; /* override default max width of 300px */
+  /* override default max width of 300px to allow resizing */
+  max-width: 800px !important;
 }
 
 /* Add placeholder to an empty element */
