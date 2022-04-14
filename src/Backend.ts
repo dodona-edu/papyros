@@ -75,7 +75,7 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
      * @param {function(BackendEvent):void} onEvent Callback for when events occur
      * @return {Promise<void>} Promise of launching
      */
-    launch(
+    public launch(
         onEvent: (e: BackendEvent) => void
     ): Promise<void> {
         this.onEvent = (e: BackendEvent) => {
@@ -90,7 +90,7 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
         return Promise.resolve();
     }
 
-    runModes(): Array<string> {
+    public runModes(): Array<string> {
         return ["exec"];
     }
 

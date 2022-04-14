@@ -57,6 +57,7 @@ export class OutputManager extends Renderable {
         this.content = [];
         BackendManager.subscribe(BackendEventType.Start, () => this.reset());
         BackendManager.subscribe(BackendEventType.Output, e => this.showOutput(e));
+        BackendManager.subscribe(BackendEventType.Debug, e => this.showOutput(e));
         BackendManager.subscribe(BackendEventType.Error, e => this.showError(e));
         BackendManager.subscribe(BackendEventType.End, () => this.onRunEnd());
     }

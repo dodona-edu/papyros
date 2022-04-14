@@ -25,7 +25,21 @@ export function getLocales(): Array<string> {
 /**
  * Helper type to access a HTML element, either via its id or the element itself
  */
-type ElementIdentifier = string | HTMLElement;
+export type ElementIdentifier = string | HTMLElement;
+export interface ButtonOptions {
+    /**
+     * The HTML id of the button
+     */
+    id: string;
+    /**
+     * The text to display in the button, can also be HTML
+     */
+    buttonText: string;
+    /**
+     * Optional Tailwind classes to apply to the button
+     */
+    extraClasses?: string;
+}
 
 /**
  * Resolve an ElementIdentifier to the corresponding HTLMElement

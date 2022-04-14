@@ -44,7 +44,7 @@ class PythonWorker extends Backend<PyodideExtras> {
         return pyodideExpose;
     }
 
-    override async launch(
+    public override async launch(
         onEvent: (e: BackendEvent) => void
     ): Promise<void> {
         await super.launch(onEvent);
@@ -84,7 +84,11 @@ class PythonWorker extends Backend<PyodideExtras> {
         this.installPromise = null;
     }
 
-    public async runCode(extras: PyodideExtras, code: string): Promise<any> {
+    public override runModes(): string[] {
+        return [...super.runModes(), "snoop"];
+    }
+
+    public async runCode(extras: PyodideExtras, code: string, mode: string): Promise<any> {
         this.extras = extras;
         if (extras.interruptBuffer) {
             this.pyodide.setInterruptBuffer(extras.interruptBuffer);
@@ -92,10 +96,12 @@ class PythonWorker extends Backend<PyodideExtras> {
         await this.installImports(code, true);
         return await this.papyros.run_async.callKwargs({
             source_code: code,
+            mode: mode,
+            snoop_config: { color: false }
         });
     }
 
-    override async autocomplete(context: WorkerAutocompleteContext):
+    public override async autocomplete(context: WorkerAutocompleteContext):
         Promise<CompletionResult | null> {
         await this.installImports(context.text, true);
         const result: CompletionResult = PythonWorker.convert(
@@ -105,7 +111,7 @@ class PythonWorker extends Backend<PyodideExtras> {
         return result;
     }
 
-    override async lintCode(code: string): Promise<Array<WorkerDiagnostic>> {
+    public override async lintCode(code: string): Promise<Array<WorkerDiagnostic>> {
         await this.installImports(code, true);
         return PythonWorker.convert(this.papyros.lint(code));
     }
