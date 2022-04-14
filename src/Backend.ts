@@ -89,6 +89,7 @@ export abstract class Backend<Extras extends SyncExtras=SyncExtras> {
     /**
      * Converts the context to a cloneable object containing useful properties
      * to generate autocompletion suggestions with
+     * Class instances are not passable to workers, so we extract the useful information
      * @param {CompletionContext} context Current context to autocomplete for
      * @param {RegExp} expr Expression to match the previous token with
      * @return {WorkerAutocompleteContext} Completion context that can be passed as a message

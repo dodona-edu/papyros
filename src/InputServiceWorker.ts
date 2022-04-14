@@ -1,7 +1,7 @@
 /**
  * Default service worker to process user input using HTTP requests
  */
-// Impport service worker provided by the Papyros-package
+// Import service worker provided by the Papyros-package
 import { InputWorker } from "./workers/input/InputWorker";
 
 // Strip away the filename of the script to obtain the scope
@@ -13,7 +13,8 @@ addEventListener("fetch", async function (event: FetchEvent) {
     if (!await inputHandler.handleInputRequest(event)) {
         // Not a Papyros-specific request
         // Fetch as we would handle a normal request
-        // Default action is to let browser handle it by doing nothing
+        // Default action is to let browser handle it by not responding here
+        return;
     }
 });
 // Prevent needing to reload page to have working input
