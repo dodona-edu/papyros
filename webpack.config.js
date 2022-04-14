@@ -1,24 +1,33 @@
 const path = require("path");
-const glob = require("glob");
 const TerserPlugin = require('terser-webpack-plugin');
 
 const PUBLIC_DIR = "public";
 const LIBRARY_DIR = "dist";
 const DEVELOPMENT_PORT = 8080;
-module.exports = function (webpackEnv) {
-	const mode = webpackEnv["mode"];
+module.exports = function (webpackEnv, argv) {
+	let mode = argv.mode;
+	if (!mode) {
+		mode = webpackEnv.WEBPACK_SERVE ? 'development' : 'production'
+	}
 	// In development, the bundle is loaded from the public folder
 	// In production, node_modules typically use the dist folder
-	const outFolder = mode === "development" ? PUBLIC_DIR : LIBRARY_DIR;
+	let outFolder = "";
+	let entries = {};
+	if (mode === "development") {
+		outFolder = PUBLIC_DIR;
+		entries = Object.fromEntries([
+			["App", "./src/App.ts"],
+			["InputServiceWorker", "./src/InputServiceWorker.ts"]
+		]);
+	} else {
+		outFolder = LIBRARY_DIR;
+		entries = Object.fromEntries([
+			["Library", "./src/Library.ts"],
+			["/workers/input/InputWorker", "./src/workers/input/InputWorker.ts"]
+		]);
+	}
 	return {
-		entry: Object.fromEntries(
-			glob.sync("./src/**/*.{ts,js}") // All js and ts file
-			// But not already typed files or worker files (those get inlined)
-			.filter(n => !n.includes(".d.ts") && !n.includes(".worker.ts"))
-			// Strip src folder and extension
-			// Obtain [name, actual path]
-			.map(v => [v.split("./src/")[1].split(".")[0], v])
-		),
+		entry: entries,
 		module: {
 			rules: [
 				// Inline bundle worker-scripts to prevent bundle resolution errors

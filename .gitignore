@@ -28,3 +28,5 @@ yarn-error.log*
 
 # script outputs
 translationIssues.txt
+
+src/workers/python/python_package/

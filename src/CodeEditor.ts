@@ -26,7 +26,7 @@ import { rectangularSelection } from "@codemirror/rectangular-selection";
 import { defaultHighlightStyle } from "@codemirror/highlight";
 import { lintKeymap } from "@codemirror/lint";
 import { showPanel } from "@codemirror/panel";
-import { RenderOptions, renderWithOptions } from "./util/Util";
+import { RenderOptions, renderWithOptions, t } from "./util/Util";
 
 /**
  * Component that provides useful features to users writing code
@@ -64,15 +64,14 @@ export class CodeEditor {
      * @param {string} initialCode The initial code to display
      * @param {number} indentLength The length in spaces for the indent unit
      */
-    constructor(language: ProgrammingLanguage,
-        editorPlaceHolder: string, initialCode = "", indentLength = 4) {
+    constructor(initialCode = "", indentLength = 4) {
         this.editorView = new EditorView(
             {
                 state: EditorState.create({
                     doc: initialCode,
                     extensions:
                         [
-                            this.languageCompartment.of(CodeEditor.getLanguageSupport(language)),
+                            this.languageCompartment.of([]),
                             this.autocompletionCompartment.of(
                                 autocompletion()
                             ),
@@ -80,7 +79,7 @@ export class CodeEditor {
                                 indentUnit.of(CodeEditor.getIndentUnit(indentLength))
                             ),
                             keymap.of([indentWithTab]),
-                            this.placeholderCompartment.of(placeholder(editorPlaceHolder)),
+                            this.placeholderCompartment.of([]),
                             this.panelCompartment.of(showPanel.of(null)),
                             ...CodeEditor.getExtensions()
                         ]
@@ -105,20 +104,29 @@ export class CodeEditor {
     }
 
     /**
-     * Set the language that is currently used, with a corresponding placeholder
+     * Set the language that is currently used
      * @param {ProgrammingLanguage} language The language to use
-     * @param {CompletionSource} completionSource Function to generate autocomplete results
-     * @param {string} editorPlaceHolder Placeholder when empty
      */
-    setLanguage(language: ProgrammingLanguage, completionSource: CompletionSource,
-        editorPlaceHolder: string): void {
+    setLanguage(language: ProgrammingLanguage)
+        : void {
         this.editorView.dispatch({
             effects: [
                 this.languageCompartment.reconfigure(CodeEditor.getLanguageSupport(language)),
+                this.placeholderCompartment.reconfigure(placeholder(t("Papyros.code_placeholder",
+                    { programmingLanguage: language })))
+            ]
+        });
+    }
+
+    /**
+     * @param {CompletionSource} completionSource Function to obtain autocomplete results
+     */
+    setCompletionSource(completionSource: CompletionSource): void {
+        this.editorView.dispatch({
+            effects: [
                 this.autocompletionCompartment.reconfigure(
                     autocompletion({ override: [completionSource] })
-                ),
-                this.placeholderCompartment.reconfigure(placeholder(editorPlaceHolder))
+                )
             ]
         });
     }

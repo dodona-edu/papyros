@@ -1,34 +1,27 @@
+import { INPUT_TA_ID } from "../Constants";
 import { InputMode } from "../InputManager";
-import { RunListener } from "../RunListener";
 import { getElement, RenderOptions, t } from "../util/Util";
 
 /**
  * Base class for components that handle input from the user
  */
-export abstract class UserInputHandler implements RunListener {
+export abstract class UserInputHandler {
     /**
      * Whether we are waiting for the user to input data
      */
     protected waiting: boolean;
-    /**
-     * Callback for when the user has entered a value
-     */
-    protected onInput: () => void;
-    /**
-     * HTML identifier for the used HTML input field
-     */
-    protected inputAreaId: string;
+
+    protected inputCallback: () => void;
 
     /**
      * Construct a new UserInputHandler
-     * @param {function()} onInput  Callback for when the user has entered a value
-     * @param {string} inputAreaId HTML identifier for the used HTML input field
+     * @param {function()} inputCallback  Callback for when the user has entered a value
      */
-    constructor(onInput: () => void, inputAreaId: string) {
+    constructor(inputCallback: () => void) {
         this.waiting = false;
-        this.onInput = onInput;
-        this.inputAreaId = inputAreaId;
+        this.inputCallback = inputCallback;
     }
+
     /**
      * Whether this handler has input ready
      */
@@ -66,7 +59,7 @@ export abstract class UserInputHandler implements RunListener {
      * Retrieve the HTMLInputElement for this InputHandler
      */
     get inputArea(): HTMLInputElement {
-        return getElement<HTMLInputElement>(this.inputAreaId);
+        return getElement<HTMLInputElement>(INPUT_TA_ID);
     }
 
     /**
@@ -89,7 +82,7 @@ export abstract class UserInputHandler implements RunListener {
     }
 
     /**
-     * Helper method to reset internal state when needed
+     * Helper method to reset internal state
      */
     protected reset(): void {
         this.inputArea.value = "";

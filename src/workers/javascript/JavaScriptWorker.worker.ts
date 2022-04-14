@@ -1,13 +1,15 @@
-import { expose } from "comlink";
+import * as Comlink from "comlink";
 import { Backend, WorkerAutocompleteContext } from "../../Backend";
 import { CompletionResult } from "@codemirror/autocomplete";
 import { javascriptLanguage } from "@codemirror/lang-javascript";
+import { BackendEventType } from "../../BackendEvent";
+import { SyncExtras } from "comsync";
 
 /**
  * Implementation of a JavaScript backend for Papyros
  * by using eval and overriding some builtins
  */
-class JavaScriptWorker extends Backend {
+class JavaScriptWorker extends Backend<SyncExtras> {
     /**
      * Convert varargs to a string, similar to how the console does it
      * @param {any[]} args The values to join into a string
@@ -41,10 +43,9 @@ class JavaScriptWorker extends Backend {
      */
     private prompt(text = ""): string {
         return this.onEvent({
-            type: "input",
-            data: JavaScriptWorker.stringify({ prompt: text }),
-            contentType: "text/json",
-            runId: this.runId
+            type: BackendEventType.Input,
+            data: text,
+            contentType: "text/plain"
         });
     }
 
@@ -54,9 +55,8 @@ class JavaScriptWorker extends Backend {
      */
     private consoleLog(...args: any[]): void {
         this.onEvent({
-            type: "output",
+            type: BackendEventType.Output,
             data: JavaScriptWorker.stringify(...args) + "\n",
-            runId: this.runId,
             contentType: "text/plain"
         });
     }
@@ -67,10 +67,9 @@ class JavaScriptWorker extends Backend {
      */
     private consoleError(...args: any[]): void {
         this.onEvent({
-            type: "error",
+            type: BackendEventType.Error,
             data: JavaScriptWorker.stringify(...args) + "\n",
-            contentType: "text/plain",
-            runId: this.runId
+            contentType: "text/plain"
         });
     }
 
@@ -121,7 +120,8 @@ class JavaScriptWorker extends Backend {
         return ret;
     }
 
-    override _runCodeInternal(code: string): Promise<any> {
+    override runCode(extras: SyncExtras, code: string): Promise<any> {
+        this.extras = extras;
         // Builtins to store before execution and restore afterwards
         // Workers do not have access to prompt
         const oldContent = {
@@ -144,14 +144,13 @@ class JavaScriptWorker extends Backend {
         } catch (error: any) { // try to create a friendly traceback
             Error.captureStackTrace(error);
             return Promise.resolve(this.onEvent({
-                type: "error",
-                runId: this.runId,
-                contentType: "text/json",
-                data: JSON.stringify({
+                type: BackendEventType.Error,
+                contentType: "application/json",
+                data: {
                     name: error.constructor.name,
                     what: error.message,
                     traceback: error.stack
-                })
+                }
             }));
         } finally { // restore the old builtins
             new Function("ctx",
@@ -163,5 +162,6 @@ class JavaScriptWorker extends Backend {
 
 // Default export to be recognized as a TS module
 export default {} as any;
-// Expose handles the actual export
-expose(new JavaScriptWorker());
+
+// Comlink and Comsync handle the actual export
+Comlink.expose(new JavaScriptWorker());

@@ -5,6 +5,8 @@ import {
 import { Papyros } from "./Papyros";
 import { InputMode } from "./InputManager";
 import { getElement } from "./util/Util";
+import { papyrosLog, LogType } from "./util/Logging";
+import { BackendManager } from "./BackendManager";
 
 
 async function startPapyros(): Promise<void> {
@@ -28,11 +30,12 @@ async function startPapyros(): Promise<void> {
         }
     });
     // Try to configure synchronous input mechanism
-    if (!await papyros.configureInput(location.href, DEFAULT_SERVICE_WORKER, false)) {
+    if (!await papyros.configureInput(location.href, DEFAULT_SERVICE_WORKER)) {
         getElement(MAIN_APP_ID).innerHTML =
             "Your browser is unsupported.\n" +
             "Please use a modern version of Chrome, Safari, Firefox, ...";
     } else { // Start actual application
+        papyrosLog(LogType.Debug, "Using channel: ", BackendManager.channel);
         papyros.launch();
     }
 }

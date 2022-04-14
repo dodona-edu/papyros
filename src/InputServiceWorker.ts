@@ -6,14 +6,15 @@ import { InputWorker } from "./workers/input/InputWorker";
 
 // Strip away the filename of the script to obtain the scope
 let domain = location.href;
-domain = domain.slice(0, domain.lastIndexOf("/")+1);
+domain = domain.slice(0, domain.lastIndexOf("/") + 1);
 const inputHandler = new InputWorker(domain);
 
 addEventListener("fetch", async function (event: FetchEvent) {
     if (!await inputHandler.handleInputRequest(event)) {
         // Not a Papyros-specific request
         // Fetch as we would handle a normal request
-        return; // Default to nothing, browser will handle fetch itself
+        // Default action is to let browser handle it by not responding here
+        return;
     }
 });
 // Prevent needing to reload page to have working input

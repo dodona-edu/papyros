@@ -18,12 +18,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2.3.1
       - name: Install and Build 🔧
-        # Ensure public files are available when hosted as a web application
+        # Last step ensures public files are available when hosting the web application
         run: |
-          rm -rf dist/ 
-          cp -r public/ dist
           yarn install
-          yarn build
+          yarn build:app
+          cp -r public/* dist
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@4.1.5
         with:
