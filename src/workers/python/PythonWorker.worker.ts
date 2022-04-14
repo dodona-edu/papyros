@@ -71,7 +71,7 @@ class PythonWorker extends Backend<PyodideExtras> {
     }
 
     override async lintCode(code: string): Promise<Array<WorkerDiagnostic>> {
-        return PythonWorker.convert(await this.papyros.lint_code(code));
+        return PythonWorker.convert(await this.papyros.lint(code));
     }
 }
 

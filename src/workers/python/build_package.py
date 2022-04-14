@@ -45,4 +45,4 @@ def check_tar(tarname):
 
 
 if __name__ == "__main__":
-    create_package("python_package", "python-runner friendly_traceback jedi flake8", extra_deps="papyros")
+    create_package("python_package", "python-runner friendly_traceback jedi pylint", extra_deps="papyros")
