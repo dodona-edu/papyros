@@ -1,7 +1,7 @@
 /* eslint-disable valid-jsdoc */
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import { t } from "./util/Util";
-import { Renderable, RenderOptions, appendClasses, renderWithOptions } from "./util/Rendering";
+import { Renderable, RenderOptions, renderWithOptions } from "./util/Rendering";
 import {
     CompletionSource, autocompletion,
     closeBrackets, closeBracketsKeymap, completionKeymap
@@ -38,11 +38,14 @@ const OPTIONS = [
     Option.Autocompletion, Option.Linting,
     Option.Style
 ];
+export interface CodeEditorRenderOptions extends RenderOptions {
+    programmingLanguage: ProgrammingLanguage;
+}
 
 /**
  * Component that provides useful features to users writing code
  */
-export class CodeEditor extends Renderable {
+export class CodeEditor extends Renderable<CodeEditorRenderOptions> {
     /**
      * Reference to the user interface of the editor
      */
@@ -88,13 +91,7 @@ export class CodeEditor extends Renderable {
         });
     }
 
-    /**
-     * Render the editor with the given options and panel
-     * @param {RenderOptions} options Options for rendering
-     * @param {HTMLElement} panel The panel to display at the bottom
-     * @return {HTMLElement} The rendered element
-     */
-    protected override _render(options: RenderOptions): void {
+    protected override _render(options: CodeEditorRenderOptions): void {
         let styleExtensions: Extension = [];
         if (options.darkMode) {
             styleExtensions = oneDark;
@@ -102,6 +99,7 @@ export class CodeEditor extends Renderable {
             styleExtensions = syntaxHighlighting(defaultHighlightStyle, { fallback: true });
         }
         this.reconfigure([Option.Style, styleExtensions]);
+        this.setProgrammingLanguage(options.programmingLanguage);
         // Ensure that the classes are added to a child of the parent so that
         // dark mode classes are properly activated
         // CodeMirror dom resets its classList, so that is not an option

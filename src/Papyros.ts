@@ -15,7 +15,7 @@ import {
     removeSelection,
     addListener, getElement, cleanCurrentUrl
 } from "./util/Util";
-import { RunState, CodeRunner } from "./CodeRunner";
+import { RunState, CodeRunner, ButtonType } from "./CodeRunner";
 import { getCodeForExample, getExampleNames } from "./examples/Examples";
 import { OutputManager } from "./OutputManager";
 import { AtomicsChannelOptions, makeChannel, ServiceWorkerChannelOptions } from "sync-message";
@@ -343,9 +343,10 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
      * Add a button to the status panel within Papyros
      * @param {ButtonOptions} options Options to render the button with
      * @param {function} onClick Listener for click events on the button
+     * @param {ButtonType} type The type of the button
      */
-    addButton(options: ButtonOptions, onClick: () => void): void {
-        this.codeRunner.addButton(options, onClick);
+    addButton(options: ButtonOptions, onClick: () => void, type: ButtonType): void {
+        this.codeRunner.addButton(options, onClick, type);
     }
 
     /**
