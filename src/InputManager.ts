@@ -1,9 +1,9 @@
 import { t } from "i18n-js";
 import {
     SWITCH_INPUT_MODE_A_ID,
-    INPUT_TA_ID, SEND_INPUT_BTN_ID, USER_INPUT_WRAPPER_ID
+    USER_INPUT_WRAPPER_ID
 } from "./Constants";
-import { PapyrosEvent } from "./PapyrosEvent";
+import { BackendEvent, BackendEventType } from "./BackendEvent";
 import { papyrosLog, LogType } from "./util/Logging";
 import {
     addListener, parseData,
@@ -13,11 +13,13 @@ import { Channel, makeChannel, writeMessage } from "sync-message";
 import { InteractiveInputHandler } from "./input/InteractiveInputHandler";
 import { UserInputHandler } from "./input/UserInputHandler";
 import { BatchInputHandler } from "./input/BatchInputHandler";
-import { RunListener } from "./RunListener";
+import { PdbInputHandler } from "./input/PdbInputHandler";
+import { BackendManager } from "./BackendManager";
 
 export enum InputMode {
     Interactive = "interactive",
-    Batch = "batch"
+    Batch = "batch",
+    Debugging = "debugging"
 }
 
 export const INPUT_MODES = [InputMode.Batch, InputMode.Interactive];
@@ -27,7 +29,8 @@ export interface InputData {
     messageId: string;
 }
 
-export class InputManager implements RunListener {
+export class InputManager {
+    private previousInputMode: InputMode;
     private _inputMode: InputMode;
     private inputHandlers: Map<InputMode, UserInputHandler>;
     private renderOptions: RenderOptions;
@@ -38,24 +41,32 @@ export class InputManager implements RunListener {
     channel: Channel;
     messageId = "";
 
-    constructor(onSend: () => void, inputMode: InputMode) {
-        this._inputMode = inputMode;
+    constructor(onSend: () => void) {
+        this.inputHandlers = this.buildInputHandlerMap();
+        this._inputMode = InputMode.Interactive;
+        this.inputHandler.addInputListener(this);
+        this.previousInputMode = this._inputMode;
         this.channel = makeChannel()!; // by default we try to use Atomics
         this.onSend = onSend;
         this._waiting = false;
         this.prompt = "";
-        this.inputHandlers = this.buildInputHandlerMap();
         this.renderOptions = {} as RenderOptions;
+        BackendManager.subscribe(BackendEventType.Start, () => this.onRunStart());
+        BackendManager.subscribe(BackendEventType.End, () => this.onRunEnd());
+        BackendManager.subscribe(BackendEventType.Input, e => this.onInputRequest(e));
     }
 
     private buildInputHandlerMap(): Map<InputMode, UserInputHandler> {
         const interactiveInputHandler: UserInputHandler =
-            new InteractiveInputHandler(() => this.sendLine(), INPUT_TA_ID, SEND_INPUT_BTN_ID);
+            new InteractiveInputHandler();
         const batchInputHandler: UserInputHandler =
-            new BatchInputHandler(() => this.sendLine(), INPUT_TA_ID);
+            new BatchInputHandler();
+        const debuggingInputHandler: UserInputHandler =
+            new PdbInputHandler();
         return new Map([
             [InputMode.Interactive, interactiveInputHandler],
-            [InputMode.Batch, batchInputHandler]
+            [InputMode.Batch, batchInputHandler],
+            [InputMode.Debugging, debuggingInputHandler]
         ]);
     }
 
@@ -68,6 +79,7 @@ export class InputManager implements RunListener {
         this._inputMode = inputMode;
         this.render(this.renderOptions);
         this.inputHandler.onToggle(true);
+        this.inputHandler.addInputListener(this);
     }
 
     get inputHandler(): UserInputHandler {
@@ -76,17 +88,24 @@ export class InputManager implements RunListener {
 
     render(options: RenderOptions): void {
         this.renderOptions = options;
-        const otherMode = this.inputMode === InputMode.Interactive ?
-            InputMode.Batch : InputMode.Interactive;
+        let switchMode = "";
+        if (this.inputMode !== InputMode.Debugging) {
+            const otherMode = this.inputMode === InputMode.Interactive ?
+                InputMode.Batch : InputMode.Interactive;
+            switchMode = `<a id="${SWITCH_INPUT_MODE_A_ID}" data-value="${otherMode}"
+            class="flex flex-row-reverse hover:cursor-pointer text-blue-500">
+               ${t(`Papyros.input_modes.switch_to_${otherMode}`)}
+            </a>`;
+        }
+
         renderWithOptions(options, `
 <div id="${USER_INPUT_WRAPPER_ID}">
 </div>
-<a id="${SWITCH_INPUT_MODE_A_ID}" data-value="${otherMode}"
-class="flex flex-row-reverse hover:cursor-pointer text-blue-500">
-   ${t(`Papyros.input_modes.switch_to_${otherMode}`)}
-</a>`);
-        addListener<InputMode>(SWITCH_INPUT_MODE_A_ID, im => this.inputMode = im,
-            "click", "data-value");
+${switchMode}`);
+        if (this.inputMode !== InputMode.Debugging) {
+            addListener<InputMode>(SWITCH_INPUT_MODE_A_ID, im => this.inputMode = im,
+                "click", "data-value");
+        }
         this.inputHandler.render({ parentElementId: USER_INPUT_WRAPPER_ID });
         this.inputHandler.waitWithPrompt(this._waiting, this.prompt);
     }
@@ -96,7 +115,7 @@ class="flex flex-row-reverse hover:cursor-pointer text-blue-500">
         this.inputHandler.waitWithPrompt(waiting, this.prompt);
     }
 
-    async sendLine(): Promise<void> {
+    async onUserInput(): Promise<void> {
         if (this.inputHandler.hasNext()) {
             const line = this.inputHandler.next();
             papyrosLog(LogType.Debug, "Sending input to user: " + line);
@@ -111,19 +130,20 @@ class="flex flex-row-reverse hover:cursor-pointer text-blue-500">
 
     /**
      * Asynchronously handle an input request by prompting the user for input
-     * @param {PapyrosEvent} e Event containing the input data
+     * @param {BackendEvent} e Event containing the input data
      * @return {Promise<void>} Promise of handling the request
      */
-    async onInput(e: PapyrosEvent): Promise<void> {
+    async onInputRequest(e: BackendEvent): Promise<void> {
         papyrosLog(LogType.Debug, "Handling input request in Papyros");
         const data = parseData(e.data, e.contentType) as InputData;
         this.messageId = data.messageId;
         this.prompt = data.prompt;
-        return this.sendLine();
+        return this.onUserInput();
     }
 
     onRunStart(): void {
         this.waiting = false;
+        this.previousInputMode = this.inputMode;
         this.inputHandler.onRunStart();
     }
 
@@ -131,5 +151,8 @@ class="flex flex-row-reverse hover:cursor-pointer text-blue-500">
         this.prompt = "";
         this.inputHandler.onRunEnd();
         this.waiting = false;
+        if (this.previousInputMode !== this.inputMode) {
+            this.inputMode = this.previousInputMode;
+        }
     }
 }

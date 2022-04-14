@@ -1,11 +1,13 @@
 import { expose } from "comlink";
 import { Backend, WorkerAutocompleteContext } from "../../Backend";
-import { PapyrosEvent } from "../../PapyrosEvent";
+import { BackendEvent } from "../../BackendEvent";
 import { LogType, papyrosLog } from "../../util/Logging";
 import { Pyodide, PYODIDE_INDEX_URL, PYODIDE_JS_URL } from "./Pyodide";
 import { Channel } from "sync-message";
 import { CompletionResult } from "@codemirror/autocomplete";
 import { parseData } from "../../util/Util";
+import { DebuggingInputHandler } from "../../input/DebuggingInputHandler";
+import { PdbInputHandler } from "../../input/PdbInputHandler";
 /* eslint-disable-next-line */
 const initPythonString = require("!!raw-loader!./init.py").default;
 
@@ -37,7 +39,7 @@ class PythonWorker extends Backend {
     }
 
     override async launch(
-        onEvent: (e: PapyrosEvent) => void,
+        onEvent: (e: BackendEvent) => void,
         channel: Channel
     ): Promise<void> {
         await super.launch(onEvent, channel);
@@ -46,18 +48,18 @@ class PythonWorker extends Backend {
             fullStdLib: false
         });
         // Load our own modules to connect Papyros and Pyodide
-        await this._runCodeInternal(initPythonString);
+        await this.runCodeInternal(initPythonString);
         // Python calls our function with a PyProxy dict or a Js Map,
         // These must be converted to a PapyrosEvent (JS Object) to allow message passing
         const eventCallback = (data: any): void => {
             return this.onEvent(this.convert(data));
         };
         // Initialize our loaded Papyros module with the callback
-        this.pyodide.globals.get("init_papyros")(eventCallback);
+        await this.pyodide.globals.get("init_papyros")(eventCallback);
         this.initialized = true;
     }
 
-    override async _runCodeInternal(code: string): Promise<any> {
+    override async runCodeInternal(code: string): Promise<any> {
         if (this.initialized) {
             try {
                 // Sometimes a SyntaxError can cause imports to fail
@@ -72,6 +74,10 @@ class PythonWorker extends Backend {
             await this.pyodide.loadPackage("micropip");
             return this.pyodide.runPythonAsync(code);
         }
+    }
+
+    override async debugCodeInternal(code: string, breakpoints: Set<number>): Promise<any> {
+        return await this.pyodide.globals.get("debug_code")(code, breakpoints);
     }
 
     override async autocomplete(context: WorkerAutocompleteContext):

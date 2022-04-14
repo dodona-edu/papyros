@@ -1,4 +1,4 @@
-import { PapyrosEvent } from "./PapyrosEvent";
+import { BackendEvent } from "./BackendEvent";
 import { Channel, readMessage, uuidv4 } from "sync-message";
 import { parseData } from "./util/Util";
 import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
@@ -38,7 +38,7 @@ export interface WorkerAutocompleteContext {
 }
 
 export abstract class Backend {
-    protected onEvent: (e: PapyrosEvent) => any;
+    protected onEvent: (e: BackendEvent) => any;
     protected runId: number;
 
     /**
@@ -54,19 +54,19 @@ export abstract class Backend {
 
     /**
      * Initialize the backend by doing all setup-related work
-     * @param {function(PapyrosEvent):void} onEvent Callback for when events occur
+     * @param {function(BackendEvent):void} onEvent Callback for when events occur
      * @param {Channel} channel for communication with the main thread
      * @return {Promise<void>} Promise of launching
      */
     launch(
-        onEvent: (e: PapyrosEvent) => void,
+        onEvent: (e: BackendEvent) => void,
         channel: Channel
     ): Promise<void> {
         // Input messages are handled in a special way
         // In order to link input requests to their responses
         // An ID is required to make the connection
         // The message must be read in the worker to not stall the main thread
-        const onInput = (e: PapyrosEvent): string => {
+        const onInput = (e: BackendEvent): string => {
             const inputData = parseData(e.data, e.contentType);
             const messageId = uuidv4();
             inputData.messageId = messageId;
@@ -75,7 +75,7 @@ export abstract class Backend {
             onEvent(e);
             return readMessage(channel, messageId);
         };
-        this.onEvent = (e: PapyrosEvent) => {
+        this.onEvent = (e: BackendEvent) => {
             e.runId = this.runId;
             if (e.type === "input") {
                 return onInput(e);
@@ -91,7 +91,7 @@ export abstract class Backend {
      * Results or Errors must be passed by using the onEvent-callback
      * @param code The code to run
      */
-    protected abstract _runCodeInternal(code: string): Promise<any>;
+    protected abstract runCodeInternal(code: string): Promise<void>;
 
     /**
      * Executes the given code
@@ -99,10 +99,32 @@ export abstract class Backend {
      * @param {string} runId The uuid for this execution
      * @return {Promise<void>} Promise of execution
      */
-    async runCode(code: string, runId: number): Promise<any> {
+    async runCode(code: string, runId: number): Promise<void> {
         this.runId = runId;
-        return await this._runCodeInternal(code);
+        return await this.runCodeInternal(code);
     }
+
+    /**
+     * Run a piece of code in debug mode, allowing the user to figure out
+     * why things do or do not work
+     * @param {string} code The code to debug
+     * @param {number} runId The internal identifier for this code run
+     * @param {Set<number>} breakpoints The line numbers where the user put a breakpoint
+     * @return {Promise<void>} Promise of debugging
+     */
+    debugCode(code: string, runId: number, breakpoints: Set<number>): Promise<void> {
+        this.runId = runId;
+        return this.debugCodeInternal(code, breakpoints);
+    }
+
+    /**
+     * Internal helper method that actually debugs the code
+     * Communication is done by using the onEvent-callback
+     * @param {string} code The code to debug
+     * @param {Set<number>} breakpoints The line numbers where the user put a breakpoint
+     * @return {Promise<void>} Promise of debugging
+     */
+    protected abstract debugCodeInternal(code: string, breakpoints: Set<number>): Promise<any>;
 
     /**
      * Converts the context to a cloneable object containing useful properties

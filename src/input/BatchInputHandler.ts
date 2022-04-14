@@ -1,3 +1,4 @@
+import { INPUT_TA_ID } from "../Constants";
 import { InputMode } from "../InputManager";
 import { RenderOptions, renderWithOptions } from "../util/Util";
 import { UserInputHandler } from "./UserInputHandler";
@@ -16,15 +17,14 @@ export class BatchInputHandler extends UserInputHandler {
     /**
      * Construct a new BatchInputHandler
      * @param {function()} onInput  Callback for when the user has entered a value
-     * @param {string} inputAreaId HTML identifier for the used HTML input field
      */
-    constructor(onInput: () => void, inputAreaId: string) {
-        super(onInput, inputAreaId);
+    constructor() {
+        super();
         this.lineNr = 0;
         this.previousInput = "";
     }
 
-    onToggle(active: boolean): void {
+    override onToggle(active: boolean): void {
         if (active) {
             this.inputArea.value = this.previousInput;
         } else {
@@ -32,14 +32,14 @@ export class BatchInputHandler extends UserInputHandler {
         }
     }
 
-    getInputMode(): InputMode {
+    override getInputMode(): InputMode {
         return InputMode.Batch;
     }
     /**
      * Retrieve the lines of input that the user has given so far
      * @return {Array<string>} The entered lines
      */
-    private get lines(): Array<string> {
+    protected get lines(): Array<string> {
         const l = this.inputArea.value.split("\n");
         if (!l[l.length - 1]) { // last line is empty
             l.splice(l.length - 1); // do not consider it valid input
@@ -47,27 +47,27 @@ export class BatchInputHandler extends UserInputHandler {
         return l;
     }
 
-    hasNext(): boolean {
+    override hasNext(): boolean {
         return this.lineNr < this.lines.length;
     }
 
-    next(): string {
+    override next(): string {
         const nextLine = this.lines[this.lineNr];
         this.lineNr += 1;
         return nextLine;
     }
 
-    onRunStart(): void {
+    override onRunStart(): void {
         this.lineNr = 0;
     }
 
-    onRunEnd(): void {
+    override onRunEnd(): void {
         // Intentionally empty
     }
 
     render(options: RenderOptions): HTMLElement {
         const rendered = renderWithOptions(options, `
-<textarea id="${this.inputAreaId}" 
+<textarea id="${INPUT_TA_ID}"
 class="border-2 h-auto w-full max-h-1/4 px-1 overflow-auto
 focus:outline-none focus:ring-1 focus:ring-blue-500" rows="5">
 </textarea>`);
@@ -77,7 +77,7 @@ focus:outline-none focus:ring-1 focus:ring-blue-500" rows="5">
                 if (this.lines.length < this.lineNr) {
                     this.lineNr = this.lines.length - 1;
                 }
-                this.onInput();
+                this.onUserInput();
             }
         });
         return rendered;

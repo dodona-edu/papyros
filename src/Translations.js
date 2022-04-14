@@ -10,13 +10,15 @@ const ENGLISH_TRANSLATION = {
     "input_placeholder": {
         "interactive": "Provide input and press enter to send",
         "batch": "Provide all input required by your code here.\n" +
-            "You can enter multiple lines by pressing enter."
+            "You can enter multiple lines by pressing enter.",
+        "debugging": "Provide a command for the debugger here."
     },
     "input_disabled": "You can only provide input when your code requires it in interactive mode",
     "output": "Output",
     "output_placeholder": "The output of your code will appear here",
     "run": "Run",
     "stop": "Stop",
+    "debug": "Debug",
     "finished": "Code executed in %{time} s",
     "states": {
         "running": "Running",
@@ -39,7 +41,12 @@ const ENGLISH_TRANSLATION = {
         "switch_to_batch": "Switch to batch input"
     },
     "enter": "Enter",
-    "examples": "Examples"
+    "examples": "Examples",
+    "debugging_command": {
+        "step_over": "Step over",
+        "step_into": "Step into",
+        "continue": "Continue"
+    }
 };
 
 const DUTCH_TRANSLATION = {
@@ -50,13 +57,15 @@ const DUTCH_TRANSLATION = {
     "input_placeholder": {
         "interactive": "Geef invoer in en druk op enter",
         "batch": "Geef hier alle invoer die je code nodig heeft vooraf in.\n" +
-            "Je kan verschillende lijnen ingeven door op enter te drukken."
+            "Je kan verschillende lijnen ingeven door op enter te drukken.",
+        "debugging": "Geef hier een commando in voor de debugger."
     },
     "input_disabled": "Je kan enkel invoer invullen als je code erom vraagt in interactieve modus",
     "output": "Uitvoer",
     "output_placeholder": "Hier komt de uitvoer van je code",
     "run": "Run",
     "stop": "Stop",
+    "debug": "Debug",
     "states": {
         "running": "Aan het uitvoeren",
         "stopping": "Aan het stoppen",
@@ -79,7 +88,12 @@ const DUTCH_TRANSLATION = {
         "switch_to_batch": "Geef invoer vooraf in"
     },
     "enter": "Enter",
-    "examples": "Voorbeelden"
+    "examples": "Voorbeelden",
+    "debugging_command": {
+        "step_over": "Stap over",
+        "step_into": "Stap in",
+        "continue": "Ga verder"
+    }
 };
 
 const TRANSLATIONS = {

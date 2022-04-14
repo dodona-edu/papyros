@@ -1,6 +1,6 @@
 import escapeHTML from "escape-html";
-import { PapyrosEvent } from "./PapyrosEvent";
-import { RunListener } from "./RunListener";
+import { BackendEvent, BackendEventType } from "./BackendEvent";
+import { BackendManager } from "./BackendManager";
 import { inCircle } from "./util/HTMLShapes";
 import {
     getElement, parseData,
@@ -40,9 +40,16 @@ export interface FriendlyError {
 /**
  * Component for displaying code output or errors to the user
  */
-export class OutputManager implements RunListener {
+export class OutputManager {
     // Store options to allow re-rendering
-    options: RenderOptions = { parentElementId: "" };
+    options: RenderOptions;
+
+    constructor() {
+        BackendManager.subscribe(BackendEventType.Start, () => this.reset());
+        BackendManager.subscribe(BackendEventType.Output, e => this.showOutput(e));
+        BackendManager.subscribe(BackendEventType.Error, e => this.showError(e));
+        this.options = { parentElementId: "" };
+    }
 
     /**
      * Retrieve the parent element containing all output parts
@@ -78,9 +85,9 @@ export class OutputManager implements RunListener {
 
     /**
      * Display output to the user, based on its content type
-     * @param {PapyrosEvent} output Event containing the output data
+     * @param {BackendEvent} output Event containing the output data
      */
-    showOutput(output: PapyrosEvent): void {
+    showOutput(output: BackendEvent): void {
         const data = parseData(output.data, output.contentType);
         if (output.contentType === "img/png;base64") {
             this.renderNextElement(`<img src="data:image/png;base64, ${data}"></img>`);
@@ -91,9 +98,9 @@ export class OutputManager implements RunListener {
 
     /**
      * Display an error to the user
-     * @param {PapyrosEvent} error Event containing the error data
+     * @param {BackendEvent} error Event containing the error data
      */
-    showError(error: PapyrosEvent): void {
+    showError(error: BackendEvent): void {
         let errorHTML = "";
         const errorData = parseData(error.data, error.contentType);
         if (typeof (errorData) === "string") {
@@ -143,13 +150,5 @@ export class OutputManager implements RunListener {
      */
     reset(): void {
         this.render(this.options);
-    }
-
-    onRunStart(): void {
-        this.reset();
-    }
-
-    onRunEnd(): void {
-        // currently empty
     }
 }
