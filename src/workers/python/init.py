@@ -1,3 +1,4 @@
+import sys
 import json
 import os
 from collections.abc import Awaitable
@@ -8,13 +9,12 @@ from pyodide import to_js
 await micropip.install("python_runner")
 import python_runner
 
-ft = micropip.install('friendly_traceback')
-
+ft = micropip.install("friendly_traceback")
+jedi_install = micropip.install("jedi")
 # Otherwise `import matplotlib` fails while assuming a browser backend
-os.environ['MPLBACKEND'] = 'AGG'
+os.environ["MPLBACKEND"] = "AGG"
 
 # Code is executed in a worker with less resources than ful environment
-import sys
 sys.setrecursionlimit(500)
 
 # Global Papyros instance
@@ -30,10 +30,10 @@ class Papyros(python_runner.PatchedStdinRunner):
 
         def show():
             buf = BytesIO()
-            matplotlib.pyplot.savefig(buf, format='png')
+            matplotlib.pyplot.savefig(buf, format="png")
             buf.seek(0)
             # encode to a base64 str
-            img = base64.b64encode(buf.read()).decode('utf-8')
+            img = base64.b64encode(buf.read()).decode("utf-8")
             matplotlib.pyplot.clf()
             self.output("img", img, contentType="img/png;base64")
 
@@ -46,7 +46,8 @@ class Papyros(python_runner.PatchedStdinRunner):
         """
         with self._execute_context(source_code):
             try:
-                code_obj = self.pre_run(source_code, mode, top_level_await=top_level_await)
+                code_obj = self.pre_run(
+                    source_code, mode, top_level_await=top_level_await)
                 if code_obj:
                     result = self.execute(code_obj, source_code, mode)
                     while isinstance(result, Awaitable):
@@ -57,12 +58,12 @@ class Papyros(python_runner.PatchedStdinRunner):
                 # Let `_execute_context` and `serialize_traceback`
                 # handle the exception
                 raise
-    
+
     def serialize_syntax_error(self, exc, source_code):
-        raise # Rethrow to ensure FriendlyTraceback library is imported correctly
+        raise  # Rethrow to ensure FriendlyTraceback library is imported correctly
 
     def serialize_traceback(self, exc, source_code):
-        import friendly_traceback # Delay import for faster startup
+        import friendly_traceback  # Delay import for faster startup
         from friendly_traceback.core import FriendlyTraceback
 
         # Allow friendly_traceback to inspect the code
@@ -106,23 +107,25 @@ class Papyros(python_runner.PatchedStdinRunner):
 
 def init_papyros(event_callback):
     global papyros
+
     def runner_callback(event_type, data):
         def cb(typ, dat, **kwargs):
-            return event_callback(to_js(dict(type=typ, data=dat, depth=0, **kwargs)))
+            return event_callback(to_js(dict(type=typ, data=dat, **kwargs)))
 
         # Translate python_runner events to papyros events
         if event_type == "output":
             for part in data["parts"]:
-                if part["type"] in ["stderr", "traceback", "syntax_error"]:
+                typ = part["type"]
+                if typ in ["stderr", "traceback", "syntax_error"]:
                     cb("error", part["text"], contentType="text/json")
-                elif part["type"] == "stdout":
+                elif typ == "stdout":
                     cb("output", part["text"], contentType="text/plain")
-                elif part["type"] == "img":
+                elif typ == "img":
                     cb("output", part["text"], contentType=part["contentType"])
-                elif part["type"] in ["input", "input_prompt"]:
+                elif typ in ["input", "input_prompt"]:
                     continue
                 else:
-                    raise ValueError(f"Unknown output part type {part['type']}")
+                    raise ValueError(f"Unknown output part type {typ}")
         elif event_type == "input":
             return cb("input", json.dumps(dict(prompt=data["prompt"])), contentType="text/json")
         else:
@@ -145,3 +148,41 @@ async def process_code(code, filename="my_code.py"):
         papyros.override_matplotlib()
 
     await papyros.run_async(code)
+
+def convert_completion(completion, index):
+    converted = dict(type=completion.type, label=completion.name_with_symbols)
+    # if completion.get_signatures():
+    #     converted["detail"] = completion.get_signatures()[0].description
+    # converted["detail"] = f"{completion.parent().name} ({completion.type})" 
+    if completion.type != "keyword":
+        # Keywords have obvious meanings yet non-useful docstrings
+        converted["info"] = completion.docstring().replace("\n", "\r\n")
+    # Jedi does sorting, so give earlier element highest boost
+    converted["boost"] = -index
+    return converted
+
+async def autocomplete(context):
+    context = context.to_py()
+    if context["before"]:
+        before = context["before"]
+    else:
+        before = dict(text=None)
+        before["from"] = context["pos"]
+
+    complete_from = before["from"]
+    if not context["explicit"] and \
+         (context["before"] is not None and not context["before"]["text"]):
+        # If user did not request completions, don't complete for the empty string
+        options = []
+    else:
+        await jedi_install
+        import jedi
+        s = jedi.Script(context["text"])
+        # Convert Jedi completions to CodeMirror objects
+        options = [convert_completion(c, i)
+                   for (i, c) in enumerate(s.complete(line=context["line"], column=context["column"]))]
+        if "." in before["text"]:
+            complete_from = before["to"]
+    results = dict(options=json.dumps(options), contentType="text/json")
+    results["from"] = complete_from
+    return to_js(results)

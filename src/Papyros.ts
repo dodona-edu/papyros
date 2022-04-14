@@ -210,7 +210,6 @@ export class Papyros {
         if (this.codeState.programmingLanguage !== programmingLanguage) { // Expensive, so ensure it is needed
             stopBackend(this.codeState.backend);
             this.codeState.programmingLanguage = programmingLanguage;
-            this.codeState.editor.setLanguage(programmingLanguage, t("Papyros.code_placeholder", { programmingLanguage }));
             await this.startBackend();
         }
     }
@@ -233,11 +232,16 @@ export class Papyros {
      * Start up the backend for the current programming language
      */
     private async startBackend(): Promise<void> {
+        const programmingLanguage = this.codeState.programmingLanguage;
         this.stateManager.setState(RunState.Loading);
-        const backend = startBackend(this.codeState.programmingLanguage);
+        const backend = startBackend(programmingLanguage);
         // Allow passing messages between worker and main thread
         await backend.launch(proxy(e => this.onMessage(e)), this.inputManager.channel);
         this.codeState.backend = backend;
+        this.codeState.editor.setLanguage(programmingLanguage,
+            async context => await this.codeState.backend.autocomplete(Backend.convertCompletionContext(context)),
+            t("Papyros.code_placeholder", { programmingLanguage })
+        );
         this.stateManager.setState(RunState.Ready);
     }
 

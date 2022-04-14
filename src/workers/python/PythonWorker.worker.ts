@@ -1,9 +1,11 @@
 import { expose } from "comlink";
-import { Backend } from "../../Backend";
+import { Backend, WorkerAutocompleteContext } from "../../Backend";
 import { PapyrosEvent } from "../../PapyrosEvent";
 import { LogType, papyrosLog } from "../../util/Logging";
 import { Pyodide, PYODIDE_INDEX_URL, PYODIDE_JS_URL } from "./Pyodide";
 import { Channel } from "sync-message";
+import { CompletionResult } from "@codemirror/autocomplete";
+import { parseData } from "../../util/Util";
 /* eslint-disable-next-line */
 const initPythonString = require("!!raw-loader!./init.py").default;
 
@@ -26,6 +28,14 @@ class PythonWorker extends Backend {
         this.initialized = false;
     }
 
+    private convert(data: any): any {
+        let converted = data;
+        if ("toJs" in data) {
+            converted = data.toJs();
+        }
+        return Object.fromEntries(converted);
+    }
+
     override async launch(
         onEvent: (e: PapyrosEvent) => void,
         channel: Channel
@@ -40,8 +50,7 @@ class PythonWorker extends Backend {
         // Python calls our function with a PyProxy dict or a Js Map,
         // These must be converted to a PapyrosEvent (JS Object) to allow message passing
         const eventCallback = (data: any): void => {
-            const jsEvent: PapyrosEvent = "toJs" in data ? data.toJs() : Object.fromEntries(data);
-            return this.onEvent(jsEvent);
+            return this.onEvent(this.convert(data));
         };
         // Initialize our loaded Papyros module with the callback
         this.pyodide.globals.get("init_papyros")(eventCallback);
@@ -63,6 +72,17 @@ class PythonWorker extends Backend {
             await this.pyodide.loadPackage("micropip");
             return this.pyodide.runPythonAsync(code);
         }
+    }
+
+    override async autocomplete(context: WorkerAutocompleteContext):
+        Promise<CompletionResult | null> {
+        // Do not await as not strictly required to compute autocompletions
+        this.pyodide.loadPackagesFromImports(context.text);
+        const result = this.convert(await this.pyodide.globals.get("autocomplete")(context));
+        result.options = parseData(result.options, result.contentType);
+        delete result.contentType;
+        result.span = /^[\w$]*$/;
+        return result;
     }
 }
 
