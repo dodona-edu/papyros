@@ -107,7 +107,7 @@ export abstract class Backend {
     /**
      * Converts the context to a cloneable object containing useful properties
      * to generate autocompletion suggestions with
-     * Class instances are not passable to workers, so we extract the useful infromation
+     * Class instances are not passable to workers, so we extract the useful information
      * @param {CompletionContext} context Current context to autocomplete for
      * @param {RegExp} expr Expression to match the previous token with
      * default a word with an optional dot to represent property access
