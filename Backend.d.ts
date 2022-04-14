@@ -34,31 +34,19 @@ export interface WorkerAutocompleteContext {
         text: string;
     } | null;
 }
-export interface WorkerDiagnostic {
-    lineNr: number;
-    columnNr: number;
-    severity: "info" | "warning" | "error";
-    message: string;
-}
 export declare abstract class Backend<Extras extends SyncExtras = SyncExtras> {
     protected extras: Extras;
     protected onEvent: (e: BackendEvent) => any;
     /**
-     *  Constructor is limited as it is meant to be used as a WebWorker
-     *  These are then exposed via Comlink. Proper initialization occurs
-     *  in the launch method when the worker is started
-     * @param {Array<string>} syncMethods The methods to expose
+     * Constructor is limited as it is meant to be used as a WebWorker
+     * Proper initialization occurs in the launch method when the worker is started
+     * Synchronously exposing methods should be done here
      */
-    constructor(syncMethods?: string[]);
+    constructor();
     /**
      * @return {any} The function to expose methods for Comsync to allow interrupting
      */
     protected syncExpose(): any;
-    /**
-     * Expose all the methods that should support being interrupted
-     * @param {Array<string>} syncMethods The names of the methods to expose
-     */
-    protected exposeMethods(syncMethods: Array<string>): void;
     /**
      * Initialize the backend by doing all setup-related work
      * @param {function(BackendEvent):void} onEvent Callback for when events occur
@@ -75,6 +63,7 @@ export declare abstract class Backend<Extras extends SyncExtras = SyncExtras> {
     /**
      * Converts the context to a cloneable object containing useful properties
      * to generate autocompletion suggestions with
+     * Class instances are not passable to workers, so we extract the useful information
      * @param {CompletionContext} context Current context to autocomplete for
      * @param {RegExp} expr Expression to match the previous token with
      * @return {WorkerAutocompleteContext} Completion context that can be passed as a message
@@ -85,5 +74,4 @@ export declare abstract class Backend<Extras extends SyncExtras = SyncExtras> {
      * @param {WorkerAutocompleteContext} context Context to autcomplete in
      */
     abstract autocomplete(context: WorkerAutocompleteContext): Promise<CompletionResult | null>;
-    abstract lintCode(code: string): Promise<Array<WorkerDiagnostic>>;
 }
