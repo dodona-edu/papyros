@@ -53,14 +53,14 @@ export class InteractiveInputHandler extends UserInputHandler {
 
     render(options: RenderOptions): HTMLElement {
         const rendered = renderWithOptions(options, `
-<div class="flex flex-row">
+<div class="flex flex-row my-1">
     <input id="${INPUT_TA_ID}" type="text"
     class="border border-transparent w-full mr-0.5 px-1
     disabled:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500">
     </input>
     <button id="${SEND_INPUT_BTN_ID}" type="button"
     class="text-black bg-white border-2 px-4
-        disabled:opacity-50 disabled:cursor-wait">
+        disabled:opacity-50 disabled:cursor-not-allowed">
         ${t("Papyros.enter")}
     </button>
 </div>`);
