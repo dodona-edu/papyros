@@ -71,7 +71,9 @@ export class CodeRunner {
         this.programmingLanguage = programmingLanguage;
         this.editor = new CodeEditor();
         this.inputManager = new InputManager(async (input: string) => {
-            (await this.backend).writeMessage(input);
+            const backend = await this.backend;
+            // Give backend time to be waiting for the message, temporary until comsync fix
+            setTimeout(() => backend.writeMessage(input), 100);
             this.setState(RunState.Running);
         });
         this.backend = Promise.resolve({} as SyncClient<Backend>);
@@ -213,7 +215,7 @@ export class CodeRunner {
         inputOptions: RenderOptions,
         codeEditorOptions: RenderOptions): HTMLElement {
         const rendered = renderWithOptions(statusPanelOptions, `
-<div class="grid grid-cols-2 items-center">
+<div class="grid grid-cols-2 items-center mx-1">
     <div class="col-span-1 flex flex-row">
         ${this.buttons.map(b => b.buttonHTML).join("\n")}
     </div>

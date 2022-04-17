@@ -79,7 +79,7 @@ export class InputManager {
         </a>`;
 
         renderWithOptions(options, `
-<div id="${USER_INPUT_WRAPPER_ID}">
+<div id="${USER_INPUT_WRAPPER_ID}" class="my-1">
 </div>
 ${switchMode}`);
         addListener<InputMode>(SWITCH_INPUT_MODE_A_ID, im => this.setInputMode(im),

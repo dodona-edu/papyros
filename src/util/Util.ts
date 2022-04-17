@@ -95,8 +95,8 @@ export function renderButton(options: ButtonOptions): string {
     }
     return `
 <button id="${options.id}" type="button"
-    class="border-2 m-1 px-4 inset-y-2 rounded-lg
-    disabled:opacity-50 disabled:cursor-wait${options.extraClasses}">
+    class="m-1 px-3 py-1 rounded-lg
+    disabled:opacity-50 disabled:cursor-not-allowed${options.extraClasses}">
     ${options.buttonText}
 </button>`;
 }
