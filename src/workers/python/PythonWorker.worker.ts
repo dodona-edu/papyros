@@ -97,7 +97,8 @@ class PythonWorker extends Backend<PyodideExtras> {
         return await this.papyros.run_async.callKwargs({
             source_code: code,
             mode: mode,
-            snoop_config: { color: false }
+            // Suitable color picked from http://help.farbox.com/pygments.html
+            snoop_config: { color: "default" }
         });
     }
 

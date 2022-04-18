@@ -12,6 +12,7 @@ import {
     RenderOptions, renderWithOptions
 } from "./util/Rendering";
 import { OUTPUT_AREA_ID, OUTPUT_OVERFLOW_ID } from "./Constants";
+import AnsiUp from "ansi_up";
 
 /**
  * Shape of Error objects that are easy to interpret
@@ -52,6 +53,8 @@ export class OutputManager extends Renderable {
      */
     private content: Array<string>;
 
+    private ansiUp: AnsiUp;
+
     constructor() {
         super();
         this.content = [];
@@ -60,6 +63,7 @@ export class OutputManager extends Renderable {
         BackendManager.subscribe(BackendEventType.Debug, e => this.showOutput(e));
         BackendManager.subscribe(BackendEventType.Error, e => this.showError(e));
         BackendManager.subscribe(BackendEventType.End, () => this.onRunEnd());
+        this.ansiUp = new AnsiUp();
     }
 
     /**
@@ -97,7 +101,13 @@ export class OutputManager extends Renderable {
                 .filter(line => !ignoreEmpty || line.trim().length > 0)
                 .join("\n");
         }
-        return `<span class="${className}">${escapeHTML(spanText)}</span>`;
+        // If the HTML can be interpreted as colored, then render it that way
+        const coloredText = this.ansiUp.ansi_to_html(spanText);
+        if (coloredText !== spanText) {
+            return coloredText;
+        } else {
+            return (`<span class="${className}">${escapeHTML(spanText)}</span>`);
+        }
     }
 
     /**
