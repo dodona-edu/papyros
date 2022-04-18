@@ -14,15 +14,12 @@ from .autocomplete import autocomplete
 
 SYS_RECURSION_LIMIT = 500
 
-# Global Papyros instance
-papyros = None
-
 class Papyros(python_runner.PyodideRunner):
     def __init__(
         self,
         *,
         source_code="",
-        filename="my_program.py",
+        filename="/my_program.py",
         callback=None,
         limit=SYS_RECURSION_LIMIT
     ):
