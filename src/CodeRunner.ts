@@ -72,8 +72,7 @@ export class CodeRunner {
         this.editor = new CodeEditor();
         this.inputManager = new InputManager(async (input: string) => {
             const backend = await this.backend;
-            // Give backend time to be waiting for the message, temporary until comsync fix
-            setTimeout(() => backend.writeMessage(input), 100);
+            backend.writeMessage(input);
             this.setState(RunState.Running);
         });
         this.backend = Promise.resolve({} as SyncClient<Backend>);
