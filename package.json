@@ -1,6 +1,6 @@
 {
   "name": "@dodona/papyros",
-  "version": "0.1.925-tar",
+  "version": "0.1.93",
   "private": false,
   "homepage": ".",
   "devDependencies": {
@@ -54,11 +54,11 @@
     "@codemirror/search": "^0.19.3",
     "@codemirror/state": "^0.19.6",
     "comlink": "^4.3.1",
-    "comsync": "^0.0.7",
+    "comsync": "^0.0.8",
     "escape-html": "^1.0.3",
     "i18n-js": "^3.8.0",
     "pyodide-worker-runner": "^0.0.8",
-    "sync-message": "^0.0.9"
+    "sync-message": "^0.0.10"
   },
   "scripts": {
     "start": "yarn setup && webpack serve --mode development",
