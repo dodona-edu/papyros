@@ -101,13 +101,7 @@ export class OutputManager extends Renderable {
                 .filter(line => !ignoreEmpty || line.trim().length > 0)
                 .join("\n");
         }
-        // If the HTML can be interpreted as colored, then render it that way
-        const coloredText = this.ansiUp.ansi_to_html(spanText);
-        if (coloredText !== spanText) {
-            return coloredText;
-        } else {
-            return (`<span class="${className}">${escapeHTML(spanText)}</span>`);
-        }
+        return `<span class="${className}">${this.ansiUp.ansi_to_html(spanText)}</span>`;
     }
 
     /**
