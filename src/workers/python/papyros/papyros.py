@@ -105,7 +105,7 @@ class Papyros(python_runner.PyodideRunner):
                     while isinstance(result, Awaitable):
                         result = await result
                     return result
-            except Exception as e:
+            except (Exception, KeyboardInterrupt) as e:
                 # Sometimes KeyboardInterrupt is caught by Pyodide and raised as a PythonError
                 # with a js_error containing the reason
                 js_error = str(getattr(e, "js_error", ""))
