@@ -80,5 +80,9 @@ focus:outline-none focus:ring-1 focus:ring-blue-500" rows="5">
                 this.inputCallback();
             }
         });
+        this.inputArea.addEventListener("change", () => {
+            this.previousInput = this.inputArea.value;
+        })
+        this.inputArea.value = this.previousInput;
     }
 }
