@@ -4,9 +4,10 @@ import { BackendManager } from "./BackendManager";
 import { inCircle } from "./util/HTMLShapes";
 import {
     getElement, parseData,
-    RenderOptions, renderWithOptions, t
+    t
 } from "./util/Util";
 import { LogType, papyrosLog } from "./util/Logging";
+import { RenderOptions, renderWithOptions } from "./util/Rendering";
 
 /**
  * Shape of Error objects that are easy to interpret

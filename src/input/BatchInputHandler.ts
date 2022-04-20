@@ -1,7 +1,7 @@
 import { INPUT_TA_ID } from "../Constants";
 import { InputMode } from "../InputManager";
-import { RenderOptions, renderWithOptions } from "../util/Util";
 import { UserInputHandler } from "./UserInputHandler";
+import { RenderOptions, renderWithOptions } from "../util/Rendering";
 
 export class BatchInputHandler extends UserInputHandler {
     /**

@@ -12,6 +12,8 @@ const HEIGHTS = {
   "full": "80vh"
 };
 module.exports = {
+  // Allow toggling dark mode using a class
+  darkMode: "class",
   purge: [
     "./src/**/*.ts",
   ],

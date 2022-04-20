@@ -13,10 +13,13 @@ import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import { svgCircle } from "./util/HTMLShapes";
 import { LogType, papyrosLog } from "./util/Logging";
 import {
-    addListener, ButtonOptions, renderButton,
-    RenderOptions, renderWithOptions, getElement,
+    addListener, getElement,
     t
 } from "./util/Util";
+import {
+    RenderOptions, renderWithOptions,
+    renderButton, ButtonOptions
+} from "./util/Rendering";
 
 interface DynamicButton {
     id: string;

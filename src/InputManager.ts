@@ -7,12 +7,12 @@ import { BackendEvent, BackendEventType } from "./BackendEvent";
 import { papyrosLog, LogType } from "./util/Logging";
 import {
     addListener,
-    RenderOptions, renderWithOptions
 } from "./util/Util";
 import { InteractiveInputHandler } from "./input/InteractiveInputHandler";
 import { UserInputHandler } from "./input/UserInputHandler";
 import { BatchInputHandler } from "./input/BatchInputHandler";
 import { BackendManager } from "./BackendManager";
+import { RenderOptions, renderWithOptions } from "./util/Rendering";
 
 export enum InputMode {
     Interactive = "interactive",
@@ -85,11 +85,14 @@ ${switchMode}`);
         addListener<InputMode>(SWITCH_INPUT_MODE_A_ID, im => this.setInputMode(im),
             "click", "data-value");
 
-        this.inputHandler.render({ parentElementId: USER_INPUT_WRAPPER_ID });
+        this.inputHandler.render({
+            parentElementId: USER_INPUT_WRAPPER_ID,
+            darkMode: options.darkMode
+        });
         this.inputHandler.waitWithPrompt(this.waiting, this.prompt);
     }
 
-    waitWithPrompt(waiting: boolean, prompt=""): void {
+    waitWithPrompt(waiting: boolean, prompt = ""): void {
         this.waiting = waiting;
         this.prompt = prompt;
         this.inputHandler.waitWithPrompt(this.waiting, this.prompt);

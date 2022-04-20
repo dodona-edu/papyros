@@ -1,7 +1,8 @@
 import { INPUT_TA_ID, SEND_INPUT_BTN_ID } from "../Constants";
 import { InputMode } from "../InputManager";
-import { addListener, getElement, RenderOptions, renderWithOptions, t } from "../util/Util";
+import { addListener, getElement, t } from "../util/Util";
 import { UserInputHandler } from "./UserInputHandler";
+import { RenderOptions, renderWithOptions } from "../util/Rendering";
 
 /**
  * Input handler that takes input from the user in an interactive fashion

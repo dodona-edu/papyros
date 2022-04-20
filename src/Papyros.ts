@@ -3,22 +3,22 @@ import "./Papyros.css";
 import I18n from "i18n-js";
 import {
     EDITOR_WRAPPER_ID, PROGRAMMING_LANGUAGE_SELECT_ID, OUTPUT_TA_ID,
-    LOCALE_SELECT_ID, INPUT_AREA_WRAPPER_ID, EXAMPLE_SELECT_ID, PANEL_WRAPPER_ID
+    LOCALE_SELECT_ID, INPUT_AREA_WRAPPER_ID, EXAMPLE_SELECT_ID, PANEL_WRAPPER_ID, DARK_MODE_TOGGLE_ID, MAIN_APP_ID
 } from "./Constants";
 import { InputMode } from "./InputManager";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import { LogType, papyrosLog } from "./util/Logging";
 import {
     t, loadTranslations, getLocales,
-    getSelectOptions, renderSelect, removeSelection,
-    RenderOptions, renderWithOptions,
-    addListener, ButtonOptions, getElement
+    getSelectOptions, removeSelection,
+    addListener, getElement
 } from "./util/Util";
 import { RunState, CodeRunner } from "./CodeRunner";
 import { getCodeForExample, getExampleNames } from "./examples/Examples";
 import { OutputManager } from "./OutputManager";
 import { makeChannel } from "sync-message";
 import { BackendManager } from "./BackendManager";
+import { RenderOptions, renderWithOptions, renderSelect, ButtonOptions } from "./util/Rendering";
 
 const LANGUAGE_MAP = new Map([
     ["python", ProgrammingLanguage.Python],
@@ -70,7 +70,11 @@ interface PapyrosRenderOptions {
     /**
      * RenderOptions for the output field
      */
-    outputOptions?: RenderOptions
+    outputOptions?: RenderOptions;
+    /**
+     * Whether to render in dark mode
+     */
+    darkMode?: boolean;
 }
 
 /**
@@ -185,11 +189,16 @@ export class Papyros {
      */
     render(renderOptions: PapyrosRenderOptions): void {
         // Set default values for each option
-        renderOptions.inputOptions = Object.assign({ parentElementId: INPUT_AREA_WRAPPER_ID }, renderOptions.inputOptions);
-        renderOptions.statusPanelOptions = Object.assign({ parentElementId: PANEL_WRAPPER_ID }, renderOptions.statusPanelOptions);
-        renderOptions.codeEditorOptions = Object.assign({ parentElementId: EDITOR_WRAPPER_ID }, renderOptions.codeEditorOptions);
-        renderOptions.outputOptions = Object.assign({ parentElementId: OUTPUT_TA_ID }, renderOptions.outputOptions);
-
+        for (const [option, defaultParentId] of [
+            ["inputOptions", INPUT_AREA_WRAPPER_ID], ["statusPanelOptions", PANEL_WRAPPER_ID],
+            ["codeEditorOptions", EDITOR_WRAPPER_ID], ["outputOptions", OUTPUT_TA_ID],
+            ["standAloneOptions", MAIN_APP_ID]
+        ]) {
+            const elementOptions: RenderOptions = (renderOptions as any)[option] || {};
+            elementOptions.darkMode = renderOptions.darkMode;
+            (renderOptions as any)[option] = Object.assign(
+                { parentElementId: defaultParentId }, elementOptions);
+        }
         if (this.config.standAlone) {
             const {
                 locale, programmingLanguage
@@ -208,6 +217,10 @@ export class Papyros {
                 <i class="mdi mdi-web text-4xl text-white"></i>
             </div>
             `;
+            const darkModeToggle = `
+            <a id=${DARK_MODE_TOGGLE_ID} class="text-white hover:cursor-pointer">
+            ${t(`Papyros.toggle_dark_mode.${!renderOptions.darkMode}`)}
+            </a>`;
             const navBar = `
             <div class="bg-blue-500 text-white text-lg p-4 grid grid-cols-8 items-center max-h-1/5">
                 <div class="col-span-6">
@@ -215,7 +228,9 @@ export class Papyros {
                 </div>
                 <div class="col-span-2 text-black">
                     ${localeSelect}
+                    ${darkModeToggle}
                 </div>
+
             </div>
             `;
             const header = `
@@ -225,7 +240,7 @@ export class Papyros {
                 ${exampleSelect}
             </div>`;
             renderWithOptions(renderOptions.standAloneOptions!, `
-    <div id="papyros" class="max-h-screen h-full overflow-y-hidden">
+    <div id="${MAIN_APP_ID}" class="max-h-screen h-full overflow-y-hidden">
         ${navBar}
         <div class="m-10">
             ${header}
@@ -234,15 +249,15 @@ export class Papyros {
                 <!-- Code section-->
                 <div>
                     <h1>${t("Papyros.code")}:</h1>
-                    <div id="${renderOptions.codeEditorOptions.parentElementId}"></div>
-                    <div id="${renderOptions.statusPanelOptions.parentElementId}"></div>
+                    <div id="${renderOptions.codeEditorOptions!.parentElementId}"></div>
+                    <div id="${renderOptions.statusPanelOptions!.parentElementId}"></div>
                 </div>
                 <!-- User input and output section-->
                 <div>
                     <h1>${t("Papyros.output")}:</h1>
-                    <div id="${renderOptions.outputOptions.parentElementId}"></div>
+                    <div id="${renderOptions.outputOptions!.parentElementId}"></div>
                     <h1>${t("Papyros.input")}:</h1>
-                    <div id="${renderOptions.inputOptions.parentElementId}"></div>
+                    <div id="${renderOptions.inputOptions!.parentElementId}"></div>
                 </div>
             </div>
         </div>
@@ -267,10 +282,14 @@ export class Papyros {
             }, "change", "value");
             // Ensure there is no initial selection
             removeSelection(EXAMPLE_SELECT_ID);
+            addListener(DARK_MODE_TOGGLE_ID, () => {
+                renderOptions.darkMode = !renderOptions.darkMode;
+                this.render(renderOptions);
+            }, "click");
         }
-        this.codeRunner.render(renderOptions.statusPanelOptions,
-            renderOptions.inputOptions, renderOptions.codeEditorOptions);
-        this.outputManager.render(renderOptions.outputOptions);
+        this.codeRunner.render(renderOptions.statusPanelOptions!,
+            renderOptions.inputOptions!, renderOptions.codeEditorOptions!);
+        this.outputManager.render(renderOptions.outputOptions!);
     }
 
     /**

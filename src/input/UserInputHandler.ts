@@ -1,6 +1,7 @@
 import { INPUT_TA_ID } from "../Constants";
 import { InputMode } from "../InputManager";
-import { getElement, RenderOptions, t } from "../util/Util";
+import { t, getElement } from "../util/Util";
+import { RenderOptions } from "../util/Rendering";
 
 /**
  * Base class for components that handle input from the user

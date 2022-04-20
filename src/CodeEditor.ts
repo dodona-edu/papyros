@@ -26,7 +26,8 @@ import { rectangularSelection } from "@codemirror/rectangular-selection";
 import { defaultHighlightStyle } from "@codemirror/highlight";
 import { lintKeymap, linter, Diagnostic, lintGutter } from "@codemirror/lint";
 import { showPanel } from "@codemirror/panel";
-import { RenderOptions, renderWithOptions, t } from "./util/Util";
+import { t } from "./util/Util";
+import { RenderOptions, renderWithOptions } from "./util/Rendering";
 
 /**
  * Component that provides useful features to users writing code
