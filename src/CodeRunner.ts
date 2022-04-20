@@ -18,13 +18,28 @@ import {
 } from "./util/Util";
 import {
     RenderOptions, renderWithOptions,
-    renderButton, ButtonOptions
+    renderButton, ButtonOptions, Renderable
 } from "./util/Rendering";
 
 interface DynamicButton {
     id: string;
     buttonHTML: string;
     onClick: () => void;
+}
+
+interface CodeRunnerRenderOptions {
+    /**
+     * Options for rendering the panel
+     */
+    statusPanelOptions: RenderOptions;
+    /**
+     * Options for rendering the InputManager
+     */
+    inputOptions: RenderOptions;
+    /**
+     * Options for rendering the editor
+     */
+    codeEditorOptions: RenderOptions;
 }
 
 /**
@@ -40,7 +55,7 @@ export enum RunState {
 /**
  * Helper component to manage and visualize the current RunState
  */
-export class CodeRunner {
+export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     /**
      * The currently used programming language
      */
@@ -71,6 +86,7 @@ export class CodeRunner {
      * @param {ProgrammingLanguage} programmingLanguage The language to use
      */
     constructor(programmingLanguage: ProgrammingLanguage) {
+        super();
         this.programmingLanguage = programmingLanguage;
         this.editor = new CodeEditor();
         this.inputManager = new InputManager(async (input: string) => {
@@ -83,12 +99,12 @@ export class CodeRunner {
         this.addButton({
             id: RUN_BTN_ID,
             buttonText: t("Papyros.run"),
-            extraClasses: "text-white bg-blue-500"
+            classNames: "text-white bg-blue-500"
         }, () => this.runCode());
         this.addButton({
             id: STOP_BTN_ID,
             buttonText: t("Papyros.stop"),
-            extraClasses: "text-white bg-red-500"
+            classNames: "text-white bg-red-500"
         }, () => this.stop());
         BackendManager.subscribe(BackendEventType.Input,
             () => this.setState(RunState.AwaitingInput));
@@ -215,17 +231,8 @@ export class CodeRunner {
         });
     }
 
-    /**
-     * Render the RunStateManager with the given options
-     * @param {RenderOptions} statusPanelOptions Options for rendering the panel
-     * @param {RenderOptions} inputOptions Options for rendering the InputManager
-     * @param {RenderOptions} codeEditorOptions Options for rendering the editor
-     * @return {HTMLElement} The rendered RunStateManager
-     */
-    render(statusPanelOptions: RenderOptions,
-        inputOptions: RenderOptions,
-        codeEditorOptions: RenderOptions): HTMLElement {
-        const rendered = renderWithOptions(statusPanelOptions, `
+    protected override _render(options: CodeRunnerRenderOptions): HTMLElement {
+        const rendered = renderWithOptions(options.statusPanelOptions, `
 <div class="grid grid-cols-2 items-center mx-1">
     <div class="col-span-1 flex flex-row">
         ${this.buttons.map(b => b.buttonHTML).join("\n")}
@@ -237,8 +244,11 @@ export class CodeRunner {
 </div>`);
         // Buttons are freshly added to the DOM, so attach listeners now
         this.buttons.forEach(b => addListener(b.id, b.onClick, "click"));
-        this.inputManager.render(inputOptions);
-        this.editor.render(codeEditorOptions, rendered);
+        this.inputManager.render(options.inputOptions);
+        this.editor.render(options.codeEditorOptions);
+        this.editor.setPanel(rendered);
+        // Set language again to update the placeholder
+        this.editor.setLanguage(this.programmingLanguage);
         return rendered;
     }
 

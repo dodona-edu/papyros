@@ -52,8 +52,8 @@ export class InteractiveInputHandler extends UserInputHandler {
         // Intentionally empty
     }
 
-    render(options: RenderOptions): HTMLElement {
-        const rendered = renderWithOptions(options, `
+    protected override _render(options: RenderOptions): void {
+        renderWithOptions(options, `
 <div class="flex flex-row my-1">
     <input id="${INPUT_TA_ID}" type="text"
     class="border border-transparent w-full mr-0.5 px-1
@@ -71,6 +71,5 @@ export class InteractiveInputHandler extends UserInputHandler {
                 this.inputCallback();
             }
         });
-        return rendered;
     }
 }

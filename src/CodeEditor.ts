@@ -27,12 +27,12 @@ import { defaultHighlightStyle } from "@codemirror/highlight";
 import { lintKeymap, linter, Diagnostic, lintGutter } from "@codemirror/lint";
 import { showPanel } from "@codemirror/panel";
 import { t } from "./util/Util";
-import { RenderOptions, renderWithOptions } from "./util/Rendering";
+import { appendClasses, Renderable, RenderOptions, renderWithOptions } from "./util/Rendering";
 
 /**
  * Component that provides useful features to users writing code
  */
-export class CodeEditor {
+export class CodeEditor extends Renderable {
     /**
      * Reference to the user interface of the editor
      */
@@ -69,6 +69,7 @@ export class CodeEditor {
      * @param {number} indentLength The length in spaces for the indent unit
      */
     constructor(initialCode = "", indentLength = 4) {
+        super();
         this.editorView = new EditorView(
             {
                 state: EditorState.create({
@@ -93,20 +94,10 @@ export class CodeEditor {
             });
     }
 
-    /**
-     * Render the editor with the given options and panel
-     * @param {RenderOptions} options Options for rendering
-     * @param {HTMLElement} panel The panel to display at the bottom
-     * @return {HTMLElement} The rendered element
-     */
-    render(options: RenderOptions, panel?: HTMLElement): HTMLElement {
-        if (panel) {
-            this.setPanel(panel);
-        }
-        options.classNames =
-            // eslint-disable-next-line max-len
-            `overflow-auto max-h-9/10 min-h-1/4 border-solid border-gray-200 border-2 ${options.classNames}`;
-        return renderWithOptions(options, this.editorView.dom);
+    protected override _render(options: RenderOptions): void {
+        appendClasses(options,
+            "overflow-auto max-h-9/10 min-h-1/4 border-solid border-gray-200 border-2");
+        renderWithOptions(options, this.editorView.dom);
     }
 
     /**

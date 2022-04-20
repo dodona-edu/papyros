@@ -18,7 +18,7 @@ import { getCodeForExample, getExampleNames } from "./examples/Examples";
 import { OutputManager } from "./OutputManager";
 import { makeChannel } from "sync-message";
 import { BackendManager } from "./BackendManager";
-import { RenderOptions, renderWithOptions, renderSelect, ButtonOptions } from "./util/Rendering";
+import { RenderOptions, renderWithOptions, renderSelect, ButtonOptions, Renderable } from "./util/Rendering";
 
 const LANGUAGE_MAP = new Map([
     ["python", ProgrammingLanguage.Python],
@@ -80,7 +80,7 @@ interface PapyrosRenderOptions {
 /**
  * Class that manages multiple components to form a coding scratchpad
  */
-export class Papyros {
+export class Papyros extends Renderable<PapyrosRenderOptions> {
     /**
      * Config used to initialize Papyros
      */
@@ -103,6 +103,7 @@ export class Papyros {
      * @param {PapyrosConfig} config Properties to configure this instance
      */
     constructor(config: PapyrosConfig) {
+        super();
         this.launched = false;
         this.config = config;
         // Load translations as other components depend on them
@@ -138,6 +139,27 @@ export class Papyros {
      */
     async setProgrammingLanguage(programmingLanguage: ProgrammingLanguage): Promise<void> {
         await this.codeRunner.setProgrammingLanguage(programmingLanguage);
+    }
+
+    /**
+     * @param {string} locale The locale to use
+     */
+    setLocale(locale: string): void {
+        if (locale !== I18n.locale) {
+            I18n.locale = locale;
+            this.config.locale = locale;
+            this.render();
+        }
+    }
+
+    /**
+     * @param {boolean} darkMode Whether to use dark mode
+     */
+    setDarkMode(darkMode: boolean): void {
+        if (darkMode !== this.renderOptions.darkMode) {
+            this.renderOptions.darkMode = darkMode;
+            this.render();
+        }
     }
 
     /**
@@ -183,11 +205,7 @@ export class Papyros {
         return true;
     }
 
-    /**
-     * Render Papyros with the given options
-     * @param {PapyrosRenderOptions} renderOptions Options to use
-     */
-    render(renderOptions: PapyrosRenderOptions): void {
+    protected override _render(renderOptions: PapyrosRenderOptions): void {
         // Set default values for each option
         for (const [option, defaultParentId] of [
             ["inputOptions", INPUT_AREA_WRAPPER_ID], ["statusPanelOptions", PANEL_WRAPPER_ID],
@@ -274,7 +292,9 @@ export class Papyros {
                 }, "change", "value"
             );
             addListener(LOCALE_SELECT_ID, locale => {
-                document.location.href = `?locale=${locale}&language=${this.codeRunner.getProgrammingLanguage()}`;
+                // Modify search query params without reloading page
+                history.pushState(null, "", `?locale=${locale}&language=${this.codeRunner.getProgrammingLanguage()}`);
+                this.setLocale(locale);
             }, "change", "value");
             addListener(EXAMPLE_SELECT_ID, name => {
                 const code = getCodeForExample(this.codeRunner.getProgrammingLanguage(), name);
@@ -283,12 +303,14 @@ export class Papyros {
             // Ensure there is no initial selection
             removeSelection(EXAMPLE_SELECT_ID);
             addListener(DARK_MODE_TOGGLE_ID, () => {
-                renderOptions.darkMode = !renderOptions.darkMode;
-                this.render(renderOptions);
+                this.setDarkMode(!renderOptions.darkMode);
             }, "click");
         }
-        this.codeRunner.render(renderOptions.statusPanelOptions!,
-            renderOptions.inputOptions!, renderOptions.codeEditorOptions!);
+        this.codeRunner.render({
+            statusPanelOptions: renderOptions.statusPanelOptions!,
+            inputOptions: renderOptions.inputOptions!,
+            codeEditorOptions: renderOptions.codeEditorOptions!
+        });
         this.outputManager.render(renderOptions.outputOptions!);
     }
 

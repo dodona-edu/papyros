@@ -65,8 +65,8 @@ export class BatchInputHandler extends UserInputHandler {
         // Intentionally empty
     }
 
-    render(options: RenderOptions): HTMLElement {
-        const rendered = renderWithOptions(options, `
+    protected override _render(options: RenderOptions): void {
+        renderWithOptions(options, `
 <textarea id="${INPUT_TA_ID}"
 class="border-2 h-auto w-full max-h-1/4 px-1 overflow-auto
 focus:outline-none focus:ring-1 focus:ring-blue-500" rows="5">
@@ -80,6 +80,5 @@ focus:outline-none focus:ring-1 focus:ring-blue-500" rows="5">
                 this.inputCallback();
             }
         });
-        return rendered;
     }
 }

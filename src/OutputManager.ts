@@ -7,7 +7,7 @@ import {
     t
 } from "./util/Util";
 import { LogType, papyrosLog } from "./util/Logging";
-import { RenderOptions, renderWithOptions } from "./util/Rendering";
+import { appendClasses, Renderable, RenderOptions, renderWithOptions } from "./util/Rendering";
 
 /**
  * Shape of Error objects that are easy to interpret
@@ -42,22 +42,19 @@ export interface FriendlyError {
 /**
  * Component for displaying code output or errors to the user
  */
-export class OutputManager {
-    // Store options to allow re-rendering
-    options: RenderOptions;
-
+export class OutputManager extends Renderable {
     constructor() {
+        super();
         BackendManager.subscribe(BackendEventType.Start, () => this.reset());
         BackendManager.subscribe(BackendEventType.Output, e => this.showOutput(e));
         BackendManager.subscribe(BackendEventType.Error, e => this.showError(e));
-        this.options = { parentElementId: "" };
     }
 
     /**
      * Retrieve the parent element containing all output parts
      */
     get outputArea(): HTMLElement {
-        return getElement(this.options.parentElementId);
+        return getElement(this.renderOptions.parentElementId);
     }
 
     /**
@@ -131,27 +128,21 @@ export class OutputManager {
         this.renderNextElement(errorHTML);
     }
 
-    /**
-     * Render the OutputManager with the given options
-     * @param {RenderOptions} options Options for rendering
-     * @return {HTMLElement} The rendered output area
-     */
-    render(options: RenderOptions): HTMLElement {
+    protected override _render(options: RenderOptions): void {
         options.attributes = new Map([
-            ["data-placeholder", t("Papyros.output_placeholder")],
-            ...(options.attributes || [])
+            ...(options.attributes || []),
+            ["data-placeholder", t("Papyros.output_placeholder")]
         ]);
-        const initialClassNames = options.classNames ? options.classNames + " " : "";
-        // eslint-disable-next-line max-len
-        options.classNames = `${initialClassNames}border-2 w-full min-h-1/4 max-h-3/5 overflow-auto py-1 px-2 whitespace-pre with-placeholder`;
-        this.options = options;
-        return renderWithOptions(options, "");
+        appendClasses(options,
+            // eslint-disable-next-line max-len
+            "border-2 w-full min-h-1/4 max-h-3/5 overflow-auto py-1 px-2 whitespace-pre with-placeholder");
+        renderWithOptions(options, "");
     }
 
     /**
      * Clear the contents of the output area
      */
     reset(): void {
-        this.render(this.options);
+        this.render();
     }
 }

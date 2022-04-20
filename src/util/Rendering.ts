@@ -23,6 +23,20 @@ export interface RenderOptions {
 }
 
 /**
+ * Helper method to append classes to the class attribute of an HTMLElement
+ * Consecutive whitespace is not allowed
+ * @param {Object} options Object containing classNames
+ * @param {string} classNames The classes to append
+ */
+export function appendClasses(options: { classNames?: string }, classNames: string): void {
+    if (options.classNames && !options.classNames.includes(classNames)) {
+        options.classNames = `${options.classNames} ${classNames}`;
+    } else {
+        options.classNames = classNames;
+    }
+}
+
+/**
  * Renders an element with the given options
  * @param {RenderOptions} options Options to be used while rendering
  * @param {string | HTMLElement} content What to fill the parent with.
@@ -66,7 +80,7 @@ export interface ButtonOptions {
     /**
      * Optional classes to apply to the button
      */
-    extraClasses?: string;
+    classNames?: string;
 }
 
 /**
@@ -75,14 +89,11 @@ export interface ButtonOptions {
  * @return {string} HTML string for the button
  */
 export function renderButton(options: ButtonOptions): string {
-    if (options.extraClasses) {
-        // Prepend space to use in HTML
-        options.extraClasses = ` ${options.extraClasses}`;
-    }
+    appendClasses(options,
+        "m-1 px-3 py-1 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed");
     return `
 <button id="${options.id}" type="button"
-    class="m-1 px-3 py-1 rounded-lg
-    disabled:opacity-50 disabled:cursor-not-allowed${options.extraClasses}">
+    class="${options.classNames}">
     ${options.buttonText}
 </button>`;
 }
@@ -109,4 +120,38 @@ export function renderSelect<T>(selectId: string,
     ${label}
     ${select}
     `;
+}
+
+/**
+ * Helper superclass to handle storing options used during rendering
+ * to allow re-rendering without needing to explicitly store used options each time
+ */
+export abstract class Renderable<Options = RenderOptions> {
+    /**
+     * The options to render with
+     */
+    private _renderOptions?: Options;
+
+    protected get renderOptions(): Options {
+        if (!this._renderOptions) {
+            throw new Error(`${this.constructor.name} not yet rendered!`);
+        }
+        return this._renderOptions!;
+    }
+    /**
+     * Render this component into the DOM
+     * @param {Options} options Optional options to render with. If omitted, stored options are used
+     */
+    public render(options?: Options): void {
+        if (options) {
+            this._renderOptions = options;
+        }
+        this._render(this.renderOptions!);
+    }
+
+    /**
+     * Internal method to actually perform the rendering
+     * @param {Options} options The options to render with
+     */
+    protected abstract _render(options: Options): void;
 }

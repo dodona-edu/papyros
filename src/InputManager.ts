@@ -12,7 +12,7 @@ import { InteractiveInputHandler } from "./input/InteractiveInputHandler";
 import { UserInputHandler } from "./input/UserInputHandler";
 import { BatchInputHandler } from "./input/BatchInputHandler";
 import { BackendManager } from "./BackendManager";
-import { RenderOptions, renderWithOptions } from "./util/Rendering";
+import { Renderable, RenderOptions, renderWithOptions } from "./util/Rendering";
 
 export enum InputMode {
     Interactive = "interactive",
@@ -21,22 +21,21 @@ export enum InputMode {
 
 export const INPUT_MODES = [InputMode.Batch, InputMode.Interactive];
 
-export class InputManager {
+export class InputManager extends Renderable {
     private inputMode: InputMode;
     private inputHandlers: Map<InputMode, UserInputHandler>;
-    private renderOptions: RenderOptions;
     private waiting: boolean;
     private prompt: string;
 
     private sendInput: (input: string) => void;
 
     constructor(sendInput: (input: string) => void) {
+        super();
         this.inputHandlers = this.buildInputHandlerMap();
         this.inputMode = InputMode.Interactive;
         this.sendInput = sendInput;
         this.waiting = false;
         this.prompt = "";
-        this.renderOptions = {} as RenderOptions;
         BackendManager.subscribe(BackendEventType.Start, () => this.onRunStart());
         BackendManager.subscribe(BackendEventType.End, () => this.onRunEnd());
         BackendManager.subscribe(BackendEventType.Input, e => this.onInputRequest(e));
@@ -60,7 +59,7 @@ export class InputManager {
     setInputMode(inputMode: InputMode): void {
         this.inputHandler.onToggle(false);
         this.inputMode = inputMode;
-        this.render(this.renderOptions);
+        this.render();
         this.inputHandler.onToggle(true);
     }
 
@@ -68,8 +67,7 @@ export class InputManager {
         return this.inputHandlers.get(this.inputMode)!;
     }
 
-    render(options: RenderOptions): void {
-        this.renderOptions = options;
+    override _render(options: RenderOptions): void {
         let switchMode = "";
         const otherMode = this.inputMode === InputMode.Interactive ?
             InputMode.Batch : InputMode.Interactive;
