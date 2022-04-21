@@ -22,5 +22,5 @@
 /* Add placeholder to an empty element */
 .with-placeholder:empty:before {
   content:attr(data-placeholder);
-  color:gray
+  color:#888;
 }

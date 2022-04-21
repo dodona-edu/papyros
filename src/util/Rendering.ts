@@ -25,7 +25,7 @@ export interface RenderOptions {
 
 /**
  * Helper method to append classes to the class attribute of an HTMLElement
- * Consecutive whitespace is not allowed
+ * as consecutive whitespace is not allowed
  * @param {Object} options Object containing classNames
  * @param {string} classNames The classes to append
  */
@@ -35,6 +35,18 @@ export function appendClasses(options: { classNames?: string }, classNames: stri
     } else {
         options.classNames = classNames;
     }
+}
+
+/**
+ * Helper method to add attributes to options with a possibly undefined attribute Map
+ * @param {Object} options Object containing attributes
+ * @param {Map<string, string>} attributes The attributes to add
+ */
+export function addAttributes(options: { attributes?: Map<string, string> }, attributes: Map<string, string>): void {
+    options.attributes = new Map([
+        ...(options.attributes || []),
+        ...attributes
+    ]);
 }
 
 /**

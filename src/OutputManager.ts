@@ -8,6 +8,7 @@ import {
 } from "./util/Util";
 import { LogType, papyrosLog } from "./util/Logging";
 import {
+    addAttributes,
     appendClasses, Renderable,
     RenderOptions, renderWithOptions
 } from "./util/Rendering";
@@ -46,8 +47,14 @@ export interface FriendlyError {
  * Component for displaying code output or errors to the user
  */
 export class OutputManager extends Renderable {
+    /**
+     * Store the HTML that is rendered to restore when changing language/theme
+     */
+    private content: Array<string>;
+
     constructor() {
         super();
+        this.content = [];
         BackendManager.subscribe(BackendEventType.Start, () => this.reset());
         BackendManager.subscribe(BackendEventType.Output, e => this.showOutput(e));
         BackendManager.subscribe(BackendEventType.Error, e => this.showError(e));
@@ -65,6 +72,7 @@ export class OutputManager extends Renderable {
      * @param {string} html Safe string version of the next child to render
      */
     renderNextElement(html: string): void {
+        this.content.push(html);
         this.outputArea.insertAdjacentHTML("beforeend", html);
     }
 
@@ -132,20 +140,20 @@ export class OutputManager extends Renderable {
     }
 
     protected override _render(options: RenderOptions): void {
-        options.attributes = new Map([
-            ...(options.attributes || []),
-            ["data-placeholder", t("Papyros.output_placeholder")]
-        ]);
+        addAttributes(options,
+            new Map([["data-placeholder", t("Papyros.output_placeholder")]]));
         appendClasses(options,
             // eslint-disable-next-line max-len
-            "border-2 w-full min-h-1/4 max-h-3/5 overflow-auto py-1 px-2 whitespace-pre with-placeholder rounded-lg dark:border-dark-mode-content");
+            "border-2 w-full min-h-1/4 max-h-3/5 overflow-auto py-1 px-2 with-placeholder whitespace-pre rounded-lg dark:border-dark-mode-content");
         renderWithOptions(options, "");
+        this.content.forEach(html => this.renderNextElement(html));
     }
 
     /**
      * Clear the contents of the output area
      */
     reset(): void {
+        this.content = [];
         this.render();
     }
 }
