@@ -10,7 +10,7 @@ import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import { LogType, papyrosLog } from "./util/Logging";
 import {
     t, loadTranslations, getLocales,
-    getSelectOptions, removeSelection,
+    removeSelection,
     addListener, getElement
 } from "./util/Util";
 import { RunState, CodeRunner } from "./CodeRunner";
@@ -18,7 +18,10 @@ import { getCodeForExample, getExampleNames } from "./examples/Examples";
 import { OutputManager } from "./OutputManager";
 import { makeChannel } from "sync-message";
 import { BackendManager } from "./BackendManager";
-import { RenderOptions, renderWithOptions, renderSelect, ButtonOptions, Renderable, DEFAULT_DARK_MODE_CLASSES } from "./util/Rendering";
+import {
+    RenderOptions, renderWithOptions, renderSelect, getSelectOptions,
+    ButtonOptions, Renderable, DARK_MODE_BLUE, DARK_MODE_BG_COLOR
+} from "./util/Rendering";
 
 const LANGUAGE_MAP = new Map([
     ["python", ProgrammingLanguage.Python],
@@ -235,13 +238,16 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
                 <i class="mdi mdi-web text-4xl text-white"></i>
             </div>
             `;
+            const toggleIconClasses = renderOptions.darkMode ? "mdi-toggle-switch text-[#FF8F00]" : "mdi-toggle-switch-off text-white";
             const darkModeToggle = `
-            <a id=${DARK_MODE_TOGGLE_ID} class="text-white hover:cursor-pointer">
-            ${t(`Papyros.toggle_dark_mode.${!renderOptions.darkMode}`)}
-            </a>`;
+            <div class="flex flex-row-reverse text-white items-center">
+                <i id=${DARK_MODE_TOGGLE_ID} class="mdi ${toggleIconClasses} hover:cursor-pointer text-4xl"></i>
+                ${t("Papyros.dark_mode")}
+            </div>
+           `;
             const navBar = `
-            <div class="bg-blue-500 text-white text-lg p-4 grid grid-cols-8 items-center max-h-1/5">
-                <div class="col-span-6">
+            <div class="bg-blue-500 text-white text-lg p-4 grid grid-cols-8 items-center max-h-1/5 dark:bg-[${DARK_MODE_BLUE}]">
+                <div class="col-span-6 text-4xl font-medium">
                     ${t("Papyros.Papyros")}
                 </div>
                 <div class="col-span-2 text-black">
@@ -258,7 +264,7 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
                 ${exampleSelect}
             </div>`;
             renderWithOptions(renderOptions.standAloneOptions!, `
-    <div id="${MAIN_APP_ID}" class="min-h-screen max-h-screen h-full overflow-y-hidden ${DEFAULT_DARK_MODE_CLASSES}">
+    <div id="${MAIN_APP_ID}" class="min-h-screen max-h-screen h-full overflow-y-hidden dark:text-white dark:bg-[${DARK_MODE_BG_COLOR}]">
         ${navBar}
         <div class="m-10">
             ${header}

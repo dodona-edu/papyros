@@ -27,7 +27,8 @@ async function startPapyros(): Promise<void> {
     papyros.render({
         standAloneOptions: {
             parentElementId: "root"
-        }
+        },
+        darkMode: true
     });
     // Try to configure synchronous input mechanism
     if (!await papyros.configureInput(location.href, DEFAULT_SERVICE_WORKER)) {

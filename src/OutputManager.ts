@@ -7,7 +7,10 @@ import {
     t
 } from "./util/Util";
 import { LogType, papyrosLog } from "./util/Logging";
-import { appendClasses, Renderable, RenderOptions, renderWithOptions } from "./util/Rendering";
+import {
+    appendClasses, DARK_MODE_CONTENT_COLOR, Renderable,
+    RenderOptions, renderWithOptions
+} from "./util/Rendering";
 
 /**
  * Shape of Error objects that are easy to interpret
@@ -135,7 +138,7 @@ export class OutputManager extends Renderable {
         ]);
         appendClasses(options,
             // eslint-disable-next-line max-len
-            "border-2 w-full min-h-1/4 max-h-3/5 overflow-auto py-1 px-2 whitespace-pre with-placeholder");
+            `border-2 w-full min-h-1/4 max-h-3/5 overflow-auto py-1 px-2 whitespace-pre with-placeholder rounded-lg dark:border-[${DARK_MODE_CONTENT_COLOR}]`);
         renderWithOptions(options, "");
     }
 

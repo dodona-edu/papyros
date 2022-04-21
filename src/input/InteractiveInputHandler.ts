@@ -2,7 +2,10 @@ import { INPUT_TA_ID, SEND_INPUT_BTN_ID } from "../Constants";
 import { InputMode } from "../InputManager";
 import { addListener, getElement, t } from "../util/Util";
 import { UserInputHandler } from "./UserInputHandler";
-import { DEFAULT_DARK_MODE_CLASSES, renderButton, RenderOptions, renderWithOptions } from "../util/Rendering";
+import {
+    DARK_MODE_BG_COLOR, DARK_MODE_CONTENT_COLOR, renderButton,
+    RenderOptions, renderWithOptions
+} from "../util/Rendering";
 
 /**
  * Input handler that takes input from the user in an interactive fashion
@@ -55,13 +58,15 @@ export class InteractiveInputHandler extends UserInputHandler {
     protected override _render(options: RenderOptions): void {
         const buttonHTML = renderButton({
             id: SEND_INPUT_BTN_ID,
-            classNames: `text-black bg-white border-2 ${DEFAULT_DARK_MODE_CLASSES}`,
+            // eslint-disable-next-line max-len
+            classNames: `text-black bg-white border-2 dark:text-white dark:bg-[${DARK_MODE_BG_COLOR}]`,
             buttonText: t("Papyros.enter")
         });
         renderWithOptions(options, `
 <div class="flex flex-row my-1">
     <input id="${INPUT_TA_ID}" type="text"
-    class="border border-transparent w-full mr-0.5 px-1
+    class="border border-transparent w-full mr-0.5 px-1 rounded-lg
+    dark:border-[${DARK_MODE_CONTENT_COLOR}] dark:bg-[${DARK_MODE_BG_COLOR}]
     disabled:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500">
     </input>
     ${buttonHTML}

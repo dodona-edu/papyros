@@ -40,10 +40,7 @@ const ENGLISH_TRANSLATION = {
     },
     "enter": "Enter",
     "examples": "Examples",
-    "toggle_dark_mode": {
-        "false": "Use light mode",
-        "true": "Use dark mode"
-    }
+    "dark_mode": "Dark mode"
 };
 
 const DUTCH_TRANSLATION = {
@@ -84,10 +81,7 @@ const DUTCH_TRANSLATION = {
     },
     "enter": "Enter",
     "examples": "Voorbeelden",
-    "toggle_dark_mode": {
-        "false": "Gebruik lichte modus",
-        "true": "Gebruik donkere modus"
-    }
+    "dark_mode": "Donkere modus"
 };
 
 const TRANSLATIONS = {

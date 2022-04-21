@@ -1,5 +1,8 @@
-import { getElement, getSelectOptions } from "./Util";
-export const DEFAULT_DARK_MODE_CLASSES = "dark:text-white dark:bg-[#37474F]";
+/* eslint-disable max-len */
+import { getElement } from "./Util";
+export const DARK_MODE_BG_COLOR = "#37474F";
+export const DARK_MODE_CONTENT_COLOR = "#263238";
+export const DARK_MODE_BLUE = "#0277BD";
 
 /**
  * Useful options for rendering an element
@@ -100,6 +103,25 @@ export function renderButton(options: ButtonOptions): string {
 }
 
 /**
+ * Constructs the options for use within an HTML select element
+ * @param {Array<T>} options All options to display in the list
+ * @param {function(T):string} optionText Function to convert the elements to a string
+ * @param {T} selected The initially selected element in the list, if any
+ * @return {string} The string representation of the select options
+ */
+export function getSelectOptions<T>(
+    options: Array<T>, optionText: (option: T) => string, selected?: T): string {
+    return options.map((option: T) => {
+        const selectedValue = option === selected ? "selected" : "";
+        return `
+            <option ${selectedValue} value="${option}" class="dark:text-white dark:bg-[${DARK_MODE_BG_COLOR}]">
+                ${optionText(option)}
+            </option>
+        `;
+    }).join("\n");
+}
+
+/**
  * Constructs an HTML select element
  * @param {string} selectId The HTML id for the element
  * @param {Array<T>} options to display in the list
@@ -112,10 +134,14 @@ export function renderSelect<T>(selectId: string,
     options: Array<T>, optionText: (option: T) => string, selected?: T,
     labelText?: string): string {
     const label = labelText ?
-        `<label for="${selectId}" class="${DEFAULT_DARK_MODE_CLASSES} px-1">${labelText}: </label>
+        `<label for="${selectId}"
+         class="dark:text-white dark:bg-[${DARK_MODE_BG_COLOR}] px-1">
+            ${labelText}:
+        </label>
     `: "";
     const select = `
-    <select id="${selectId}" class="m-2 border-2 px-1 ${DEFAULT_DARK_MODE_CLASSES}">
+    <select id="${selectId}" class="m-2 border-2 px-1 rounded-lg
+    dark:text-white dark:bg-[${DARK_MODE_BG_COLOR}] dark:border-[${DARK_MODE_CONTENT_COLOR}]">
         ${getSelectOptions(options, optionText, selected)}
     </select>`;
     return `

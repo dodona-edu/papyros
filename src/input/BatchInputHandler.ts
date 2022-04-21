@@ -1,7 +1,10 @@
 import { INPUT_TA_ID } from "../Constants";
 import { InputMode } from "../InputManager";
 import { UserInputHandler } from "./UserInputHandler";
-import { RenderOptions, renderWithOptions } from "../util/Rendering";
+import {
+    DARK_MODE_BG_COLOR, DARK_MODE_CONTENT_COLOR,
+    RenderOptions, renderWithOptions
+} from "../util/Rendering";
 
 export class BatchInputHandler extends UserInputHandler {
     /**
@@ -68,7 +71,8 @@ export class BatchInputHandler extends UserInputHandler {
     protected override _render(options: RenderOptions): void {
         renderWithOptions(options, `
 <textarea id="${INPUT_TA_ID}"
-class="border-2 h-auto w-full max-h-1/4 px-1 overflow-auto
+class="border-2 h-auto w-full max-h-1/4 px-1 overflow-auto rounded-lg
+dark:border-[${DARK_MODE_CONTENT_COLOR}] dark:bg-[${DARK_MODE_BG_COLOR}]
 focus:outline-none focus:ring-1 focus:ring-blue-500" rows="5">
 </textarea>`);
         this.inputArea.addEventListener("keydown", (ev: KeyboardEvent) => {
@@ -82,7 +86,7 @@ focus:outline-none focus:ring-1 focus:ring-blue-500" rows="5">
         });
         this.inputArea.addEventListener("change", () => {
             this.previousInput = this.inputArea.value;
-        })
+        });
         this.inputArea.value = this.previousInput;
     }
 }

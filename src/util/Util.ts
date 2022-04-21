@@ -1,7 +1,6 @@
 import I18n from "i18n-js";
 import { TRANSLATIONS } from "../Translations";
 import { LogType, papyrosLog } from "./Logging";
-import { DEFAULT_DARK_MODE_CLASSES } from "./Rendering";
 
 // Shorthand for ease of use
 export const t = I18n.t;
@@ -21,25 +20,6 @@ export function loadTranslations(): void {
 
 export function getLocales(): Array<string> {
     return Object.keys(TRANSLATIONS);
-}
-
-/**
- * Constructs the options for use within an HTML select element
- * @param {Array<T>} options All options to display in the list
- * @param {function(T):string} optionText Function to convert the elements to a string
- * @param {T} selected The initially selected element in the list, if any
- * @return {string} The string representation of the select options
- */
-export function getSelectOptions<T>(
-    options: Array<T>, optionText: (option: T) => string, selected?: T): string {
-    return options.map((option: T) => {
-        const selectedValue = option === selected ? "selected" : "";
-        return `
-            <option ${selectedValue} value="${option}" class="${DEFAULT_DARK_MODE_CLASSES}">
-                ${optionText(option)}
-            </option>
-        `;
-    }).join("\n");
 }
 
 /**

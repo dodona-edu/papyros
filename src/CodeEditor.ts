@@ -102,7 +102,8 @@ export class CodeEditor extends Renderable {
 
     protected override _render(options: RenderOptions): void {
         appendClasses(options,
-            "overflow-auto max-h-9/10 min-h-1/4 border-solid border-gray-200 border-2");
+            // eslint-disable-next-line max-len
+            "overflow-auto max-h-9/10 min-h-1/4 border-solid border-gray-200 border-2 rounded-lg dark:border-0");
         let styleExtensions: Extension = [];
         if (options.darkMode) {
             styleExtensions = oneDark;
