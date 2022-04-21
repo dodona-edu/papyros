@@ -35,7 +35,8 @@ module.exports = {
       colors: {
         "dark-mode-bg": "#37474F",
         "dark-mode-content": "#263238",
-        "dark-mode-blue": "#0277BD"
+        "dark-mode-blue": "#0277BD",
+        "placeholder-grey": "#888"
       }
     },
   }
