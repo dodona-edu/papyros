@@ -246,7 +246,7 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
             </div>
            `;
             const navBar = `
-            <div class="bg-blue-500 text-white text-lg p-4 grid grid-cols-8 items-center max-h-1/5 dark:bg-[#0277BD]">
+            <div class="bg-blue-500 text-white text-lg p-4 grid grid-cols-8 items-center max-h-1/5 dark:bg-dark-mode-blue">
                 <div class="col-span-6 text-4xl font-medium">
                     ${t("Papyros.Papyros")}
                 </div>
@@ -264,7 +264,7 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
                 ${exampleSelect}
             </div>`;
             renderWithOptions(renderOptions.standAloneOptions!, `
-    <div id="${MAIN_APP_ID}" class="min-h-screen max-h-screen h-full overflow-y-hidden dark:text-white dark:bg-[#37474F]">
+    <div id="${MAIN_APP_ID}" class="min-h-screen max-h-screen h-full overflow-y-hidden dark:text-white dark:bg-dark-mode-bg">
         ${navBar}
         <div class="m-10">
             ${header}

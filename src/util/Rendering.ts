@@ -111,7 +111,7 @@ export function getSelectOptions<T>(
     return options.map((option: T) => {
         const selectedValue = option === selected ? "selected" : "";
         return `
-            <option ${selectedValue} value="${option}" class="dark:text-white dark:bg-[#37474F]">
+            <option ${selectedValue} value="${option}" class="dark:text-white dark:bg-dark-mode-bg">
                 ${optionText(option)}
             </option>
         `;
@@ -132,13 +132,13 @@ export function renderSelect<T>(selectId: string,
     labelText?: string): string {
     const label = labelText ?
         `<label for="${selectId}"
-         class="dark:text-white dark:bg-[#37474F] px-1">
+         class="dark:text-white dark:bg-dark-mode-bg px-1">
             ${labelText}:
         </label>
     `: "";
     const select = `
     <select id="${selectId}" class="m-2 border-2 px-1 rounded-lg
-    dark:text-white dark:bg-[#37474F] dark:border-[#263238]">
+    dark:text-white dark:bg-dark-mode-bg dark:border-dark-mode-content">
         ${getSelectOptions(options, optionText, selected)}
     </select>`;
     return `

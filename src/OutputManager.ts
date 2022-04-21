@@ -138,7 +138,7 @@ export class OutputManager extends Renderable {
         ]);
         appendClasses(options,
             // eslint-disable-next-line max-len
-            "border-2 w-full min-h-1/4 max-h-3/5 overflow-auto py-1 px-2 whitespace-pre with-placeholder rounded-lg dark:border-[#263238]");
+            "border-2 w-full min-h-1/4 max-h-3/5 overflow-auto py-1 px-2 whitespace-pre with-placeholder rounded-lg dark:border-dark-mode-content");
         renderWithOptions(options, "");
     }
 

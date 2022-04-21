@@ -59,14 +59,14 @@ export class InteractiveInputHandler extends UserInputHandler {
         const buttonHTML = renderButton({
             id: SEND_INPUT_BTN_ID,
             // eslint-disable-next-line max-len
-            classNames: "text-black bg-white border-2 dark:text-white dark:bg-[#37474F]",
+            classNames: "text-black bg-white border-2 dark:text-white dark:bg-dark-mode-bg",
             buttonText: t("Papyros.enter")
         });
         renderWithOptions(options, `
 <div class="flex flex-row my-1">
     <input id="${INPUT_TA_ID}" type="text"
     class="border border-transparent w-full mr-0.5 px-1 rounded-lg
-    dark:border-[#263238] dark:bg-[#37474F]
+    dark:border-dark-mode-content dark:bg-dark-mode-bg
     disabled:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500">
     </input>
     ${buttonHTML}

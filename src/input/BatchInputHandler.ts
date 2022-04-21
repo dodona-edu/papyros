@@ -71,7 +71,7 @@ export class BatchInputHandler extends UserInputHandler {
         renderWithOptions(options, `
 <textarea id="${INPUT_TA_ID}"
 class="border-2 h-auto w-full max-h-1/4 px-1 overflow-auto rounded-lg
-dark:border-[#263238] dark:bg-[#37474F]
+dark:border-dark-mode-content dark:bg-dark-mode-bg
 focus:outline-none focus:ring-1 focus:ring-blue-500" rows="5">
 </textarea>`);
         this.inputArea.addEventListener("keydown", (ev: KeyboardEvent) => {

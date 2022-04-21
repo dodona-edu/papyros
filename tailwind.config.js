@@ -31,7 +31,12 @@ module.exports = {
   theme: {
     extend: {
       maxHeight: HEIGHTS,
-      minHeight: HEIGHTS
-    }
+      minHeight: HEIGHTS,
+      colors: {
+        "dark-mode-bg": "#37474F",
+        "dark-mode-content": "#263238",
+        "dark-mode-blue": "#0277BD"
+      }
+    },
   }
 };
