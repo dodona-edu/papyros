@@ -16,7 +16,7 @@ module.exports = {
   mode: "jit",
   // Allow toggling dark mode using a class
   darkMode: "class",
-  purge: [
+  content: [
     "./src/**/*.ts",
   ],
   variants: {

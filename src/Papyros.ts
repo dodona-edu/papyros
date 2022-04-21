@@ -20,7 +20,7 @@ import { makeChannel } from "sync-message";
 import { BackendManager } from "./BackendManager";
 import {
     RenderOptions, renderWithOptions, renderSelect, getSelectOptions,
-    ButtonOptions, Renderable, DARK_MODE_BLUE, DARK_MODE_BG_COLOR
+    ButtonOptions, Renderable
 } from "./util/Rendering";
 
 const LANGUAGE_MAP = new Map([
@@ -246,7 +246,7 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
             </div>
            `;
             const navBar = `
-            <div class="bg-blue-500 text-white text-lg p-4 grid grid-cols-8 items-center max-h-1/5 dark:bg-[${DARK_MODE_BLUE}]">
+            <div class="bg-blue-500 text-white text-lg p-4 grid grid-cols-8 items-center max-h-1/5 dark:bg-[#0277BD]">
                 <div class="col-span-6 text-4xl font-medium">
                     ${t("Papyros.Papyros")}
                 </div>
@@ -264,7 +264,7 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
                 ${exampleSelect}
             </div>`;
             renderWithOptions(renderOptions.standAloneOptions!, `
-    <div id="${MAIN_APP_ID}" class="min-h-screen max-h-screen h-full overflow-y-hidden dark:text-white dark:bg-[${DARK_MODE_BG_COLOR}]">
+    <div id="${MAIN_APP_ID}" class="min-h-screen max-h-screen h-full overflow-y-hidden dark:text-white dark:bg-[#37474F]">
         ${navBar}
         <div class="m-10">
             ${header}

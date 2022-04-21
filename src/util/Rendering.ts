@@ -1,8 +1,5 @@
 /* eslint-disable max-len */
 import { getElement } from "./Util";
-export const DARK_MODE_BG_COLOR = "#37474F";
-export const DARK_MODE_CONTENT_COLOR = "#263238";
-export const DARK_MODE_BLUE = "#0277BD";
 
 /**
  * Useful options for rendering an element
@@ -114,7 +111,7 @@ export function getSelectOptions<T>(
     return options.map((option: T) => {
         const selectedValue = option === selected ? "selected" : "";
         return `
-            <option ${selectedValue} value="${option}" class="dark:text-white dark:bg-[${DARK_MODE_BG_COLOR}]">
+            <option ${selectedValue} value="${option}" class="dark:text-white dark:bg-[#37474F]">
                 ${optionText(option)}
             </option>
         `;
@@ -135,13 +132,13 @@ export function renderSelect<T>(selectId: string,
     labelText?: string): string {
     const label = labelText ?
         `<label for="${selectId}"
-         class="dark:text-white dark:bg-[${DARK_MODE_BG_COLOR}] px-1">
+         class="dark:text-white dark:bg-[#37474F] px-1">
             ${labelText}:
         </label>
     `: "";
     const select = `
     <select id="${selectId}" class="m-2 border-2 px-1 rounded-lg
-    dark:text-white dark:bg-[${DARK_MODE_BG_COLOR}] dark:border-[${DARK_MODE_CONTENT_COLOR}]">
+    dark:text-white dark:bg-[#37474F] dark:border-[#263238]">
         ${getSelectOptions(options, optionText, selected)}
     </select>`;
     return `
