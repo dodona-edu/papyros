@@ -18,7 +18,7 @@ import { getCodeForExample, getExampleNames } from "./examples/Examples";
 import { OutputManager } from "./OutputManager";
 import { makeChannel } from "sync-message";
 import { BackendManager } from "./BackendManager";
-import { RenderOptions, renderWithOptions, renderSelect, ButtonOptions, Renderable } from "./util/Rendering";
+import { RenderOptions, renderWithOptions, renderSelect, ButtonOptions, Renderable, DEFAULT_DARK_MODE_CLASSES } from "./util/Rendering";
 
 const LANGUAGE_MAP = new Map([
     ["python", ProgrammingLanguage.Python],
@@ -258,7 +258,7 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
                 ${exampleSelect}
             </div>`;
             renderWithOptions(renderOptions.standAloneOptions!, `
-    <div id="${MAIN_APP_ID}" class="max-h-screen h-full overflow-y-hidden">
+    <div id="${MAIN_APP_ID}" class="min-h-screen max-h-screen h-full overflow-y-hidden ${DEFAULT_DARK_MODE_CLASSES}">
         ${navBar}
         <div class="m-10">
             ${header}

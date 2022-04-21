@@ -1,6 +1,7 @@
 import I18n from "i18n-js";
 import { TRANSLATIONS } from "../Translations";
 import { LogType, papyrosLog } from "./Logging";
+import { DEFAULT_DARK_MODE_CLASSES } from "./Rendering";
 
 // Shorthand for ease of use
 export const t = I18n.t;
@@ -34,7 +35,7 @@ export function getSelectOptions<T>(
     return options.map((option: T) => {
         const selectedValue = option === selected ? "selected" : "";
         return `
-            <option ${selectedValue} value="${option}">
+            <option ${selectedValue} value="${option}" class="${DEFAULT_DARK_MODE_CLASSES}">
                 ${optionText(option)}
             </option>
         `;

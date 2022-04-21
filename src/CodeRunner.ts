@@ -244,6 +244,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
 </div>`);
         // Buttons are freshly added to the DOM, so attach listeners now
         this.buttons.forEach(b => addListener(b.id, b.onClick, "click"));
+        this.setState(this.state);
         this.inputManager.render(options.inputOptions);
         this.editor.render(options.codeEditorOptions);
         this.editor.setPanel(rendered);

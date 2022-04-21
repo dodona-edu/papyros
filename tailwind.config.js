@@ -12,6 +12,8 @@ const HEIGHTS = {
   "full": "80vh"
 };
 module.exports = {
+  // allow using dynamic classes
+  mode: "jit",
   // Allow toggling dark mode using a class
   darkMode: "class",
   purge: [

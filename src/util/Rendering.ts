@@ -1,4 +1,5 @@
 import { getElement, getSelectOptions } from "./Util";
+export const DEFAULT_DARK_MODE_CLASSES = "dark:text-white dark:bg-[#37474F]";
 
 /**
  * Useful options for rendering an element
@@ -110,10 +111,11 @@ export function renderButton(options: ButtonOptions): string {
 export function renderSelect<T>(selectId: string,
     options: Array<T>, optionText: (option: T) => string, selected?: T,
     labelText?: string): string {
-    const label = labelText ? `<label for="${selectId}">${labelText}: </label>
+    const label = labelText ?
+        `<label for="${selectId}" class="${DEFAULT_DARK_MODE_CLASSES} px-1">${labelText}: </label>
     `: "";
     const select = `
-    <select id="${selectId}" class="m-2 border-2">
+    <select id="${selectId}" class="m-2 border-2 px-1 ${DEFAULT_DARK_MODE_CLASSES}">
         ${getSelectOptions(options, optionText, selected)}
     </select>`;
     return `
