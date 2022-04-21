@@ -1,7 +1,21 @@
 import { CodeEditor } from "./CodeEditor";
 import { InputManager } from "./InputManager";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
-import { ButtonOptions, RenderOptions } from "./util/Util";
+import { RenderOptions, ButtonOptions, Renderable } from "./util/Rendering";
+interface CodeRunnerRenderOptions {
+    /**
+     * Options for rendering the panel
+     */
+    statusPanelOptions: RenderOptions;
+    /**
+     * Options for rendering the InputManager
+     */
+    inputOptions: RenderOptions;
+    /**
+     * Options for rendering the editor
+     */
+    codeEditorOptions: RenderOptions;
+}
 /**
  * Enum representing the possible states while processing code
  */
@@ -15,7 +29,7 @@ export declare enum RunState {
 /**
  * Helper component to manage and visualize the current RunState
  */
-export declare class CodeRunner {
+export declare class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     /**
      * The currently used programming language
      */
@@ -86,17 +100,11 @@ export declare class CodeRunner {
      * @param {function} onClick Listener for click events on the button
      */
     addButton(options: ButtonOptions, onClick: () => void): void;
-    /**
-     * Render the RunStateManager with the given options
-     * @param {RenderOptions} statusPanelOptions Options for rendering the panel
-     * @param {RenderOptions} inputOptions Options for rendering the InputManager
-     * @param {RenderOptions} codeEditorOptions Options for rendering the editor
-     * @return {HTMLElement} The rendered RunStateManager
-     */
-    render(statusPanelOptions: RenderOptions, inputOptions: RenderOptions, codeEditorOptions: RenderOptions): HTMLElement;
+    protected _render(options: CodeRunnerRenderOptions): HTMLElement;
     /**
      * Run the code that is currently present in the editor
      * @return {Promise<void>} Promise of running the code
      */
     runCode(): Promise<void>;
 }
+export {};

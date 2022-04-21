@@ -1,9 +1,9 @@
 import "./Papyros.css";
 import { InputMode } from "./InputManager";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
-import { RenderOptions, ButtonOptions } from "./util/Util";
 import { RunState, CodeRunner } from "./CodeRunner";
 import { OutputManager } from "./OutputManager";
+import { RenderOptions, ButtonOptions, Renderable } from "./util/Rendering";
 /**
  * Configuration options for this instance of Papyros
  */
@@ -49,11 +49,15 @@ interface PapyrosRenderOptions {
      * RenderOptions for the output field
      */
     outputOptions?: RenderOptions;
+    /**
+     * Whether to render in dark mode
+     */
+    darkMode?: boolean;
 }
 /**
  * Class that manages multiple components to form a coding scratchpad
  */
-export declare class Papyros {
+export declare class Papyros extends Renderable<PapyrosRenderOptions> {
     /**
      * Config used to initialize Papyros
      */
@@ -90,6 +94,14 @@ export declare class Papyros {
      */
     setProgrammingLanguage(programmingLanguage: ProgrammingLanguage): Promise<void>;
     /**
+     * @param {string} locale The locale to use
+     */
+    setLocale(locale: string): void;
+    /**
+     * @param {boolean} darkMode Whether to use dark mode
+     */
+    setDarkMode(darkMode: boolean): void;
+    /**
      * @param {string} code The code to use in the editor
      */
     setCode(code: string): void;
@@ -109,11 +121,7 @@ export declare class Papyros {
      * @return {Promise<boolean>} Promise of configuring input
      */
     configureInput(serviceWorkerRoot?: string, serviceWorkerName?: string): Promise<boolean>;
-    /**
-     * Render Papyros with the given options
-     * @param {PapyrosRenderOptions} renderOptions Options to use
-     */
-    render(renderOptions: PapyrosRenderOptions): void;
+    protected _render(renderOptions: PapyrosRenderOptions): void;
     /**
      * Add a button to the status panel within Papyros
      * @param {ButtonOptions} options Options to render the button with

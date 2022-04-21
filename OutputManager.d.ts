@@ -1,5 +1,5 @@
 import { BackendEvent } from "./BackendEvent";
-import { RenderOptions } from "./util/Util";
+import { Renderable, RenderOptions } from "./util/Rendering";
 /**
  * Shape of Error objects that are easy to interpret
  */
@@ -32,8 +32,11 @@ export interface FriendlyError {
 /**
  * Component for displaying code output or errors to the user
  */
-export declare class OutputManager {
-    options: RenderOptions;
+export declare class OutputManager extends Renderable {
+    /**
+     * Store the HTML that is rendered to restore when changing language/theme
+     */
+    private content;
     constructor();
     /**
      * Retrieve the parent element containing all output parts
@@ -62,12 +65,7 @@ export declare class OutputManager {
      * @param {BackendEvent} error Event containing the error data
      */
     showError(error: BackendEvent): void;
-    /**
-     * Render the OutputManager with the given options
-     * @param {RenderOptions} options Options for rendering
-     * @return {HTMLElement} The rendered output area
-     */
-    render(options: RenderOptions): HTMLElement;
+    protected _render(options: RenderOptions): void;
     /**
      * Clear the contents of the output area
      */

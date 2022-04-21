@@ -1,6 +1,6 @@
 import { InputMode } from "../InputManager";
-import { RenderOptions } from "../util/Util";
 import { UserInputHandler } from "./UserInputHandler";
+import { RenderOptions } from "../util/Rendering";
 export declare class BatchInputHandler extends UserInputHandler {
     /**
      * The index of the next line in lines to send
@@ -27,5 +27,5 @@ export declare class BatchInputHandler extends UserInputHandler {
     next(): string;
     onRunStart(): void;
     onRunEnd(): void;
-    render(options: RenderOptions): HTMLElement;
+    protected _render(options: RenderOptions): void;
 }
