@@ -231,28 +231,24 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
                 renderSelect(EXAMPLE_SELECT_ID, getExampleNames(programmingLanguage),
                     name => name, undefined, t("Papyros.examples"));
             const locales = [locale, ...getLocales().filter(l => l != locale)];
-            const localeSelect = `
-            <div class="flex flex-row-reverse">
-                <!-- row-reverse to start at the right, so put elements in order of display -->
-                ${renderSelect(LOCALE_SELECT_ID, locales, l => t(`Papyros.locales.${l}`), locale)}
-                <i class="mdi mdi-web text-4xl text-white"></i>
-            </div>
-            `;
             const toggleIconClasses = renderOptions.darkMode ? "mdi-toggle-switch text-[#FF8F00]" : "mdi-toggle-switch-off text-white";
-            const darkModeToggle = `
-            <div class="flex flex-row-reverse text-white items-center">
+            const navOptions = `
+            <div class="flex flex-row-reverse dark:text-white items-center">
+                <!-- row-reverse to start at the right, so put elements in order of display -->
                 <i id=${DARK_MODE_TOGGLE_ID} class="mdi ${toggleIconClasses} hover:cursor-pointer text-4xl"></i>
                 ${t("Papyros.dark_mode")}
+                ${renderSelect(LOCALE_SELECT_ID, locales, l => t(`Papyros.locales.${l}`), locale)}
+                <i class="mdi mdi-web text-4xl text-white"></i>
+
             </div>
-           `;
+            `;
             const navBar = `
             <div class="bg-blue-500 text-white text-lg p-4 grid grid-cols-8 items-center max-h-1/5 dark:bg-dark-mode-blue">
                 <div class="col-span-6 text-4xl font-medium">
                     ${t("Papyros.Papyros")}
                 </div>
                 <div class="col-span-2 text-black">
-                    ${localeSelect}
-                    ${darkModeToggle}
+                    ${navOptions}
                 </div>
 
             </div>
