@@ -71,13 +71,14 @@ export class InputManager extends Renderable {
         let switchMode = "";
         const otherMode = this.inputMode === InputMode.Interactive ?
             InputMode.Batch : InputMode.Interactive;
+        const otherModeTranslationKey = `switch_to_${otherMode}`;
         switchMode = `<a id="${SWITCH_INPUT_MODE_A_ID}" data-value="${otherMode}"
-        class="flex flex-row-reverse hover:cursor-pointer text-blue-500">
-            ${t(`Papyros.input_modes.switch_to_${otherMode}`)}
+        class="_tw-flex _tw-flex-row-reverse hover:_tw-cursor-pointer _tw-text-blue-500">
+            ${t(`Papyros.input_modes.${otherModeTranslationKey}`)}
         </a>`;
 
         renderWithOptions(options, `
-<div id="${USER_INPUT_WRAPPER_ID}" class="my-1">
+<div id="${USER_INPUT_WRAPPER_ID}" class="_tw-my-1">
 </div>
 ${switchMode}`);
         addListener<InputMode>(SWITCH_INPUT_MODE_A_ID, im => this.setInputMode(im),

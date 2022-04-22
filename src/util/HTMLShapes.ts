@@ -9,11 +9,11 @@
  */
 export const svgCircle = (id: string, color: string): string => {
     return (
-`<svg id="${id}" class="animate-spin mr-3 h-5 w-5 text-white"
+`<svg id="${id}" class="_tw-animate-spin _tw-mr-3 _tw-h-5 _tw-w-5 _tw-text-white"
 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="${color}" stroke-width="4">
+    <circle class="_tw-opacity-25" cx="12" cy="12" r="10" stroke="${color}" stroke-width="4">
     </circle>
-    <path class="opacity-75" fill="${color}"
+    <path class="_tw-opacity-75" fill="${color}"
     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
     </path>
 </svg>`);
@@ -28,6 +28,9 @@ xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
  */
 export const inCircle = (content: string, title: string, color: string): string => {
     const htmlTitle = title ? `title="${title}"`: "";
-    return `<span ${htmlTitle} class="display-block font-bold text-center
-    w-10 h-10 rounded-full px-1 text-${color} bg-white-500 border-${color} border-2">${content}</span>`;
+    return `<span ${htmlTitle} class="_tw-display-block _tw-font-bold _tw-text-center
+    _tw-w-10 _tw-h-10 _tw-rounded-full _tw-px-1 _tw-text-${color}
+    _tw-bg-white-500 _tw-border-${color} border-2">
+        ${content}
+    </span>`;
 };

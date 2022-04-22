@@ -144,7 +144,9 @@ export class OutputManager extends Renderable {
             new Map([["data-placeholder", t("Papyros.output_placeholder")]]));
         appendClasses(options,
             // eslint-disable-next-line max-len
-            "border-2 w-full min-h-1/4 max-h-3/5 overflow-auto py-1 px-2 with-placeholder whitespace-pre rounded-lg dark:border-dark-mode-content");
+            "_tw-border-2 _tw-w-full _tw-min-h-1/4 _tw-max-h-3/5 _tw-overflow-auto _tw-py-1" +
+            " _tw-px-2 _tw-whitespace-pre _tw-rounded-lg" +
+            " dark:_tw-border-dark-mode-content with-placeholder");
         renderWithOptions(options, "");
         this.content.forEach(html => this.renderNextElement(html));
     }

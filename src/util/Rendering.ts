@@ -63,7 +63,7 @@ export function renderWithOptions(
     if (options.classNames) {
         parent.classList.add(...options.classNames.split(" "));
     }
-    parent.classList.toggle("dark", Boolean(options.darkMode));
+    parent.classList.toggle("_tw-dark", Boolean(options.darkMode));
     if (options.attributes) {
         for (const [attr, value] of options.attributes.entries()) {
             parent.setAttribute(attr, value);
@@ -103,7 +103,7 @@ export interface ButtonOptions {
  */
 export function renderButton(options: ButtonOptions): string {
     appendClasses(options,
-        "m-1 px-3 py-1 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed");
+        "_tw-m-1 _tw-px-3 _tw-py-1 _tw-rounded-lg disabled:_tw-opacity-50 disabled:_tw-cursor-not-allowed");
     return `
 <button id="${options.id}" type="button"
     class="${options.classNames}">
@@ -123,7 +123,7 @@ export function getSelectOptions<T>(
     return options.map((option: T) => {
         const selectedValue = option === selected ? "selected" : "";
         return `
-            <option ${selectedValue} value="${option}" class="dark:text-white dark:bg-dark-mode-bg">
+            <option ${selectedValue} value="${option}" class="dark:_tw-text-white dark:_tw-bg-dark-mode-bg">
                 ${optionText(option)}
             </option>
         `;
@@ -144,13 +144,13 @@ export function renderSelect<T>(selectId: string,
     labelText?: string): string {
     const label = labelText ?
         `<label for="${selectId}"
-         class="dark:text-white dark:bg-dark-mode-bg px-1">
+         class="dark:_tw-text-white dark:_tw-bg-dark-mode-bg _tw-px-1">
             ${labelText}:
         </label>
     `: "";
     const select = `
-    <select id="${selectId}" class="m-2 border-2 px-1 rounded-lg
-    dark:text-white dark:bg-dark-mode-bg dark:border-dark-mode-content">
+    <select id="${selectId}" class="_tw-m-2 _tw-border-2 _tw-px-1 _tw-rounded-lg
+    dark:_tw-text-white dark:_tw-bg-dark-mode-bg dark:_tw-border-dark-mode-content">
         ${getSelectOptions(options, optionText, selected)}
     </select>`;
     return `

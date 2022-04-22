@@ -19,6 +19,7 @@ module.exports = {
   content: [
     "./src/**/*.ts",
   ],
+  prefix: "_tw-",
   variants: {
     extend: {
       // generate classes for these states

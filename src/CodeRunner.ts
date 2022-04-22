@@ -99,12 +99,12 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         this.addButton({
             id: RUN_BTN_ID,
             buttonText: t("Papyros.run"),
-            classNames: "text-white bg-blue-500"
+            classNames: "_tw-text-white _tw-bg-blue-500"
         }, () => this.runCode());
         this.addButton({
             id: STOP_BTN_ID,
             buttonText: t("Papyros.stop"),
-            classNames: "text-white bg-red-500"
+            classNames: "_tw-text-white _tw-bg-red-500"
         }, () => this.stop());
         BackendManager.subscribe(BackendEventType.Input,
             () => this.setState(RunState.AwaitingInput));
@@ -233,11 +233,11 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
 
     protected override _render(options: CodeRunnerRenderOptions): HTMLElement {
         const rendered = renderWithOptions(options.statusPanelOptions, `
-<div class="grid grid-cols-2 items-center mx-1">
-    <div class="col-span-1 flex flex-row">
+<div class="_tw-grid _tw-grid-cols-2 _tw-items-center _tw-mx-1">
+    <div class="_tw-col-span-1 _tw-flex _tw-flex-row">
         ${this.buttons.map(b => b.buttonHTML).join("\n")}
     </div>
-    <div class="col-span-1 flex flex-row-reverse">
+    <div class="_tw-col-span-1 _tw-flex _tw-flex-row-reverse">
         <div id="${APPLICATION_STATE_TEXT_ID}"></div>
         ${svgCircle(STATE_SPINNER_ID, "red")}
     </div>

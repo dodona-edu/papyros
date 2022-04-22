@@ -231,41 +231,41 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
                 renderSelect(EXAMPLE_SELECT_ID, getExampleNames(programmingLanguage),
                     name => name, undefined, t("Papyros.examples"));
             const locales = [locale, ...getLocales().filter(l => l != locale)];
-            const toggleIconClasses = renderOptions.darkMode ? "mdi-toggle-switch text-[#FF8F00]" : "mdi-toggle-switch-off text-white";
+            const toggleIconClasses = renderOptions.darkMode ? "mdi-toggle-switch _tw-text-[#FF8F00]" : "mdi-toggle-switch-off _tw-text-white";
             const navOptions = `
-            <div class="flex flex-row-reverse dark:text-white items-center">
+            <div class="_tw-flex _tw-flex-row-reverse dark:_tw-text-white _tw-items-center">
                 <!-- row-reverse to start at the right, so put elements in order of display -->
-                <i id=${DARK_MODE_TOGGLE_ID} class="mdi ${toggleIconClasses} hover:cursor-pointer text-4xl"></i>
-                ${t("Papyros.dark_mode")}
+                <i id=${DARK_MODE_TOGGLE_ID} class="mdi ${toggleIconClasses} hover:_tw-cursor-pointer _tw-text-4xl"></i>
+                <p class="_tw-text-white">${t("Papyros.dark_mode")}</p>
                 ${renderSelect(LOCALE_SELECT_ID, locales, l => t(`Papyros.locales.${l}`), locale)}
-                <i class="mdi mdi-web text-4xl text-white"></i>
-
+                <i class="mdi mdi-web _tw-text-4xl _tw-text-white"></i>
             </div>
             `;
             const navBar = `
-            <div class="bg-blue-500 text-white text-lg p-4 grid grid-cols-8 items-center max-h-1/5 dark:bg-dark-mode-blue">
-                <div class="col-span-6 text-4xl font-medium">
+            <div class="_tw-bg-blue-500 _tw-text-white _tw-text-lg _tw-p-4 _tw-grid _tw-grid-cols-8
+            _tw-items-center _tw-max-h-1/5 dark:_tw-bg-dark-mode-blue">
+                <div class="_tw-col-span-6 _tw-text-4xl _tw-font-medium">
                     ${t("Papyros.Papyros")}
                 </div>
-                <div class="col-span-2 text-black">
+                <div class="_tw-col-span-2 _tw-text-black">
                     ${navOptions}
                 </div>
-
             </div>
             `;
             const header = `
             <!-- Header -->
-            <div class="flex flex-row items-center">
+            <div class="_tw-flex _tw-flex-row _tw-items-center">
                 ${programmingLanguageSelect}
                 ${exampleSelect}
             </div>`;
             renderWithOptions(renderOptions.standAloneOptions!, `
-    <div id="${MAIN_APP_ID}" class="min-h-screen max-h-screen h-full overflow-y-hidden dark:text-white dark:bg-dark-mode-bg">
+    <div id="${MAIN_APP_ID}" class="_tw-min-h-screen _tw-max-h-screen _tw-h-full
+    _tw-overflow-y-hidden dark:_tw-text-white dark:_tw-bg-dark-mode-bg">
         ${navBar}
-        <div class="m-10">
+        <div class="_tw-m-10">
             ${header}
             <!--Body of the application-->
-            <div class="grid grid-cols-2 gap-4 box-border max-h-full">
+            <div class="_tw-grid _tw-grid-cols-2 _tw-gap-4 _tw-box-border _tw-max-h-full">
                 <!-- Code section-->
                 <div>
                     <h1>${t("Papyros.code")}:</h1>

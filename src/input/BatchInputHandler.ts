@@ -70,9 +70,9 @@ export class BatchInputHandler extends UserInputHandler {
     protected override _render(options: RenderOptions): void {
         renderWithOptions(options, `
 <textarea id="${INPUT_TA_ID}"
-class="border-2 h-auto w-full max-h-1/4 px-1 overflow-auto rounded-lg
-dark:border-dark-mode-content dark:bg-dark-mode-bg placeholder:text-placeholder-grey
-focus:outline-none focus:ring-1 focus:ring-blue-500" rows="5">
+class="_tw-border-2 _tw-h-auto _tw-w-full _tw-max-h-1/4 _tw-px-1 _tw-overflow-auto _tw-rounded-lg
+dark:_tw-border-dark-mode-content dark:_tw-bg-dark-mode-bg placeholder:_tw-text-placeholder-grey
+focus:_tw-outline-none focus:_tw-ring-1 focus:_tw-ring-blue-500" rows="5">
 </textarea>`);
         this.inputArea.addEventListener("keydown", (ev: KeyboardEvent) => {
             if (this.waiting && ev.key.toLowerCase() === "enter") {
