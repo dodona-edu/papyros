@@ -114,7 +114,7 @@ export class CodeRunner {
                             const workerDiagnostics =
                                 await backend.workerProxy.lintCode(this.editor.getCode());
                             return workerDiagnostics.map(d => {
-                                const from = view.state.doc.lineAt(d.lineNr).from + d.columnNr;
+                                const from = view.state.doc.line(d.lineNr).from + d.columnNr;
                                 return { ...d, from: from, to: from };
                             });
                         });
