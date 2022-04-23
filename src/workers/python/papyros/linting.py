@@ -9,8 +9,9 @@ MESSAGE_CATEGORIES = {
     'C': 'convention',
     'R': 'refactor'
 }
-
 PYLINT_RC_FILE = os.path.abspath("papyros/pylint_config.rc")
+PYLINT_PLUGINS = os.path.abspath("papyros/pylint_ast_checker")
+
 def lint_code(file):
     # Delay import until patches are applied at the call site
     from pylint.lint import Run
@@ -20,7 +21,11 @@ def lint_code(file):
     MANAGER.astroid_cache.clear()
     pylint_output = StringIO()  # Custom open stream
     reporter = TextReporter(pylint_output)
-    Run(["-j", "1", "--rcfile", PYLINT_RC_FILE, file], reporter=reporter, do_exit=False)
+    Run([
+        "-j", "1", # ensure no parallellism is used as multiprocessing is patched
+        "--rcfile", PYLINT_RC_FILE,
+        '--load-plugins', PYLINT_PLUGINS,
+        file], reporter=reporter, do_exit=False)
     return process_linting_output(pylint_output.getvalue()) 
 
 def process_linting_output(linting_output):
@@ -36,10 +41,8 @@ def process_linting_output(linting_output):
             first_bracket = message.index("(")
             # ignore message code for now
             message = message[:first_bracket-1]
-            severity = MESSAGE_CATEGORIES[code[0]] # "error" if code[0] == "E" else "warning"
+            severity = MESSAGE_CATEGORIES[code[0]]
             diagnostics.append(
                 {"lineNr": line_nr, "columnNr": column_nr, "severity": severity, "message": message}
             )
-    print("Lint output: ", linting_output)
-    print("Obtained diagnostics: ", diagnostics)
     return diagnostics
