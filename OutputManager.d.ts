@@ -45,8 +45,9 @@ export declare class OutputManager extends Renderable {
     /**
      * Render an element in the next position of the output area
      * @param {string} html Safe string version of the next child to render
+     * @param {boolean} isNewElement Whether this a newly generated element
      */
-    renderNextElement(html: string): void;
+    renderNextElement(html: string, isNewElement?: boolean): void;
     /**
      * Convert a piece of text to a span element for displaying
      * @param {string} text The text content for the span
