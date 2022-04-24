@@ -70,9 +70,12 @@ export class OutputManager extends Renderable {
     /**
      * Render an element in the next position of the output area
      * @param {string} html Safe string version of the next child to render
+     * @param {boolean} isNewElement Whether this a newly generated element
      */
-    renderNextElement(html: string): void {
-        this.content.push(html);
+    renderNextElement(html: string, isNewElement = true): void {
+        if (isNewElement) { // Only save new ones to prevent duplicating
+            this.content.push(html);
+        }
         this.outputArea.insertAdjacentHTML("beforeend", html);
     }
 
@@ -151,7 +154,8 @@ export class OutputManager extends Renderable {
             " _tw-px-2 _tw-whitespace-pre _tw-rounded-lg" +
             " dark:_tw-border-dark-mode-content with-placeholder");
         renderWithOptions(options, "");
-        this.content.forEach(html => this.renderNextElement(html));
+        // Restore previously rendered items
+        this.content.forEach(html => this.renderNextElement(html, false));
     }
 
     /**
