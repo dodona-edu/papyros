@@ -115,7 +115,7 @@ export class OutputManager extends Renderable {
         const errorData = parseData(error.data, error.contentType);
         papyrosLog(LogType.Debug, "Showing error: ", errorData);
         if (typeof (errorData) === "string") {
-            errorHTML = this.spanify(errorData, false, "text-red-500");
+            errorHTML = this.spanify(errorData, false, "_tw-text-red-500");
         } else {
             const errorObject = errorData as FriendlyError;
             let shortTraceback = (errorObject.where || "").trim();
@@ -123,9 +123,12 @@ export class OutputManager extends Renderable {
             if (shortTraceback) {
                 shortTraceback = this.spanify("  " + shortTraceback, true, "where");
             }
-            errorHTML += "<div class=\"text-red-500 text-bold\">";
-            const infoQM = inCircle("?", escapeHTML(errorObject.info), "blue-500");
-            const tracebackEM = inCircle("!", escapeHTML(errorObject.traceback), "red-500");
+            errorHTML += "<div class=\"_tw-text-red-500 _tw-text-bold\">";
+            const infoQM = inCircle("?", escapeHTML(errorObject.info),
+                // eslint-disable-next-line max-len
+                "_tw-text-blue-500 _tw-border-blue-500 dark:_tw-text-dark-mode-blue dark:_tw-border-dark-mode-blue");
+            const tracebackEM = inCircle("!",
+                escapeHTML(errorObject.traceback), "_tw-text-red-500 _tw-border-red-500");
             errorHTML += `${infoQM}${errorObject.name} traceback:${tracebackEM}\n`;
             errorHTML += shortTraceback;
             errorHTML += "</div>\n";

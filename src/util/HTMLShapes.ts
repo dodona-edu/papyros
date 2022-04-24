@@ -23,14 +23,12 @@ xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
  * Wrap text (best a single character) in a circle to provide information to the user
  * @param {string} content The symbol in the circle, e.g. ? of !
  * @param {string} title The information to display when hovering over the element
- * @param {string} color The color of the circle and the symbol
+ * @param {string} colorClasses The classes to color the content
  * @return {string} A string representation of the circle with content
  */
-export const inCircle = (content: string, title: string, color: string): string => {
+export const inCircle = (content: string, title: string, colorClasses: string): string => {
     const htmlTitle = title ? `title="${title}"`: "";
     return `<span ${htmlTitle} class="_tw-display-block _tw-font-bold _tw-text-center
-    _tw-w-10 _tw-h-10 _tw-rounded-full _tw-px-1 _tw-text-${color}
-    _tw-bg-white-500 _tw-border-${color} border-2">
-        ${content}
-    </span>`;
+    _tw-w-[10px] _tw-h-[10px] _tw-rounded-full _tw-px-1  _tw-mx-1
+    _tw-bg-white-500 _tw-border-2 ${colorClasses}">${content}</span>`;
 };
