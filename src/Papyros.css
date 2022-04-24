@@ -15,8 +15,14 @@
   white-space: pre;
   overflow: scroll;
   resize: both;
-  /* override default max width of 300px to allow resizing */
-  max-width: 800px !important;
+  /* override default max width/height to allow resizing */
+  max-width: 600px !important;
+  max-height: 600px !important;
+}
+
+/* Disable resizing left until https://github.com/codemirror/codemirror.next/issues/815 is resolved */
+.cm-completionInfo-left {
+  resize: none;
 }
 
 /* Add placeholder to an empty element */
