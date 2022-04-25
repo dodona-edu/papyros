@@ -17,6 +17,6 @@ jobs:
     - name: Install dependencies
       run: |
         yarn install
-    - name: Lint
+    - name: Test
       run: |
-        yarn lint
+        yarn test --ci --runInBand
