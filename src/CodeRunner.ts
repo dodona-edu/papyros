@@ -117,7 +117,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     async start(): Promise<void> {
         this.setState(RunState.Loading);
         const backend = BackendManager.startBackend(this.programmingLanguage);
-        this.editor.setLanguage(this.programmingLanguage);
+        this.editor.setProgrammingLanguage(this.programmingLanguage);
         // Use a Promise to immediately enable running while downloading
         this.backend = new Promise(resolve => {
             return backend.workerProxy
@@ -249,7 +249,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         this.editor.render(options.codeEditorOptions);
         this.editor.setPanel(rendered);
         // Set language again to update the placeholder
-        this.editor.setLanguage(this.programmingLanguage);
+        this.editor.setProgrammingLanguage(this.programmingLanguage);
         return rendered;
     }
 
