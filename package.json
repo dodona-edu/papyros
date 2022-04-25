@@ -82,7 +82,10 @@
   },
   "keywords": [
     "programming",
-    "scratchpad"
+    "scratchpad",
+    "Dodona",
+    "Python",
+    "Pyodide"
   ],
   "author": "Winnie De Ridder",
   "license": "MIT",
