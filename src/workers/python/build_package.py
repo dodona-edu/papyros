@@ -11,8 +11,7 @@ def tarfile_filter(tar_info):
         x in name
         for x in [
             "__pycache__",
-            "friendly_traceback/locales",
-            "dist-info"
+            "friendly_traceback/locales"
         ]
     ) or name.endswith(".pyc"):
         return None
@@ -40,10 +39,11 @@ def install_dependencies(packages, out_dir):
         packages = [packages]
     subprocess.check_call([sys.executable, "-m", "pip", "install", "-t", out_dir, *packages])
 
-def check_tar(tarname):
+def check_tar(tarname, out_dir="."):
     with open(tarname, "rb") as t:
-        shutil.unpack_archive(tarname, ".", 'gztar')
+        shutil.unpack_archive(tarname, out_dir, 'gztar')
 
 
 if __name__ == "__main__":
-    create_package("python_package", "python-runner friendly_traceback jedi", extra_deps="papyros")
+    create_package("python_package", "python-runner friendly_traceback jedi pylint==2.4.4", extra_deps="papyros")
+    #check_tar("python_package.tar.gz.load_by_url", out_dir="test")

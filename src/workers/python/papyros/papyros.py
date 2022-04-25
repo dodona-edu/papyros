@@ -159,3 +159,20 @@ class Papyros(python_runner.PyodideRunner):
         context = to_py(context)
         await self.install_imports(context["text"], ignore_missing=True)
         return await autocomplete(context)
+
+    async def lint(self, code):
+        self.set_source_code(code)
+        if not code:
+            return []
+        await self.install_imports(code, ignore_missing=True)
+        # Override os.devnull to allow Pylint to import and run
+        import os
+        devnull = os.devnull
+        temporary_devnull = "__papyros_dev_null"
+        with open(temporary_devnull, "w"):
+            pass
+        os.devnull = temporary_devnull
+        from .linting import lint_code
+        result = lint_code(self.filename)
+        os.devnull = devnull
+        return result

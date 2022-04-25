@@ -1,5 +1,5 @@
 import * as Comlink from "comlink";
-import { Backend, WorkerAutocompleteContext } from "../../Backend";
+import { Backend, WorkerAutocompleteContext, WorkerDiagnostic } from "../../Backend";
 import { CompletionResult } from "@codemirror/autocomplete";
 import { javascriptLanguage } from "@codemirror/lang-javascript";
 import { BackendEventType } from "../../BackendEvent";
@@ -157,6 +157,10 @@ class JavaScriptWorker extends Backend<SyncExtras> {
                 Object.keys(oldContent).map(k => `${k} = ctx['${k}'];`).join("\n")
             )(oldContent);
         }
+    }
+
+    override async lintCode(_code: string): Promise<Array<WorkerDiagnostic>> {
+        return Promise.resolve([]);
     }
 }
 

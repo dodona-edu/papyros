@@ -109,6 +109,15 @@ export class CodeRunner {
                         const completionContext = Backend.convertCompletionContext(context);
                         return backend.workerProxy.autocomplete(completionContext);
                     });
+                    this.editor.setLintingSource(
+                        async view => {
+                            const workerDiagnostics =
+                                await backend.workerProxy.lintCode(this.editor.getCode());
+                            return workerDiagnostics.map(d => {
+                                const from = view.state.doc.line(d.lineNr).from + d.columnNr;
+                                return { ...d, from: from, to: from };
+                            });
+                        });
                     return resolve(backend);
                 });
         });
