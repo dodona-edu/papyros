@@ -24,7 +24,8 @@ import {
 
 export enum ButtonType {
     Run = "run",
-    Stop = "stop"
+    Stop = "stop",
+    Other = "other"
 }
 
 interface DynamicButton {
@@ -186,7 +187,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     getButtons(type: ButtonType): Array<HTMLButtonElement> {
         return this.buttons.filter(b => b.type === type)
             .map(b => getElement<HTMLButtonElement>(b.id))
-            .filter(b => b !== null);
+            .filter(Boolean);
     }
 
     /**
