@@ -67,7 +67,6 @@ export class CodeEditor extends Renderable {
     constructor(initialCode = "", indentLength = 4) {
         super();
         this.compartments = new Map(OPTIONS.map(opt => [opt, new Compartment()]));
-        this.setIndentLength(indentLength);
         const configurableExtensions = [...this.compartments.values()]
             .map(compartment => compartment.of([]));
         this.editorView = new EditorView(
@@ -81,6 +80,7 @@ export class CodeEditor extends Renderable {
                         ]
                 })
             });
+        this.setIndentLength(indentLength);
     }
 
     /**
