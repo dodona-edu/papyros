@@ -2,9 +2,8 @@ from jedi import Script
 
 def convert_completion(completion, index):
     converted = dict(type=completion.type, label=completion.name_with_symbols)
-    if completion.type != "keyword":
-        # Keywords have obvious meanings yet non-useful docstrings
-        converted["info"] = completion.docstring().replace("\n", "\r\n")
+    if completion.type != "keyword": # Keywords have obvious meanings yet non-useful docstrings
+        converted["info"] = completion.docstring()
     # Jedi does sorting, so give earlier element highest boost
     converted["boost"] = -index
     return converted

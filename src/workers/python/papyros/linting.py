@@ -19,7 +19,7 @@ def lint(file):
     MANAGER.astroid_cache.clear()
     pylint_output = StringIO()  # Custom open stream
     Run([
-        "-j", "1", # ensure no parallellism is used as multiprocessing is patched
+        "-j", "1", # ensure no parallellism is used as we don't have such resources in a worker
         "--rcfile", PYLINT_RC_FILE,
         '--load-plugins', PYLINT_PLUGINS,
         file], reporter=TextReporter(pylint_output), do_exit=False)

@@ -7,7 +7,7 @@ import friendly_traceback
 from friendly_traceback.core import FriendlyTraceback
 from collections.abc import Awaitable
 from pyodide_worker_runner import install_imports
-
+from pyodide import JsException
 
 from .util import to_py
 from .autocomplete import autocomplete
@@ -88,7 +88,8 @@ class Papyros(python_runner.PyodideRunner):
     async def install_imports(self, source_code, ignore_missing=True):
         try:
             await install_imports(source_code)
-        except ValueError:
+        except (ValueError, JsException):
+            # Occurs when trying to fetch PyPi files for misspelled imports
             if not ignore_missing:
                 raise
 
