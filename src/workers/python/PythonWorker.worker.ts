@@ -60,7 +60,9 @@ class PythonWorker extends Backend<PyodideExtras> {
         if (extras.interruptBuffer) {
             this.pyodide.setInterruptBuffer(extras.interruptBuffer);
         }
-        await this.papyros.run_async(code);
+        await this.papyros.run_async.callKwargs({
+            source_code: code,
+        });
     }
 
     override async autocomplete(context: WorkerAutocompleteContext):

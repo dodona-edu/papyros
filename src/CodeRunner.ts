@@ -269,9 +269,11 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         let endMessage = "Program finishd normally";
         let terminated = false;
         try {
-            await (this.backend).then(b => b.call(
-                b.workerProxy.runCode, this.editor.getCode()
-            ));
+            const backend = await this.backend;
+            await backend.workerProxy.setInitialInput(this.inputManager.getInitialInput());
+            await backend.call(
+                backend.workerProxy.runCode, this.editor.getCode()
+            );
         } catch (error: any) {
             papyrosLog(LogType.Debug, "Error during code run", error);
             if (error.type === "InterruptError") {

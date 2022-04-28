@@ -47,6 +47,7 @@ export interface WorkerDiagnostic {
 export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
     protected extras: Extras;
     protected onEvent: (e: BackendEvent) => any;
+    protected initialInput: Array<string>;
     /**
      * Constructor is limited as it is meant to be used as a WebWorker
      * Proper initialization occurs in the launch method when the worker is started
@@ -54,6 +55,7 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
      */
     constructor() {
         this.extras = {} as Extras;
+        this.initialInput = [];
         // eslint-disable-next-line @typescript-eslint/no-empty-function
         this.onEvent = () => { };
         this.runCode = this.syncExpose()(this.runCode.bind(this));
@@ -75,6 +77,10 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
         onEvent: (e: BackendEvent) => void
     ): Promise<void> {
         this.onEvent = (e: BackendEvent) => {
+            // Handle input events immediately if possible
+            if (e.type === BackendEventType.Input && this.initialInput.length > 0) {
+                return this.initialInput.splice(0, 1)[0];
+            }
             onEvent(e);
             if (e.type === BackendEventType.Sleep) {
                 return this.extras.syncSleep(e.data);
@@ -83,6 +89,17 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
             }
         };
         return Promise.resolve();
+    }
+
+    /**
+     * @param {string | Array<string>} input Optional input from the user to use before prompting
+     */
+    setInitialInput(input: string | Array<string>): void {
+        if (input.length > 0) {
+            this.initialInput = typeof input === "string" ? input.split("\n") : input;
+        } else {
+            this.initialInput = [];
+        }
     }
 
     /**

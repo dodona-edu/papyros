@@ -37,6 +37,10 @@ export class BatchInputHandler extends UserInputHandler {
     override getInputMode(): InputMode {
         return InputMode.Batch;
     }
+
+    override getInitialInput(): string {
+        return this.inputArea.value;
+    }
     /**
      * Retrieve the lines of input that the user has given so far
      * @return {Array<string>} The entered lines
@@ -60,7 +64,8 @@ export class BatchInputHandler extends UserInputHandler {
     }
 
     override onRunStart(): void {
-        this.lineNr = 0;
+        // First lines are provided at the start
+        this.lineNr = this.lines.length;
     }
 
     override onRunEnd(): void {
