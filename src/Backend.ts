@@ -2,6 +2,7 @@ import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
 import { BackendEvent, BackendEventType } from "./BackendEvent";
 import { papyrosLog, LogType } from "./util/Logging";
 import { syncExpose, SyncExtras } from "comsync";
+import { BackendEventQueue } from "./BackendEventQueue";
 
 /**
  * Interface to represent the CodeMirror CompletionContext in a worker
@@ -48,6 +49,7 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
     protected extras: Extras;
     protected onEvent: (e: BackendEvent) => any;
     protected initialInput: Array<string>;
+    protected queue: BackendEventQueue;
     /**
      * Constructor is limited as it is meant to be used as a WebWorker
      * Proper initialization occurs in the launch method when the worker is started
@@ -59,6 +61,7 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
         // eslint-disable-next-line @typescript-eslint/no-empty-function
         this.onEvent = () => { };
         this.runCode = this.syncExpose()(this.runCode.bind(this));
+        this.queue = {} as BackendEventQueue;
     }
 
     /**
@@ -88,6 +91,7 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
                 return this.extras.readMessage();
             }
         };
+        this.queue = new BackendEventQueue(this.onEvent.bind(this));
         return Promise.resolve();
     }
 
