@@ -112,3 +112,14 @@ export function parseData(data: string, contentType?: string): any {
     papyrosLog(LogType.Important, `Unhandled content type: ${contentType}`);
     return data;
 }
+
+export function downloadResults(data: string, filename: string): void {
+    const blob = new Blob([data], { type: "text/plain" });
+    const elem = window.document.createElement("a");
+    elem.href = window.URL.createObjectURL(blob);
+    elem.download = filename;
+    document.body.appendChild(elem);
+    elem.click();
+    document.body.removeChild(elem);
+    window.URL.revokeObjectURL(elem.href);
+}

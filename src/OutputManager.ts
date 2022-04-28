@@ -11,7 +11,7 @@ import {
     Renderable,
     RenderOptions, renderWithOptions
 } from "./util/Rendering";
-import { OUTPUT_TA_ID } from "./Constants";
+import { OUTPUT_AREA_ID, OUTPUT_OVERFLOW_ID } from "./Constants";
 
 /**
  * Shape of Error objects that are easy to interpret
@@ -64,7 +64,7 @@ export class OutputManager extends Renderable {
      * Retrieve the parent element containing all output parts
      */
     get outputArea(): HTMLElement {
-        return getElement(OUTPUT_TA_ID);
+        return getElement(OUTPUT_AREA_ID);
     }
 
     /**
@@ -149,10 +149,13 @@ export class OutputManager extends Renderable {
 
     protected override _render(options: RenderOptions): void {
         renderWithOptions(options, `
-    <div id=${OUTPUT_TA_ID}
+    <div id=${OUTPUT_AREA_ID}
     class="_tw-border-2 _tw-w-full _tw-min-h-1/4 _tw-max-h-3/5 _tw-overflow-auto
     _tw-py-1 _tw-px-2 _tw-whitespace-pre with-placeholder"
     data-placeholder="${t("Papyros.output_placeholder")}"></div>
+    <a id="${OUTPUT_OVERFLOW_ID}" hidden
+    class="hover:_tw-cursor-pointer _tw-text-blue-500">${t("Papyros.output_overflow")}
+    </a>
     `);
         // Restore previously rendered items
         this.content.forEach(html => this.renderNextElement(html, false));

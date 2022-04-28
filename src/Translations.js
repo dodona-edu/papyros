@@ -40,7 +40,8 @@ const ENGLISH_TRANSLATION = {
     },
     "enter": "Enter",
     "examples": "Examples",
-    "dark_mode": "Dark mode"
+    "dark_mode": "Dark mode",
+    "output_overflow": "Output truncated.\nClick here to download the results."
 };
 
 const DUTCH_TRANSLATION = {
@@ -81,7 +82,8 @@ const DUTCH_TRANSLATION = {
     },
     "enter": "Enter",
     "examples": "Voorbeelden",
-    "dark_mode": "Donkere modus"
+    "dark_mode": "Donkere modus",
+    "output_overflow": "Uitvoer ingekort. Klik hier om de resultaten te downloaden."
 };
 
 const TRANSLATIONS = {

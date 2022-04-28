@@ -4,7 +4,8 @@ import I18n from "i18n-js";
 import {
     EDITOR_WRAPPER_ID, PROGRAMMING_LANGUAGE_SELECT_ID,
     LOCALE_SELECT_ID, INPUT_AREA_WRAPPER_ID, EXAMPLE_SELECT_ID,
-    PANEL_WRAPPER_ID, DARK_MODE_TOGGLE_ID, MAIN_APP_ID, OUTPUT_AREA_WRAPPER_ID
+    PANEL_WRAPPER_ID, DARK_MODE_TOGGLE_ID,
+    MAIN_APP_ID, OUTPUT_AREA_WRAPPER_ID
 } from "./Constants";
 import { InputMode } from "./InputManager";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
@@ -217,6 +218,7 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
             (renderOptions as any)[option] = Object.assign(
                 { parentElementId: defaultParentId }, elementOptions);
         }
+
         if (this.config.standAlone) {
             const {
                 locale, programmingLanguage

@@ -148,4 +148,12 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
     abstract autocomplete(context: WorkerAutocompleteContext): Promise<CompletionResult | null>;
 
     abstract lintCode(code: string): Promise<Array<WorkerDiagnostic>>;
+
+    public hasOverflow(): boolean {
+        return this.queue.hasOverflow();
+    }
+
+    public getOverflow(): Array<BackendEvent> {
+        return this.queue.getOverflow();
+    }
 }

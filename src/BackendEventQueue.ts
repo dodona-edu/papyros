@@ -82,6 +82,10 @@ export class BackendEventQueue {
         this.lastFlushTime = new Date().getTime();
     }
 
+    public hasOverflow(): boolean {
+        return this.overflow.length > 0;
+    }
+
     public getOverflow(): Array<BackendEvent> {
         return this.overflow;
     }
