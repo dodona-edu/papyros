@@ -77,6 +77,8 @@ export class OutputManager extends Renderable {
             this.content.push(html);
         }
         this.outputArea.insertAdjacentHTML("beforeend", html);
+        // Scroll to bottom to show latest output
+        this.outputArea.scrollTop = this.outputArea.scrollHeight;
     }
 
     /**
