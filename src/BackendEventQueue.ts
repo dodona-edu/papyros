@@ -11,7 +11,7 @@ export class BackendEventQueue {
     private sendCount: number;
     private encoder: TextDecoder;
     constructor(callback: (e: BackendEvent) => void,
-        limit = 5000, flushTime = 0.1) {
+        limit = 250, flushTime = 0.1) {
         this.callback = callback;
         this.limit = limit;
         this.flushTime = flushTime;
@@ -23,15 +23,32 @@ export class BackendEventQueue {
         this.encoder = new TextDecoder();
     }
 
-    public put(type: BackendEventType, text: string | BufferSource, contentType: string): void {
+    public put(type: BackendEventType, text: string | BufferSource, extra: string | any): void {
         let stringData = "";
         if (typeof text !== "string") {
             stringData = this.encoder.decode(text);
         } else {
             stringData = text;
         }
+        let extraArgs = {};
+        let contentType = "text/plain";
+        if (extra) {
+            if (typeof extra === "string") {
+                contentType = extra;
+            } else {
+                contentType = extra["contentType"];
+                delete extra["contentType"];
+                extraArgs = extra;
+            }
+        }
+
         if (this.queue.length === 0 || this.queue[this.queue.length - 1].type !== type) {
-            this.queue.push({ type: type, data: stringData, contentType: contentType });
+            this.queue.push({
+                type: type,
+                data: stringData,
+                contentType: contentType,
+                ...extraArgs
+            });
         } else {
             this.queue[this.queue.length - 1].data += stringData;
         }
@@ -49,6 +66,7 @@ export class BackendEventQueue {
         this.queue = [];
         this.overflow = [];
         this.lastFlushTime = new Date().getTime();
+        this.sendCount = 0;
     }
 
     public flush(): void {
@@ -66,5 +84,9 @@ export class BackendEventQueue {
 
     public getOverflow(): Array<BackendEvent> {
         return this.overflow;
+    }
+
+    public setCallback(callback: (e: BackendEvent) => void): void {
+        this.callback = callback;
     }
 }

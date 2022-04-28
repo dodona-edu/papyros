@@ -6,8 +6,9 @@ import friendly_traceback
 
 from friendly_traceback.core import FriendlyTraceback
 from collections.abc import Awaitable
+from contextlib import contextmanager, redirect_stdout, redirect_stderr
 from pyodide_worker_runner import install_imports
-from pyodide import JsException
+from pyodide import JsException, create_proxy
 
 from .util import to_py
 from .autocomplete import autocomplete
@@ -22,10 +23,13 @@ class Papyros(python_runner.PyodideRunner):
         source_code="",
         filename="/my_program.py",
         callback=None,
+        buffer_constructor=None,
         limit=SYS_RECURSION_LIMIT
     ):
         if callback is None:
             raise ValueError("Callback must not be None")
+        if buffer_constructor is not None:
+            self.OutputBufferClass = lambda f: buffer_constructor(create_proxy(f))
         super().__init__(source_code=source_code, filename=filename)
         self.limit = limit
         self.override_globals()
@@ -37,15 +41,19 @@ class Papyros(python_runner.PyodideRunner):
                 return event_callback(dict(type=typ, data=dat, contentType=contentType or "text/plain", **kwargs))
 
             if event_type == "output":
-                for part in data["parts"]:
+                parts = data["parts"]
+                if not isinstance(parts, list):
+                    parts = [parts]
+                for part in to_py(parts):
                     typ = part["type"]
+                    data = part["text"] if "text" in part else part["data"]
                     if typ in ["stderr", "traceback", "syntax_error"]:
-                        cb("error", part["text"], contentType=part.get("contentType"))
+                        cb("error", data, contentType=part.get("contentType"))
                     elif typ in ["input", "input_prompt"]:
                         # Do not display values entered by user for input
                         continue
                     else:
-                        cb("output", part["text"], contentType=part.get("contentType"))
+                        cb("output", data, contentType=part.get("contentType"))
             elif event_type == "input":
                 return cb("input", data["prompt"])
             elif event_type == "sleep":
@@ -60,13 +68,6 @@ class Papyros(python_runner.PyodideRunner):
         sys.setrecursionlimit(self.limit)
         # Otherwise `import matplotlib` fails while assuming a browser backend
         os.environ["MPLBACKEND"] = "AGG"
-        try:
-            import matplotlib
-        except ModuleNotFoundError:
-            pass
-        else:
-            # Only override matplotlib when required by the code
-            self.override_matplotlib()
 
     def override_matplotlib(self):
         # workaround from https://github.com/pyodide/pyodide/issues/1518
@@ -85,13 +86,37 @@ class Papyros(python_runner.PyodideRunner):
 
         matplotlib.pyplot.show = show
 
-    async def install_imports(self, source_code, ignore_missing=True):
+    async def install_imports(self, source_code, ignore_missing=True, first_attempt=True):
         try:
             await install_imports(source_code)
         except (ValueError, JsException):
             # Occurs when trying to fetch PyPi files for misspelled imports
             if not ignore_missing:
                 raise
+        except BaseException:
+            if first_attempt:
+                await self.install_imports(source_code, ignore_missing=ignore_missing, first_attempt=False)
+            else:
+                raise
+        if not ignore_missing:
+            try:
+                import matplotlib
+            except ModuleNotFoundError:
+                pass
+            else:# Only override matplotlib when required by the code
+                self.override_matplotlib()
+
+    @contextmanager
+    def _execute_context(self):
+        with (
+            redirect_stdout(python_runner.output.SysStream("output", self.output_buffer)),
+            redirect_stderr(python_runner.output.SysStream("error", self.output_buffer)),
+        ):
+            try:
+                yield
+            except BaseException as e:
+                self.output("traceback", **self.serialize_traceback(e))
+        self.post_run()
 
     def pre_run(self, source_code, mode="exec", top_level_await=False):
         self.override_globals()
