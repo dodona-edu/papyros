@@ -98,7 +98,7 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
     /**
      * @param {string | Array<string>} input Optional input from the user to use before prompting
      */
-    setInitialInput(input: string | Array<string>): void {
+    public setInitialInput(input: string | Array<string>): void {
         if (input.length > 0) {
             this.initialInput = typeof input === "string" ? input.split("\n") : input;
         } else {
@@ -112,7 +112,7 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
      * @param {string} code The code to run
      * @return {Promise<void>} Promise of execution
      */
-    abstract runCode(extras: Extras, code: string): Promise<void>;
+    public abstract runCode(extras: Extras, code: string): Promise<void>;
 
     /**
      * Converts the context to a cloneable object containing useful properties
@@ -122,7 +122,7 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
      * @param {RegExp} expr Expression to match the previous token with
      * @return {WorkerAutocompleteContext} Completion context that can be passed as a message
      */
-    static convertCompletionContext(context: CompletionContext, expr = /\w*(\.)?/):
+    public static convertCompletionContext(context: CompletionContext, expr = /\w*(\.)?/):
         WorkerAutocompleteContext {
         const [lineNr, column] = context.state.selection.ranges.map(range => {
             const line = context.state.doc.lineAt(range.head);
@@ -145,14 +145,25 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
      * Generate autocompletion suggestions for the given context
      * @param {WorkerAutocompleteContext} context Context to autcomplete in
      */
-    abstract autocomplete(context: WorkerAutocompleteContext): Promise<CompletionResult | null>;
+    public abstract autocomplete(context: WorkerAutocompleteContext):
+        Promise<CompletionResult | null>;
 
-    abstract lintCode(code: string): Promise<Array<WorkerDiagnostic>>;
+    /**
+     * Generate linting suggestions for the given code
+     * @param {string} code The code to lint
+     */
+    public abstract lintCode(code: string): Promise<Array<WorkerDiagnostic>>;
 
+    /**
+     * @return {boolean} Whether too many output events were generated
+     */
     public hasOverflow(): boolean {
         return this.queue.hasOverflow();
     }
 
+    /**
+     * @return {Array<BackendEvent>} The events that happened after overflow
+     */
     public getOverflow(): Array<BackendEvent> {
         return this.queue.getOverflow();
     }

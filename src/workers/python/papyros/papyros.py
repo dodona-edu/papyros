@@ -68,6 +68,13 @@ class Papyros(python_runner.PyodideRunner):
         sys.setrecursionlimit(self.limit)
         # Otherwise `import matplotlib` fails while assuming a browser backend
         os.environ["MPLBACKEND"] = "AGG"
+        try:
+            import matplotlib
+        except ModuleNotFoundError:
+            pass
+        else:# Only override matplotlib when required by the code
+            import time
+            self.override_matplotlib()
 
     def override_matplotlib(self):
         # workaround from https://github.com/pyodide/pyodide/issues/1518
@@ -98,13 +105,6 @@ class Papyros(python_runner.PyodideRunner):
                 await self.install_imports(source_code, ignore_missing=ignore_missing, first_attempt=False)
             else:
                 raise
-        if not ignore_missing:
-            try:
-                import matplotlib
-            except ModuleNotFoundError:
-                pass
-            else:# Only override matplotlib when required by the code
-                self.override_matplotlib()
 
     @contextmanager
     def _execute_context(self):
