@@ -58,6 +58,7 @@ export class OutputManager extends Renderable {
         BackendManager.subscribe(BackendEventType.Start, () => this.reset());
         BackendManager.subscribe(BackendEventType.Output, e => this.showOutput(e));
         BackendManager.subscribe(BackendEventType.Error, e => this.showError(e));
+        BackendManager.subscribe(BackendEventType.End, () => this.onRunEnd());
     }
 
     /**
@@ -167,5 +168,11 @@ export class OutputManager extends Renderable {
     public reset(): void {
         this.content = [];
         this.render();
+    }
+
+    onRunEnd(): void {
+        if (this.outputArea.childElementCount === 0) {
+            this.outputArea.setAttribute("data-placeholder", t("Papyros.no_output"));
+        }
     }
 }

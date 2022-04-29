@@ -14,7 +14,7 @@ const ENGLISH_TRANSLATION = {
     },
     "input_disabled": "You can only provide input when your code requires it in interactive mode",
     "output": "Output",
-    "output_placeholder": "The output of your code will appear here",
+    "output_placeholder": "The output of your code will appear here.",
     "run": "Run",
     "stop": "Stop",
     "finished": "Code executed in %{time} s",
@@ -41,7 +41,8 @@ const ENGLISH_TRANSLATION = {
     "enter": "Enter",
     "examples": "Examples",
     "dark_mode": "Dark mode",
-    "output_overflow": "Output truncated.\nClick here to download the results."
+    "output_overflow": "Output truncated.\nClick here to download the results.",
+    "no_output": "The code did not produce any output."
 };
 
 const DUTCH_TRANSLATION = {
@@ -56,7 +57,7 @@ const DUTCH_TRANSLATION = {
     },
     "input_disabled": "Je kan enkel invoer invullen als je code erom vraagt in interactieve modus",
     "output": "Uitvoer",
-    "output_placeholder": "Hier komt de uitvoer van je code",
+    "output_placeholder": "Hier komt de uitvoer van je code.",
     "run": "Run",
     "stop": "Stop",
     "states": {
@@ -83,7 +84,8 @@ const DUTCH_TRANSLATION = {
     "enter": "Enter",
     "examples": "Voorbeelden",
     "dark_mode": "Donkere modus",
-    "output_overflow": "Uitvoer ingekort. Klik hier om de resultaten te downloaden."
+    "output_overflow": "Uitvoer ingekort. Klik hier om de resultaten te downloaden.",
+    "no_output": "De code produceerde geen uitvoer."
 };
 
 const TRANSLATIONS = {
