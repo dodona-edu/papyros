@@ -15,7 +15,6 @@ export declare const SWITCH_INPUT_MODE_A_ID: string;
 export declare const EXAMPLE_SELECT_ID: string;
 export declare const LOCALE_SELECT_ID: string;
 export declare const PROGRAMMING_LANGUAGE_SELECT_ID: string;
-export declare const DARK_MODE_TOGGLE_ID: string;
 export declare const DEFAULT_PROGRAMMING_LANGUAGE = ProgrammingLanguage.Python;
 export declare const DEFAULT_LOCALE = "nl";
 export declare const DEFAULT_SERVICE_WORKER = "InputServiceWorker.js";

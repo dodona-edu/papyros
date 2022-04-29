@@ -1,9 +1,9 @@
 import { InputMode } from "../InputManager";
-import { Renderable } from "../util/Rendering";
+import { RenderOptions } from "../util/Util";
 /**
  * Base class for components that handle input from the user
  */
-export declare abstract class UserInputHandler extends Renderable {
+export declare abstract class UserInputHandler {
     /**
      * Whether we are waiting for the user to input data
      */
@@ -26,6 +26,12 @@ export declare abstract class UserInputHandler extends Renderable {
      * @return {string} The next value
      */
     abstract next(): string;
+    /**
+     * Render this UserInputHandler with the given options
+     * @param {RenderOptions} options The options to use while rendering
+     * @return {HTMLElement} The parent with the new content
+     */
+    abstract render(options: RenderOptions): HTMLElement;
     abstract onRunStart(): void;
     abstract onRunEnd(): void;
     /**

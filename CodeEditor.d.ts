@@ -4,11 +4,11 @@ import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import { EditorView } from "@codemirror/view";
 import { CompletionSource } from "@codemirror/autocomplete";
 import { Diagnostic } from "@codemirror/lint";
-import { Renderable, RenderOptions } from "./util/Rendering";
+import { RenderOptions } from "./util/Util";
 /**
  * Component that provides useful features to users writing code
  */
-export declare class CodeEditor extends Renderable {
+export declare class CodeEditor {
     /**
      * Reference to the user interface of the editor
      */
@@ -38,16 +38,20 @@ export declare class CodeEditor extends Renderable {
      */
     lintCompartment: Compartment;
     /**
-     * Compartment to configure styling at runtime (e.g. switching to dark mode)
-     */
-    styleCompartent: Compartment;
-    /**
      * Construct a new CodeEditor
+     * @param {ProgrammingLanguage} language The used programming language
+     * @param {string} editorPlaceHolder The placeholder for the editor
      * @param {string} initialCode The initial code to display
      * @param {number} indentLength The length in spaces for the indent unit
      */
     constructor(initialCode?: string, indentLength?: number);
-    protected _render(options: RenderOptions): void;
+    /**
+     * Render the editor with the given options and panel
+     * @param {RenderOptions} options Options for rendering
+     * @param {HTMLElement} panel The panel to display at the bottom
+     * @return {HTMLElement} The rendered element
+     */
+    render(options: RenderOptions, panel?: HTMLElement): HTMLElement;
     /**
      * Set the language that is currently used
      * @param {ProgrammingLanguage} language The language to use
@@ -99,8 +103,7 @@ export declare class CodeEditor extends Renderable {
     *  - [custom selection drawing](#view.drawSelection)
     *  - [multiple selections](#state.EditorState^allowMultipleSelections)
     *  - [reindentation on input](#language.indentOnInput)
-    *  - [syntax highlighting with the default highlight style]
-    *   (#highlight.defaultHighlightStyle) (as fallback)
+    *  - [the default highlight style](#highlight.defaultHighlightStyle) (as fallback)
     *  - [bracket matching](#matchbrackets.bracketMatching)
     *  - [bracket closing](#closebrackets.closeBrackets)
     *  - [autocompletion](#autocomplete.autocompletion)
@@ -109,7 +112,6 @@ export declare class CodeEditor extends Renderable {
     *  - [active line gutter highlighting](#gutter.highlightActiveLineGutter)
     *  - [selection match highlighting](#search.highlightSelectionMatches)
     * Keymaps:
-    *  - [bracket closing](#commands.closeBracketsKeymap)
     *  - [the default command bindings](#commands.defaultKeymap)
     *  - [search](#search.searchKeymap)
     *  - [commenting](#comment.commentKeymap)
