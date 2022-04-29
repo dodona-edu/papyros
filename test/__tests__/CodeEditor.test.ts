@@ -1,22 +1,11 @@
-import { CodeEditor } from "../CodeEditor";
-import { ProgrammingLanguage } from "../ProgrammingLanguage";
-import { RenderOptions } from "../util/Util";
+import { CodeEditor } from "../../src/CodeEditor";
+import { ProgrammingLanguage } from "../../src/ProgrammingLanguage";
+import { RenderOptions } from "../../src/util/Util";
 import { Diagnostic } from "@codemirror/lint";
 
 describe("CodeEditor", () => {
     const editorParentId = "jest-code-editor";
     document.body.innerHTML = `<div id=${editorParentId}></div>`;
-    // Polyfill for CodeMirror that uses createRange
-    window.document.createRange = () => ({
-        setStart: () => {},
-        setEnd: () => {},
-        // eslint-disable-next-line
-        commonAncestorContainer: {
-            nodeName: 'BODY',
-            ownerDocument: document,
-        },
-        getClientRects: () => []
-    } as any);
     const editor = new CodeEditor();
     const renderOptions: RenderOptions = {
         parentElementId: editorParentId
@@ -60,10 +49,11 @@ describe("CodeEditor", () => {
         });
         editor.setLintingSource(lintMock);
         editor.setCode("x=5");
+        // CodeMirror waits until editor is idle to call linter
         setTimeout(() => {
             expect(lintMock).toBeCalled();
             done();
-        }, 4000);
+        }, 750);
     })
 })
 
