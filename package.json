@@ -4,25 +4,21 @@
   "private": false,
   "homepage": ".",
   "devDependencies": {
-    "@babel/traverse": "^7.16.3",
     "@types/escape-html": "^1.0.1",
     "@types/i18n-js": "^3.8.2",
+    "@types/jest": "27.0.0",
     "@types/serviceworker": "^0.0.36",
     "@typescript-eslint/eslint-plugin": "^4.5.0",
     "@typescript-eslint/parser": "^4.5.0",
     "autoprefixer": "^10.4.0",
-    "bootstrap": "^5.1.2",
     "css-loader": "^6.5.1",
     "eslint": "^7.11.0",
     "eslint-config-google": "^0.14.0",
     "eslint-plugin-flowtype": "^5.2.0",
     "eslint-plugin-import": "^2.22.1",
-    "eslint-plugin-jest": "^25.2.4",
     "eslint-webpack-plugin": "^2.5.2",
-    "glob": "^7.2.0",
     "i18n-extract": "^0.6.7",
-    "jest": "^27.3.1",
-    "jest-junit": "^13.0.0",
+    "jest": "27.0.0",
     "postcss": "^8.3.11",
     "postcss-import": "^14.0.2",
     "postcss-loader": "^6.2.0",
@@ -30,7 +26,7 @@
     "style-loader": "^3.3.1",
     "tailwindcss": "^3.0.24",
     "terser-webpack-plugin": "^5.3.1",
-    "ts-jest": "^27.0.7",
+    "ts-jest": "^27.1.4",
     "ts-loader": "^9.2.6",
     "typescript": "^4.1.2",
     "url-loader": "^4.1.1",
@@ -66,14 +62,9 @@
     "setup": "bash scripts/setup.sh",
     "build:app": "bash scripts/build_package.sh development",
     "build:library": "bash scripts/build_package.sh production",
-    "test": "jest --coverage",
+    "test": "jest",
     "lint": "eslint  --ext '.js' --ext '.ts' src",
     "validate:translations": "node scripts/ValidateTranslations.js"
-  },
-  "babel": {
-    "presets": [
-      "@babel/preset-typescript"
-    ]
   },
   "description": "Scratchpad for multiple programming languages in the browser.",
   "repository": {
