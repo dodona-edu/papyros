@@ -15,7 +15,7 @@ jobs:
       name: production
       url: https://docs.dodona.be/papyros/
     steps:
-      - name: Checkout
+      - name: Checkout branch
         uses: actions/checkout@v2.3.1
       - name: Install and Build 🔧
         # Last step ensures public files are available when hosting the web application
@@ -23,6 +23,16 @@ jobs:
           yarn install
           yarn build:app
           cp -r public/* dist
+          mv dist devdist
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          path: main
+        run: |
+          yarn install
+          yarn build:app
+          cp -r public/* dist
+          mv devdist dist/dev
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@4.1.5
         with:
