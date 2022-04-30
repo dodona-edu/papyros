@@ -63,14 +63,14 @@ export abstract class BackendManager {
             throw new Error(`${language} is not yet supported.`);
         }
     }
-    
+
     /**
      * Remove a backend for the given language
      * @param {ProgrammingLanguage} language The programming language supported by the backend
      * @return {boolean} Whether the remove operation had any effect
      */
     static removeBackend(language: ProgrammingLanguage): boolean {
-        this.backendMap.delete(language)
+        this.backendMap.delete(language);
         return this.createBackendMap.delete(language);
     }
 
