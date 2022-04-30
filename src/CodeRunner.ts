@@ -116,7 +116,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      */
     async start(): Promise<void> {
         this.setState(RunState.Loading);
-        const backend = BackendManager.startBackend(this.programmingLanguage);
+        const backend = BackendManager.getBackend(this.programmingLanguage);
         this.editor.setProgrammingLanguage(this.programmingLanguage);
         // Use a Promise to immediately enable running while downloading
         // eslint-disable-next-line no-async-promise-executor

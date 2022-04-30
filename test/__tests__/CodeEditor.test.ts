@@ -2,7 +2,7 @@ import { CodeEditor } from "../../src/CodeEditor";
 import { ProgrammingLanguage } from "../../src/ProgrammingLanguage";
 import { RenderOptions } from "../../src/util/Util";
 import { Diagnostic } from "@codemirror/lint";
-import { CompletionResult, startCompletion } from "@codemirror/autocomplete";
+import { startCompletion } from "@codemirror/autocomplete";
 
 describe("CodeEditor", () => {
     const editorParentId = "jest-code-editor";
@@ -59,7 +59,6 @@ describe("CodeEditor", () => {
 
     it("supports autocompletion", done => {
         const autocompleteMock: () => null = jest.fn(() => null);
-        editor.focus();
         editor.setCompletionSource(autocompleteMock);
         startCompletion(editor.editorView);
 
