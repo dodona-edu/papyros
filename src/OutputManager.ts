@@ -159,7 +159,7 @@ export class OutputManager extends Renderable {
     /**
      * Clear the contents of the output area
      */
-    reset(): void {
+    public reset(): void {
         this.content = [];
         this.render();
     }

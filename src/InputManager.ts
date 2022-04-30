@@ -52,11 +52,11 @@ export class InputManager extends Renderable {
         ]);
     }
 
-    getInputMode(): InputMode {
+    public getInputMode(): InputMode {
         return this.inputMode;
     }
 
-    setInputMode(inputMode: InputMode): void {
+    public setInputMode(inputMode: InputMode): void {
         this.inputHandler.onToggle(false);
         this.inputMode = inputMode;
         this.render();
@@ -67,7 +67,11 @@ export class InputManager extends Renderable {
         return this.inputHandlers.get(this.inputMode)!;
     }
 
-    override _render(options: RenderOptions): void {
+    public isWaiting(): boolean {
+        return this.waiting;
+    }
+
+    protected override _render(options: RenderOptions): void {
         let switchMode = "";
         const otherMode = this.inputMode === InputMode.Interactive ?
             InputMode.Batch : InputMode.Interactive;
@@ -91,13 +95,13 @@ ${switchMode}`);
         this.inputHandler.waitWithPrompt(this.waiting, this.prompt);
     }
 
-    waitWithPrompt(waiting: boolean, prompt = ""): void {
+    private waitWithPrompt(waiting: boolean, prompt=""): void {
         this.waiting = waiting;
         this.prompt = prompt;
         this.inputHandler.waitWithPrompt(this.waiting, this.prompt);
     }
 
-    async onUserInput(): Promise<void> {
+    private async onUserInput(): Promise<void> {
         if (this.inputHandler.hasNext()) {
             const line = this.inputHandler.next();
             papyrosLog(LogType.Debug, "Sending input to user: " + line);
@@ -114,18 +118,18 @@ ${switchMode}`);
      * @param {BackendEvent} e Event containing the input data
      * @return {Promise<void>} Promise of handling the request
      */
-    async onInputRequest(e: BackendEvent): Promise<void> {
+    private async onInputRequest(e: BackendEvent): Promise<void> {
         papyrosLog(LogType.Debug, "Handling input request in Papyros");
         this.prompt = e.data;
         return await this.onUserInput();
     }
 
-    onRunStart(): void {
+    private onRunStart(): void {
         this.waitWithPrompt(false);
         this.inputHandler.onRunStart();
     }
 
-    onRunEnd(): void {
+    private onRunEnd(): void {
         this.inputHandler.onRunEnd();
         this.waitWithPrompt(false);
     }
