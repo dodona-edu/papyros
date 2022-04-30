@@ -1,12 +1,12 @@
 import { BackendEventType } from "../../src/BackendEvent";
 import { BackendManager } from "../../src/BackendManager";
+import { OUTPUT_TA_ID } from "../../src/Constants";
 import { FriendlyError, OutputManager } from "../../src/OutputManager";
 
 describe("OutputManager", () => {
-    const outputParentId = "jest-code-editor";
-    document.body.innerHTML = `<div id=${outputParentId}></div>`;
+    document.body.innerHTML = `<div id=${OUTPUT_TA_ID}></div>`;
     const outputManager = new OutputManager();
-    outputManager.render({ parentElementId: outputParentId });
+    outputManager.render({ parentElementId: OUTPUT_TA_ID });
 
     beforeEach(() => {
         outputManager.reset();

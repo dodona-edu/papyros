@@ -1,17 +1,15 @@
 import { CodeEditor } from "../../src/CodeEditor";
 import { ProgrammingLanguage } from "../../src/ProgrammingLanguage";
-import { RenderOptions } from "../../src/util/Util";
 import { Diagnostic } from "@codemirror/lint";
 import { startCompletion } from "@codemirror/autocomplete";
+import { EDITOR_WRAPPER_ID } from "../../src/Constants";
 
 describe("CodeEditor", () => {
-    const editorParentId = "jest-code-editor";
-    document.body.innerHTML = `<div id=${editorParentId}></div>`;
+    document.body.innerHTML = `<div id=${EDITOR_WRAPPER_ID}></div>`;
     const editor = new CodeEditor();
-    const renderOptions: RenderOptions = {
-        parentElementId: editorParentId
-    }
-    editor.render(renderOptions);
+    editor.render({
+        parentElementId: EDITOR_WRAPPER_ID
+    });
 
     beforeEach(() => {
         editor.setCode("");
