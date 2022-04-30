@@ -8,10 +8,10 @@ import {
 } from "./util/Util";
 import { LogType, papyrosLog } from "./util/Logging";
 import {
-    addAttributes,
-    appendClasses, Renderable,
+    Renderable,
     RenderOptions, renderWithOptions
 } from "./util/Rendering";
+import { OUTPUT_TA_ID } from "./Constants";
 
 /**
  * Shape of Error objects that are easy to interpret
@@ -86,7 +86,7 @@ export class OutputManager extends Renderable {
      * @param {string} className Optional class name for the span
      * @return {string} String version of the created span
      */
-    spanify(text: string, ignoreEmpty = false, className = ""): string {
+    private spanify(text: string, ignoreEmpty = false, className = ""): string {
         let spanText = text;
         if (spanText.includes("\n") && spanText !== "\n") {
             spanText = spanText.split("\n")
@@ -100,7 +100,7 @@ export class OutputManager extends Renderable {
      * Display output to the user, based on its content type
      * @param {BackendEvent} output Event containing the output data
      */
-    showOutput(output: BackendEvent): void {
+    public showOutput(output: BackendEvent): void {
         const data = parseData(output.data, output.contentType);
         if (output.contentType && output.contentType.startsWith("img")) {
             this.renderNextElement(`<img src="data:${output.contentType}, ${data}"></img>`);
@@ -113,7 +113,7 @@ export class OutputManager extends Renderable {
      * Display an error to the user
      * @param {BackendEvent} error Event containing the error data
      */
-    showError(error: BackendEvent): void {
+    public showError(error: BackendEvent): void {
         let errorHTML = "";
         const errorData = parseData(error.data, error.contentType);
         papyrosLog(LogType.Debug, "Showing error: ", errorData);
@@ -146,14 +146,12 @@ export class OutputManager extends Renderable {
     }
 
     protected override _render(options: RenderOptions): void {
-        addAttributes(options,
-            new Map([["data-placeholder", t("Papyros.output_placeholder")]]));
-        appendClasses(options,
-            // eslint-disable-next-line max-len
-            "_tw-border-2 _tw-w-full _tw-min-h-1/4 _tw-max-h-3/5 _tw-overflow-auto _tw-py-1" +
-            " _tw-px-2 _tw-whitespace-pre _tw-rounded-lg" +
-            " dark:_tw-border-dark-mode-content with-placeholder");
-        renderWithOptions(options, "");
+        renderWithOptions(options, `
+    <div id=${OUTPUT_TA_ID}
+    class="_tw-border-2 _tw-w-full _tw-min-h-1/4 _tw-max-h-3/5 _tw-overflow-auto
+    _tw-py-1 _tw-px-2 _tw-whitespace-pre with-placeholder"
+    data-placeholder="${t("Papyros.output_placeholder")}"></div>
+    `);
         // Restore previously rendered items
         this.content.forEach(html => this.renderNextElement(html, false));
     }
