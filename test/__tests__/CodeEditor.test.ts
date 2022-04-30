@@ -2,6 +2,7 @@ import { CodeEditor } from "../../src/CodeEditor";
 import { ProgrammingLanguage } from "../../src/ProgrammingLanguage";
 import { RenderOptions } from "../../src/util/Util";
 import { Diagnostic } from "@codemirror/lint";
+import { CompletionResult, startCompletion } from "@codemirror/autocomplete";
 
 describe("CodeEditor", () => {
     const editorParentId = "jest-code-editor";
@@ -26,10 +27,10 @@ describe("CodeEditor", () => {
     it("uses syntax highlighting", () => {
         editor.setProgrammingLanguage(ProgrammingLanguage.Python);
         editor.setCode("def test():\n    return 42");
-        
+
         // Def should have markup in Python
         let defSpans = Array.from(document.querySelectorAll("span"))
-        .filter(el => el.textContent?.includes("def"));
+            .filter(el => el.textContent?.includes("def"));
         expect(defSpans.length).toEqual(1);
         expect(defSpans[0].textContent).toEqual("def");
         expect(defSpans[0].classList.length).toBeGreaterThan(0);
@@ -37,14 +38,14 @@ describe("CodeEditor", () => {
         // Def is not a keyword in JavaScript, should not have special markup
         editor.setProgrammingLanguage(ProgrammingLanguage.JavaScript);
         defSpans = Array.from(document.querySelectorAll("span"))
-        .filter(el => el.textContent?.includes("def"));
+            .filter(el => el.textContent?.includes("def"));
         expect(defSpans.length).toEqual(0);
     })
 
     it("supports linting", done => {
         const lintMock: () => Array<Diagnostic> = jest.fn(() => {
             return [
-                {from: 0, to: 0, severity: "error", message: "mock"}
+                { from: 0, to: 0, severity: "error", message: "mock" }
             ]
         });
         editor.setLintingSource(lintMock);
@@ -52,6 +53,19 @@ describe("CodeEditor", () => {
         // CodeMirror waits until editor is idle to call linter
         setTimeout(() => {
             expect(lintMock).toBeCalled();
+            done();
+        }, 750);
+    })
+
+    it("supports autocompletion", done => {
+        const autocompleteMock: () => null = jest.fn(() => null);
+        editor.focus();
+        editor.setCompletionSource(autocompleteMock);
+        startCompletion(editor.editorView);
+
+        // CodeMirror waits until editor is idle to call autocompletion
+        setTimeout(() => {
+            expect(autocompleteMock).toBeCalled();
             done();
         }, 750);
     })

@@ -53,7 +53,7 @@ export class CodeEditor extends Renderable {
     /**
      * Reference to the user interface of the editor
      */
-    private editorView: EditorView;
+    readonly editorView: EditorView;
     /**
      * Mapping from CodeEditorOptions to a configurable compartment
      */
