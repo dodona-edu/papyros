@@ -224,7 +224,7 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
             const programmingLanguageSelect =
                 renderSelect(PROGRAMMING_LANGUAGE_SELECT_ID, new Array(...LANGUAGE_MAP.values()),
                     l => t(`Papyros.programming_languages.${l}`), programmingLanguage, t("Papyros.programming_language"));
-µ            const exampleSelect =
+            const exampleSelect =
                 renderSelect(EXAMPLE_SELECT_ID, getExampleNames(programmingLanguage),
                     name => name, this.config.example, t("Papyros.examples"));
             const locales = [locale, ...getLocales().filter(l => l != locale)];
