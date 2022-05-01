@@ -4,9 +4,14 @@ import { BackendManager } from "./BackendManager";
 import { inCircle } from "./util/HTMLShapes";
 import {
     getElement, parseData,
-    RenderOptions, renderWithOptions, t
+    t
 } from "./util/Util";
 import { LogType, papyrosLog } from "./util/Logging";
+import {
+    addAttributes,
+    appendClasses, Renderable,
+    RenderOptions, renderWithOptions
+} from "./util/Rendering";
 
 /**
  * Shape of Error objects that are easy to interpret
@@ -41,29 +46,36 @@ export interface FriendlyError {
 /**
  * Component for displaying code output or errors to the user
  */
-export class OutputManager {
-    // Store options to allow re-rendering
-    options: RenderOptions;
+export class OutputManager extends Renderable {
+    /**
+     * Store the HTML that is rendered to restore when changing language/theme
+     */
+    private content: Array<string>;
 
     constructor() {
+        super();
+        this.content = [];
         BackendManager.subscribe(BackendEventType.Start, () => this.reset());
         BackendManager.subscribe(BackendEventType.Output, e => this.showOutput(e));
         BackendManager.subscribe(BackendEventType.Error, e => this.showError(e));
-        this.options = { parentElementId: "" };
     }
 
     /**
      * Retrieve the parent element containing all output parts
      */
     get outputArea(): HTMLElement {
-        return getElement(this.options.parentElementId);
+        return getElement(this.renderOptions.parentElementId);
     }
 
     /**
      * Render an element in the next position of the output area
      * @param {string} html Safe string version of the next child to render
+     * @param {boolean} isNewElement Whether this a newly generated element
      */
-    renderNextElement(html: string): void {
+    renderNextElement(html: string, isNewElement = true): void {
+        if (isNewElement) { // Only save new ones to prevent duplicating
+            this.content.push(html);
+        }
         this.outputArea.insertAdjacentHTML("beforeend", html);
     }
 
@@ -106,7 +118,7 @@ export class OutputManager {
         const errorData = parseData(error.data, error.contentType);
         papyrosLog(LogType.Debug, "Showing error: ", errorData);
         if (typeof (errorData) === "string") {
-            errorHTML = this.spanify(errorData, false, "text-red-500");
+            errorHTML = this.spanify(errorData, false, "_tw-text-red-500");
         } else {
             const errorObject = errorData as FriendlyError;
             let shortTraceback = (errorObject.where || "").trim();
@@ -114,9 +126,12 @@ export class OutputManager {
             if (shortTraceback) {
                 shortTraceback = this.spanify("  " + shortTraceback, true, "where");
             }
-            errorHTML += "<div class=\"text-red-500 text-bold\">";
-            const infoQM = inCircle("?", escapeHTML(errorObject.info), "blue-500");
-            const tracebackEM = inCircle("!", escapeHTML(errorObject.traceback), "red-500");
+            errorHTML += "<div class=\"_tw-text-red-500 _tw-text-bold\">";
+            const infoQM = inCircle("?", escapeHTML(errorObject.info),
+                // eslint-disable-next-line max-len
+                "_tw-text-blue-500 _tw-border-blue-500 dark:_tw-text-dark-mode-blue dark:_tw-border-dark-mode-blue");
+            const tracebackEM = inCircle("!",
+                escapeHTML(errorObject.traceback), "_tw-text-red-500 _tw-border-red-500");
             errorHTML += `${infoQM}${errorObject.name} traceback:${tracebackEM}\n`;
             errorHTML += shortTraceback;
             errorHTML += "</div>\n";
@@ -130,27 +145,24 @@ export class OutputManager {
         this.renderNextElement(errorHTML);
     }
 
-    /**
-     * Render the OutputManager with the given options
-     * @param {RenderOptions} options Options for rendering
-     * @return {HTMLElement} The rendered output area
-     */
-    render(options: RenderOptions): HTMLElement {
-        options.attributes = new Map([
-            ["data-placeholder", t("Papyros.output_placeholder")],
-            ...(options.attributes || [])
-        ]);
-        const initialClassNames = options.classNames ? options.classNames + " " : "";
-        // eslint-disable-next-line max-len
-        options.classNames = `${initialClassNames}border-2 w-full min-h-1/4 max-h-3/5 overflow-auto py-1 px-2 whitespace-pre with-placeholder`;
-        this.options = options;
-        return renderWithOptions(options, "");
+    protected override _render(options: RenderOptions): void {
+        addAttributes(options,
+            new Map([["data-placeholder", t("Papyros.output_placeholder")]]));
+        appendClasses(options,
+            // eslint-disable-next-line max-len
+            "_tw-border-2 _tw-w-full _tw-min-h-1/4 _tw-max-h-3/5 _tw-overflow-auto _tw-py-1" +
+            " _tw-px-2 _tw-whitespace-pre _tw-rounded-lg" +
+            " dark:_tw-border-dark-mode-content with-placeholder");
+        renderWithOptions(options, "");
+        // Restore previously rendered items
+        this.content.forEach(html => this.renderNextElement(html, false));
     }
 
     /**
      * Clear the contents of the output area
      */
     reset(): void {
-        this.render(this.options);
+        this.content = [];
+        this.render();
     }
 }

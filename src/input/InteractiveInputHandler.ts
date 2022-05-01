@@ -1,7 +1,11 @@
 import { INPUT_TA_ID, SEND_INPUT_BTN_ID } from "../Constants";
 import { InputMode } from "../InputManager";
-import { addListener, getElement, RenderOptions, renderWithOptions, t } from "../util/Util";
+import { addListener, getElement, t } from "../util/Util";
 import { UserInputHandler } from "./UserInputHandler";
+import {
+    renderButton,
+    RenderOptions, renderWithOptions
+} from "../util/Rendering";
 
 /**
  * Input handler that takes input from the user in an interactive fashion
@@ -51,18 +55,22 @@ export class InteractiveInputHandler extends UserInputHandler {
         // Intentionally empty
     }
 
-    render(options: RenderOptions): HTMLElement {
-        const rendered = renderWithOptions(options, `
-<div class="flex flex-row my-1">
+    protected override _render(options: RenderOptions): void {
+        const buttonHTML = renderButton({
+            id: SEND_INPUT_BTN_ID,
+            // eslint-disable-next-line max-len
+            classNames: "_tw-text-black _tw-bg-white _tw-border-2 dark:_tw-text-white dark:_tw-bg-dark-mode-bg",
+            buttonText: t("Papyros.enter")
+        });
+        renderWithOptions(options, `
+<div class="_tw-flex _tw-flex-row _tw-my-1">
     <input id="${INPUT_TA_ID}" type="text"
-    class="border border-transparent w-full mr-0.5 px-1
-    disabled:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500">
+    class="_tw-border _tw-border-transparent _tw-w-full _tw-mr-0.5 _tw-px-1 _tw-rounded-lg
+    dark:_tw-border-dark-mode-content dark:_tw-bg-dark-mode-bg
+    placeholder:_tw-text-placeholder-grey disabled:_tw-cursor-not-allowed
+    focus:_tw-outline-none focus:_tw-ring-1 focus:_tw-ring-blue-500">
     </input>
-    <button id="${SEND_INPUT_BTN_ID}" type="button"
-    class="text-black bg-white border-2 px-4
-        disabled:opacity-50 disabled:cursor-not-allowed">
-        ${t("Papyros.enter")}
-    </button>
+    ${buttonHTML}
 </div>`);
         addListener(SEND_INPUT_BTN_ID, () => this.inputCallback(), "click");
         this.inputArea.addEventListener("keydown", (ev: KeyboardEvent) => {
@@ -70,6 +78,5 @@ export class InteractiveInputHandler extends UserInputHandler {
                 this.inputCallback();
             }
         });
-        return rendered;
     }
 }

@@ -12,9 +12,14 @@ const HEIGHTS = {
   "full": "80vh"
 };
 module.exports = {
-  purge: [
+  // allow using dynamic classes
+  mode: "jit",
+  // Allow toggling dark mode using a class
+  darkMode: "class",
+  content: [
     "./src/**/*.ts",
   ],
+  prefix: "_tw-",
   variants: {
     extend: {
       // generate classes for these states
@@ -27,7 +32,13 @@ module.exports = {
   theme: {
     extend: {
       maxHeight: HEIGHTS,
-      minHeight: HEIGHTS
-    }
+      minHeight: HEIGHTS,
+      colors: {
+        "dark-mode-bg": "#37474F",
+        "dark-mode-content": "#263238",
+        "dark-mode-blue": "#0277BD",
+        "placeholder-grey": "#888"
+      }
+    },
   }
 };

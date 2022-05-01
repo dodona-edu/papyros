@@ -7,12 +7,12 @@ import { BackendEvent, BackendEventType } from "./BackendEvent";
 import { papyrosLog, LogType } from "./util/Logging";
 import {
     addListener,
-    RenderOptions, renderWithOptions
 } from "./util/Util";
 import { InteractiveInputHandler } from "./input/InteractiveInputHandler";
 import { UserInputHandler } from "./input/UserInputHandler";
 import { BatchInputHandler } from "./input/BatchInputHandler";
 import { BackendManager } from "./BackendManager";
+import { Renderable, RenderOptions, renderWithOptions } from "./util/Rendering";
 
 export enum InputMode {
     Interactive = "interactive",
@@ -21,22 +21,21 @@ export enum InputMode {
 
 export const INPUT_MODES = [InputMode.Batch, InputMode.Interactive];
 
-export class InputManager {
+export class InputManager extends Renderable {
     private inputMode: InputMode;
     private inputHandlers: Map<InputMode, UserInputHandler>;
-    private renderOptions: RenderOptions;
     private waiting: boolean;
     private prompt: string;
 
     private sendInput: (input: string) => void;
 
     constructor(sendInput: (input: string) => void) {
+        super();
         this.inputHandlers = this.buildInputHandlerMap();
         this.inputMode = InputMode.Interactive;
         this.sendInput = sendInput;
         this.waiting = false;
         this.prompt = "";
-        this.renderOptions = {} as RenderOptions;
         BackendManager.subscribe(BackendEventType.Start, () => this.onRunStart());
         BackendManager.subscribe(BackendEventType.End, () => this.onRunEnd());
         BackendManager.subscribe(BackendEventType.Input, e => this.onInputRequest(e));
@@ -60,7 +59,7 @@ export class InputManager {
     setInputMode(inputMode: InputMode): void {
         this.inputHandler.onToggle(false);
         this.inputMode = inputMode;
-        this.render(this.renderOptions);
+        this.render();
         this.inputHandler.onToggle(true);
     }
 
@@ -68,28 +67,31 @@ export class InputManager {
         return this.inputHandlers.get(this.inputMode)!;
     }
 
-    render(options: RenderOptions): void {
-        this.renderOptions = options;
+    override _render(options: RenderOptions): void {
         let switchMode = "";
         const otherMode = this.inputMode === InputMode.Interactive ?
             InputMode.Batch : InputMode.Interactive;
+        const otherModeTranslationKey = `switch_to_${otherMode}`;
         switchMode = `<a id="${SWITCH_INPUT_MODE_A_ID}" data-value="${otherMode}"
-        class="flex flex-row-reverse hover:cursor-pointer text-blue-500">
-            ${t(`Papyros.input_modes.switch_to_${otherMode}`)}
+        class="_tw-flex _tw-flex-row-reverse hover:_tw-cursor-pointer _tw-text-blue-500">
+            ${t(`Papyros.input_modes.${otherModeTranslationKey}`)}
         </a>`;
 
         renderWithOptions(options, `
-<div id="${USER_INPUT_WRAPPER_ID}" class="my-1">
+<div id="${USER_INPUT_WRAPPER_ID}" class="_tw-my-1">
 </div>
 ${switchMode}`);
         addListener<InputMode>(SWITCH_INPUT_MODE_A_ID, im => this.setInputMode(im),
             "click", "data-value");
 
-        this.inputHandler.render({ parentElementId: USER_INPUT_WRAPPER_ID });
+        this.inputHandler.render({
+            parentElementId: USER_INPUT_WRAPPER_ID,
+            darkMode: options.darkMode
+        });
         this.inputHandler.waitWithPrompt(this.waiting, this.prompt);
     }
 
-    waitWithPrompt(waiting: boolean, prompt=""): void {
+    waitWithPrompt(waiting: boolean, prompt = ""): void {
         this.waiting = waiting;
         this.prompt = prompt;
         this.inputHandler.waitWithPrompt(this.waiting, this.prompt);

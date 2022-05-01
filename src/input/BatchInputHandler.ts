@@ -1,7 +1,9 @@
 import { INPUT_TA_ID } from "../Constants";
 import { InputMode } from "../InputManager";
-import { RenderOptions, renderWithOptions } from "../util/Util";
 import { UserInputHandler } from "./UserInputHandler";
+import {
+    RenderOptions, renderWithOptions
+} from "../util/Rendering";
 
 export class BatchInputHandler extends UserInputHandler {
     /**
@@ -65,11 +67,12 @@ export class BatchInputHandler extends UserInputHandler {
         // Intentionally empty
     }
 
-    render(options: RenderOptions): HTMLElement {
-        const rendered = renderWithOptions(options, `
+    protected override _render(options: RenderOptions): void {
+        renderWithOptions(options, `
 <textarea id="${INPUT_TA_ID}"
-class="border-2 h-auto w-full max-h-1/4 px-1 overflow-auto
-focus:outline-none focus:ring-1 focus:ring-blue-500" rows="5">
+class="_tw-border-2 _tw-h-auto _tw-w-full _tw-max-h-1/4 _tw-px-1 _tw-overflow-auto _tw-rounded-lg
+dark:_tw-border-dark-mode-content dark:_tw-bg-dark-mode-bg placeholder:_tw-text-placeholder-grey
+focus:_tw-outline-none focus:_tw-ring-1 focus:_tw-ring-blue-500" rows="5">
 </textarea>`);
         this.inputArea.addEventListener("keydown", (ev: KeyboardEvent) => {
             if (this.waiting && ev.key.toLowerCase() === "enter") {
@@ -80,6 +83,9 @@ focus:outline-none focus:ring-1 focus:ring-blue-500" rows="5">
                 this.inputCallback();
             }
         });
-        return rendered;
+        this.inputArea.addEventListener("change", () => {
+            this.previousInput = this.inputArea.value;
+        });
+        this.inputArea.value = this.previousInput;
     }
 }

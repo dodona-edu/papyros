@@ -1,11 +1,12 @@
 import { INPUT_TA_ID } from "../Constants";
 import { InputMode } from "../InputManager";
-import { getElement, RenderOptions, t } from "../util/Util";
+import { t, getElement } from "../util/Util";
+import { Renderable } from "../util/Rendering";
 
 /**
  * Base class for components that handle input from the user
  */
-export abstract class UserInputHandler {
+export abstract class UserInputHandler extends Renderable {
     /**
      * Whether we are waiting for the user to input data
      */
@@ -18,6 +19,7 @@ export abstract class UserInputHandler {
      * @param {function()} inputCallback  Callback for when the user has entered a value
      */
     constructor(inputCallback: () => void) {
+        super();
         this.waiting = false;
         this.inputCallback = inputCallback;
     }
@@ -34,12 +36,6 @@ export abstract class UserInputHandler {
      * @return {string} The next value
      */
     abstract next(): string;
-    /**
-     * Render this UserInputHandler with the given options
-     * @param {RenderOptions} options The options to use while rendering
-     * @return {HTMLElement} The parent with the new content
-     */
-    abstract render(options: RenderOptions): HTMLElement;
 
     abstract onRunStart(): void;
 

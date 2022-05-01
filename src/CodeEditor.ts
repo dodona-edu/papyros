@@ -1,7 +1,9 @@
 /* eslint-disable valid-jsdoc */
 import { indentWithTab } from "@codemirror/commands";
 import { javascript } from "@codemirror/lang-javascript";
-import { indentUnit, LanguageSupport } from "@codemirror/language";
+import {
+    indentUnit, LanguageSupport,
+} from "@codemirror/language";
 import { Compartment, EditorState, Extension } from "@codemirror/state";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import { python } from "@codemirror/lang-python";
@@ -23,15 +25,16 @@ import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
 import { autocompletion, completionKeymap, CompletionSource } from "@codemirror/autocomplete";
 import { commentKeymap } from "@codemirror/comment";
 import { rectangularSelection } from "@codemirror/rectangular-selection";
-import { defaultHighlightStyle } from "@codemirror/highlight";
 import { lintKeymap, linter, Diagnostic, lintGutter } from "@codemirror/lint";
+import { t } from "./util/Util";
+import { oneDark } from "@codemirror/theme-one-dark";
+import { defaultHighlightStyle } from "@codemirror/highlight";
 import { showPanel } from "@codemirror/panel";
-import { RenderOptions, renderWithOptions, t } from "./util/Util";
-
+import { Renderable, RenderOptions, appendClasses, renderWithOptions } from "./util/Rendering";
 /**
  * Component that provides useful features to users writing code
  */
-export class CodeEditor {
+export class CodeEditor extends Renderable {
     /**
      * Reference to the user interface of the editor
      */
@@ -39,19 +42,19 @@ export class CodeEditor {
     /**
      * Compartment to change language at runtime
      */
-    languageCompartment: Compartment = new Compartment();
+    languageCompartment = new Compartment();
     /**
      * Compartment to configure indentation level at runtime
      */
-    indentCompartment: Compartment = new Compartment();
+    indentCompartment = new Compartment();
     /**
      * Compartment to configure the placeholder at runtime
      */
-    placeholderCompartment: Compartment = new Compartment();
+    placeholderCompartment = new Compartment();
     /**
     * Compartment to configure the panel at runtime
      */
-    panelCompartment: Compartment = new Compartment();
+    panelCompartment = new Compartment();
     /**
      * Compartment to configure the autocompletion at runtime
      */
@@ -61,13 +64,17 @@ export class CodeEditor {
      */
     lintCompartment: Compartment = new Compartment();
     /**
+     * Compartment to configure styling at runtime (e.g. switching to dark mode)
+     */
+    styleCompartent = new Compartment();
+
+    /**
      * Construct a new CodeEditor
-     * @param {ProgrammingLanguage} language The used programming language
-     * @param {string} editorPlaceHolder The placeholder for the editor
      * @param {string} initialCode The initial code to display
      * @param {number} indentLength The length in spaces for the indent unit
      */
     constructor(initialCode = "", indentLength = 4) {
+        super();
         this.editorView = new EditorView(
             {
                 state: EditorState.create({
@@ -86,26 +93,28 @@ export class CodeEditor {
                             keymap.of([indentWithTab]),
                             this.placeholderCompartment.of([]),
                             this.panelCompartment.of(showPanel.of(null)),
+                            this.styleCompartent.of([]),
                             ...CodeEditor.getExtensions()
                         ]
                 })
             });
     }
 
-    /**
-     * Render the editor with the given options and panel
-     * @param {RenderOptions} options Options for rendering
-     * @param {HTMLElement} panel The panel to display at the bottom
-     * @return {HTMLElement} The rendered element
-     */
-    render(options: RenderOptions, panel?: HTMLElement): HTMLElement {
-        if (panel) {
-            this.setPanel(panel);
-        }
-        options.classNames =
+    protected override _render(options: RenderOptions): void {
+        appendClasses(options,
             // eslint-disable-next-line max-len
-            `overflow-auto max-h-9/10 min-h-1/4 border-solid border-gray-200 border-2 ${options.classNames}`;
-        return renderWithOptions(options, this.editorView.dom);
+            "_tw-overflow-auto _tw-max-h-9/10 _tw-min-h-1/4 _tw-border-solid _tw-border-gray-200 _tw-border-2 _tw-rounded-lg dark:_tw-border-0");
+        let styleExtensions: Extension = [];
+        if (options.darkMode) {
+            styleExtensions = oneDark;
+        } else {
+            styleExtensions = defaultHighlightStyle.fallback;
+            // styleExtensions = syntaxHighlighting(defaultHighlightStyle, { fallback: true });
+        }
+        this.editorView.dispatch({
+            effects: [this.styleCompartent.reconfigure(styleExtensions)]
+        });
+        renderWithOptions(options, this.editorView.dom);
     }
 
     /**
@@ -230,7 +239,8 @@ export class CodeEditor {
     *  - [custom selection drawing](#view.drawSelection)
     *  - [multiple selections](#state.EditorState^allowMultipleSelections)
     *  - [reindentation on input](#language.indentOnInput)
-    *  - [the default highlight style](#highlight.defaultHighlightStyle) (as fallback)
+    *  - [syntax highlighting with the default highlight style]
+    *   (#highlight.defaultHighlightStyle) (as fallback)
     *  - [bracket matching](#matchbrackets.bracketMatching)
     *  - [bracket closing](#closebrackets.closeBrackets)
     *  - [autocompletion](#autocomplete.autocompletion)
@@ -239,6 +249,7 @@ export class CodeEditor {
     *  - [active line gutter highlighting](#gutter.highlightActiveLineGutter)
     *  - [selection match highlighting](#search.highlightSelectionMatches)
     * Keymaps:
+    *  - [bracket closing](#commands.closeBracketsKeymap)
     *  - [the default command bindings](#commands.defaultKeymap)
     *  - [search](#search.searchKeymap)
     *  - [commenting](#comment.commentKeymap)
@@ -256,7 +267,6 @@ export class CodeEditor {
             drawSelection(),
             EditorState.allowMultipleSelections.of(true),
             indentOnInput(),
-            defaultHighlightStyle.fallback,
             bracketMatching(),
             closeBrackets(),
             autocompletion(),

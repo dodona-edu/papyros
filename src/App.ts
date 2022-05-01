@@ -24,11 +24,20 @@ async function startPapyros(): Promise<void> {
         inputMode: InputMode.Interactive
     };
     const papyros = new Papyros(config);
+    let darkMode = false;
+    if (window.matchMedia) {
+        darkMode = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", e => {
+            papyros.setDarkMode(e.matches);
+        });
+    }
     papyros.render({
         standAloneOptions: {
             parentElementId: "root"
-        }
+        },
+        darkMode: darkMode
     });
+
     // Try to configure synchronous input mechanism
     if (!await papyros.configureInput(location.href, DEFAULT_SERVICE_WORKER)) {
         getElement(MAIN_APP_ID).innerHTML =

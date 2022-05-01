@@ -39,7 +39,8 @@ const ENGLISH_TRANSLATION = {
         "switch_to_batch": "Switch to batch input"
     },
     "enter": "Enter",
-    "examples": "Examples"
+    "examples": "Examples",
+    "dark_mode": "Dark mode"
 };
 
 const DUTCH_TRANSLATION = {
@@ -79,7 +80,8 @@ const DUTCH_TRANSLATION = {
         "switch_to_batch": "Geef invoer vooraf in"
     },
     "enter": "Enter",
-    "examples": "Voorbeelden"
+    "examples": "Voorbeelden",
+    "dark_mode": "Donkere modus"
 };
 
 const TRANSLATIONS = {
