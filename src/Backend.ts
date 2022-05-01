@@ -58,8 +58,9 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
     constructor() {
         this.extras = {} as Extras;
         this.initialInput = [];
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
-        this.onEvent = () => { };
+        this.onEvent = () => {
+            // Empty, initialized in launch
+        };
         this.runCode = this.syncExpose()(this.runCode.bind(this));
         this.queue = {} as BackendEventQueue;
     }
