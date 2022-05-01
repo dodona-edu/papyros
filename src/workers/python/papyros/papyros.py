@@ -10,6 +10,7 @@ from contextlib import contextmanager, redirect_stdout, redirect_stderr
 from pyodide_worker_runner import install_imports
 from pyodide import JsException, create_proxy
 
+from threading import Lock
 from .util import to_py
 from .autocomplete import autocomplete
 from .linting import lint
@@ -32,6 +33,7 @@ class Papyros(python_runner.PyodideRunner):
             self.OutputBufferClass = lambda f: buffer_constructor(create_proxy(f))
         super().__init__(source_code=source_code, filename=filename)
         self.limit = limit
+        self.lock = Lock()
         self.override_globals()
         self.set_event_callback(callback)
 
@@ -93,18 +95,18 @@ class Papyros(python_runner.PyodideRunner):
 
         matplotlib.pyplot.show = show
 
-    async def install_imports(self, source_code, ignore_missing=True, first_attempt=True):
+    async def install_imports(self, source_code, ignore_missing=True):
         try:
+            # Use a lock to install imports in a thread safe way
+            # Issues can occur when linting and running install libraries at the same time
+            self.lock.acquire()
             await install_imports(source_code)
         except (ValueError, JsException):
             # Occurs when trying to fetch PyPi files for misspelled imports
             if not ignore_missing:
                 raise
-        except BaseException:
-            if first_attempt:
-                await self.install_imports(source_code, ignore_missing=ignore_missing, first_attempt=False)
-            else:
-                raise
+        finally:
+            self.lock.release()
 
     @contextmanager
     def _execute_context(self):
