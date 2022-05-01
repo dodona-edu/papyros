@@ -64,7 +64,7 @@ export class OutputManager extends Renderable {
      * Retrieve the parent element containing all output parts
      */
     get outputArea(): HTMLElement {
-        return getElement(this.renderOptions.parentElementId);
+        return getElement(OUTPUT_TA_ID);
     }
 
     /**

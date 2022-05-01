@@ -2,8 +2,9 @@
 import "./Papyros.css";
 import I18n from "i18n-js";
 import {
-    EDITOR_WRAPPER_ID, PROGRAMMING_LANGUAGE_SELECT_ID, OUTPUT_TA_ID,
-    LOCALE_SELECT_ID, INPUT_AREA_WRAPPER_ID, EXAMPLE_SELECT_ID, PANEL_WRAPPER_ID, DARK_MODE_TOGGLE_ID, MAIN_APP_ID
+    EDITOR_WRAPPER_ID, PROGRAMMING_LANGUAGE_SELECT_ID,
+    LOCALE_SELECT_ID, INPUT_AREA_WRAPPER_ID, EXAMPLE_SELECT_ID,
+    PANEL_WRAPPER_ID, DARK_MODE_TOGGLE_ID, MAIN_APP_ID, OUTPUT_AREA_WRAPPER_ID
 } from "./Constants";
 import { InputMode } from "./InputManager";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
@@ -208,7 +209,7 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
         // Set default values for each option
         for (const [option, defaultParentId] of [
             ["inputOptions", INPUT_AREA_WRAPPER_ID], ["statusPanelOptions", PANEL_WRAPPER_ID],
-            ["codeEditorOptions", EDITOR_WRAPPER_ID], ["outputOptions", OUTPUT_TA_ID],
+            ["codeEditorOptions", EDITOR_WRAPPER_ID], ["outputOptions", OUTPUT_AREA_WRAPPER_ID],
             ["standAloneOptions", MAIN_APP_ID]
         ]) {
             const elementOptions: RenderOptions = (renderOptions as any)[option] || {};
@@ -223,8 +224,7 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
             const programmingLanguageSelect =
                 renderSelect(PROGRAMMING_LANGUAGE_SELECT_ID, new Array(...LANGUAGE_MAP.values()),
                     l => t(`Papyros.programming_languages.${l}`), programmingLanguage, t("Papyros.programming_language"));
-            console.log("Currently selected: ", this.config.example);
-            const exampleSelect =
+µ            const exampleSelect =
                 renderSelect(EXAMPLE_SELECT_ID, getExampleNames(programmingLanguage),
                     name => name, this.config.example, t("Papyros.examples"));
             const locales = [locale, ...getLocales().filter(l => l != locale)];

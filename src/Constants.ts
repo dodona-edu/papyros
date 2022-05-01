@@ -10,6 +10,7 @@ function addPapyrosPrefix(s: string): string {
 }
 /* Default HTML ids for various elements */
 export const MAIN_APP_ID = addPapyrosPrefix("root");
+export const OUTPUT_AREA_WRAPPER_ID = addPapyrosPrefix("code-output-area-wrapper");
 export const OUTPUT_TA_ID = addPapyrosPrefix("code-output-area");
 export const INPUT_AREA_WRAPPER_ID = addPapyrosPrefix("code-input-area-wrapper");
 export const INPUT_TA_ID = addPapyrosPrefix("code-input-area");
