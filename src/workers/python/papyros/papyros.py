@@ -7,10 +7,11 @@ import friendly_traceback
 from friendly_traceback.core import FriendlyTraceback
 from collections.abc import Awaitable
 from pyodide_worker_runner import install_imports
-
+from pyodide import JsException
 
 from .util import to_py
 from .autocomplete import autocomplete
+from .linting import lint
 
 SYS_RECURSION_LIMIT = 500
 
@@ -87,7 +88,8 @@ class Papyros(python_runner.PyodideRunner):
     async def install_imports(self, source_code, ignore_missing=True):
         try:
             await install_imports(source_code)
-        except ValueError:
+        except (ValueError, JsException):
+            # Occurs when trying to fetch PyPi files for misspelled imports
             if not ignore_missing:
                 raise
 
@@ -162,17 +164,5 @@ class Papyros(python_runner.PyodideRunner):
 
     async def lint(self, code):
         self.set_source_code(code)
-        if not code:
-            return []
         await self.install_imports(code, ignore_missing=True)
-        # Override os.devnull to allow Pylint to import and run
-        import os
-        devnull = os.devnull
-        temporary_devnull = "__papyros_dev_null"
-        with open(temporary_devnull, "w"):
-            pass
-        os.devnull = temporary_devnull
-        from .linting import lint_code
-        result = lint_code(self.filename)
-        os.devnull = devnull
-        return result
+        return lint(self.filename)

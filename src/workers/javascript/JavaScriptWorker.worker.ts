@@ -159,7 +159,7 @@ class JavaScriptWorker extends Backend<SyncExtras> {
         }
     }
 
-    override async lintCode(_code: string): Promise<Array<WorkerDiagnostic>> {
+    override async lintCode(): Promise<Array<WorkerDiagnostic>> {
         return Promise.resolve([]);
     }
 }

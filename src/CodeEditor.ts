@@ -1,10 +1,8 @@
 /* eslint-disable valid-jsdoc */
 import { indentWithTab } from "@codemirror/commands";
 import { javascript } from "@codemirror/lang-javascript";
-import {
-    indentUnit, LanguageSupport,
-} from "@codemirror/language";
 import { Compartment, EditorState, Extension } from "@codemirror/state";
+import { indentUnit, LanguageSupport } from "@codemirror/language";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import { python } from "@codemirror/lang-python";
 import {
@@ -31,6 +29,23 @@ import { oneDark } from "@codemirror/theme-one-dark";
 import { defaultHighlightStyle } from "@codemirror/highlight";
 import { showPanel } from "@codemirror/panel";
 import { Renderable, RenderOptions, appendClasses, renderWithOptions } from "./util/Rendering";
+
+enum Option {
+    ProgrammingLanguage = "programming_language",
+    Placeholder = "placeholder",
+    Indentation = "indentation",
+    Panel = "panel",
+    Autocompletion = "autocompletion",
+    Linting = "linting",
+    Style = "style"
+}
+const OPTIONS = [
+    Option.ProgrammingLanguage, Option.Placeholder,
+    Option.Indentation, Option.Panel,
+    Option.Autocompletion, Option.Linting,
+    Option.Style
+];
+
 /**
  * Component that provides useful features to users writing code
  */
@@ -38,35 +53,11 @@ export class CodeEditor extends Renderable {
     /**
      * Reference to the user interface of the editor
      */
-    editorView: EditorView;
+    readonly editorView: EditorView;
     /**
-     * Compartment to change language at runtime
+     * Mapping from CodeEditorOptions to a configurable compartment
      */
-    languageCompartment = new Compartment();
-    /**
-     * Compartment to configure indentation level at runtime
-     */
-    indentCompartment = new Compartment();
-    /**
-     * Compartment to configure the placeholder at runtime
-     */
-    placeholderCompartment = new Compartment();
-    /**
-    * Compartment to configure the panel at runtime
-     */
-    panelCompartment = new Compartment();
-    /**
-     * Compartment to configure the autocompletion at runtime
-     */
-    autocompletionCompartment: Compartment = new Compartment();
-    /**
-     * Compartment to configure linting at runtime
-     */
-    lintCompartment: Compartment = new Compartment();
-    /**
-     * Compartment to configure styling at runtime (e.g. switching to dark mode)
-     */
-    styleCompartent = new Compartment();
+    private compartments: Map<Option, Compartment>;
 
     /**
      * Construct a new CodeEditor
@@ -75,31 +66,41 @@ export class CodeEditor extends Renderable {
      */
     constructor(initialCode = "", indentLength = 4) {
         super();
+        this.compartments = new Map(OPTIONS.map(opt => [opt, new Compartment()]));
+        const configurableExtensions = [...this.compartments.values()]
+            .map(compartment => compartment.of([]));
         this.editorView = new EditorView(
             {
                 state: EditorState.create({
                     doc: initialCode,
                     extensions:
                         [
-                            this.languageCompartment.of([]),
-                            this.autocompletionCompartment.of(
-                                autocompletion()
-                            ),
-                            this.lintCompartment.of([]),
-                            lintGutter(),
-                            this.indentCompartment.of(
-                                indentUnit.of(CodeEditor.getIndentUnit(indentLength))
-                            ),
-                            keymap.of([indentWithTab]),
-                            this.placeholderCompartment.of([]),
-                            this.panelCompartment.of(showPanel.of(null)),
-                            this.styleCompartent.of([]),
+                            ...configurableExtensions,
                             ...CodeEditor.getExtensions()
                         ]
                 })
             });
+        this.setIndentLength(indentLength);
     }
 
+    /**
+     * Helper method to dispatch configuration changes at runtime
+     * @param {Array<[Option, Extension]>} items Array of items to reconfigure
+     * The option indicates the relevant compartment
+     * The extension indicates the new configuration
+     */
+    private reconfigure(...items: Array<[Option, Extension]>): void {
+        this.editorView.dispatch({
+            effects: items.map(([opt, ext]) => this.compartments.get(opt)!.reconfigure(ext))
+        });
+    }
+
+    /**
+     * Render the editor with the given options and panel
+     * @param {RenderOptions} options Options for rendering
+     * @param {HTMLElement} panel The panel to display at the bottom
+     * @return {HTMLElement} The rendered element
+     */
     protected override _render(options: RenderOptions): void {
         appendClasses(options,
             // eslint-disable-next-line max-len
@@ -111,87 +112,73 @@ export class CodeEditor extends Renderable {
             styleExtensions = defaultHighlightStyle.fallback;
             // styleExtensions = syntaxHighlighting(defaultHighlightStyle, { fallback: true });
         }
-        this.editorView.dispatch({
-            effects: [this.styleCompartent.reconfigure(styleExtensions)]
-        });
+        this.reconfigure([Option.Style, styleExtensions]);
         renderWithOptions(options, this.editorView.dom);
     }
 
     /**
-     * Set the language that is currently used
      * @param {ProgrammingLanguage} language The language to use
      */
-    setLanguage(language: ProgrammingLanguage)
+    public setProgrammingLanguage(language: ProgrammingLanguage)
         : void {
-        this.editorView.dispatch({
-            effects: [
-                this.languageCompartment.reconfigure(CodeEditor.getLanguageSupport(language)),
-                this.placeholderCompartment.reconfigure(placeholder(t("Papyros.code_placeholder",
-                    { programmingLanguage: language })))
-            ]
-        });
+        this.reconfigure(
+            [Option.ProgrammingLanguage, CodeEditor.getLanguageSupport(language)],
+            [Option.Placeholder, placeholder(t("Papyros.code_placeholder",
+                { programmingLanguage: language }))]
+        );
     }
 
     /**
      * @param {CompletionSource} completionSource Function to obtain autocomplete results
      */
-    setCompletionSource(completionSource: CompletionSource): void {
-        this.editorView.dispatch({
-            effects: [
-                this.autocompletionCompartment.reconfigure(
-                    autocompletion({ override: [completionSource] })
-                )
-            ]
-        });
+    public setCompletionSource(completionSource: CompletionSource): void {
+        this.reconfigure(
+            [Option.Autocompletion, autocompletion({ override: [completionSource] })]
+        );
     }
 
-    setLintingSource(
+    /**
+     * @param {LintSource} lintSource Function to obtain linting results
+     */
+    public setLintingSource(
         lintSource: (view: EditorView) => readonly Diagnostic[] | Promise<readonly Diagnostic[]>)
         : void {
-        this.editorView.dispatch({
-            effects: [
-                this.lintCompartment.reconfigure(
-                    linter(lintSource)
-                )
-            ]
-        });
+        this.reconfigure(
+            [Option.Linting, linter(lintSource)]
+        );
     }
 
     /**
-     * Set the length in spaces of the indentation unit
-     * @param {number} indentLength The number of spaces to use
+     * @param {number} indentLength The number of spaces to use for indentation
      */
-    setIndentLength(indentLength: number): void {
-        this.editorView.dispatch({
-            effects: this.indentCompartment.reconfigure(
-                indentUnit.of(CodeEditor.getIndentUnit(indentLength))
-            )
-        });
+    public setIndentLength(indentLength: number): void {
+        this.reconfigure(
+            [Option.Indentation, indentUnit.of(CodeEditor.getIndentUnit(indentLength))]
+        );
     }
 
     /**
-     * Set the panel that is displayed at the bottom of the editor
-     * @param {HTMLElement} panel The panel to display
+     * @param {HTMLElement} panel The panel to display at the bottom of the editor
      */
-    setPanel(panel: HTMLElement): void {
-        this.editorView.dispatch({
-            effects: this.panelCompartment.reconfigure(showPanel.of(() => {
+    public setPanel(panel: HTMLElement): void {
+        this.reconfigure(
+            [Option.Panel, showPanel.of(() => {
                 return { dom: panel };
-            }))
-        });
+            })]
+        );
     }
 
     /**
      * @return {string} The code within the editor
      */
-    getCode(): string {
+    public getCode(): string {
         return this.editorView.state.doc.toString();
     }
 
     /**
      * @param {string} code The new code to be shown in the editor
      */
-    setCode(code: string): void {
+    public setCode(code: string): void {
         this.editorView.dispatch(
             { changes: { from: 0, to: this.getCode().length, insert: code } }
         );
@@ -200,15 +187,15 @@ export class CodeEditor extends Renderable {
     /**
      * Put focus on the CodeEditor
      */
-    focus(): void {
+    public focus(): void {
         this.editorView.focus();
     }
 
     /**
      * @param {number} indentLength The amount of spaces to use
-     * @return {string} The indentation unit to use
+     * @return {string} The indentation unit to be used by CodeMirror
      */
-    static getIndentUnit(indentLength: number): string {
+    private static getIndentUnit(indentLength: number): string {
         return new Array(indentLength).fill(" ").join("");
     }
 
@@ -216,7 +203,7 @@ export class CodeEditor extends Renderable {
      * @param  {ProgrammingLanguage} language The language to support
      * @return {LanguageSupport} CodeMirror LanguageSupport for the language
      */
-    static getLanguageSupport(language: ProgrammingLanguage): LanguageSupport {
+    private static getLanguageSupport(language: ProgrammingLanguage): LanguageSupport {
         switch (language) {
             case ProgrammingLanguage.Python: {
                 return python();
@@ -236,6 +223,7 @@ export class CodeEditor extends Renderable {
     *  - [special character highlighting](#view.highlightSpecialChars)
     *  - [the undo history](#history.history)
     *  - [a fold gutter](#fold.foldGutter)
+    *  - [gutter for linting](#lint.lintGutter)
     *  - [custom selection drawing](#view.drawSelection)
     *  - [multiple selections](#state.EditorState^allowMultipleSelections)
     *  - [reindentation on input](#language.indentOnInput)
@@ -257,13 +245,14 @@ export class CodeEditor extends Renderable {
     *  - [indenting with tab](#commands.indentWithTab)
     *  @return {Array<Extension} Default extensions to use
     */
-    static getExtensions(): Array<Extension> {
+    private static getExtensions(): Array<Extension> {
         return [
             lineNumbers(),
             highlightActiveLineGutter(),
             highlightSpecialChars(),
             history(),
             foldGutter(),
+            lintGutter(),
             drawSelection(),
             EditorState.allowMultipleSelections.of(true),
             indentOnInput(),

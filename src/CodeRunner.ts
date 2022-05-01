@@ -116,29 +116,29 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      */
     async start(): Promise<void> {
         this.setState(RunState.Loading);
-        const backend = BackendManager.startBackend(this.programmingLanguage);
-        this.editor.setLanguage(this.programmingLanguage);
+        const backend = BackendManager.getBackend(this.programmingLanguage);
+        this.editor.setProgrammingLanguage(this.programmingLanguage);
         // Use a Promise to immediately enable running while downloading
-        this.backend = new Promise(resolve => {
-            return backend.workerProxy
+        // eslint-disable-next-line no-async-promise-executor
+        this.backend = new Promise(async resolve => {
+            const workerProxy = backend.workerProxy;
+            await workerProxy
                 // Allow passing messages between worker and main thread
-                .launch(proxy((e: BackendEvent) => BackendManager.publish(e)))
-                .then(() => {
-                    this.editor.setCompletionSource(async context => {
-                        const completionContext = Backend.convertCompletionContext(context);
-                        return backend.workerProxy.autocomplete(completionContext);
+                .launch(proxy((e: BackendEvent) => BackendManager.publish(e)));
+            this.editor.setCompletionSource(async context => {
+                const completionContext = Backend.convertCompletionContext(context);
+                return await workerProxy.autocomplete(completionContext);
+            });
+            this.editor.setLintingSource(
+                async view => {
+                    const workerDiagnostics = await workerProxy.lintCode(this.editor.getCode());
+                    return workerDiagnostics.map(d => {
+                        const line = view.state.doc.line(d.lineNr);
+                        const from = Math.min(line.from + d.columnNr, line.from);
+                        return { ...d, from: from, to: from };
                     });
-                    this.editor.setLintingSource(
-                        async view => {
-                            const workerDiagnostics =
-                                await backend.workerProxy.lintCode(this.editor.getCode());
-                            return workerDiagnostics.map(d => {
-                                const from = view.state.doc.line(d.lineNr).from + d.columnNr;
-                                return { ...d, from: from, to: from };
-                            });
-                        });
-                    return resolve(backend);
                 });
+            return resolve(backend);
         });
         this.editor.focus();
         this.setState(RunState.Ready);
@@ -249,7 +249,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         this.editor.render(options.codeEditorOptions);
         this.editor.setPanel(rendered);
         // Set language again to update the placeholder
-        this.editor.setLanguage(this.programmingLanguage);
+        this.editor.setProgrammingLanguage(this.programmingLanguage);
         return rendered;
     }
 

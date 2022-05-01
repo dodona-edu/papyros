@@ -30,11 +30,11 @@ export abstract class BackendManager {
      * Map an event type to interested subscribers
      * Uses an Array to maintain order of subscription
      */
-    static subscriberMap: Map<BackendEventType, Array<BackendEventListener>>;
+    private static subscriberMap: Map<BackendEventType, Array<BackendEventListener>>;
     /**
      * The channel used to communicate with the SyncClients
      */
-    static channel: Channel;
+    public static channel: Channel;
 
     /**
      * @param {ProgrammingLanguage} language The language to support
@@ -42,8 +42,8 @@ export abstract class BackendManager {
      */
     static registerBackend(language: ProgrammingLanguage,
         backendCreator: () => SyncClient<Backend>): void {
+        BackendManager.removeBackend(language);
         BackendManager.createBackendMap.set(language, backendCreator);
-        BackendManager.backendMap.delete(language);
     }
 
     /**
@@ -51,7 +51,7 @@ export abstract class BackendManager {
      * @param {ProgrammingLanguage} language The programming language supported by the backend
      * @return {SyncClient<Backend>} A SyncClient for the Backend
      */
-    static startBackend(language: ProgrammingLanguage): SyncClient<Backend> {
+    static getBackend(language: ProgrammingLanguage): SyncClient<Backend> {
         if (this.backendMap.has(language)) { // Cached
             return this.backendMap.get(language)!;
         } else if (this.createBackendMap.has(language)) {
@@ -62,6 +62,16 @@ export abstract class BackendManager {
         } else {
             throw new Error(`${language} is not yet supported.`);
         }
+    }
+
+    /**
+     * Remove a backend for the given language
+     * @param {ProgrammingLanguage} language The programming language supported by the backend
+     * @return {boolean} Whether the remove operation had any effect
+     */
+    static removeBackend(language: ProgrammingLanguage): boolean {
+        this.backendMap.delete(language);
+        return this.createBackendMap.delete(language);
     }
 
     /**
