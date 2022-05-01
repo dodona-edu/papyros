@@ -5,7 +5,7 @@ const fs = require("fs");
 const outputFile = fs.openSync("translationIssues.txt", "w");
 
 const usedKeys = extract.extractFromFiles([
-    "src/*.ts"
+    "src/**/*.ts"
 ], {
     marker: "t", // renamed I18n.t to t for convenience
     parser: "typescript",
@@ -34,13 +34,13 @@ const checks = [
             "Papyros.programming_languages.*",
             "Papyros.locales.*",
             "Papyros.states.*",
-            "Papyros.input_modes.switch_to_*",
+            "Papyros.switch_input_mode_to.*",
             "Papyros.input_placeholder.*"
         ]
     }
 ];
 
-function checkReport(report, type, locale) {
+function checkReport(report, type) {
     const valid = report.length === 0;
     if (!valid) {
         const errorNumber = checks.map(c => c.type).indexOf(type);
@@ -52,21 +52,20 @@ function checkReport(report, type, locale) {
                 column = issue.loc.start.column;
             }
             const file = issue.file || "src/Translations.js";
-            const errorMsg = `R${errorNumber} ${type} key ${issue.key} for locale ${locale}`;
+            const errorMsg = `R${errorNumber} ${type} key ${issue.key}`;
             fs.writeFileSync(outputFile, `${file}:${line}:${column}: ${errorMsg}\n`);
         }
     }
     return valid;
 }
 
-for (const locale of Object.keys(translations)) {
-    // requires flattening as the translations object uses the Papyros-scope
-    const localeKeys = extract.flatten(translations[locale]);
-    for (const check of checks) {
-        checkReport(
-            check.check(localeKeys, usedKeys).filter(k => !check.allowed.includes(k.key)),
-            check.type, locale
-        );
-    }
+const locale = Object.keys(translations)[0];
+// requires flattening as the translations object uses the Papyros-scope
+const localeKeys = extract.flatten(translations[locale]);
+for (const check of checks) {
+    checkReport(
+        check.check(localeKeys, usedKeys).filter(k => !check.allowed.includes(k.key)),
+        check.type
+    );
 }
 

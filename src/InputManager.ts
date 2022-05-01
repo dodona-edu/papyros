@@ -75,10 +75,9 @@ export class InputManager extends Renderable {
         let switchMode = "";
         const otherMode = this.inputMode === InputMode.Interactive ?
             InputMode.Batch : InputMode.Interactive;
-        const otherModeTranslationKey = `switch_to_${otherMode}`;
         switchMode = `<a id="${SWITCH_INPUT_MODE_A_ID}" data-value="${otherMode}"
         class="_tw-flex _tw-flex-row-reverse hover:_tw-cursor-pointer _tw-text-blue-500">
-            ${t(`Papyros.input_modes.${otherModeTranslationKey}`)}
+            ${t(`Papyros.switch_input_mode_to.${otherMode}`)}
         </a>`;
 
         renderWithOptions(options, `

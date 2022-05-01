@@ -34,9 +34,9 @@ const ENGLISH_TRANSLATION = {
         "en": "English",
         "nl": "Nederlands"
     },
-    "input_modes": {
-        "switch_to_interactive": "Switch to interactive mode",
-        "switch_to_batch": "Switch to batch input"
+    "switch_input_mode_to": {
+        "interactive": "Switch to interactive mode",
+        "batch": "Switch to batch input"
     },
     "enter": "Enter",
     "examples": "Examples",
