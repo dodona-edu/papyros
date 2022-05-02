@@ -1158,10 +1158,10 @@
     "@types/mime" "^1"
     "@types/node" "*"
 
-"@types/serviceworker@^0.0.36":
-  version "0.0.36"
-  resolved "https://registry.yarnpkg.com/@types/serviceworker/-/serviceworker-0.0.36.tgz#cd520ce93a7b595a8be10e47264cfdd4bf0bb42d"
-  integrity sha512-bTKTpQsvC7ArSolj9aoSPU+Cq95zVI21RyYXkHkLiQfTvjHmTFW+uIgV9yWSCaYdHjTBv9l3tPBiblR32fvWig==
+"@types/serviceworker@^0.0.42":
+  version "0.0.42"
+  resolved "https://registry.yarnpkg.com/@types/serviceworker/-/serviceworker-0.0.42.tgz#d099010b5166bda3d14fd1bae96fa3e52a58969f"
+  integrity sha512-PBUOL/6sdL1F1Zlecvzm0MygBTJLVWeAH1D2ze5OcibTAMqbieEEKBj5tVgJ+0XHBd+/amGkYLm7kXoHhpyomw==
 
 "@types/sockjs@^0.3.33":
   version "0.3.33"
