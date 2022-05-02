@@ -25,7 +25,7 @@ export declare abstract class BackendManager {
      * Map an event type to interested subscribers
      * Uses an Array to maintain order of subscription
      */
-    static subscriberMap: Map<BackendEventType, Array<BackendEventListener>>;
+    private static subscriberMap;
     /**
      * The channel used to communicate with the SyncClients
      */
@@ -40,7 +40,13 @@ export declare abstract class BackendManager {
      * @param {ProgrammingLanguage} language The programming language supported by the backend
      * @return {SyncClient<Backend>} A SyncClient for the Backend
      */
-    static startBackend(language: ProgrammingLanguage): SyncClient<Backend>;
+    static getBackend(language: ProgrammingLanguage): SyncClient<Backend>;
+    /**
+     * Remove a backend for the given language
+     * @param {ProgrammingLanguage} language The programming language supported by the backend
+     * @return {boolean} Whether the remove operation had any effect
+     */
+    static removeBackend(language: ProgrammingLanguage): boolean;
     /**
      * Register a callback for when an event of a certain type is published
      * @param {BackendEventType} type The type of event to subscribe to

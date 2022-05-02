@@ -1,6 +1,8 @@
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
 export declare const MAIN_APP_ID: string;
-export declare const OUTPUT_TA_ID: string;
+export declare const OUTPUT_AREA_WRAPPER_ID: string;
+export declare const OUTPUT_AREA_ID: string;
+export declare const OUTPUT_OVERFLOW_ID: string;
 export declare const INPUT_AREA_WRAPPER_ID: string;
 export declare const INPUT_TA_ID: string;
 export declare const USER_INPUT_WRAPPER_ID: string;
@@ -15,6 +17,7 @@ export declare const SWITCH_INPUT_MODE_A_ID: string;
 export declare const EXAMPLE_SELECT_ID: string;
 export declare const LOCALE_SELECT_ID: string;
 export declare const PROGRAMMING_LANGUAGE_SELECT_ID: string;
+export declare const DARK_MODE_TOGGLE_ID: string;
 export declare const DEFAULT_PROGRAMMING_LANGUAGE = ProgrammingLanguage.Python;
 export declare const DEFAULT_LOCALE = "nl";
 export declare const DEFAULT_SERVICE_WORKER = "InputServiceWorker.js";

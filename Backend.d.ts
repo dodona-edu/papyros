@@ -1,6 +1,7 @@
 import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
 import { BackendEvent } from "./BackendEvent";
 import { SyncExtras } from "comsync";
+import { BackendEventQueue } from "./BackendEventQueue";
 /**
  * Interface to represent the CodeMirror CompletionContext in a worker
  */
@@ -43,6 +44,7 @@ export interface WorkerDiagnostic {
 export declare abstract class Backend<Extras extends SyncExtras = SyncExtras> {
     protected extras: Extras;
     protected onEvent: (e: BackendEvent) => any;
+    protected queue: BackendEventQueue;
     /**
      * Constructor is limited as it is meant to be used as a WebWorker
      * Proper initialization occurs in the launch method when the worker is started
@@ -80,5 +82,17 @@ export declare abstract class Backend<Extras extends SyncExtras = SyncExtras> {
      * @param {WorkerAutocompleteContext} context Context to autcomplete in
      */
     abstract autocomplete(context: WorkerAutocompleteContext): Promise<CompletionResult | null>;
+    /**
+     * Generate linting suggestions for the given code
+     * @param {string} code The code to lint
+     */
     abstract lintCode(code: string): Promise<Array<WorkerDiagnostic>>;
+    /**
+     * @return {boolean} Whether too many output events were generated
+     */
+    hasOverflow(): boolean;
+    /**
+     * @return {Array<BackendEvent>} The events that happened after overflow
+     */
+    getOverflow(): Array<BackendEvent>;
 }

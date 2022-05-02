@@ -1,6 +1,6 @@
 import { InputMode } from "../InputManager";
-import { RenderOptions } from "../util/Util";
 import { UserInputHandler } from "./UserInputHandler";
+import { RenderOptions } from "../util/Rendering";
 /**
  * Input handler that takes input from the user in an interactive fashion
  */
@@ -16,5 +16,5 @@ export declare class InteractiveInputHandler extends UserInputHandler {
     onToggle(): void;
     onRunStart(): void;
     onRunEnd(): void;
-    render(options: RenderOptions): HTMLElement;
+    protected _render(options: RenderOptions): void;
 }

@@ -1,75 +1,58 @@
-import { LanguageSupport } from "@codemirror/language";
-import { Compartment, Extension } from "@codemirror/state";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import { EditorView } from "@codemirror/view";
 import { CompletionSource } from "@codemirror/autocomplete";
 import { Diagnostic } from "@codemirror/lint";
-import { RenderOptions } from "./util/Util";
+import { Renderable, RenderOptions } from "./util/Rendering";
 /**
  * Component that provides useful features to users writing code
  */
-export declare class CodeEditor {
+export declare class CodeEditor extends Renderable {
     /**
      * Reference to the user interface of the editor
      */
-    editorView: EditorView;
+    readonly editorView: EditorView;
     /**
-     * Compartment to change language at runtime
+     * Mapping from CodeEditorOptions to a configurable compartment
      */
-    languageCompartment: Compartment;
-    /**
-     * Compartment to configure indentation level at runtime
-     */
-    indentCompartment: Compartment;
-    /**
-     * Compartment to configure the placeholder at runtime
-     */
-    placeholderCompartment: Compartment;
-    /**
-    * Compartment to configure the panel at runtime
-     */
-    panelCompartment: Compartment;
-    /**
-     * Compartment to configure the autocompletion at runtime
-     */
-    autocompletionCompartment: Compartment;
-    /**
-     * Compartment to configure linting at runtime
-     */
-    lintCompartment: Compartment;
+    private compartments;
     /**
      * Construct a new CodeEditor
-     * @param {ProgrammingLanguage} language The used programming language
-     * @param {string} editorPlaceHolder The placeholder for the editor
      * @param {string} initialCode The initial code to display
      * @param {number} indentLength The length in spaces for the indent unit
      */
     constructor(initialCode?: string, indentLength?: number);
+    /**
+     * Helper method to dispatch configuration changes at runtime
+     * @param {Array<[Option, Extension]>} items Array of items to reconfigure
+     * The option indicates the relevant compartment
+     * The extension indicates the new configuration
+     */
+    private reconfigure;
     /**
      * Render the editor with the given options and panel
      * @param {RenderOptions} options Options for rendering
      * @param {HTMLElement} panel The panel to display at the bottom
      * @return {HTMLElement} The rendered element
      */
-    render(options: RenderOptions, panel?: HTMLElement): HTMLElement;
+    protected _render(options: RenderOptions): void;
     /**
-     * Set the language that is currently used
      * @param {ProgrammingLanguage} language The language to use
      */
-    setLanguage(language: ProgrammingLanguage): void;
+    setProgrammingLanguage(language: ProgrammingLanguage): void;
     /**
      * @param {CompletionSource} completionSource Function to obtain autocomplete results
      */
     setCompletionSource(completionSource: CompletionSource): void;
+    /**
+     * @param {LintSource} lintSource Function to obtain linting results
+     */
     setLintingSource(lintSource: (view: EditorView) => readonly Diagnostic[] | Promise<readonly Diagnostic[]>): void;
     /**
-     * Set the length in spaces of the indentation unit
-     * @param {number} indentLength The number of spaces to use
+     * @param {number} indentLength The number of spaces to use for indentation
      */
     setIndentLength(indentLength: number): void;
     /**
-     * Set the panel that is displayed at the bottom of the editor
-     * @param {HTMLElement} panel The panel to display
+     * @param {HTMLElement} panel The panel to display at the bottom of the editor
      */
     setPanel(panel: HTMLElement): void;
     /**
@@ -86,24 +69,26 @@ export declare class CodeEditor {
     focus(): void;
     /**
      * @param {number} indentLength The amount of spaces to use
-     * @return {string} The indentation unit to use
+     * @return {string} The indentation unit to be used by CodeMirror
      */
-    static getIndentUnit(indentLength: number): string;
+    private static getIndentUnit;
     /**
      * @param  {ProgrammingLanguage} language The language to support
      * @return {LanguageSupport} CodeMirror LanguageSupport for the language
      */
-    static getLanguageSupport(language: ProgrammingLanguage): LanguageSupport;
+    private static getLanguageSupport;
     /**
     *  - [syntax highlighting depending on the language](#getLanguageSupport)
     *  - [line numbers](#gutter.lineNumbers)
     *  - [special character highlighting](#view.highlightSpecialChars)
     *  - [the undo history](#history.history)
     *  - [a fold gutter](#fold.foldGutter)
+    *  - [gutter for linting](#lint.lintGutter)
     *  - [custom selection drawing](#view.drawSelection)
     *  - [multiple selections](#state.EditorState^allowMultipleSelections)
     *  - [reindentation on input](#language.indentOnInput)
-    *  - [the default highlight style](#highlight.defaultHighlightStyle) (as fallback)
+    *  - [syntax highlighting with the default highlight style]
+    *   (#highlight.defaultHighlightStyle) (as fallback)
     *  - [bracket matching](#matchbrackets.bracketMatching)
     *  - [bracket closing](#closebrackets.closeBrackets)
     *  - [autocompletion](#autocomplete.autocompletion)
@@ -112,6 +97,7 @@ export declare class CodeEditor {
     *  - [active line gutter highlighting](#gutter.highlightActiveLineGutter)
     *  - [selection match highlighting](#search.highlightSelectionMatches)
     * Keymaps:
+    *  - [bracket closing](#commands.closeBracketsKeymap)
     *  - [the default command bindings](#commands.defaultKeymap)
     *  - [search](#search.searchKeymap)
     *  - [commenting](#comment.commentKeymap)
@@ -119,5 +105,5 @@ export declare class CodeEditor {
     *  - [indenting with tab](#commands.indentWithTab)
     *  @return {Array<Extension} Default extensions to use
     */
-    static getExtensions(): Array<Extension>;
+    private static getExtensions;
 }

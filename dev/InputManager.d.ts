@@ -1,15 +1,13 @@
-import { BackendEvent } from "./BackendEvent";
-import { RenderOptions } from "./util/Util";
 import { UserInputHandler } from "./input/UserInputHandler";
+import { Renderable, RenderOptions } from "./util/Rendering";
 export declare enum InputMode {
     Interactive = "interactive",
     Batch = "batch"
 }
 export declare const INPUT_MODES: InputMode[];
-export declare class InputManager {
+export declare class InputManager extends Renderable {
     private inputMode;
     private inputHandlers;
-    private renderOptions;
     private waiting;
     private prompt;
     private sendInput;
@@ -18,15 +16,16 @@ export declare class InputManager {
     getInputMode(): InputMode;
     setInputMode(inputMode: InputMode): void;
     get inputHandler(): UserInputHandler;
-    render(options: RenderOptions): void;
-    waitWithPrompt(waiting: boolean, prompt?: string): void;
-    onUserInput(): Promise<void>;
+    isWaiting(): boolean;
+    protected _render(options: RenderOptions): void;
+    private waitWithPrompt;
+    private onUserInput;
     /**
      * Asynchronously handle an input request by prompting the user for input
      * @param {BackendEvent} e Event containing the input data
      * @return {Promise<void>} Promise of handling the request
      */
-    onInputRequest(e: BackendEvent): Promise<void>;
-    onRunStart(): void;
-    onRunEnd(): void;
+    private onInputRequest;
+    private onRunStart;
+    private onRunEnd;
 }

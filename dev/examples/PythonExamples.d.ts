@@ -9,4 +9,5 @@ export declare const PYTHON_EXAMPLES: {
     Files: string;
     Matplotlib: string;
     Sleep: string;
+    Overflow: string;
 };
