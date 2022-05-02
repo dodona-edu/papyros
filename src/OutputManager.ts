@@ -150,10 +150,10 @@ export class OutputManager extends Renderable {
 
     protected override _render(options: RenderOptions): void {
         renderWithOptions(options, `
-    <div id=${OUTPUT_AREA_ID}
-    class="_tw-border-2 _tw-w-full _tw-min-h-1/4 _tw-max-h-3/5 _tw-overflow-auto
-    _tw-py-1 _tw-px-2 _tw-whitespace-pre with-placeholder dark:_tw-border-dark-mode-content"
-    data-placeholder="${t("Papyros.output_placeholder")}"></div>
+    <div id=${OUTPUT_AREA_ID} class="_tw-border-2 _tw-w-full _tw-min-h-1/4
+     _tw-max-h-3/5 _tw-overflow-auto papyros-font-family
+    _tw-py-1 _tw-px-2 _tw-whitespace-pre _tw-rounded-lg dark:_tw-border-dark-mode-content"
+    with-placeholder data-placeholder="${t("Papyros.output_placeholder")}"></div>
     <a id="${OUTPUT_OVERFLOW_ID}" hidden
     class="hover:_tw-cursor-pointer _tw-text-blue-500">${t("Papyros.output_overflow")}
     </a>

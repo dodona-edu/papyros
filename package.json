@@ -1,6 +1,6 @@
 {
   "name": "@dodona/papyros",
-  "version": "0.1.955-darkmode",
+  "version": "0.2.1",
   "private": false,
   "homepage": ".",
   "devDependencies": {

@@ -11,6 +11,12 @@ const HEIGHTS = {
   "9/10": "72vh",
   "full": "80vh"
 };
+const COLORS = {
+  "dark-mode-bg": "#37474F",
+  "dark-mode-content": "#263238",
+  "dark-mode-blue": "#0277BD",
+  "placeholder-grey": "#888"
+};
 module.exports = {
   // allow using dynamic classes
   mode: "jit",
@@ -33,12 +39,10 @@ module.exports = {
     extend: {
       maxHeight: HEIGHTS,
       minHeight: HEIGHTS,
-      colors: {
-        "dark-mode-bg": "#37474F",
-        "dark-mode-content": "#263238",
-        "dark-mode-blue": "#0277BD",
-        "placeholder-grey": "#888"
-      }
+      // Specify for all used kinds to ensure they are kept
+      colors: COLORS,
+      borderColor: COLORS,
+      backgroundColor: COLORS
     },
   }
 };
