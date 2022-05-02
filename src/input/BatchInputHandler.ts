@@ -37,6 +37,7 @@ export class BatchInputHandler extends UserInputHandler {
     override getInputMode(): InputMode {
         return InputMode.Batch;
     }
+
     /**
      * Retrieve the lines of input that the user has given so far
      * @return {Array<string>} The entered lines

@@ -1,6 +1,6 @@
 import { BackendEventType } from "../../src/BackendEvent";
 import { BackendManager } from "../../src/BackendManager";
-import { OUTPUT_AREA_WRAPPER_ID, OUTPUT_TA_ID } from "../../src/Constants";
+import { OUTPUT_AREA_WRAPPER_ID } from "../../src/Constants";
 import { FriendlyError, OutputManager } from "../../src/OutputManager";
 
 describe("OutputManager", () => {

@@ -5,7 +5,7 @@ import { BackendEvent, BackendEventType } from "./BackendEvent";
 import { BackendManager } from "./BackendManager";
 import { CodeEditor } from "./CodeEditor";
 import {
-    APPLICATION_STATE_TEXT_ID, RUN_BTN_ID,
+    APPLICATION_STATE_TEXT_ID, OUTPUT_OVERFLOW_ID, RUN_BTN_ID,
     STATE_SPINNER_ID, STOP_BTN_ID
 } from "./Constants";
 import { InputManager } from "./InputManager";
@@ -14,7 +14,7 @@ import { svgCircle } from "./util/HTMLShapes";
 import { LogType, papyrosLog } from "./util/Logging";
 import {
     addListener, getElement,
-    t
+    t, downloadResults
 } from "./util/Util";
 import {
     RenderOptions, renderWithOptions,
@@ -268,10 +268,11 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         const start = new Date().getTime();
         let endMessage = "Program finishd normally";
         let terminated = false;
+        const backend = await this.backend;
         try {
-            await (this.backend).then(b => b.call(
-                b.workerProxy.runCode, this.editor.getCode()
-            ));
+            await backend.call(
+                backend.workerProxy.runCode, this.editor.getCode()
+            );
         } catch (error: any) {
             papyrosLog(LogType.Debug, "Error during code run", error);
             if (error.type === "InterruptError") {
@@ -296,6 +297,13 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             if (terminated) {
                 await this.start();
             }
+            const overflowLink = getElement(OUTPUT_OVERFLOW_ID);
+            overflowLink.setAttribute("hidden", "" + !await backend.workerProxy.hasOverflow());
+            overflowLink.addEventListener("click", async () => {
+                const overflowResults = (await backend.workerProxy.getOverflow())
+                    .map(e => e.data).join("\n");
+                downloadResults(overflowResults, "overflow-results.txt");
+            });
         }
     }
 }

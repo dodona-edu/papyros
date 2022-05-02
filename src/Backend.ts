@@ -2,6 +2,7 @@ import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
 import { BackendEvent, BackendEventType } from "./BackendEvent";
 import { papyrosLog, LogType } from "./util/Logging";
 import { syncExpose, SyncExtras } from "comsync";
+import { BackendEventQueue } from "./BackendEventQueue";
 
 /**
  * Interface to represent the CodeMirror CompletionContext in a worker
@@ -47,6 +48,7 @@ export interface WorkerDiagnostic {
 export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
     protected extras: Extras;
     protected onEvent: (e: BackendEvent) => any;
+    protected queue: BackendEventQueue;
     /**
      * Constructor is limited as it is meant to be used as a WebWorker
      * Proper initialization occurs in the launch method when the worker is started
@@ -54,9 +56,11 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
      */
     constructor() {
         this.extras = {} as Extras;
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
-        this.onEvent = () => { };
+        this.onEvent = () => {
+            // Empty, initialized in launch
+        };
         this.runCode = this.syncExpose()(this.runCode.bind(this));
+        this.queue = {} as BackendEventQueue;
     }
 
     /**
@@ -82,6 +86,7 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
                 return this.extras.readMessage();
             }
         };
+        this.queue = new BackendEventQueue(this.onEvent.bind(this));
         return Promise.resolve();
     }
 
@@ -91,7 +96,7 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
      * @param {string} code The code to run
      * @return {Promise<void>} Promise of execution
      */
-    abstract runCode(extras: Extras, code: string): Promise<void>;
+    public abstract runCode(extras: Extras, code: string): Promise<void>;
 
     /**
      * Converts the context to a cloneable object containing useful properties
@@ -101,7 +106,7 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
      * @param {RegExp} expr Expression to match the previous token with
      * @return {WorkerAutocompleteContext} Completion context that can be passed as a message
      */
-    static convertCompletionContext(context: CompletionContext, expr = /\w*(\.)?/):
+    public static convertCompletionContext(context: CompletionContext, expr = /\w*(\.)?/):
         WorkerAutocompleteContext {
         const [lineNr, column] = context.state.selection.ranges.map(range => {
             const line = context.state.doc.lineAt(range.head);
@@ -124,7 +129,26 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
      * Generate autocompletion suggestions for the given context
      * @param {WorkerAutocompleteContext} context Context to autcomplete in
      */
-    abstract autocomplete(context: WorkerAutocompleteContext): Promise<CompletionResult | null>;
+    public abstract autocomplete(context: WorkerAutocompleteContext):
+        Promise<CompletionResult | null>;
 
-    abstract lintCode(code: string): Promise<Array<WorkerDiagnostic>>;
+    /**
+     * Generate linting suggestions for the given code
+     * @param {string} code The code to lint
+     */
+    public abstract lintCode(code: string): Promise<Array<WorkerDiagnostic>>;
+
+    /**
+     * @return {boolean} Whether too many output events were generated
+     */
+    public hasOverflow(): boolean {
+        return this.queue.hasOverflow();
+    }
+
+    /**
+     * @return {Array<BackendEvent>} The events that happened after overflow
+     */
+    public getOverflow(): Array<BackendEvent> {
+        return this.queue.getOverflow();
+    }
 }

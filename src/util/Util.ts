@@ -112,3 +112,16 @@ export function parseData(data: string, contentType?: string): any {
     papyrosLog(LogType.Important, `Unhandled content type: ${contentType}`);
     return data;
 }
+export function downloadResults(data: string, filename: string): void {
+    const blob = new Blob([data], { type: "text/plain" });
+    const elem = window.document.createElement("a");
+    // Cast URL to any as TypeScript doesn't recognize it properly
+    // error TS2339: Property 'revokeObjectURL' does not exist on type
+    const windowUrl = URL as any;
+    elem.href = windowUrl.createObjectURL(blob);
+    elem.download = filename;
+    document.body.appendChild(elem);
+    elem.click();
+    document.body.removeChild(elem);
+    windowUrl.revokeObjectURL(elem.href);
+}

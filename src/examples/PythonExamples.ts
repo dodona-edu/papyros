@@ -64,14 +64,22 @@ if __name__ == "__main__":
     doctest.testmod()
 `,
     "Async":
-        `async def main():
-    import micropip
-    await micropip.install('snowballstemmer')
-    import snowballstemmer
-    stemmer = snowballstemmer.stemmer('english')
-    print(stemmer.stemWords('go goes going gone'.split()))
+        `import asyncio
 
-await main()`,
+async def nested():
+    print(42)
+
+async def main():
+    # Schedule nested() to run soon concurrently
+    # with "main()".
+    task = asyncio.create_task(nested())
+
+    # "task" can now be used to cancel "nested()", or
+    # can simply be awaited to wait until it is complete:
+    await task
+
+await main()
+`,
     "Erroneous":
         `def bitonic_search(numbers, query):
     if not numbers:
@@ -133,5 +141,14 @@ plt.show()
 print("See you in a few seconds!")
 time.sleep(3)
 print("Good to see you again!")
+`,
+    "Overflow": `from functools import lru_cache
+
+@lru_cache
+def fibonacci(n):
+    return n if n <= 1 else fibonacci(n- 2) + fibonacci(n - 1)
+
+for index in range(5000):
+    print(f'{index}: {fibonacci(index)}')
 `
 };

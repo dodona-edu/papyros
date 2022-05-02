@@ -1,12 +1,11 @@
 import nodeCrypto from "crypto";
-
+import { TextDecoder } from "util";
 // Polyfill for CodeMirror that uses createRange
 window.document.createRange = () => ({
-    setStart: () => { },
-    setEnd: () => { },
-    // eslint-disable-next-line
+    setStart: jest.fn(),
+    setEnd: jest.fn(),
     commonAncestorContainer: {
-        nodeName: 'BODY',
+        nodeName: "BODY",
         ownerDocument: document,
     },
     getClientRects: () => []
@@ -19,8 +18,15 @@ window.crypto = {
     },
 } as any;
 
-// Mocks for Worker specific methods
-window.importScripts = (...urls: (string | URL)[]) => {}
-(window as any).loadPyodide = () => new Object();
+// Mock TextDecoder
+(window as any).TextDecoder = TextDecoder;
 
-export { }
+// Mock URL methods
+(window.URL as any).createObjectURL = jest.fn();
+(window.URL as any).revokeObjectURL = jest.fn();
+
+// Mocks for Worker specific methods
+window.importScripts = jest.fn();
+(window as any).loadPyodide = jest.fn();
+
+export { };

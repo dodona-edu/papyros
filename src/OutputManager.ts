@@ -11,7 +11,7 @@ import {
     Renderable,
     RenderOptions, renderWithOptions
 } from "./util/Rendering";
-import { OUTPUT_TA_ID } from "./Constants";
+import { OUTPUT_AREA_ID, OUTPUT_OVERFLOW_ID } from "./Constants";
 
 /**
  * Shape of Error objects that are easy to interpret
@@ -58,13 +58,14 @@ export class OutputManager extends Renderable {
         BackendManager.subscribe(BackendEventType.Start, () => this.reset());
         BackendManager.subscribe(BackendEventType.Output, e => this.showOutput(e));
         BackendManager.subscribe(BackendEventType.Error, e => this.showError(e));
+        BackendManager.subscribe(BackendEventType.End, () => this.onRunEnd());
     }
 
     /**
      * Retrieve the parent element containing all output parts
      */
     get outputArea(): HTMLElement {
-        return getElement(OUTPUT_TA_ID);
+        return getElement(OUTPUT_AREA_ID);
     }
 
     /**
@@ -77,6 +78,8 @@ export class OutputManager extends Renderable {
             this.content.push(html);
         }
         this.outputArea.insertAdjacentHTML("beforeend", html);
+        // Scroll to bottom to show latest output
+        this.outputArea.scrollTop = this.outputArea.scrollHeight;
     }
 
     /**
@@ -147,10 +150,13 @@ export class OutputManager extends Renderable {
 
     protected override _render(options: RenderOptions): void {
         renderWithOptions(options, `
-    <div id=${OUTPUT_TA_ID}
+    <div id=${OUTPUT_AREA_ID}
     class="_tw-border-2 _tw-w-full _tw-min-h-1/4 _tw-max-h-3/5 _tw-overflow-auto
     _tw-py-1 _tw-px-2 _tw-whitespace-pre with-placeholder"
     data-placeholder="${t("Papyros.output_placeholder")}"></div>
+    <a id="${OUTPUT_OVERFLOW_ID}" hidden
+    class="hover:_tw-cursor-pointer _tw-text-blue-500">${t("Papyros.output_overflow")}
+    </a>
     `);
         // Restore previously rendered items
         this.content.forEach(html => this.renderNextElement(html, false));
@@ -162,5 +168,11 @@ export class OutputManager extends Renderable {
     public reset(): void {
         this.content = [];
         this.render();
+    }
+
+    onRunEnd(): void {
+        if (this.outputArea.childElementCount === 0) {
+            this.outputArea.setAttribute("data-placeholder", t("Papyros.no_output"));
+        }
     }
 }

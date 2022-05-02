@@ -54,11 +54,10 @@ class JavaScriptWorker extends Backend<SyncExtras> {
      * @param {any[]} args The values to log
      */
     private consoleLog(...args: any[]): void {
-        this.onEvent({
-            type: BackendEventType.Output,
-            data: JavaScriptWorker.stringify(...args) + "\n",
-            contentType: "text/plain"
-        });
+        this.queue.put(BackendEventType.Output,
+            JavaScriptWorker.stringify(...args) + "\n",
+            "text/plain"
+        );
     }
 
     /**
@@ -66,11 +65,10 @@ class JavaScriptWorker extends Backend<SyncExtras> {
      * @param {any[]} args The error values to log
      */
     private consoleError(...args: any[]): void {
-        this.onEvent({
-            type: BackendEventType.Error,
-            data: JavaScriptWorker.stringify(...args) + "\n",
-            contentType: "text/plain"
-        });
+        this.queue.put(BackendEventType.Error,
+            JavaScriptWorker.stringify(...args) + "\n",
+            "text/plain"
+        );
     }
 
     override async autocomplete(context: WorkerAutocompleteContext):
@@ -122,6 +120,7 @@ class JavaScriptWorker extends Backend<SyncExtras> {
 
     override runCode(extras: SyncExtras, code: string): Promise<any> {
         this.extras = extras;
+        this.queue.reset();
         // Builtins to store before execution and restore afterwards
         // Workers do not have access to prompt
         const oldContent = {
@@ -156,6 +155,7 @@ class JavaScriptWorker extends Backend<SyncExtras> {
             new Function("ctx",
                 Object.keys(oldContent).map(k => `${k} = ctx['${k}'];`).join("\n")
             )(oldContent);
+            this.queue.flush();
         }
     }
 
