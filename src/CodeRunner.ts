@@ -267,6 +267,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         papyrosLog(LogType.Debug, "Running code in Papyros, sending to backend");
         const start = new Date().getTime();
         let endMessage = "Program finishd normally";
+        let interrupted = false;
         let terminated = false;
         const backend = await this.backend;
         try {
@@ -277,23 +278,30 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             papyrosLog(LogType.Debug, "Error during code run", error);
             if (error.type === "InterruptError") {
                 // Error signaling forceful interrupt
+                interrupted = true;
                 terminated = true;
+            } else {
+                BackendManager.publish({
+                    type: BackendEventType.Error,
+                    data: JSON.stringify(error),
+                    contentType: "text/json"
+                });
+                endMessage = "Program terminated due to error: " + error.constructor.name;
             }
-            BackendManager.publish({
-                type: BackendEventType.Error,
-                data: JSON.stringify(error),
-                contentType: "text/json"
-            });
-            endMessage = "Program terminated due to error: " + error.constructor.name;
         } finally {
-            if (this.state !== RunState.Stopping) { // Was interrupted
+            if (this.state !== RunState.Stopping) {
+                // Was interrupted, End message already published
                 BackendManager.publish({
                     type: BackendEventType.End,
                     data: endMessage, contentType: "text/plain"
                 });
+            } else {
+                interrupted = true;
             }
             const end = new Date().getTime();
-            this.setState(RunState.Ready, t("Papyros.finished", { time: (end - start) / 1000 }));
+            this.setState(RunState.Ready, t(
+                interrupted ? "Papyros.interrupted" : "Papyros.finished",
+                { time: (end - start) / 1000 }));
             if (terminated) {
                 await this.start();
             }

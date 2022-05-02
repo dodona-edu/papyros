@@ -5,8 +5,9 @@
 import { InputWorker } from "./workers/input/InputWorker";
 
 // Strip away the filename of the script to obtain the scope
-let domain = location.href;
-domain = domain.slice(0, domain.lastIndexOf("/") + 1);
+// let domain = location.href;
+// domain = domain.slice(0, domain.lastIndexOf("/") + 1);
+const domain = ""; // Disable SharedArrayBuffers to use same environment as Dodona
 const inputHandler = new InputWorker(domain);
 
 addEventListener("fetch", async function (event: FetchEvent) {
