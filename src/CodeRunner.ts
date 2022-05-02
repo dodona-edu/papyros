@@ -298,7 +298,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
                 await this.start();
             }
             const overflowLink = getElement(OUTPUT_OVERFLOW_ID);
-            overflowLink.setAttribute("hidden", "" + !await backend.workerProxy.hasOverflow());
+            overflowLink.hidden = !await backend.workerProxy.hasOverflow();
             overflowLink.addEventListener("click", async () => {
                 const overflowResults = (await backend.workerProxy.getOverflow())
                     .map(e => e.data).join("\n");
