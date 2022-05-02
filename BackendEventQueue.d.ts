@@ -62,6 +62,11 @@ export declare class BackendEventQueue {
      */
     reset(): void;
     /**
+     * @param {BackendEvent} e The event put in the queue
+     * @return {number} The amount of lines of data in the event
+     */
+    private static lines;
+    /**
      * Flush the queue contents using the callback
      */
     flush(): void;

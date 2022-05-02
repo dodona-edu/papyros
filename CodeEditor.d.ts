@@ -1,8 +1,8 @@
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
-import { EditorView } from "@codemirror/view";
-import { CompletionSource } from "@codemirror/autocomplete";
-import { Diagnostic } from "@codemirror/lint";
 import { Renderable, RenderOptions } from "./util/Rendering";
+import { CompletionSource } from "@codemirror/autocomplete";
+import { EditorView } from "@codemirror/view";
+import { Diagnostic } from "@codemirror/lint";
 /**
  * Component that provides useful features to users writing code
  */
@@ -78,31 +78,28 @@ export declare class CodeEditor extends Renderable {
      */
     private static getLanguageSupport;
     /**
-    *  - [syntax highlighting depending on the language](#getLanguageSupport)
-    *  - [line numbers](#gutter.lineNumbers)
-    *  - [special character highlighting](#view.highlightSpecialChars)
-    *  - [the undo history](#history.history)
-    *  - [a fold gutter](#fold.foldGutter)
-    *  - [gutter for linting](#lint.lintGutter)
-    *  - [custom selection drawing](#view.drawSelection)
-    *  - [multiple selections](#state.EditorState^allowMultipleSelections)
-    *  - [reindentation on input](#language.indentOnInput)
-    *  - [syntax highlighting with the default highlight style]
-    *   (#highlight.defaultHighlightStyle) (as fallback)
-    *  - [bracket matching](#matchbrackets.bracketMatching)
-    *  - [bracket closing](#closebrackets.closeBrackets)
-    *  - [autocompletion](#autocomplete.autocompletion)
-    *  - [rectangular selection](#rectangular-selection.rectangularSelection)
-    *  - [active line highlighting](#view.highlightActiveLine)
-    *  - [active line gutter highlighting](#gutter.highlightActiveLineGutter)
-    *  - [selection match highlighting](#search.highlightSelectionMatches)
+    *  - line numbers
+    *  - special character highlighting
+    *  - the undo history
+    *  - a fold gutter
+    *  - gutter for linting
+    *  - custom selection drawing
+    *  - multiple selections
+    *  - reindentation on input
+    *  - bracket matching
+    *  - bracket closing
+    *  - autocompletion
+    *  - rectangular selection
+    *  - active line highlighting
+    *  - active line gutter highlighting
+    *  - selection match highlighting
     * Keymaps:
-    *  - [bracket closing](#commands.closeBracketsKeymap)
-    *  - [the default command bindings](#commands.defaultKeymap)
-    *  - [search](#search.searchKeymap)
-    *  - [commenting](#comment.commentKeymap)
-    *  - [linting](#lint.lintKeymap)
-    *  - [indenting with tab](#commands.indentWithTab)
+    *  - the default command bindings
+    *  - bracket closing
+    *  - searching
+    *  - linting
+    *  - completion
+    *  - indenting with tab
     *  @return {Array<Extension} Default extensions to use
     */
     private static getExtensions;
