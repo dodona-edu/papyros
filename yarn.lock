@@ -480,14 +480,13 @@
     "@codemirror/view" "^0.19.0"
     "@lezer/javascript" "^0.15.1"
 
-"@codemirror/lang-python@^0.19.2":
-  version "0.19.5"
-  resolved "https://registry.yarnpkg.com/@codemirror/lang-python/-/lang-python-0.19.5.tgz#52ad893c45d9a20fdd9841ebfe1d6de52e1dead1"
-  integrity sha512-MQf7t0k6+i9KCzlFCI8EY+jjwyXLy5AwjmXsMyMCMbOw/97j70jFZYrs7Mm7RJakNE2rypWhnLGlyBTSYMqR5g==
+"@codemirror/lang-python@^0.20.0":
+  version "0.20.0"
+  resolved "https://registry.yarnpkg.com/@codemirror/lang-python/-/lang-python-0.20.0.tgz#e7d133030e1fcd911f91480322b99c9c6b714567"
+  integrity sha512-P2mIyjqBexRTaYbLmAf1HpIyNDw6nWsh2K5MiDi80+6oYwnRggU9dR3Yn9Lv0RM5ph3xJzayMbW0IpicIfA87w==
   dependencies:
-    "@codemirror/highlight" "^0.19.7"
-    "@codemirror/language" "^0.19.0"
-    "@lezer/python" "^0.15.0"
+    "@codemirror/language" "^0.20.0"
+    "@lezer/python" "^0.16.0"
 
 "@codemirror/language@^0.19.0", "@codemirror/language@^0.19.5":
   version "0.19.10"
@@ -499,6 +498,17 @@
     "@codemirror/view" "^0.19.0"
     "@lezer/common" "^0.15.5"
     "@lezer/lr" "^0.15.0"
+
+"@codemirror/language@^0.20.0":
+  version "0.20.0"
+  resolved "https://registry.yarnpkg.com/@codemirror/language/-/language-0.20.0.tgz#959967901e780c1612934cf5d6df3d7b7e5bf9f0"
+  integrity sha512-lPsF5Y2ZFd5lZ9+7HXTxu57Po3dms3+7q2iAffzrbis2wyJo0lzi/j2312EKStEzwd0pGGpvrUk2dEd333N2jw==
+  dependencies:
+    "@codemirror/state" "^0.20.0"
+    "@codemirror/view" "^0.20.0"
+    "@lezer/common" "^0.16.0"
+    "@lezer/highlight" "^0.16.0"
+    "@lezer/lr" "^0.16.0"
 
 "@codemirror/lint@^0.19.0":
   version "0.19.6"
@@ -566,6 +576,11 @@
   dependencies:
     "@codemirror/text" "^0.19.0"
 
+"@codemirror/state@^0.20.0":
+  version "0.20.0"
+  resolved "https://registry.yarnpkg.com/@codemirror/state/-/state-0.20.0.tgz#3343d209169813b0152b77361cd78bea01549a73"
+  integrity sha512-R3XrAWCS5Xm9lx+4pDET4EUPEg+8bDfAa5zoOFIhx+VChsfew9Vy33dAjCXS5ES4Q8UecW4WM4UudmUFpZ+86A==
+
 "@codemirror/text@^0.19.0", "@codemirror/text@^0.19.2", "@codemirror/text@^0.19.4", "@codemirror/text@^0.19.6":
   version "0.19.6"
   resolved "https://registry.yarnpkg.com/@codemirror/text/-/text-0.19.6.tgz#9adcbd8137f69b75518eacd30ddb16fd67bbac45"
@@ -596,6 +611,15 @@
     "@codemirror/rangeset" "^0.19.5"
     "@codemirror/state" "^0.19.3"
     "@codemirror/text" "^0.19.0"
+    style-mod "^4.0.0"
+    w3c-keyname "^2.2.4"
+
+"@codemirror/view@^0.20.0":
+  version "0.20.3"
+  resolved "https://registry.yarnpkg.com/@codemirror/view/-/view-0.20.3.tgz#c907b93afb540400c0088c4203c42deb949cbc08"
+  integrity sha512-wAKK1SSmNOEAG1QEDlY5NhzVnzcXU21pcs6wzYa4G6IC6EWO208N69Ei11A4SIHk9QL658p2+GQ+ealpwHtAcw==
+  dependencies:
+    "@codemirror/state" "^0.20.0"
     style-mod "^4.0.0"
     w3c-keyname "^2.2.4"
 
@@ -870,6 +894,18 @@
   resolved "https://registry.yarnpkg.com/@lezer/common/-/common-0.15.12.tgz#2f21aec551dd5fd7d24eb069f90f54d5bc6ee5e9"
   integrity sha512-edfwCxNLnzq5pBA/yaIhwJ3U3Kz8VAUOTRg0hhxaizaI1N+qxV7EXDv/kLCkLeq2RzSFvxexlaj5Mzfn2kY0Ig==
 
+"@lezer/common@^0.16.0":
+  version "0.16.0"
+  resolved "https://registry.yarnpkg.com/@lezer/common/-/common-0.16.0.tgz#b6023a0a682b0b7676d0e7f0e0838f71bde39fcd"
+  integrity sha512-H6sPCku+asKWYaNjwfQ1Uvcay9UP1Pdzu4qpy8GtRZ0cKT2AAGnj9MQGiRtY18MDntvhYRJxNGv7FNWOSV/e8A==
+
+"@lezer/highlight@^0.16.0":
+  version "0.16.0"
+  resolved "https://registry.yarnpkg.com/@lezer/highlight/-/highlight-0.16.0.tgz#95f7b7ee3c32c8a0f6ce499c085e8b1f927ffbdc"
+  integrity sha512-iE5f4flHlJ1g1clOStvXNLbORJoiW4Kytso6ubfYzHnaNo/eo5SKhxs4wv/rtvwZQeZrK3we8S9SyA7OGOoRKQ==
+  dependencies:
+    "@lezer/common" "^0.16.0"
+
 "@lezer/javascript@^0.15.1":
   version "0.15.3"
   resolved "https://registry.yarnpkg.com/@lezer/javascript/-/javascript-0.15.3.tgz#833a4c5650bae07805b9af88de6706368844dc55"
@@ -884,12 +920,20 @@
   dependencies:
     "@lezer/common" "^0.15.0"
 
-"@lezer/python@^0.15.0":
-  version "0.15.1"
-  resolved "https://registry.yarnpkg.com/@lezer/python/-/python-0.15.1.tgz#dce18dade29fd93b01c1f7fc5dee4135e947f07b"
-  integrity sha512-Xdb2nh+FoxR8ssEADGsroDtsnP+EDhiPpW9zhER3h+6cpGtZ2e9Oq/Rwn9nFQRiKCfMT+AQaqC3ZgAbhbnumyQ==
+"@lezer/lr@^0.16.0":
+  version "0.16.2"
+  resolved "https://registry.yarnpkg.com/@lezer/lr/-/lr-0.16.2.tgz#a26e2572b6acf60815b12d898341ed02464f1c5e"
+  integrity sha512-bx7kkp4eLOzp+YclKMOx1P0OzWRH/6Y3EdEvsHC+rhsc7H72GvccwlKfuXlWkiKjnmzlxLTFxsNjA8v+Yj75mQ==
   dependencies:
-    "@lezer/lr" "^0.15.0"
+    "@lezer/common" "^0.16.0"
+
+"@lezer/python@^0.16.0":
+  version "0.16.0"
+  resolved "https://registry.yarnpkg.com/@lezer/python/-/python-0.16.0.tgz#9946d19dc1f35a79bef4e936568dce98974e3cab"
+  integrity sha512-jbcidwKGE1TwmozoHel6RwqHc6/gC8KAx8ZwFYUNcIuar20dQTGgyj6MVn85njhm2ZtejUJpTkVr5KS8KGh1CQ==
+  dependencies:
+    "@lezer/highlight" "^0.16.0"
+    "@lezer/lr" "^0.16.0"
 
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"
