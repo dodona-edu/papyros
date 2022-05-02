@@ -8,7 +8,6 @@ import { BackendEventType } from "../../src/BackendEvent";
  * by using eval and overriding some builtins
  */
 export class MockBackend extends Backend<SyncExtras> {
-
     constructor() {
         super();
         this.autocomplete = jest.fn(this.autocomplete);
@@ -22,18 +21,27 @@ export class MockBackend extends Backend<SyncExtras> {
 
     override async autocomplete(context: WorkerAutocompleteContext):
         Promise<CompletionResult | null> {
-        this.onEvent({ type: BackendEventType.Output, data: "Autocompleting code", contentType: "text/plain" })
-        return { span: /^[\w$]*$/, options: [], from: context.pos };
+        this.onEvent({
+            type: BackendEventType.Output,
+            data: "Autocompleting code", contentType: "text/plain"
+        });
+        return { validFor: /^[\w$]*$/, options: [], from: context.pos };
     }
 
     override runCode(extras: SyncExtras, code: string): Promise<any> {
         this.extras = extras;
-        this.onEvent({ type: BackendEventType.Output, data: "Running code", contentType: "text/plain" })
+        this.onEvent({
+            type: BackendEventType.Output,
+            data: `Running code: ${code}`, contentType: "text/plain"
+        });
         return Promise.resolve();
     }
 
-    override async lintCode(_code: string): Promise<Array<WorkerDiagnostic>> {
-        this.onEvent({ type: BackendEventType.Output, data: "Linting code", contentType: "text/plain" })
+    override async lintCode(code: string): Promise<Array<WorkerDiagnostic>> {
+        this.onEvent({
+            type: BackendEventType.Output,
+            data: `Linting code: ${code}`, contentType: "text/plain"
+        });
         return Promise.resolve([]);
     }
 }

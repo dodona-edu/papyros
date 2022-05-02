@@ -110,12 +110,11 @@ class JavaScriptWorker extends Backend<SyncExtras> {
                 type: typeof object[name] === "function" ? "function" : "variable"
             };
         });
-        const ret = {
+        return {
             from,
             options,
-            span: /^[\w$]*$/
+            validFor: /^[\w$]*$/
         };
-        return ret;
     }
 
     override runCode(extras: SyncExtras, code: string): Promise<any> {

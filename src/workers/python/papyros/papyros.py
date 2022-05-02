@@ -10,7 +10,7 @@ from contextlib import contextmanager, redirect_stdout, redirect_stderr
 from pyodide_worker_runner import install_imports
 from pyodide import JsException, create_proxy
 
-from threading import Lock
+from threading import RLock
 from .util import to_py
 from .autocomplete import autocomplete
 from .linting import lint
@@ -33,7 +33,7 @@ class Papyros(python_runner.PyodideRunner):
             self.OutputBufferClass = lambda f: buffer_constructor(create_proxy(f))
         super().__init__(source_code=source_code, filename=filename)
         self.limit = limit
-        self.lock = Lock()
+        self.lock = RLock()
         self.override_globals()
         self.set_event_callback(callback)
 

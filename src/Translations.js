@@ -18,6 +18,7 @@ const ENGLISH_TRANSLATION = {
     "run": "Run",
     "stop": "Stop",
     "finished": "Code executed in %{time} s",
+    "interrupted": "Code interrupted after %{time} s",
     "states": {
         "running": "Running",
         "stopping": "Stopping",
@@ -68,6 +69,7 @@ const DUTCH_TRANSLATION = {
         "ready": " ",
     },
     "finished": "Code uitgevoerd in %{time} s",
+    "interrupted": "Code onderbroken na %{time} s",
     "programming_language": "Programmeertaal",
     "programming_languages": {
         "Python": "Python",

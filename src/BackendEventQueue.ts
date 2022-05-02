@@ -123,17 +123,26 @@ export class BackendEventQueue {
     }
 
     /**
+     * @param {BackendEvent} e The event put in the queue
+     * @return {number} The amount of lines of data in the event
+     */
+    private static lines(e: BackendEvent): number {
+        return (e.data.match(/\n/g) || []).length + 1;
+    }
+
+    /**
      * Flush the queue contents using the callback
      */
     public flush(): void {
         this.queue.forEach(e => {
-            if (this.sendCount < this.limit || e.type !== BackendEventType.Output) {
-                if (e.type === BackendEventType.Output) {
-                    this.sendCount += e.data.match(/\n/g).length + 1;
-                }
-                this.callback(e);
-            } else {
+            if (e.type === BackendEventType.Output) {
                 this.overflow.push(e);
+                if (this.sendCount < this.limit) {
+                    this.sendCount += BackendEventQueue.lines(e);
+                    this.callback(e);
+                }
+            } else {
+                this.callback(e);
             }
         });
         this.queue = [];
@@ -144,7 +153,9 @@ export class BackendEventQueue {
      * @return {boolean} Whether too many output events were generated
      */
     public hasOverflow(): boolean {
-        return this.overflow.length > 0;
+        return this.overflow.length > this.limit ||
+            this.overflow.map(BackendEventQueue.lines)
+                .reduce((acc, next) => acc + next, 0) > this.limit;
     }
 
     /**

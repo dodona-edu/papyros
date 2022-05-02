@@ -51,7 +51,7 @@ class PythonWorker extends Backend<PyodideExtras> {
                     const converted = PythonWorker.convert(e);
                     return this.onEvent(converted);
                 },
-                buffer_constructor: (cb: (e: BackendEvent) => void ) => {
+                buffer_constructor: (cb: (e: BackendEvent) => void) => {
                     this.queue.setCallback(cb);
                     return this.queue;
                 }
@@ -71,8 +71,10 @@ class PythonWorker extends Backend<PyodideExtras> {
 
     override async autocomplete(context: WorkerAutocompleteContext):
         Promise<CompletionResult | null> {
-        const result = PythonWorker.convert(await this.papyros.autocomplete(context));
-        result.span = /^[\w$]*$/;
+        const result: CompletionResult = PythonWorker.convert(
+            await this.papyros.autocomplete(context)
+        );
+        result.validFor = /^[\w$]*$/;
         return result;
     }
 
