@@ -547,16 +547,13 @@
     "@codemirror/text" "^0.19.4"
     "@codemirror/view" "^0.19.48"
 
-"@codemirror/search@^0.19.3":
-  version "0.19.10"
-  resolved "https://registry.yarnpkg.com/@codemirror/search/-/search-0.19.10.tgz#4b0d91c53278db05088624ae04f164d66fd581cd"
-  integrity sha512-qjubm69HJixPBWzI6HeEghTWOOD8NXiHOTRNvdizqs8xWRuFChq9zkjD3XiAJ7GXSTzCuQJnAP9DBBGCLq4ZIA==
+"@codemirror/search@^0.20.1":
+  version "0.20.1"
+  resolved "https://registry.yarnpkg.com/@codemirror/search/-/search-0.20.1.tgz#9eba0514218a673e29501a889a4fcb7da7ce24ad"
+  integrity sha512-ROe6gRboQU5E4z6GAkNa2kxhXqsGNbeLEisbvzbOeB7nuDYXUZ70vGIgmqPu0tB+1M3F9yWk6W8k2vrFpJaD4Q==
   dependencies:
-    "@codemirror/panel" "^0.19.0"
-    "@codemirror/rangeset" "^0.19.0"
-    "@codemirror/state" "^0.19.3"
-    "@codemirror/text" "^0.19.0"
-    "@codemirror/view" "^0.19.34"
+    "@codemirror/state" "^0.20.0"
+    "@codemirror/view" "^0.20.0"
     crelt "^1.0.5"
 
 "@codemirror/state@^0.19.0", "@codemirror/state@^0.19.2", "@codemirror/state@^0.19.3", "@codemirror/state@^0.19.4", "@codemirror/state@^0.19.6", "@codemirror/state@^0.19.9":
@@ -565,6 +562,11 @@
   integrity sha512-psOzDolKTZkx4CgUqhBQ8T8gBc0xN5z4gzed109aF6x7D7umpDRoimacI/O6d9UGuyl4eYuDCZmDFr2Rq7aGOw==
   dependencies:
     "@codemirror/text" "^0.19.0"
+
+"@codemirror/state@^0.20.0":
+  version "0.20.0"
+  resolved "https://registry.yarnpkg.com/@codemirror/state/-/state-0.20.0.tgz#3343d209169813b0152b77361cd78bea01549a73"
+  integrity sha512-R3XrAWCS5Xm9lx+4pDET4EUPEg+8bDfAa5zoOFIhx+VChsfew9Vy33dAjCXS5ES4Q8UecW4WM4UudmUFpZ+86A==
 
 "@codemirror/text@^0.19.0", "@codemirror/text@^0.19.2", "@codemirror/text@^0.19.4", "@codemirror/text@^0.19.6":
   version "0.19.6"
@@ -588,7 +590,7 @@
     "@codemirror/state" "^0.19.0"
     "@codemirror/view" "^0.19.0"
 
-"@codemirror/view@^0.19.0", "@codemirror/view@^0.19.22", "@codemirror/view@^0.19.23", "@codemirror/view@^0.19.34", "@codemirror/view@^0.19.39", "@codemirror/view@^0.19.44", "@codemirror/view@^0.19.48":
+"@codemirror/view@^0.19.0", "@codemirror/view@^0.19.22", "@codemirror/view@^0.19.23", "@codemirror/view@^0.19.39", "@codemirror/view@^0.19.44", "@codemirror/view@^0.19.48":
   version "0.19.48"
   resolved "https://registry.yarnpkg.com/@codemirror/view/-/view-0.19.48.tgz#1c657e2b0f8ed896ac6448d6e2215ab115e2a0fc"
   integrity sha512-0eg7D2Nz4S8/caetCTz61rK0tkHI17V/d15Jy0kLOT8dTLGGNJUponDnW28h2B6bERmPlVHKh8MJIr5OCp1nGw==
@@ -596,6 +598,15 @@
     "@codemirror/rangeset" "^0.19.5"
     "@codemirror/state" "^0.19.3"
     "@codemirror/text" "^0.19.0"
+    style-mod "^4.0.0"
+    w3c-keyname "^2.2.4"
+
+"@codemirror/view@^0.20.0":
+  version "0.20.3"
+  resolved "https://registry.yarnpkg.com/@codemirror/view/-/view-0.20.3.tgz#c907b93afb540400c0088c4203c42deb949cbc08"
+  integrity sha512-wAKK1SSmNOEAG1QEDlY5NhzVnzcXU21pcs6wzYa4G6IC6EWO208N69Ei11A4SIHk9QL658p2+GQ+ealpwHtAcw==
+  dependencies:
+    "@codemirror/state" "^0.20.0"
     style-mod "^4.0.0"
     w3c-keyname "^2.2.4"
 
