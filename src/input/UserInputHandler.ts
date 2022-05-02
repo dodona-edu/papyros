@@ -46,12 +46,6 @@ export abstract class UserInputHandler extends Renderable {
      */
     abstract getInputMode(): InputMode;
     /**
-     * @return {string} The input that the user entered at the start
-     */
-    getInitialInput(): string {
-        return "";
-    }
-    /**
      * Enable or disable this UserInputHandler
      * @param {boolean} active Whether this component is active
      */

@@ -67,13 +67,6 @@ export class InputManager extends Renderable {
         return this.inputHandlers.get(this.inputMode)!;
     }
 
-    /**
-     * @return {string} The input that the user entered at the start
-     */
-    getInitialInput(): string {
-        return this.inputHandler.getInitialInput();
-    }
-
     public isWaiting(): boolean {
         return this.waiting;
     }

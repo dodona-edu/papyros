@@ -270,7 +270,6 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         let terminated = false;
         const backend = await this.backend;
         try {
-            await backend.workerProxy.setInitialInput(this.inputManager.getInitialInput());
             await backend.call(
                 backend.workerProxy.runCode, this.editor.getCode()
             );
