@@ -95,9 +95,6 @@ export class CodeEditor extends Renderable {
      * @return {HTMLElement} The rendered element
      */
     protected override _render(options: RenderOptions): void {
-        appendClasses(options,
-            // eslint-disable-next-line max-len
-            "_tw-overflow-auto _tw-max-h-9/10 _tw-min-h-1/4 _tw-border-solid _tw-border-gray-200 _tw-border-2 _tw-rounded-lg dark:_tw-border-dark-mode-content");
         let styleExtensions: Extension = [];
         if (options.darkMode) {
             styleExtensions = oneDark;
@@ -105,7 +102,16 @@ export class CodeEditor extends Renderable {
             styleExtensions = syntaxHighlighting(defaultHighlightStyle, { fallback: true });
         }
         this.reconfigure([Option.Style, styleExtensions]);
-        renderWithOptions(options, this.editorView.dom);
+        // Ensure that the classes are added to a child of the parent so that
+        // dark mode classes are properly activated
+        // CodeMirror dom resets its classList, so that is not an option
+        const wrappingDiv = document.createElement("div");
+        wrappingDiv.classList
+            .add("_tw-overflow-auto", "_tw-max-h-9/10", "_tw-min-h-1/4",
+                "_tw-border-solid", "_tw-border-gray-200", "_tw-border-2",
+                "_tw-rounded-lg", "dark:_tw-border-dark-mode-content");
+        wrappingDiv.replaceChildren(this.editorView.dom);
+        renderWithOptions(options, wrappingDiv);
     }
 
     /**

@@ -12,8 +12,8 @@ const HEIGHTS = {
   "full": "80vh"
 };
 const COLORS = {
-  "dark-mode-bg": "#37474F",
-  "dark-mode-content": "#263238",
+  "dark-mode-bg": "#263238",
+  "dark-mode-content": "#37474F",
   "dark-mode-blue": "#0277BD",
   "placeholder-grey": "#888"
 };

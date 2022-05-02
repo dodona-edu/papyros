@@ -118,7 +118,7 @@ export function renderButton(options: ButtonOptions): string {
  * @param {T} selected The initially selected element in the list, if any
  * @return {string} The string representation of the select options
  */
-export function getSelectOptions<T>(
+export function renderSelectOptions<T>(
     options: Array<T>, optionText: (option: T) => string, selected?: T): string {
     return options.map((option: T) => {
         const selectedValue = option === selected ? "selected" : "";
@@ -128,6 +128,19 @@ export function getSelectOptions<T>(
             </option>
         `;
     }).join("\n");
+}
+
+/**
+ * Build a string representation of an HTML label element
+ * @param {string} labelText Optional text to display in a label
+ * If not provided, no label is created
+ * @param {string} forElement The id of the element this label is for
+ * @return {string} The HTML string of the label
+ */
+export function renderLabel(labelText: string | undefined, forElement: string): string {
+    return labelText ? `
+<label for="${forElement}"
+class="dark:_tw-text-white dark:_tw-bg-dark-mode-bg _tw-px-1">${labelText}: </label>` : "";
 }
 
 /**
@@ -142,19 +155,13 @@ export function getSelectOptions<T>(
 export function renderSelect<T>(selectId: string,
     options: Array<T>, optionText: (option: T) => string, selected?: T,
     labelText?: string): string {
-    const label = labelText ?
-        `<label for="${selectId}"
-         class="dark:_tw-text-white dark:_tw-bg-dark-mode-bg _tw-px-1">
-            ${labelText}:
-        </label>
-    `: "";
     const select = `
     <select id="${selectId}" class="_tw-m-2 _tw-border-2 _tw-px-1 _tw-rounded-lg
     dark:_tw-text-white dark:_tw-bg-dark-mode-bg dark:_tw-border-dark-mode-content">
-        ${getSelectOptions(options, optionText, selected)}
+        ${renderSelectOptions(options, optionText, selected)}
     </select>`;
     return `
-    ${label}
+    ${renderLabel(labelText, selectId)}
     ${select}
     `;
 }

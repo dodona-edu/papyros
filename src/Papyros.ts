@@ -21,8 +21,8 @@ import { OutputManager } from "./OutputManager";
 import { makeChannel } from "sync-message";
 import { BackendManager } from "./BackendManager";
 import {
-    RenderOptions, renderWithOptions, renderSelect, getSelectOptions,
-    ButtonOptions, Renderable
+    RenderOptions, renderWithOptions, renderSelect, renderSelectOptions,
+    ButtonOptions, Renderable, renderLabel
 } from "./util/Rendering";
 
 const LANGUAGE_MAP = new Map([
@@ -267,15 +267,15 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
             <div class="_tw-grid _tw-grid-cols-2 _tw-gap-4 _tw-box-border _tw-max-h-full">
                 <!-- Code section-->
                 <div>
-                    <h1>${t("Papyros.code")}:</h1>
+                    ${renderLabel(t("Papyros.code"), renderOptions.codeEditorOptions!.parentElementId)}
                     <div id="${renderOptions.codeEditorOptions!.parentElementId}"></div>
                     <div id="${renderOptions.statusPanelOptions!.parentElementId}"></div>
                 </div>
                 <!-- User input and output section-->
                 <div>
-                    <h1>${t("Papyros.output")}:</h1>
+                    ${renderLabel(t("Papyros.output"), renderOptions.outputOptions!.parentElementId)}
                     <div id="${renderOptions.outputOptions!.parentElementId}"></div>
-                    <h1>${t("Papyros.input")}:</h1>
+                    ${renderLabel(t("Papyros.input"), renderOptions.inputOptions!.parentElementId)}
                     <div id="${renderOptions.inputOptions!.parentElementId}"></div>
                 </div>
             </div>
@@ -286,7 +286,7 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
                 PROGRAMMING_LANGUAGE_SELECT_ID, pl => {
                     this.setProgrammingLanguage(pl);
                     getElement<HTMLSelectElement>(EXAMPLE_SELECT_ID).innerHTML =
-                        getSelectOptions(getExampleNames(pl), name => name);
+                        renderSelectOptions(getExampleNames(pl), name => name);
                     removeSelection(EXAMPLE_SELECT_ID);
                     this.config.example = undefined;
                     // Modify search query params without reloading page
