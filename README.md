@@ -13,7 +13,7 @@
 </p>
 
 Papyros is a programming scratchpad in the browser. It allows running code
-directly in your browser, no installation required. Right now, the focus in on providing a great experience for Python, while also supporting JavaScript.
+directly in your browser, no installation required. Right now, the focus is on providing a great experience for Python, while also supporting JavaScript.
 By taking away obstacles between students and coding, the learning experience becomes
 smoother and less error-prone.
 
