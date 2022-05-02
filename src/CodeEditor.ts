@@ -1,34 +1,27 @@
 /* eslint-disable valid-jsdoc */
-import { indentWithTab } from "@codemirror/commands";
-import { javascript } from "@codemirror/lang-javascript";
-import { Compartment, EditorState, Extension } from "@codemirror/state";
-import { indentUnit, LanguageSupport } from "@codemirror/language";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
+import { t } from "./util/Util";
+import { Renderable, RenderOptions, appendClasses, renderWithOptions } from "./util/Rendering";
+import {
+    CompletionSource, autocompletion,
+    closeBrackets, closeBracketsKeymap, completionKeymap
+} from "@codemirror/autocomplete";
+import { defaultKeymap, historyKeymap, indentWithTab, history } from "@codemirror/commands";
+import { javascript } from "@codemirror/lang-javascript";
 import { python } from "@codemirror/lang-python";
 import {
-    EditorView,
-    keymap, highlightSpecialChars,
-    drawSelection, highlightActiveLine,
-    placeholder
-}
-    from "@codemirror/view";
-import { history, historyKeymap } from "@codemirror/history";
-import { foldGutter, foldKeymap } from "@codemirror/fold";
-import { indentOnInput } from "@codemirror/language";
-import { lineNumbers, highlightActiveLineGutter } from "@codemirror/gutter";
-import { defaultKeymap } from "@codemirror/commands";
-import { bracketMatching } from "@codemirror/matchbrackets";
-import { closeBrackets, closeBracketsKeymap } from "@codemirror/closebrackets";
-import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
-import { autocompletion, completionKeymap, CompletionSource } from "@codemirror/autocomplete";
-import { commentKeymap } from "@codemirror/comment";
-import { rectangularSelection } from "@codemirror/rectangular-selection";
-import { lintKeymap, linter, Diagnostic, lintGutter } from "@codemirror/lint";
-import { t } from "./util/Util";
+    defaultHighlightStyle, indentUnit, LanguageSupport,
+    foldGutter, indentOnInput, bracketMatching, foldKeymap, syntaxHighlighting
+} from "@codemirror/language";
+import { highlightSelectionMatches, searchKeymap } from "@codemirror/search";
+import { Compartment, EditorState, Extension } from "@codemirror/state";
 import { oneDark } from "@codemirror/theme-one-dark";
-import { defaultHighlightStyle } from "@codemirror/highlight";
-import { showPanel } from "@codemirror/panel";
-import { Renderable, RenderOptions, appendClasses, renderWithOptions } from "./util/Rendering";
+import {
+    EditorView, showPanel, lineNumbers, highlightActiveLineGutter,
+    highlightSpecialChars, drawSelection,
+    rectangularSelection, highlightActiveLine, keymap, placeholder
+} from "@codemirror/view";
+import { Diagnostic, linter, lintGutter, lintKeymap } from "@codemirror/lint";
 
 enum Option {
     ProgrammingLanguage = "programming_language",
@@ -109,8 +102,7 @@ export class CodeEditor extends Renderable {
         if (options.darkMode) {
             styleExtensions = oneDark;
         } else {
-            styleExtensions = defaultHighlightStyle.fallback;
-            // styleExtensions = syntaxHighlighting(defaultHighlightStyle, { fallback: true });
+            styleExtensions = syntaxHighlighting(defaultHighlightStyle, { fallback: true });
         }
         this.reconfigure([Option.Style, styleExtensions]);
         renderWithOptions(options, this.editorView.dom);
@@ -218,37 +210,33 @@ export class CodeEditor extends Renderable {
     }
 
     /**
-    *  - [syntax highlighting depending on the language](#getLanguageSupport)
-    *  - [line numbers](#gutter.lineNumbers)
-    *  - [special character highlighting](#view.highlightSpecialChars)
-    *  - [the undo history](#history.history)
-    *  - [a fold gutter](#fold.foldGutter)
-    *  - [gutter for linting](#lint.lintGutter)
-    *  - [custom selection drawing](#view.drawSelection)
-    *  - [multiple selections](#state.EditorState^allowMultipleSelections)
-    *  - [reindentation on input](#language.indentOnInput)
-    *  - [syntax highlighting with the default highlight style]
-    *   (#highlight.defaultHighlightStyle) (as fallback)
-    *  - [bracket matching](#matchbrackets.bracketMatching)
-    *  - [bracket closing](#closebrackets.closeBrackets)
-    *  - [autocompletion](#autocomplete.autocompletion)
-    *  - [rectangular selection](#rectangular-selection.rectangularSelection)
-    *  - [active line highlighting](#view.highlightActiveLine)
-    *  - [active line gutter highlighting](#gutter.highlightActiveLineGutter)
-    *  - [selection match highlighting](#search.highlightSelectionMatches)
+    *  - line numbers
+    *  - special character highlighting
+    *  - the undo history
+    *  - a fold gutter
+    *  - gutter for linting
+    *  - custom selection drawing
+    *  - multiple selections
+    *  - reindentation on input
+    *  - bracket matching
+    *  - bracket closing
+    *  - autocompletion
+    *  - rectangular selection
+    *  - active line highlighting
+    *  - active line gutter highlighting
+    *  - selection match highlighting
     * Keymaps:
-    *  - [bracket closing](#commands.closeBracketsKeymap)
-    *  - [the default command bindings](#commands.defaultKeymap)
-    *  - [search](#search.searchKeymap)
-    *  - [commenting](#comment.commentKeymap)
-    *  - [linting](#lint.lintKeymap)
-    *  - [indenting with tab](#commands.indentWithTab)
+    *  - the default command bindings
+    *  - bracket closing
+    *  - searching
+    *  - linting
+    *  - completion
+    *  - indenting with tab
     *  @return {Array<Extension} Default extensions to use
     */
     private static getExtensions(): Array<Extension> {
         return [
             lineNumbers(),
-            highlightActiveLineGutter(),
             highlightSpecialChars(),
             history(),
             foldGutter(),
@@ -261,6 +249,7 @@ export class CodeEditor extends Renderable {
             autocompletion(),
             rectangularSelection(),
             highlightActiveLine(),
+            highlightActiveLineGutter(),
             highlightSelectionMatches(),
             keymap.of([
                 ...closeBracketsKeymap,
@@ -268,7 +257,6 @@ export class CodeEditor extends Renderable {
                 ...searchKeymap,
                 ...historyKeymap,
                 ...foldKeymap,
-                ...commentKeymap,
                 ...completionKeymap,
                 ...lintKeymap,
                 indentWithTab

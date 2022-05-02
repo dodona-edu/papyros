@@ -3,4 +3,5 @@ tailwind.config.js
 postcss.config.js
 jest.config.js
 src/Translations.js
+scripts/ValidateTranslations.js
 dist
