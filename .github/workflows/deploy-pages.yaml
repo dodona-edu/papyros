@@ -9,7 +9,7 @@ on:
       - labeled
 jobs:
   build-and-deploy:
-    if: ${{ github.event.action == 'labeled' && github.event.label.name == 'deploy' }}
+    if: ${{ github.event.action == 'workflow_dispatch' || (github.event.action == 'labeled' && github.event.label.name == 'deploy') }}
     runs-on: ubuntu-latest
     environment:
       name: production
