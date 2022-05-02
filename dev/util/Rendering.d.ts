@@ -74,7 +74,15 @@ export declare function renderButton(options: ButtonOptions): string;
  * @param {T} selected The initially selected element in the list, if any
  * @return {string} The string representation of the select options
  */
-export declare function getSelectOptions<T>(options: Array<T>, optionText: (option: T) => string, selected?: T): string;
+export declare function renderSelectOptions<T>(options: Array<T>, optionText: (option: T) => string, selected?: T): string;
+/**
+ * Build a string representation of an HTML label element
+ * @param {string} labelText Optional text to display in a label
+ * If not provided, no label is created
+ * @param {string} forElement The id of the element this label is for
+ * @return {string} The HTML string of the label
+ */
+export declare function renderLabel(labelText: string | undefined, forElement: string): string;
 /**
  * Constructs an HTML select element
  * @param {string} selectId The HTML id for the element
