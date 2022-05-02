@@ -77,9 +77,9 @@ const DUTCH_TRANSLATION = {
         "en": "English",
         "nl": "Nederlands"
     },
-    "input_modes": {
-        "switch_to_interactive": "Wissel naar interactieve invoer",
-        "switch_to_batch": "Geef invoer vooraf in"
+    "switch_input_mode_to": {
+        "interactive": "Wissen naar interactieve invoer",
+        "batch": "Geef invoer vooraf in"
     },
     "enter": "Enter",
     "examples": "Voorbeelden",
