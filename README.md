@@ -13,7 +13,7 @@
 </p>
 
 Papyros is a programming scratchpad in the browser. It allows running code
-directly in your browser, no installation required. Right now, the focus in on providing a great experience for Python, while also supporting JavaScript.
+directly in your browser, no installation required. Right now, the focus is on providing a great experience for Python, while also supporting JavaScript.
 By taking away obstacles between students and coding, the learning experience becomes
 smoother and less error-prone.
 
@@ -38,22 +38,24 @@ as the user knows for what purpose Papyros is being used. For example, when used
 scope of a Python exercise in Dodona, there is no need to support other programming languages.
 The locale should also match that of the actual application.
 
-The easiest way to initialize Papyros is by using the static method Papyros.fromElement.
-This method expects a parent element that wraps the scratchpad and a PapyrosConfig object.
+The easiest way to initialize Papyros is by using the static method `Papyros.fromElement`.
+This method expects a parent element that wraps the scratchpad and a `PapyrosConfig` object.
 The following options are supported:
-- standAlone: Whether to operate in stand-alone or embedded mode as described above.
-- locale: The locale to use, currently English and Dutch translations are provided.
-- programmingLanguage: The language to use in the CodeEditor and Backend
-- inputMode: How the users can provide input, according to the [InputMode enum](/src/InputManager.ts)
 
-Furthermore, you can provide fine-grained configuration in embedded mode by providing RenderOptions
+- `standAlone`: Whether to operate in stand-alone or embedded mode as described above.
+- `locale`: The locale to use, currently English and Dutch translations are provided.
+- `programmingLanguage`: The language to use in the CodeEditor and Backend
+- `inputMode`: How the users can provide input, according to the [InputMode enum](/src/InputManager.ts)
+
+Furthermore, you can provide fine-grained configuration in embedded mode by providing `RenderOptions`
 to each main component in the application. You minimally need to specify the ID of the parent element.
-You can also specify attributes, such as style or data, or classNames to be used.
+You can also specify attributes, such as `style` or `data`, or `classNames` to be used.
 The main components are the following:
-- code -> the CodeEditor
-- panel -> the StatusPanel in the CodeEditor
-- input -> The field for the user input
-- output -> The panel for output of the code
+
+- `code`: the CodeEditor.
+- `panel`: the StatusPanel in the CodeEditor
+- `input`: the field for the user input
+- `output`: the panel for output of the code
 
 ### User input
 
