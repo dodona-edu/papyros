@@ -3,11 +3,12 @@ import { InputMode } from "./InputManager";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import { RunState, CodeRunner } from "./CodeRunner";
 import { OutputManager } from "./OutputManager";
+import { AtomicsChannelOptions, ServiceWorkerChannelOptions } from "sync-message";
 import { RenderOptions, ButtonOptions, Renderable } from "./util/Rendering";
 /**
  * Configuration options for this instance of Papyros
  */
-interface PapyrosConfig {
+export interface PapyrosConfig {
     /**
      * Whether Papyros is run in standAlone mode or embedded in an application
      */
@@ -28,11 +29,17 @@ interface PapyrosConfig {
      * The selected code example
      */
     example?: string;
+    /**
+     * Configuration for the input channel
+     */
+    channelOptions?: {
+        serviceWorkerName?: string;
+    } & AtomicsChannelOptions & ServiceWorkerChannelOptions;
 }
 /**
  * Options for rendering Papyros
  */
-interface PapyrosRenderOptions {
+export interface PapyrosRenderOptions {
     /**
      * Options to render Papyros itself, only used in standAlone mode
      */
@@ -112,15 +119,11 @@ export declare class Papyros extends Renderable<PapyrosRenderOptions> {
     /**
      * Configure how user input is handled within Papyros
      * By default, we will try to use SharedArrayBuffers
-     * If this option is not available, the optional arguments become relevant
+     * If this option is not available, the optional arguments in the channelOptions config are used
      * They are needed to register a service worker to handle communication between threads
-     * @param {string} serviceWorkerRoot URL for the directory where the service worker lives
-     * @param {string} serviceWorkerName The name of the file containing the script
-     * @param {boolean} allowReload Whether we are allowed to force a reload of the page
-     * This allows using SharedArrayBuffers without configuring the HTTP headers yourself
      * @return {Promise<boolean>} Promise of configuring input
      */
-    configureInput(serviceWorkerRoot?: string, serviceWorkerName?: string): Promise<boolean>;
+    private configureInput;
     protected _render(renderOptions: PapyrosRenderOptions): void;
     /**
      * Add a button to the status panel within Papyros
@@ -140,4 +143,3 @@ export declare class Papyros extends Renderable<PapyrosRenderOptions> {
      */
     static toProgrammingLanguage(language: string): ProgrammingLanguage | undefined;
 }
-export {};
