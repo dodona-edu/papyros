@@ -18,7 +18,7 @@ import {
 import { RunState, CodeRunner } from "./CodeRunner";
 import { getCodeForExample, getExampleNames } from "./examples/Examples";
 import { OutputManager } from "./OutputManager";
-import { makeChannel } from "sync-message";
+import { AtomicsChannelOptions, makeChannel, ServiceWorkerChannelOptions } from "sync-message";
 import { BackendManager } from "./BackendManager";
 import {
     RenderOptions, renderWithOptions, renderSelect, renderSelectOptions,
@@ -33,7 +33,7 @@ const LANGUAGE_MAP = new Map([
 /**
  * Configuration options for this instance of Papyros
  */
-interface PapyrosConfig {
+export interface PapyrosConfig {
     /**
      * Whether Papyros is run in standAlone mode or embedded in an application
      */
@@ -54,12 +54,19 @@ interface PapyrosConfig {
      * The selected code example
      */
     example?: string;
+    /**
+     * Configuration for the input channel
+     */
+    channelOptions?: {
+        // The name of the service worker relative to the current root
+        serviceWorkerName?: string;
+    } & AtomicsChannelOptions & ServiceWorkerChannelOptions;
 }
 
 /**
  * Options for rendering Papyros
  */
-interface PapyrosRenderOptions {
+export interface PapyrosRenderOptions {
     /**
      * Options to render Papyros itself, only used in standAlone mode
      */
@@ -129,7 +136,17 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
      * @return {Promise<Papyros>} Promise of launching, chainable
      */
     async launch(): Promise<Papyros> {
-        await this.codeRunner.start();
+        if (!await this.configureInput()) {
+            alert(t("Papyros.service_worker_error"));
+        } else {
+            try {
+                await this.codeRunner.start();
+            } catch (error: any) {
+                if (confirm(t("Papyros.launch_error"))) {
+                    return this.launch();
+                }
+            }
+        }
         return this;
     }
 
@@ -180,28 +197,34 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
     /**
      * Configure how user input is handled within Papyros
      * By default, we will try to use SharedArrayBuffers
-     * If this option is not available, the optional arguments become relevant
+     * If this option is not available, the optional arguments in the channelOptions config are used
      * They are needed to register a service worker to handle communication between threads
-     * @param {string} serviceWorkerRoot URL for the directory where the service worker lives
-     * @param {string} serviceWorkerName The name of the file containing the script
-     * @param {boolean} allowReload Whether we are allowed to force a reload of the page
-     * This allows using SharedArrayBuffers without configuring the HTTP headers yourself
      * @return {Promise<boolean>} Promise of configuring input
      */
-    async configureInput(serviceWorkerRoot?: string, serviceWorkerName?: string)
-        : Promise<boolean> {
+    private async configureInput(): Promise<boolean> {
         if (typeof SharedArrayBuffer === "undefined") {
-            papyrosLog(LogType.Important, "SharedArrayBuffers are not available. ");
-            if (!serviceWorkerRoot || !serviceWorkerName || !("serviceWorker" in navigator)) {
+            if (!this.config.channelOptions?.serviceWorkerName || !("serviceWorker" in navigator)) {
                 papyrosLog(LogType.Important, "Unable to register service worker. Please specify all required parameters and ensure service workers are supported.");
                 return false;
             }
+            const serviceWorkerRoot = location.href;
+            const { serviceWorkerName } = this.config.channelOptions;
             // Ensure there is a slash at the end to allow the script to be resolved
             const rootWithSlash = serviceWorkerRoot.endsWith("/") ? serviceWorkerRoot : serviceWorkerRoot + "/";
+            this.config.channelOptions.scope = rootWithSlash;
             const serviceWorkerUrl = rootWithSlash + serviceWorkerName;
             papyrosLog(LogType.Important, `Registering service worker: ${serviceWorkerUrl}`);
-            await window.navigator.serviceWorker.register(serviceWorkerUrl);
-            BackendManager.channel = makeChannel({ serviceWorker: { scope: rootWithSlash } })!;
+            try {
+                await window.navigator.serviceWorker.register(serviceWorkerUrl);
+                BackendManager.channel = makeChannel({ serviceWorker: this.config.channelOptions })!;
+            } catch (error: any) {
+                papyrosLog(LogType.Error, "Error while registering service worker: ", error);
+                return false;
+            }
+        } else {
+            BackendManager.channel = makeChannel({
+                atomics: { ...this.config.channelOptions }
+            })!;
         }
         return true;
     }
