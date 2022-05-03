@@ -52,7 +52,9 @@ export class OutputManager extends Renderable {
      * Store the HTML that is rendered to restore when changing language/theme
      */
     private content: Array<string>;
-
+    /**
+     * Allow converting ansi strings to proper HTML
+     */
     private ansiUp: AnsiUp;
 
     constructor() {
