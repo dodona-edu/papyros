@@ -1,10 +1,9 @@
 import {
     DEFAULT_LOCALE, DEFAULT_PROGRAMMING_LANGUAGE,
-    DEFAULT_SERVICE_WORKER, MAIN_APP_ID
+    DEFAULT_SERVICE_WORKER
 } from "./Constants";
-import { Papyros } from "./Papyros";
+import { Papyros, PapyrosConfig } from "./Papyros";
 import { InputMode } from "./InputManager";
-import { getElement } from "./util/Util";
 import { papyrosLog, LogType } from "./util/Logging";
 import { BackendManager } from "./BackendManager";
 
@@ -17,11 +16,14 @@ async function startPapyros(): Promise<void> {
     const language = Papyros.toProgrammingLanguage(urlParams.get("language") ||
         DEFAULT_PROGRAMMING_LANGUAGE)!;
     const locale = urlParams.get("locale") || DEFAULT_LOCALE;
-    const config = {
+    const config: PapyrosConfig = {
         standAlone: true,
         programmingLanguage: language,
         locale: locale,
-        inputMode: InputMode.Interactive
+        inputMode: InputMode.Interactive,
+        channelOptions: {
+            serviceWorkerName: DEFAULT_SERVICE_WORKER
+        }
     };
     const papyros = new Papyros(config);
     let darkMode = false;
@@ -38,15 +40,8 @@ async function startPapyros(): Promise<void> {
         darkMode: darkMode
     });
 
-    // Try to configure synchronous input mechanism
-    if (!await papyros.configureInput(location.href, DEFAULT_SERVICE_WORKER)) {
-        getElement(MAIN_APP_ID).innerHTML =
-            "Your browser is unsupported.\n" +
-            "Please use a modern version of Chrome, Safari, Firefox, ...";
-    } else { // Start actual application
-        papyrosLog(LogType.Debug, "Using channel: ", BackendManager.channel);
-        papyros.launch();
-    }
+    await papyros.launch();
+    papyrosLog(LogType.Debug, "Using channel: ", BackendManager.channel);
 }
 
 startPapyros();
