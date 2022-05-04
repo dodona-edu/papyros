@@ -39,4 +39,10 @@ export declare function removeSelection(selectId: string): void;
  */
 export declare function parseData(data: string, contentType?: string): any;
 export declare function downloadResults(data: string, filename: string): void;
+/**
+ * Obtain the url of the current page without hashes, identifiers, query params, ...
+ * @param {boolean} endingSlash Whether the url should end in a slash
+ * @return {string} The current url
+ */
+export declare function cleanCurrentUrl(endingSlash?: boolean): string;
 export {};
