@@ -32,6 +32,10 @@ export abstract class BackendManager {
      */
     private static subscriberMap: Map<BackendEventType, Array<BackendEventListener>>;
     /**
+     * Whether the BackendManager is publishing events
+     */
+    private static halted: boolean;
+    /**
      * The channel used to communicate with the SyncClients
      */
     public static channel: Channel;
@@ -96,9 +100,16 @@ export abstract class BackendManager {
      */
     static publish(e: BackendEvent): void {
         papyrosLog(LogType.Debug, "Publishing event: ", e);
-        if (this.subscriberMap.has(e.type)) {
+        if (e.type === BackendEventType.Start) {
+            BackendManager.halted = false;
+        }
+        if (!BackendManager.halted && this.subscriberMap.has(e.type)) {
             this.subscriberMap.get(e.type)!.forEach(cb => cb(e));
         }
+    }
+
+    private static halt(): void {
+        BackendManager.halted = true;
     }
 
     /**
@@ -121,5 +132,8 @@ export abstract class BackendManager {
                 BackendManager.channel
             )
         );
+        BackendManager.halted = false;
+        BackendManager.subscribe(BackendEventType.End, () => BackendManager.halt());
+        BackendManager.subscribe(BackendEventType.Interrupt, () => BackendManager.halt());
     }
 }
