@@ -126,8 +126,9 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         this.addButton({
             id: STOP_BTN_ID,
             buttonText: t("Papyros.stop"),
-            classNames: "text-white bg-red-500"
+            classNames: "_tw-text-white _tw-bg-red-500"
         }, () => this.stop(), ButtonType.Stop);
+        this.renderButtons();
         // Use a Promise to immediately enable running while downloading
         // eslint-disable-next-line no-async-promise-executor
         this.backend = new Promise(async resolve => {
@@ -243,22 +244,23 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     }
 
     protected override _render(options: CodeRunnerRenderOptions): void {
-        renderWithOptions(options.statusPanelOptions, `
+        const panel = renderWithOptions(options.statusPanelOptions, `
 <div class="_tw-grid _tw-grid-cols-2 _tw-items-center _tw-mx-1">
-    <div class="_tw-col-span-1 _tw-flex _tw-flex-row">
-    <div id="${RUNNER_BUTTON_AREA_WRAPPER_ID}" class= "_tw-col-span-1 _tw-flex _tw-flex-row" >
-    </div>            
-    <div class= "_tw-col-span-1 _tw-flex _tw-flex-row-reverse _tw-items-center" >
+    <div id="${RUNNER_BUTTON_AREA_WRAPPER_ID}"
+     class="_tw-col-span-1 _tw-flex _tw-flex-row">
+    </div>  
+    <div class= "_tw-col-span-1 _tw-flex _tw-flex-row-reverse _tw-items-center">
         <div id="${APPLICATION_STATE_TEXT_ID}"></div>
         ${spinningCircle(STATE_SPINNER_ID, "_tw-border-gray-200 _tw-border-b-red-500")}
     </div>
-< /div>`);
+</div>`);
         this.setState(this.state);
         this.inputManager.render(options.inputOptions);
         this.editor.render({
             ...options.codeEditorOptions,
             programmingLanguage: this.programmingLanguage
         });
+        this.editor.setPanel(panel);
         this.renderButtons();
     }
 

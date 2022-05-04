@@ -3,6 +3,7 @@ import sys
 import json
 import python_runner
 import friendly_traceback
+import asyncio
 
 from friendly_traceback.core import FriendlyTraceback
 from collections.abc import Awaitable
@@ -100,7 +101,6 @@ class Papyros(python_runner.PyodideRunner):
             # Occurs when trying to fetch PyPi files for misspelled imports
             if not ignore_missing:
                 raise
-                
 
     @contextmanager
     def _execute_context(self):
