@@ -1,10 +1,10 @@
 /**
- * Draw a circle using an HTML svg element
+ * Draw a spinning circle to represent a loading animation
  * @param {string} id HTML id for this element
- * @param {string} color The color of the circle
+ * @param {string} borderColors The tailwind color classes for the borders of the circle
  * @return {string} A string representation of the circle
  */
-export declare const svgCircle: (id: string, color: string) => string;
+export declare const spinningCircle: (id: string, borderColors: string) => string;
 /**
  * Wrap text (best a single character) in a circle to provide information to the user
  * @param {string} content The symbol in the circle, e.g. ? of !
