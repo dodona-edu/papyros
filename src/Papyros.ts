@@ -13,7 +13,7 @@ import { LogType, papyrosLog } from "./util/Logging";
 import {
     t, loadTranslations, getLocales,
     removeSelection,
-    addListener, getElement
+    addListener, getElement, cleanCurrentUrl
 } from "./util/Util";
 import { RunState, CodeRunner } from "./CodeRunner";
 import { getCodeForExample, getExampleNames } from "./examples/Examples";
@@ -207,12 +207,10 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
                 papyrosLog(LogType.Important, "Unable to register service worker. Please specify all required parameters and ensure service workers are supported.");
                 return false;
             }
-            const serviceWorkerRoot = location.href;
+            const serviceWorkerRoot = cleanCurrentUrl(true);
             const { serviceWorkerName } = this.config.channelOptions;
-            // Ensure there is a slash at the end to allow the script to be resolved
-            const rootWithSlash = serviceWorkerRoot.endsWith("/") ? serviceWorkerRoot : serviceWorkerRoot + "/";
-            this.config.channelOptions.scope = rootWithSlash;
-            const serviceWorkerUrl = rootWithSlash + serviceWorkerName;
+            this.config.channelOptions.scope = serviceWorkerRoot;
+            const serviceWorkerUrl = serviceWorkerRoot + serviceWorkerName;
             papyrosLog(LogType.Important, `Registering service worker: ${serviceWorkerUrl}`);
             try {
                 await window.navigator.serviceWorker.register(serviceWorkerUrl);
