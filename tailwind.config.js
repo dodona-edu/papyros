@@ -1,3 +1,5 @@
+const flattenColorPalette = require('tailwindcss/lib/util/flattenColorPalette').default;
+
 // Scale sizes according to 80vh to prevent overflows
 const HEIGHTS = {
   "0": "0",
@@ -17,6 +19,33 @@ const COLORS = {
   "dark-mode-blue": "#0277BD",
   "placeholder-grey": "#888"
 };
+
+/**
+ * Plugin to enable more border-color variations in Tailwind
+ * Plugin source: https://github.com/tailwindlabs/tailwindcss/pull/560
+ * Issue concerning border colors: https://github.com/tailwindlabs/discuss/issues/46
+ */
+const borderPlugin = ({ addUtilities, e, theme, variants }) => {
+  let colors = flattenColorPalette(theme('borderColor'));
+  delete colors['default'];
+
+  // Replace or Add custom colors
+  if (this.theme?.extend?.colors !== undefined) {
+    colors = Object.assign(colors, this.theme.extend.colors);
+  }
+
+  const colorMap = Object.keys(colors)
+    .map(color => ({
+      [`.border-t-${color}`]: { borderTopColor: colors[color] },
+      [`.border-r-${color}`]: { borderRightColor: colors[color] },
+      [`.border-b-${color}`]: { borderBottomColor: colors[color] },
+      [`.border-l-${color}`]: { borderLeftColor: colors[color] },
+    }));
+  const utilities = Object.assign({}, ...colorMap);
+
+  addUtilities(utilities, variants('borderColor'));
+};
+
 module.exports = {
   // allow using dynamic classes
   mode: "jit",
@@ -44,5 +73,6 @@ module.exports = {
       borderColor: COLORS,
       backgroundColor: COLORS
     },
-  }
+  },
+  plugins: [borderPlugin]
 };

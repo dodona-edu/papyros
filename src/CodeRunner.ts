@@ -10,7 +10,7 @@ import {
 } from "./Constants";
 import { InputManager } from "./InputManager";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
-import { svgCircle } from "./util/HTMLShapes";
+import { spinningCircle } from "./util/HTMLShapes";
 import { LogType, papyrosLog } from "./util/Logging";
 import {
     addListener, getElement,
@@ -237,9 +237,9 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     <div class="_tw-col-span-1 _tw-flex _tw-flex-row">
         ${this.buttons.map(b => b.buttonHTML).join("\n")}
     </div>
-    <div class="_tw-col-span-1 _tw-flex _tw-flex-row-reverse">
+    <div class="_tw-col-span-1 _tw-flex _tw-flex-row-reverse _tw-items-center">
         <div id="${APPLICATION_STATE_TEXT_ID}"></div>
-        ${svgCircle(STATE_SPINNER_ID, "red")}
+        ${spinningCircle(STATE_SPINNER_ID, "_tw-border-gray-200 _tw-border-b-red-500")}
     </div>
 </div>`);
         // Buttons are freshly added to the DOM, so attach listeners now
