@@ -8,7 +8,7 @@ def convert_completion(completion, index):
     converted["boost"] = -index
     return converted
 
-async def autocomplete(context):
+def autocomplete(context):
     # Ensure before-match is not None
     before = context.get("before", {"text": "", "from": context["pos"]})
     complete_from = before["from"]

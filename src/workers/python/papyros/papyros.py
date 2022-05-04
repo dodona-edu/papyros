@@ -10,7 +10,6 @@ from contextlib import contextmanager, redirect_stdout, redirect_stderr
 from pyodide_worker_runner import install_imports
 from pyodide import JsException, create_proxy
 
-from threading import RLock
 from .util import to_py
 from .autocomplete import autocomplete
 from .linting import lint
@@ -33,7 +32,6 @@ class Papyros(python_runner.PyodideRunner):
             self.OutputBufferClass = lambda f: buffer_constructor(create_proxy(f))
         super().__init__(source_code=source_code, filename=filename)
         self.limit = limit
-        self.lock = RLock()
         self.override_globals()
         self.set_event_callback(callback)
 
@@ -70,43 +68,37 @@ class Papyros(python_runner.PyodideRunner):
         sys.setrecursionlimit(self.limit)
         # Otherwise `import matplotlib` fails while assuming a browser backend
         os.environ["MPLBACKEND"] = "AGG"
-        try:
-            import matplotlib
-        except ModuleNotFoundError:
-            pass
-        else:# Only override matplotlib when required by the code
-            import time
-            self.override_matplotlib()
+        self.override_matplotlib()
 
     def override_matplotlib(self):
-        # workaround from https://github.com/pyodide/pyodide/issues/1518
-        import base64
-        from io import BytesIO
-        import matplotlib.pyplot
+        try:
+            # workaround from https://github.com/pyodide/pyodide/issues/1518
+            import matplotlib.pyplot
+            import base64
+            from io import BytesIO
+            
 
-        def show():
-            buf = BytesIO()
-            matplotlib.pyplot.savefig(buf, format="png")
-            buf.seek(0)
-            # encode to a base64 str
-            img = base64.b64encode(buf.read()).decode("utf-8")
-            matplotlib.pyplot.clf()
-            self.output("img", img, contentType="img/png;base64")
+            def show():
+                buf = BytesIO()
+                matplotlib.pyplot.savefig(buf, format="png")
+                buf.seek(0)
+                # encode to a base64 str
+                img = base64.b64encode(buf.read()).decode("utf-8")
+                matplotlib.pyplot.clf()
+                self.output("img", img, contentType="img/png;base64")
 
-        matplotlib.pyplot.show = show
+            matplotlib.pyplot.show = show
+        except ModuleNotFoundError:
+            pass
 
     async def install_imports(self, source_code, ignore_missing=True):
         try:
-            # Use a lock to install imports in a thread safe way
-            # Issues can occur when linting and running install libraries at the same time
-            self.lock.acquire()
             await install_imports(source_code)
         except (ValueError, JsException):
             # Occurs when trying to fetch PyPi files for misspelled imports
             if not ignore_missing:
                 raise
-        finally:
-            self.lock.release()
+                
 
     @contextmanager
     def _execute_context(self):
@@ -127,7 +119,6 @@ class Papyros(python_runner.PyodideRunner):
     async def run_async(self, source_code, mode="exec", top_level_await=True):
         with self._execute_context():
             try:
-                await self.install_imports(source_code, ignore_missing=False)
                 code_obj = self.pre_run(source_code, mode=mode, top_level_await=top_level_await)
                 if code_obj:
                     result = self.execute(code_obj, mode)
@@ -184,12 +175,11 @@ class Papyros(python_runner.PyodideRunner):
             contentType="text/json"
         )
 
-    async def autocomplete(self, context):
+    def autocomplete(self, context):
         context = to_py(context)
-        await self.install_imports(context["text"], ignore_missing=True)
-        return await autocomplete(context)
+        self.set_source_code(context["text"])
+        return autocomplete(context)
 
-    async def lint(self, code):
+    def lint(self, code):
         self.set_source_code(code)
-        await self.install_imports(code, ignore_missing=True)
         return lint(self.filename)

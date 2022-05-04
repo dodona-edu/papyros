@@ -7,6 +7,7 @@ import {
     loadPyodideAndPackage,
     PyodideExtras
 } from "pyodide-worker-runner";
+import { LogType, papyrosLog } from "../../util/Logging";
 /* eslint-disable-next-line */
 const pythonPackageUrl = require("!!url-loader!./python_package.tar.gz.load_by_url").default;
 
@@ -20,11 +21,16 @@ const pyodidePromise = getPyodide();
  * Powered by Pyodide (https://pyodide.org/)
  */
 class PythonWorker extends Backend<PyodideExtras> {
-    pyodide: Pyodide;
-    papyros: any;
+    private pyodide: Pyodide;
+    private papyros: any;
+    /**
+     * Promise to asynchronously install imports needed by the code
+     */
+    private installPromise: Promise<void> | null;
     constructor() {
         super();
         this.pyodide = {} as Pyodide;
+        this.installPromise = null;
     }
 
     private static convert(data: any): any {
@@ -45,41 +51,63 @@ class PythonWorker extends Backend<PyodideExtras> {
         this.pyodide = await pyodidePromise;
         // Python calls our function with a PyProxy dict or a Js Map,
         // These must be converted to a PapyrosEvent (JS Object) to allow message passing
-        this.papyros = await this.pyodide.pyimport("papyros").Papyros.callKwargs(
-            {
-                callback: (e: any) => {
-                    const converted = PythonWorker.convert(e);
-                    return this.onEvent(converted);
-                },
-                buffer_constructor: (cb: (e: BackendEvent) => void) => {
-                    this.queue.setCallback(cb);
-                    return this.queue;
+        this.papyros = (await Promise.all([
+            this.pyodide.pyimport("papyros").Papyros.callKwargs(
+                {
+                    callback: (e: any) => {
+                        const converted = PythonWorker.convert(e);
+                        return this.onEvent(converted);
+                    },
+                    buffer_constructor: (cb: (e: BackendEvent) => void) => {
+                        this.queue.setCallback(cb);
+                        return this.queue;
+                    }
                 }
-            }
-        );
+            ),
+            (this.pyodide as any).loadPackage("micropip")
+        ]))[0];
     }
 
-    async runCode(extras: PyodideExtras, code: string): Promise<any> {
+    /**
+     * Helper method to install imports and prevent race conditions with double downloading
+     * @param {string} code The code containing import statements
+     * @param {boolean} ignoreMissing Whether to ignore failures on missing modules
+     */
+    private async installImports(code: string, ignoreMissing: boolean): Promise<void> {
+        if (this.installPromise == null) {
+            this.installPromise = this.papyros.install_imports.callKwargs({
+                source_code: code,
+                ignore_missing: ignoreMissing
+            }).catch((e: any) => papyrosLog(LogType.Error, "Error during Python imports", e));
+        }
+        await this.installPromise;
+        this.installPromise = null;
+    }
+
+    public async runCode(extras: PyodideExtras, code: string): Promise<any> {
         this.extras = extras;
         if (extras.interruptBuffer) {
             this.pyodide.setInterruptBuffer(extras.interruptBuffer);
         }
-        await this.papyros.run_async.callKwargs({
+        await this.installImports(code, true);
+        return await this.papyros.run_async.callKwargs({
             source_code: code,
         });
     }
 
     override async autocomplete(context: WorkerAutocompleteContext):
         Promise<CompletionResult | null> {
+        await this.installImports(context.text, true);
         const result: CompletionResult = PythonWorker.convert(
-            await this.papyros.autocomplete(context)
+            this.papyros.autocomplete(context)
         );
         result.validFor = /^[\w$]*$/;
         return result;
     }
 
     override async lintCode(code: string): Promise<Array<WorkerDiagnostic>> {
-        return PythonWorker.convert(await this.papyros.lint(code));
+        await this.installImports(code, true);
+        return PythonWorker.convert(this.papyros.lint(code));
     }
 }
 
