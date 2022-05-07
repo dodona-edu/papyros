@@ -2,11 +2,6 @@ import { CodeEditor } from "./CodeEditor";
 import { InputManager } from "./InputManager";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import { RenderOptions, ButtonOptions, Renderable } from "./util/Rendering";
-export declare enum ButtonType {
-    Run = "run",
-    Stop = "stop",
-    Other = "other"
-}
 interface CodeRunnerRenderOptions {
     /**
      * Options for rendering the panel
@@ -79,7 +74,14 @@ export declare class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      */
     setProgrammingLanguage(programmingLanguage: ProgrammingLanguage): Promise<void>;
     getProgrammingLanguage(): ProgrammingLanguage;
-    getButtons(type: ButtonType): Array<HTMLButtonElement>;
+    /**
+     * Get the button to run the code
+     */
+    get runButton(): HTMLButtonElement;
+    /**
+     * Get the button to interrupt the code
+     */
+    get stopButton(): HTMLButtonElement;
     /**
      * Show or hide the spinning circle, representing a running animation
      * @param {boolean} show Whether to show the spinner
@@ -96,16 +98,13 @@ export declare class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      * Add a button to display to the user
      * @param {ButtonOptions} options Options for rendering the button
      * @param {function} onClick Listener for click events on the button
-     * @param {ButtonType} type The type of the button
      */
-    addButton(options: ButtonOptions, onClick: () => void, type: ButtonType): void;
-    private renderButtons;
-    protected _render(options: CodeRunnerRenderOptions): void;
+    addButton(options: ButtonOptions, onClick: () => void): void;
+    protected _render(options: CodeRunnerRenderOptions): HTMLElement;
     /**
      * Run the code that is currently present in the editor
-     * @param {string} mode The mode to run the code in
      * @return {Promise<void>} Promise of running the code
      */
-    runCode(mode: string): Promise<void>;
+    runCode(): Promise<void>;
 }
 export {};
