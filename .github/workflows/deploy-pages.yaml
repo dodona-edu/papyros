@@ -24,6 +24,7 @@ jobs:
           cp -r public/* dist
       - name: Save build results
         run: |
+          mkdir devist
           mv dist devdist
           git add devist
       - name: Checkout
