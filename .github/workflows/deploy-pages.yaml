@@ -11,33 +11,36 @@ jobs:
       name: production
       url: https://docs.dodona.be/papyros/
     steps:
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
       - name: Checkout branch
         uses: actions/checkout@v3
-      - name: Install and build branch
-        # Last step ensures public files are available when hosting the web application
-        run: |
-          yarn install
-          yarn build:app
-          cp -r public/* dist
-          mv dist devdist
-      - name: Checkout
+      - name: Clone main
         uses: actions/checkout@v3
         with:
-          path: main
+          repository: dodona-edu/papyros
+          path: papyros
+          ref: main
       - name: Install and build main
+        run: |
+          cd papyros
+          yarn install
+          yarn build:app
+          cp -r public/* dist
+          cd ..
+      - name: Install and build branch
         run: |
           yarn install
           yarn build:app
           cp -r public/* dist
+      - name: Prepare builds to be deployed
+        run: |
+          mv dist devdist
+          mv papyros/dist dist
           mv devdist dist/dev
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@v4.3.3
         with:
           branch: gh-pages # The branch the action should deploy to.
           folder: dist # The folder the action should deploy.
-      - name: Remove deploy label
-        uses: buildsville/add-remove-label@v1
-        with:
-          token: ${{secrets.GITHUB_TOKEN}}
-          label: deploy
-          type: remove
