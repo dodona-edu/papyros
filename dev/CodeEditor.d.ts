@@ -3,10 +3,13 @@ import { Renderable, RenderOptions } from "./util/Rendering";
 import { CompletionSource } from "@codemirror/autocomplete";
 import { EditorView } from "@codemirror/view";
 import { Diagnostic } from "@codemirror/lint";
+export interface CodeEditorRenderOptions extends RenderOptions {
+    programmingLanguage: ProgrammingLanguage;
+}
 /**
  * Component that provides useful features to users writing code
  */
-export declare class CodeEditor extends Renderable {
+export declare class CodeEditor extends Renderable<CodeEditorRenderOptions> {
     /**
      * Reference to the user interface of the editor
      */
@@ -28,13 +31,7 @@ export declare class CodeEditor extends Renderable {
      * The extension indicates the new configuration
      */
     private reconfigure;
-    /**
-     * Render the editor with the given options and panel
-     * @param {RenderOptions} options Options for rendering
-     * @param {HTMLElement} panel The panel to display at the bottom
-     * @return {HTMLElement} The rendered element
-     */
-    protected _render(options: RenderOptions): void;
+    protected _render(options: CodeEditorRenderOptions): void;
     /**
      * @param {ProgrammingLanguage} language The language to use
      */

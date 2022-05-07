@@ -1,7 +1,7 @@
 import "./Papyros.css";
 import { InputMode } from "./InputManager";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
-import { RunState, CodeRunner } from "./CodeRunner";
+import { RunState, CodeRunner, ButtonType } from "./CodeRunner";
 import { OutputManager } from "./OutputManager";
 import { AtomicsChannelOptions, ServiceWorkerChannelOptions } from "sync-message";
 import { RenderOptions, ButtonOptions, Renderable } from "./util/Rendering";
@@ -129,8 +129,9 @@ export declare class Papyros extends Renderable<PapyrosRenderOptions> {
      * Add a button to the status panel within Papyros
      * @param {ButtonOptions} options Options to render the button with
      * @param {function} onClick Listener for click events on the button
+     * @param {ButtonType} type The type of the button
      */
-    addButton(options: ButtonOptions, onClick: () => void): void;
+    addButton(options: ButtonOptions, onClick: () => void, type: ButtonType): void;
     /**
      * @param {ProgrammingLanguage} language The language to check
      * @return {boolean} Whether Papyros supports this language by default
