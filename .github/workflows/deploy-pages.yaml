@@ -16,26 +16,28 @@ jobs:
           python-version: '3.9'
       - name: Checkout branch
         uses: actions/checkout@v3
-      - name: Install and build branch
-        # Last step ensures public files are available when hosting the web application
-        run: |
-          yarn install
-          yarn build:app
-          cp -r public/* dist
-      - name: Save build results
-        run: |
-          mkdir devist
-          mv dist devdist
-      - name: Checkout main
-        run: |
-          git checkout main
+      - name: Clone main
+        uses: actions/checkout@v3
+        with:
+          repository: dodona-edu/papyros
+          path: papyros
+          ref: main
       - name: Install and build main
         run: |
+          cd papyros
           yarn install
           yarn build:app
           cp -r public/* dist
-      - name: Prepare dev build to be deployed
+          cd ..
+      - name: Install and build branch
         run: |
+          yarn install
+          yarn build:app
+          cp -r public/* dist
+      - name: Prepare builds to be deployed
+        run: |
+          mv dist devdist
+          mv papyros/dist dist
           mv devdist dist/dev
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@v4.3.3
