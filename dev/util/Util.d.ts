@@ -8,21 +8,7 @@ export declare function getLocales(): Array<string>;
 /**
  * Helper type to access a HTML element, either via its id or the element itself
  */
-export declare type ElementIdentifier = string | HTMLElement;
-export interface ButtonOptions {
-    /**
-     * The HTML id of the button
-     */
-    id: string;
-    /**
-     * The text to display in the button, can also be HTML
-     */
-    buttonText: string;
-    /**
-     * Optional Tailwind classes to apply to the button
-     */
-    extraClasses?: string;
-}
+declare type ElementIdentifier = string | HTMLElement;
 /**
  * Resolve an ElementIdentifier to the corresponding HTLMElement
  * @param {ElementIdentifier} elementId The identifier for the element
@@ -59,3 +45,4 @@ export declare function downloadResults(data: string, filename: string): void;
  * @return {string} The current url
  */
 export declare function cleanCurrentUrl(endingSlash?: boolean): string;
+export {};
