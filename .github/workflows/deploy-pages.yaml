@@ -22,6 +22,8 @@ jobs:
           yarn install
           yarn build:app
           cp -r public/* dist
+      - name: Save build results
+        run: |
           mv dist devdist
           git add devist
       - name: Checkout
@@ -33,15 +35,11 @@ jobs:
           yarn install
           yarn build:app
           cp -r public/* dist
+      - name: Prepare dev build to be deployed
+        run: |
           mv devdist dist/dev
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@v4.3.3
         with:
           branch: gh-pages # The branch the action should deploy to.
           folder: dist # The folder the action should deploy.
-      - name: Remove deploy label
-        uses: buildsville/add-remove-label@v1
-        with:
-          token: ${{secrets.GITHUB_TOKEN}}
-          label: deploy
-          type: remove
