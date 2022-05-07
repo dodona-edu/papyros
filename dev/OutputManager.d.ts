@@ -37,6 +37,10 @@ export declare class OutputManager extends Renderable {
      * Store the HTML that is rendered to restore when changing language/theme
      */
     private content;
+    /**
+     * Allow converting ansi strings to proper HTML
+     */
+    private ansiUp;
     constructor();
     /**
      * Retrieve the parent element containing all output parts
