@@ -23,6 +23,7 @@ jobs:
           yarn build:app
           cp -r public/* dist
           mv dist devdist
+          git add devist
       - name: Checkout
         uses: actions/checkout@v3
         with:
