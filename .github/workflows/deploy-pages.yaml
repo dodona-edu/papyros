@@ -26,11 +26,9 @@ jobs:
         run: |
           mkdir devist
           mv dist devdist
-          git add devist
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          ref: main
+      - name: Checkout main
+        run: |
+          git checkout main
       - name: Install and build main
         run: |
           yarn install
