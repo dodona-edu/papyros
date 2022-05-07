@@ -61,15 +61,13 @@ export declare abstract class Backend<Extras extends SyncExtras = SyncExtras> {
      * @return {Promise<void>} Promise of launching
      */
     launch(onEvent: (e: BackendEvent) => void): Promise<void>;
-    runModes(): Array<string>;
     /**
      * Executes the given code
      * @param {Extras} extras Helper properties to run code
      * @param {string} code The code to run
-     * @param {string} mode The mode to run in
      * @return {Promise<void>} Promise of execution
      */
-    abstract runCode(extras: Extras, code: string, mode: string): Promise<void>;
+    abstract runCode(extras: Extras, code: string): Promise<void>;
     /**
      * Converts the context to a cloneable object containing useful properties
      * to generate autocompletion suggestions with
