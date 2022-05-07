@@ -11,6 +11,9 @@ jobs:
       name: production
       url: https://docs.dodona.be/papyros/
     steps:
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
       - name: Checkout branch
         uses: actions/checkout@v3
       - name: Install and build branch
@@ -23,7 +26,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
         with:
-          path: main
+          ref: main
       - name: Install and build main
         run: |
           yarn install
