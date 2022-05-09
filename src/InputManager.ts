@@ -62,7 +62,7 @@ export class InputManager extends Renderable {
         this.inputHandler.toggle(true);
     }
 
-    get inputHandler(): UserInputHandler {
+    private get inputHandler(): UserInputHandler {
         return this.inputHandlers.get(this.inputMode)!;
     }
 

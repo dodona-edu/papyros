@@ -1,7 +1,7 @@
 /* eslint-disable valid-jsdoc */
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import { t } from "./util/Util";
-import { Renderable, RenderOptions, appendClasses, renderWithOptions } from "./util/Rendering";
+import { Renderable, RenderOptions, renderWithOptions } from "./util/Rendering";
 import {
     CompletionSource, autocompletion,
     closeBrackets, closeBracketsKeymap, completionKeymap
@@ -46,7 +46,7 @@ export class CodeEditor extends Renderable {
     /**
      * Reference to the user interface of the editor
      */
-    readonly editorView: EditorView;
+    public readonly editorView: EditorView;
     /**
      * Mapping from CodeEditorOptions to a configurable compartment
      */

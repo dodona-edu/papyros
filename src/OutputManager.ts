@@ -64,7 +64,7 @@ export class OutputManager extends Renderable {
     /**
      * Retrieve the parent element containing all output parts
      */
-    get outputArea(): HTMLElement {
+    private get outputArea(): HTMLElement {
         return getElement(OUTPUT_AREA_ID);
     }
 
@@ -73,7 +73,7 @@ export class OutputManager extends Renderable {
      * @param {string} html Safe string version of the next child to render
      * @param {boolean} isNewElement Whether this a newly generated element
      */
-    renderNextElement(html: string, isNewElement = true): void {
+    private renderNextElement(html: string, isNewElement = true): void {
         if (isNewElement) { // Only save new ones to prevent duplicating
             this.content.push(html);
         }
@@ -170,7 +170,7 @@ export class OutputManager extends Renderable {
         this.render();
     }
 
-    onRunEnd(): void {
+    private onRunEnd(): void {
         if (this.outputArea.childElementCount === 0) {
             this.outputArea.setAttribute("data-placeholder", t("Papyros.no_output"));
         }

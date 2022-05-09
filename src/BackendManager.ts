@@ -40,7 +40,7 @@ export abstract class BackendManager {
      * @param {ProgrammingLanguage} language The language to support
      * @param {Function} backendCreator The constructor for a SyncClient
      */
-    static registerBackend(language: ProgrammingLanguage,
+    public static registerBackend(language: ProgrammingLanguage,
         backendCreator: () => SyncClient<Backend>): void {
         BackendManager.removeBackend(language);
         BackendManager.createBackendMap.set(language, backendCreator);
@@ -51,7 +51,7 @@ export abstract class BackendManager {
      * @param {ProgrammingLanguage} language The programming language supported by the backend
      * @return {SyncClient<Backend>} A SyncClient for the Backend
      */
-    static getBackend(language: ProgrammingLanguage): SyncClient<Backend> {
+    public static getBackend(language: ProgrammingLanguage): SyncClient<Backend> {
         if (this.backendMap.has(language)) { // Cached
             return this.backendMap.get(language)!;
         } else if (this.createBackendMap.has(language)) {
@@ -69,7 +69,7 @@ export abstract class BackendManager {
      * @param {ProgrammingLanguage} language The programming language supported by the backend
      * @return {boolean} Whether the remove operation had any effect
      */
-    static removeBackend(language: ProgrammingLanguage): boolean {
+    public static removeBackend(language: ProgrammingLanguage): boolean {
         this.backendMap.delete(language);
         return this.createBackendMap.delete(language);
     }
@@ -80,7 +80,7 @@ export abstract class BackendManager {
      * @param {BackendEventListener} subscriber Callback for when an event
      * of the given type is published
      */
-    static subscribe(type: BackendEventType, subscriber: BackendEventListener): void {
+    public static subscribe(type: BackendEventType, subscriber: BackendEventListener): void {
         if (!this.subscriberMap.has(type)) {
             this.subscriberMap.set(type, []);
         }
@@ -94,7 +94,7 @@ export abstract class BackendManager {
      * Publish an event, notifying all listeners for its type
      * @param {BackendEventType} e The event to publish
      */
-    static publish(e: BackendEvent): void {
+    public static publish(e: BackendEvent): void {
         papyrosLog(LogType.Debug, "Publishing event: ", e);
         if (this.subscriberMap.has(e.type)) {
             this.subscriberMap.get(e.type)!.forEach(cb => cb(e));
