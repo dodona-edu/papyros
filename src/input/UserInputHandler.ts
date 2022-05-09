@@ -27,7 +27,7 @@ export abstract class UserInputHandler extends Renderable {
     /**
      * Whether this handler has input ready
      */
-    abstract hasNext(): boolean;
+    public abstract hasNext(): boolean;
     /**
      * Consume and return the next input value
      *
@@ -35,26 +35,32 @@ export abstract class UserInputHandler extends Renderable {
      * otherwise behaviour can produce incorrect results
      * @return {string} The next value
      */
-    abstract next(): string;
+    public abstract next(): string;
 
-    abstract onRunStart(): void;
+    /**
+     * Method to call when a new run has started
+     */
+    public abstract onRunStart(): void;
 
-    abstract onRunEnd(): void;
+    /**
+     * Method to call when the run ended
+     */
+    public abstract onRunEnd(): void;
     /**
      * Retrieve the InputMode corresponding to this handler
      * @return {InputMode} The InputMode enum value
      */
-    abstract getInputMode(): InputMode;
+    public abstract getInputMode(): InputMode;
     /**
      * Enable or disable this UserInputHandler
      * @param {boolean} active Whether this component is active
      */
-    abstract onToggle(active: boolean): void;
+    public abstract toggle(active: boolean): void;
 
     /**
      * Retrieve the HTMLInputElement for this InputHandler
      */
-    get inputArea(): HTMLInputElement {
+    public get inputArea(): HTMLInputElement {
         return getElement<HTMLInputElement>(INPUT_TA_ID);
     }
 
@@ -63,7 +69,7 @@ export abstract class UserInputHandler extends Renderable {
      * @param {boolean} waiting Whether we are waiting for input
      * @param {string} prompt Optional message to display if waiting
      */
-    waitWithPrompt(waiting: boolean, prompt = ""): void {
+    public waitWithPrompt(waiting: boolean, prompt = ""): void {
         this.waiting = waiting;
         this.inputArea.setAttribute("placeholder",
             prompt || t(`Papyros.input_placeholder.${this.getInputMode()}`));

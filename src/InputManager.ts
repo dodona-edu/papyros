@@ -57,10 +57,10 @@ export class InputManager extends Renderable {
     }
 
     public setInputMode(inputMode: InputMode): void {
-        this.inputHandler.onToggle(false);
+        this.inputHandler.toggle(false);
         this.inputMode = inputMode;
         this.render();
-        this.inputHandler.onToggle(true);
+        this.inputHandler.toggle(true);
     }
 
     get inputHandler(): UserInputHandler {
@@ -94,7 +94,7 @@ ${switchMode}`);
         this.inputHandler.waitWithPrompt(this.waiting, this.prompt);
     }
 
-    private waitWithPrompt(waiting: boolean, prompt=""): void {
+    private waitWithPrompt(waiting: boolean, prompt = ""): void {
         this.waiting = waiting;
         this.prompt = prompt;
         this.inputHandler.waitWithPrompt(this.waiting, this.prompt);
