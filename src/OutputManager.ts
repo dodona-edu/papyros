@@ -1,7 +1,7 @@
 import escapeHTML from "escape-html";
 import { BackendEvent, BackendEventType } from "./BackendEvent";
 import { BackendManager } from "./BackendManager";
-import { inCircle } from "./util/HTMLShapes";
+import { renderInCircle } from "./util/HTMLShapes";
 import {
     getElement, parseData,
     t
@@ -130,10 +130,10 @@ export class OutputManager extends Renderable {
                 shortTraceback = this.spanify("  " + shortTraceback, true, "where");
             }
             errorHTML += "<div class=\"_tw-text-red-500 _tw-text-bold\">";
-            const infoQM = inCircle("?", escapeHTML(errorObject.info),
+            const infoQM = renderInCircle("?", escapeHTML(errorObject.info),
                 // eslint-disable-next-line max-len
                 "_tw-text-blue-500 _tw-border-blue-500 dark:_tw-text-dark-mode-blue dark:_tw-border-dark-mode-blue");
-            const tracebackEM = inCircle("!",
+            const tracebackEM = renderInCircle("!",
                 escapeHTML(errorObject.traceback), "_tw-text-red-500 _tw-border-red-500");
             errorHTML += `${infoQM}${errorObject.name} traceback:${tracebackEM}\n`;
             errorHTML += shortTraceback;

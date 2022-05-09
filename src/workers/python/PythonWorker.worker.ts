@@ -7,7 +7,6 @@ import {
     loadPyodideAndPackage,
     PyodideExtras
 } from "pyodide-worker-runner";
-import { LogType, papyrosLog } from "../../util/Logging";
 /* eslint-disable-next-line */
 const pythonPackageUrl = require("!!url-loader!./python_package.tar.gz.load_by_url").default;
 
@@ -78,7 +77,7 @@ class PythonWorker extends Backend<PyodideExtras> {
             this.installPromise = this.papyros.install_imports.callKwargs({
                 source_code: code,
                 ignore_missing: ignoreMissing
-            }).catch((e: any) => papyrosLog(LogType.Error, "Error during Python imports", e));
+            });
         }
         await this.installPromise;
         this.installPromise = null;

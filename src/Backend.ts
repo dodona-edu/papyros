@@ -1,6 +1,5 @@
 import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
 import { BackendEvent, BackendEventType } from "./BackendEvent";
-import { papyrosLog, LogType } from "./util/Logging";
 import { syncExpose, SyncExtras } from "comsync";
 import { BackendEventQueue } from "./BackendEventQueue";
 
@@ -113,7 +112,7 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
             return [line.number, (range.head - line.from)];
         })[0];
         const beforeMatch = context.matchBefore(expr);
-        const ret = {
+        return {
             explicit: context.explicit,
             before: beforeMatch,
             pos: context.pos,
@@ -121,8 +120,6 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
             line: lineNr,
             text: context.state.doc.toString()
         };
-        papyrosLog(LogType.Debug, "Worker completion context:", ret);
-        return ret;
     }
 
     /**

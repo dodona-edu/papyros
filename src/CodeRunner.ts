@@ -10,7 +10,7 @@ import {
 } from "./Constants";
 import { InputManager } from "./InputManager";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
-import { spinningCircle } from "./util/HTMLShapes";
+import { renderSpinningCircle } from "./util/HTMLShapes";
 import { LogType, papyrosLog } from "./util/Logging";
 import {
     addListener, getElement,
@@ -239,7 +239,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     </div>
     <div class="_tw-col-span-1 _tw-flex _tw-flex-row-reverse _tw-items-center">
         <div id="${APPLICATION_STATE_TEXT_ID}"></div>
-        ${spinningCircle(STATE_SPINNER_ID, "_tw-border-gray-200 _tw-border-b-red-500")}
+        ${renderSpinningCircle(STATE_SPINNER_ID, "_tw-border-gray-200 _tw-border-b-red-500")}
     </div>
 </div>`);
         // Buttons are freshly added to the DOM, so attach listeners now
@@ -264,7 +264,6 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             type: BackendEventType.Start,
             data: "User started run", contentType: "text/plain"
         });
-        papyrosLog(LogType.Debug, "Running code in Papyros, sending to backend");
         const start = new Date().getTime();
         let endMessage = "Program finishd normally";
         let interrupted = false;

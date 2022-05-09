@@ -9,7 +9,6 @@ import {
 } from "./Constants";
 import { InputMode } from "./InputManager";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
-import { LogType, papyrosLog } from "./util/Logging";
 import {
     t, loadTranslations, getLocales,
     removeSelection,
@@ -204,19 +203,16 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
     private async configureInput(): Promise<boolean> {
         if (typeof SharedArrayBuffer === "undefined") {
             if (!this.config.channelOptions?.serviceWorkerName || !("serviceWorker" in navigator)) {
-                papyrosLog(LogType.Important, "Unable to register service worker. Please specify all required parameters and ensure service workers are supported.");
                 return false;
             }
             const serviceWorkerRoot = cleanCurrentUrl(true);
             const { serviceWorkerName } = this.config.channelOptions;
             this.config.channelOptions.scope = serviceWorkerRoot;
             const serviceWorkerUrl = serviceWorkerRoot + serviceWorkerName;
-            papyrosLog(LogType.Important, `Registering service worker: ${serviceWorkerUrl}`);
             try {
                 await window.navigator.serviceWorker.register(serviceWorkerUrl);
                 BackendManager.channel = makeChannel({ serviceWorker: this.config.channelOptions })!;
             } catch (error: any) {
-                papyrosLog(LogType.Error, "Error while registering service worker: ", error);
                 return false;
             }
         } else {
