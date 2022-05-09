@@ -97,7 +97,7 @@ If you need more specific functionality, this can be added in your own code by a
 
 ## Documentation
 
-Visit our web page at <https://docs.dodona.be/papyros/>.
+Visit our documentation page at <https://docs.dodona.be/papyros/>.
 
 ## Building and developing
 
