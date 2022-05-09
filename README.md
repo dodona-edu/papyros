@@ -70,9 +70,11 @@ This requires advanced features which are not available by default in your brows
 
 The most efficient and practical way is using SharedArrayBuffers, which requires the presence of certain HTTP headers.
 The following headers must be set on resources using Papyros.
-```json
-'Cross-Origin-Opener-Policy': 'same-origin',
-'Cross-Origin-Embedder-Policy': 'require-corp'
+```yaml
+{
+"Cross-Origin-Opener-Policy": "same-origin",
+"Cross-Origin-Embedder-Policy": "require-corp"
+}
 ```
 If you are also embedding other components (such as iframes, videos or images) in those pages, you will also need to set the `Cross-Origin-Resource-Policy`-header to `cross-origin` to make them work correctly. If these elements come from external URLs, it will likely not be possible to keep using them. An alternative is described below.
 
