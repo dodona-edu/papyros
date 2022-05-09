@@ -24,10 +24,12 @@ Currently, Papyros provides support for the following programming languages:
 ## Using Papyros in your own project
 
 You can add Papyros to your project as follows:
-- npm: ```shell
+- npm:
+```shell
 npm install @dodona/papyros
 ```
-- yarn: ```shell
+- yarn:
+```shell
 yarn add @dodona/papyros
 ```
 
@@ -46,7 +48,7 @@ Papyros instance with a `PapyrosConfig` object.
 The following options are supported:
 
 - `standAlone`: Whether to operate in stand-alone or embedded mode as described above.
-- `programmingLanguage`: The language to use in the CodeEditor and Backend.
+- `programmingLanguage`: The [programming language](/src/ProgrammingLanguage.ts) to use in the CodeEditor and Backend.
 - `locale`: The locale to use, currently English and Dutch translations are provided.
 - `inputMode`: How the users can provide input, according to the [InputMode enum](/src/InputManager.ts)
 - `example`: Optional name of the selected example, only appliccable in standAlone-mode
@@ -81,7 +83,7 @@ If you already use a service worker, simply include our [InputWorker](src/worker
 ### Code editor
 
 The editor used in Papyros is powered by [CodeMirror 6](https://codemirror.net/6/). It is accessible in code via an instance of Papyros and by default allows configuring many options:
-- the programming language of the contents (for e.g. syntax higlighting)
+- the [programming language](/src/ProgrammingLanguage.ts) of the contents (for e.g. syntax higlighting)
 - the displayed placeholder
 - the indentation unit
 - the shown panel
