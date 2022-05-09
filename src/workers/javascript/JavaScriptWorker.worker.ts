@@ -71,7 +71,7 @@ class JavaScriptWorker extends Backend<SyncExtras> {
         );
     }
 
-    override async autocomplete(context: WorkerAutocompleteContext):
+    public override async autocomplete(context: WorkerAutocompleteContext):
         Promise<CompletionResult | null> {
         const completePropertyAfter = ["PropertyName", ".", "?."];
         const dontCompleteIn = ["TemplateString", "LineComment", "BlockComment",
@@ -117,7 +117,7 @@ class JavaScriptWorker extends Backend<SyncExtras> {
         };
     }
 
-    override runCode(extras: SyncExtras, code: string): Promise<any> {
+    public override runCode(extras: SyncExtras, code: string): Promise<any> {
         this.extras = extras;
         this.queue.reset();
         // Builtins to store before execution and restore afterwards
@@ -158,7 +158,7 @@ class JavaScriptWorker extends Backend<SyncExtras> {
         }
     }
 
-    override async lintCode(): Promise<Array<WorkerDiagnostic>> {
+    public override async lintCode(): Promise<Array<WorkerDiagnostic>> {
         return Promise.resolve([]);
     }
 }

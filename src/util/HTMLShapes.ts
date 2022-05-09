@@ -22,4 +22,4 @@ export function renderInCircle(content: string, title: string, colorClasses: str
     return `<span ${htmlTitle} class="_tw-display-block _tw-font-bold _tw-text-center
     _tw-w-[10px] _tw-h-[10px] _tw-rounded-full _tw-px-1  _tw-mx-1
     _tw-bg-white-500 _tw-border-2 ${colorClasses}">${content}</span>`;
-};
+}
