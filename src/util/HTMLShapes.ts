@@ -7,7 +7,7 @@
  * @param {string} borderColors The tailwind color classes for the borders of the circle
  * @return {string} A string representation of the circle
  */
- export const spinningCircle = (id: string, borderColors: string): string => {
+export const spinningCircle = (id: string, borderColors: string): string => {
     return (
 `<div id="${id}" class="_tw-animate-spin _tw-rounded-full ${borderColors}
  _tw-border-2 _tw-h-[20px] _tw-w-[20px] _tw-mr-3"></div>`

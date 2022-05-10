@@ -5,7 +5,7 @@ import { ProgrammingLanguage } from "./ProgrammingLanguage";
  * @param {string} s The value to add a prefix to
  * @return {string} The value with an almost certainly unused prefix
  */
-function addPapyrosPrefix(s: string): string {
+export function addPapyrosPrefix(s: string): string {
     return `__papyros-${s}`;
 }
 /* Default HTML ids for various elements */
@@ -18,9 +18,9 @@ export const INPUT_TA_ID = addPapyrosPrefix("code-input-area");
 export const USER_INPUT_WRAPPER_ID = addPapyrosPrefix("user-input-wrapper");
 export const EDITOR_WRAPPER_ID = addPapyrosPrefix("code-area");
 export const PANEL_WRAPPER_ID = addPapyrosPrefix("code-status-panel");
+export const RUNNER_BUTTON_AREA_WRAPPER_ID = addPapyrosPrefix("runner-button-area-wrapper");
 export const STATE_SPINNER_ID = addPapyrosPrefix("state-spinner");
 export const APPLICATION_STATE_TEXT_ID = addPapyrosPrefix("application-state-text");
-export const RUN_BTN_ID = addPapyrosPrefix("run-code-btn");
 export const STOP_BTN_ID = addPapyrosPrefix("stop-btn");
 export const SEND_INPUT_BTN_ID = addPapyrosPrefix("send-input-btn");
 export const SWITCH_INPUT_MODE_A_ID = addPapyrosPrefix("switch-input-mode");

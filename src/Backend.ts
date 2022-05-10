@@ -75,7 +75,7 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
      * @param {function(BackendEvent):void} onEvent Callback for when events occur
      * @return {Promise<void>} Promise of launching
      */
-    launch(
+    public launch(
         onEvent: (e: BackendEvent) => void
     ): Promise<void> {
         this.onEvent = (e: BackendEvent) => {
@@ -90,13 +90,18 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
         return Promise.resolve();
     }
 
+    public runModes(): Array<string> {
+        return ["exec"];
+    }
+
     /**
      * Executes the given code
      * @param {Extras} extras Helper properties to run code
      * @param {string} code The code to run
+     * @param {string} mode The mode to run in
      * @return {Promise<void>} Promise of execution
      */
-    public abstract runCode(extras: Extras, code: string): Promise<void>;
+    public abstract runCode(extras: Extras, code: string, mode: string): Promise<void>;
 
     /**
      * Converts the context to a cloneable object containing useful properties

@@ -12,6 +12,7 @@ import {
     RenderOptions, renderWithOptions
 } from "./util/Rendering";
 import { OUTPUT_AREA_ID, OUTPUT_OVERFLOW_ID } from "./Constants";
+import AnsiUp from "ansi_up";
 
 /**
  * Shape of Error objects that are easy to interpret
@@ -51,14 +52,20 @@ export class OutputManager extends Renderable {
      * Store the HTML that is rendered to restore when changing language/theme
      */
     private content: Array<string>;
+    /**
+     * Allow converting ansi strings to proper HTML
+     */
+    private ansiUp: AnsiUp;
 
     constructor() {
         super();
         this.content = [];
         BackendManager.subscribe(BackendEventType.Start, () => this.reset());
         BackendManager.subscribe(BackendEventType.Output, e => this.showOutput(e));
+        BackendManager.subscribe(BackendEventType.Debug, e => this.showOutput(e));
         BackendManager.subscribe(BackendEventType.Error, e => this.showError(e));
         BackendManager.subscribe(BackendEventType.End, () => this.onRunEnd());
+        this.ansiUp = new AnsiUp();
     }
 
     /**
@@ -96,7 +103,7 @@ export class OutputManager extends Renderable {
                 .filter(line => !ignoreEmpty || line.trim().length > 0)
                 .join("\n");
         }
-        return `<span class="${className}">${escapeHTML(spanText)}</span>`;
+        return `<span class="${className}">${this.ansiUp.ansi_to_html(spanText)}</span>`;
     }
 
     /**

@@ -8,7 +8,8 @@ export enum BackendEventType {
     Output = "output",
     Sleep = "sleep",
     Error = "error",
-    Interrupt = "interrupt"
+    Interrupt = "interrupt",
+    Debug = "debug"
 }
 /**
  * All possible types for ease of iteration
@@ -17,7 +18,7 @@ export const BACKEND_EVENT_TYPES = [
     BackendEventType.Start, BackendEventType.End,
     BackendEventType.Input, BackendEventType.Output,
     BackendEventType.Sleep, BackendEventType.Error,
-    BackendEventType.Interrupt
+    BackendEventType.Interrupt, BackendEventType.Debug
 ];
 /**
  * Interface for events used for communication between threads

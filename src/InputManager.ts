@@ -81,7 +81,7 @@ export class InputManager extends Renderable {
         </a>`;
 
         renderWithOptions(options, `
-<div id="${USER_INPUT_WRAPPER_ID}" class="_tw-my-1">
+<div id="${USER_INPUT_WRAPPER_ID}" class="_tw-my-1 papyros-font-family">
 </div>
 ${switchMode}`);
         addListener<InputMode>(SWITCH_INPUT_MODE_A_ID, im => this.setInputMode(im),

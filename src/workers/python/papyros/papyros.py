@@ -3,6 +3,7 @@ import sys
 import json
 import python_runner
 import friendly_traceback
+import asyncio
 
 from friendly_traceback.core import FriendlyTraceback
 from collections.abc import Awaitable
@@ -47,13 +48,15 @@ class Papyros(python_runner.PyodideRunner):
                 for part in to_py(parts):
                     typ = part["type"]
                     data = part["text"] if "text" in part else part["data"]
+                    content_type = part.get("contentType")
                     if typ in ["stderr", "traceback", "syntax_error"]:
-                        cb("error", data, contentType=part.get("contentType"))
+                        cb("error", data, contentType=content_type)
                     elif typ in ["input", "input_prompt"]:
                         # Do not display values entered by user for input
                         continue
                     else:
-                        cb("output", data, contentType=part.get("contentType"))
+                        ev_type = "debug" if typ in ["snoop"] else "output"
+                        cb(ev_type, data, contentType=content_type)
             elif event_type == "input":
                 return cb("input", data["prompt"])
             elif event_type == "sleep":
@@ -98,7 +101,6 @@ class Papyros(python_runner.PyodideRunner):
             # Occurs when trying to fetch PyPi files for misspelled imports
             if not ignore_missing:
                 raise
-                
 
     @contextmanager
     def _execute_context(self):
@@ -112,16 +114,16 @@ class Papyros(python_runner.PyodideRunner):
                 self.output("traceback", **self.serialize_traceback(e))
         self.post_run()
 
-    def pre_run(self, source_code, mode="exec", top_level_await=False):
+    def pre_run(self, source_code, mode="exec", top_level_await=True):
         self.override_globals()
         return super().pre_run(source_code, mode=mode, top_level_await=top_level_await)
 
-    async def run_async(self, source_code, mode="exec", top_level_await=True):
+    async def run_async(self, source_code, mode="exec", top_level_await=True, snoop_config=None):
         with self._execute_context():
             try:
                 code_obj = self.pre_run(source_code, mode=mode, top_level_await=top_level_await)
                 if code_obj:
-                    result = self.execute(code_obj, mode)
+                    result = self.execute(code_obj, mode=mode, snoop_config=to_py(snoop_config))
                     while isinstance(result, Awaitable):
                         result = await result
                     return result

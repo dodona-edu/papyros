@@ -45,5 +45,5 @@ def check_tar(tarname, out_dir="."):
 
 
 if __name__ == "__main__":
-    create_package("python_package", "python-runner friendly_traceback jedi pylint==2.4.4", extra_deps="papyros")
+    create_package("python_package", "python-runner friendly_traceback jedi snoop pylint==2.4.4", extra_deps="papyros")
     #check_tar("python_package.tar.gz.load_by_url", out_dir="test")

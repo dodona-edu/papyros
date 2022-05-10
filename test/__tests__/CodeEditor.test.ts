@@ -8,19 +8,20 @@ describe("CodeEditor", () => {
     document.body.innerHTML = `<div id=${EDITOR_WRAPPER_ID}></div>`;
     const editor = new CodeEditor();
     editor.render({
-        parentElementId: EDITOR_WRAPPER_ID
+        parentElementId: EDITOR_WRAPPER_ID,
+        programmingLanguage: ProgrammingLanguage.JavaScript
     });
 
     beforeEach(() => {
         editor.setCode("");
-    })
+    });
 
     it("can set and get code", () => {
         expect(editor.getCode()).toEqual("");
         const newCode = "print(input())";
         editor.setCode(newCode);
         expect(editor.getCode()).toEqual(newCode);
-    })
+    });
 
     it("uses syntax highlighting", () => {
         editor.setProgrammingLanguage(ProgrammingLanguage.Python);
@@ -38,13 +39,13 @@ describe("CodeEditor", () => {
         defSpans = Array.from(document.querySelectorAll("span"))
             .filter(el => el.textContent?.includes("def"));
         expect(defSpans.length).toEqual(0);
-    })
+    });
 
     it("supports linting", done => {
         const lintMock: () => Array<Diagnostic> = jest.fn(() => {
             return [
                 { from: 0, to: 0, severity: "error", message: "mock" }
-            ]
+            ];
         });
         editor.setLintingSource(lintMock);
         editor.setCode("x=5");
@@ -53,18 +54,20 @@ describe("CodeEditor", () => {
             expect(lintMock).toBeCalled();
             done();
         }, 750);
-    })
+    });
 
-    it("supports autocompletion", done => {
-        const autocompleteMock: () => null = jest.fn(() => null);
-        editor.setCompletionSource(autocompleteMock);
-        startCompletion(editor.editorView);
+    it("supports autocompletion", () => {
+        return new Promise<void>(done => {
+            const autocompleteMock = jest.fn(() => null);
+            editor.setCompletionSource(autocompleteMock);
+            startCompletion(editor.editorView);
 
-        // CodeMirror waits until editor is idle to call autocompletion
-        setTimeout(() => {
-            expect(autocompleteMock).toBeCalled();
-            done();
-        }, 750);
-    })
-})
+            // CodeMirror waits until editor is idle to call autocompletion
+            setTimeout(() => {
+                expect(autocompleteMock).toBeCalled();
+                done();
+            }, 750);
+        });
+    });
+});
 

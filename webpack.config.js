@@ -86,6 +86,7 @@ module.exports = function (webpackEnv, argv) {
 		devServer: {
 			static: path.join(__dirname, PUBLIC_DIR),
 			port: DEVELOPMENT_PORT,
+			hot: false // Many things in the workers cannot be replaced in a hot fashion
 		},
 	}
 };
