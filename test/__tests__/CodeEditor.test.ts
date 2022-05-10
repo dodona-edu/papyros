@@ -13,14 +13,14 @@ describe("CodeEditor", () => {
 
     beforeEach(() => {
         editor.setCode("");
-    })
+    });
 
     it("can set and get code", () => {
         expect(editor.getCode()).toEqual("");
         const newCode = "print(input())";
         editor.setCode(newCode);
         expect(editor.getCode()).toEqual(newCode);
-    })
+    });
 
     it("uses syntax highlighting", () => {
         editor.setProgrammingLanguage(ProgrammingLanguage.Python);
@@ -38,33 +38,37 @@ describe("CodeEditor", () => {
         defSpans = Array.from(document.querySelectorAll("span"))
             .filter(el => el.textContent?.includes("def"));
         expect(defSpans.length).toEqual(0);
-    })
+    });
 
-    it("supports linting", done => {
+    it("supports linting", () => {
         const lintMock: () => Array<Diagnostic> = jest.fn(() => {
             return [
                 { from: 0, to: 0, severity: "error", message: "mock" }
-            ]
+            ];
         });
         editor.setLintingSource(lintMock);
         editor.setCode("x=5");
         // CodeMirror waits until editor is idle to call linter
-        setTimeout(() => {
-            expect(lintMock).toBeCalled();
-            done();
-        }, 750);
-    })
+        return new Promise<void>(resolve => {
+            setTimeout(() => {
+                expect(lintMock).toBeCalled();
+                resolve();
+            }, 750);
+        });
+    });
 
-    it("supports autocompletion", done => {
+    it("supports autocompletion", () => {
         const autocompleteMock: () => null = jest.fn(() => null);
         editor.setCompletionSource(autocompleteMock);
         startCompletion(editor.editorView);
 
-        // CodeMirror waits until editor is idle to call autocompletion
-        setTimeout(() => {
-            expect(autocompleteMock).toBeCalled();
-            done();
-        }, 750);
-    })
-})
+        return new Promise<void>(resolve => {
+            // CodeMirror waits until editor is idle to call autocompletion
+            setTimeout(() => {
+                expect(autocompleteMock).toBeCalled();
+                resolve();
+            }, 750);
+        });
+    });
+});
 

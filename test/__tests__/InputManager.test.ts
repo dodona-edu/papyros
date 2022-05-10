@@ -4,11 +4,11 @@ import { INPUT_AREA_WRAPPER_ID, INPUT_TA_ID, SEND_INPUT_BTN_ID } from "../../src
 import { InputManager, InputMode } from "../../src/InputManager";
 import { getElement } from "../../src/util/Util";
 
-function requestInput(prompt=""): void {
+function requestInput(prompt = ""): void {
     BackendManager.publish({
         type: BackendEventType.Input,
         data: prompt, contentType: "text/plain"
-    })
+    });
 }
 
 describe("InputManager", () => {
@@ -19,7 +19,7 @@ describe("InputManager", () => {
 
     beforeEach(() => {
         inputs = [];
-    })
+    });
 
     it("can process input in interactive mode", () => {
         const input = "Jest";
@@ -32,7 +32,7 @@ describe("InputManager", () => {
         expect(inputs.length).toEqual(1);
         expect(inputs).toContain(input);
         expect(inputManager.isWaiting()).toEqual(false);
-    })
+    });
 
     it("can process input in batch mode", () => {
         const batchInputs = ["1", "2"];
@@ -40,13 +40,13 @@ describe("InputManager", () => {
         expect(inputManager.getInputMode()).toEqual(InputMode.Batch);
         const batchArea = getElement<HTMLInputElement>(INPUT_TA_ID);
         batchArea.value = batchInputs[0];
-        requestInput("First")
+        requestInput("First");
         requestInput("Second");
         expect(inputs.length).toEqual(1);
         expect(inputs).toContain(batchInputs[0]);
-        batchArea.value += `\n${batchInputs[1]}`
+        batchArea.value += `\n${batchInputs[1]}`;
         expect(inputs.length).toEqual(1);
-        batchArea.dispatchEvent(new KeyboardEvent("keydown", {key: "enter"}));
+        batchArea.dispatchEvent(new KeyboardEvent("keydown", { key: "enter" }));
         expect(inputs).toEqual(batchInputs);
-    })
-})
+    });
+});
