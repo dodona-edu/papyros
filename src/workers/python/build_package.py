@@ -21,11 +21,11 @@ def create_package(package_name, dependencies, extra_deps):
     shutil.rmtree(package_name, ignore_errors=True)
     install_dependencies(dependencies.split(" "), package_name)
     try:
-        shutil.copytree(extra_deps,
-        os.path.join(package_name, extra_deps), dirs_exist_ok=True)
+        dest_dir = os.path.join(package_name, extra_deps)
+        shutil.rmtree(dest_dir, ignore_errors=True)
+        shutil.copytree(extra_deps, dest_dir)
     except Exception as e:
         # Always seems to result in a harmless permission denied error
-        print(e)
         pass
     tar_name = f"{package_name}.tar.gz.load_by_url"
     if os.path.exists(tar_name):
@@ -45,5 +45,5 @@ def check_tar(tarname, out_dir="."):
 
 
 if __name__ == "__main__":
-    create_package("python_package", "python-runner friendly_traceback jedi pylint==2.4.4", extra_deps="papyros")
+    create_package("python_package", "python-runner friendly_traceback jedi pylint", extra_deps="papyros")
     #check_tar("python_package.tar.gz.load_by_url", out_dir="test")

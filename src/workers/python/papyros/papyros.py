@@ -12,7 +12,6 @@ from pyodide import JsException, create_proxy
 
 from .util import to_py
 from .autocomplete import autocomplete
-from .linting import lint
 
 SYS_RECURSION_LIMIT = 500
 
@@ -181,5 +180,16 @@ class Papyros(python_runner.PyodideRunner):
         return autocomplete(context)
 
     def lint(self, code):
+        # PyLint runs into an issue when trying to import its dependencies
+        # Temporarily overriding os.devnull solves this issue
+        TEMP_DEV_NULL = "__papyros_dev_null"
+        with open(TEMP_DEV_NULL, "w") as f:
+            pass
+        orig_dev_null = os.devnull
+        os.devnull = TEMP_DEV_NULL
+
         self.set_source_code(code)
-        return lint(self.filename)
+        from .linting import lint
+        os.devnull = orig_dev_null
+        lint_results = lint(self.filename)
+        return lint_results

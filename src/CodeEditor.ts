@@ -1,7 +1,7 @@
 /* eslint-disable valid-jsdoc */
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import { t } from "./util/Util";
-import { Renderable, RenderOptions, appendClasses, renderWithOptions } from "./util/Rendering";
+import { Renderable, RenderOptions, renderWithOptions } from "./util/Rendering";
 import {
     CompletionSource, autocompletion,
     closeBrackets, closeBracketsKeymap, completionKeymap
@@ -142,7 +142,13 @@ export class CodeEditor extends Renderable {
         lintSource: (view: EditorView) => readonly Diagnostic[] | Promise<readonly Diagnostic[]>)
         : void {
         this.reconfigure(
-            [Option.Linting, linter(lintSource)]
+            [
+                Option.Linting,
+                [
+                    linter(lintSource),
+                    lintGutter()
+                ]
+            ]
         );
     }
 
@@ -220,7 +226,6 @@ export class CodeEditor extends Renderable {
     *  - special character highlighting
     *  - the undo history
     *  - a fold gutter
-    *  - gutter for linting
     *  - custom selection drawing
     *  - multiple selections
     *  - reindentation on input
@@ -246,7 +251,6 @@ export class CodeEditor extends Renderable {
             highlightSpecialChars(),
             history(),
             foldGutter(),
-            lintGutter(),
             drawSelection(),
             EditorState.allowMultipleSelections.of(true),
             indentOnInput(),
