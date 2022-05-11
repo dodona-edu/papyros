@@ -82,7 +82,6 @@ export declare class CodeEditor extends Renderable {
     *  - special character highlighting
     *  - the undo history
     *  - a fold gutter
-    *  - gutter for linting
     *  - custom selection drawing
     *  - multiple selections
     *  - reindentation on input

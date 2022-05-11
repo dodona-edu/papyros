@@ -36,9 +36,30 @@ export interface WorkerAutocompleteContext {
     } | null;
 }
 export interface WorkerDiagnostic {
+    /**
+     * 1-based index of the starting line containing the issue
+     */
     lineNr: number;
+    /**
+     * 0-based index of the column in the starting line
+     */
     columnNr: number;
+    /**
+     * 1-based index of the ending line containing the issue
+     * Can be the same as lineNr
+     */
+    endLineNr: number;
+    /**
+     * 0-based index of the column in the ending line
+     */
+    endColumnNr: number;
+    /**
+     * Severity of the issue
+     */
     severity: "info" | "warning" | "error";
+    /**
+     * Message describing the issue
+     */
     message: string;
 }
 export declare abstract class Backend<Extras extends SyncExtras = SyncExtras> {
