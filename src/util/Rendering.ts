@@ -1,5 +1,6 @@
 /* eslint-disable max-len */
 import { getElement } from "./Util";
+import escapeHTML from "escape-html";
 
 /**
  * Useful options for rendering an element
@@ -118,12 +119,12 @@ export function renderButton(options: ButtonOptions): string {
  * @param {T} selected The initially selected element in the list, if any
  * @return {string} The string representation of the select options
  */
-export function renderSelectOptions<T>(
+export function renderSelectOptions<T extends string>(
     options: Array<T>, optionText: (option: T) => string, selected?: T): string {
     return options.map((option: T) => {
         const selectedValue = option === selected ? "selected" : "";
         return `
-            <option ${selectedValue} value="${option}" class="dark:_tw-text-white dark:_tw-bg-dark-mode-bg">
+            <option ${selectedValue} value="${escapeHTML(option)}" class="dark:_tw-text-white dark:_tw-bg-dark-mode-bg">
                 ${optionText(option)}
             </option>
         `;
@@ -152,7 +153,7 @@ class="dark:_tw-text-white dark:_tw-bg-dark-mode-bg _tw-px-1">${labelText}: </la
  * @param {string} labelText Optional text to display in a label
  * @return {string} The string representation of the select element
  */
-export function renderSelect<T>(selectId: string,
+export function renderSelect<T extends string>(selectId: string,
     options: Array<T>, optionText: (option: T) => string, selected?: T,
     labelText?: string): string {
     const select = `
