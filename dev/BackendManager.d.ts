@@ -27,6 +27,10 @@ export declare abstract class BackendManager {
      */
     private static subscriberMap;
     /**
+     * Whether the BackendManager is publishing events
+     */
+    private static halted;
+    /**
      * The channel used to communicate with the SyncClients
      */
     static channel: Channel;
@@ -59,5 +63,6 @@ export declare abstract class BackendManager {
      * @param {BackendEventType} e The event to publish
      */
     static publish(e: BackendEvent): void;
+    private static halt;
 }
 export {};
