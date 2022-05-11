@@ -41,13 +41,13 @@ export declare class OutputManager extends Renderable {
     /**
      * Retrieve the parent element containing all output parts
      */
-    get outputArea(): HTMLElement;
+    private get outputArea();
     /**
      * Render an element in the next position of the output area
      * @param {string} html Safe string version of the next child to render
      * @param {boolean} isNewElement Whether this a newly generated element
      */
-    renderNextElement(html: string, isNewElement?: boolean): void;
+    private renderNextElement;
     /**
      * Convert a piece of text to a span element for displaying
      * @param {string} text The text content for the span
@@ -71,5 +71,5 @@ export declare class OutputManager extends Renderable {
      * Clear the contents of the output area
      */
     reset(): void;
-    onRunEnd(): void;
+    private onRunEnd;
 }

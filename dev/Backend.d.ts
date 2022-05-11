@@ -63,8 +63,18 @@ export interface WorkerDiagnostic {
     message: string;
 }
 export declare abstract class Backend<Extras extends SyncExtras = SyncExtras> {
+    /**
+     * SyncExtras object that grants access to helpful methods
+     * for synchronous operations
+     */
     protected extras: Extras;
+    /**
+     * Callback to handle events published by this Backend
+     */
     protected onEvent: (e: BackendEvent) => any;
+    /**
+     * Queue to handle published events without overloading the thread
+     */
     protected queue: BackendEventQueue;
     /**
      * Constructor is limited as it is meant to be used as a WebWorker

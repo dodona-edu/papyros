@@ -1,4 +1,3 @@
-import { UserInputHandler } from "./input/UserInputHandler";
 import { Renderable, RenderOptions } from "./util/Rendering";
 export declare enum InputMode {
     Interactive = "interactive",
@@ -15,7 +14,7 @@ export declare class InputManager extends Renderable {
     private buildInputHandlerMap;
     getInputMode(): InputMode;
     setInputMode(inputMode: InputMode): void;
-    get inputHandler(): UserInputHandler;
+    private get inputHandler();
     isWaiting(): boolean;
     protected _render(options: RenderOptions): void;
     private waitWithPrompt;

@@ -26,7 +26,13 @@ export declare abstract class UserInputHandler extends Renderable {
      * @return {string} The next value
      */
     abstract next(): string;
+    /**
+     * Method to call when a new run has started
+     */
     abstract onRunStart(): void;
+    /**
+     * Method to call when the run ended
+     */
     abstract onRunEnd(): void;
     /**
      * Retrieve the InputMode corresponding to this handler
@@ -37,7 +43,7 @@ export declare abstract class UserInputHandler extends Renderable {
      * Enable or disable this UserInputHandler
      * @param {boolean} active Whether this component is active
      */
-    abstract onToggle(active: boolean): void;
+    abstract toggle(active: boolean): void;
     /**
      * Retrieve the HTMLInputElement for this InputHandler
      */

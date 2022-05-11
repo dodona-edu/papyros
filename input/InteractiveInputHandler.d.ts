@@ -8,12 +8,12 @@ export declare class InteractiveInputHandler extends UserInputHandler {
     /**
      * Retrieve the button that users can click to send their input
      */
-    get sendButton(): HTMLButtonElement;
+    private get sendButton();
     getInputMode(): InputMode;
     hasNext(): boolean;
     next(): string;
     waitWithPrompt(waiting: boolean, prompt?: string): void;
-    onToggle(): void;
+    toggle(): void;
     onRunStart(): void;
     onRunEnd(): void;
     protected _render(options: RenderOptions): void;

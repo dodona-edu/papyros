@@ -74,7 +74,7 @@ export declare function renderButton(options: ButtonOptions): string;
  * @param {T} selected The initially selected element in the list, if any
  * @return {string} The string representation of the select options
  */
-export declare function renderSelectOptions<T>(options: Array<T>, optionText: (option: T) => string, selected?: T): string;
+export declare function renderSelectOptions<T extends string>(options: Array<T>, optionText: (option: T) => string, selected?: T): string;
 /**
  * Build a string representation of an HTML label element
  * @param {string} labelText Optional text to display in a label
@@ -92,7 +92,7 @@ export declare function renderLabel(labelText: string | undefined, forElement: s
  * @param {string} labelText Optional text to display in a label
  * @return {string} The string representation of the select element
  */
-export declare function renderSelect<T>(selectId: string, options: Array<T>, optionText: (option: T) => string, selected?: T, labelText?: string): string;
+export declare function renderSelect<T extends string>(selectId: string, options: Array<T>, optionText: (option: T) => string, selected?: T, labelText?: string): string;
 /**
  * Helper superclass to handle storing options used during rendering
  * to allow re-rendering without needing to explicitly store used options each time

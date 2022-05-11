@@ -86,7 +86,7 @@ export declare class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      * Show or hide the spinning circle, representing a running animation
      * @param {boolean} show Whether to show the spinner
      */
-    showSpinner(show: boolean): void;
+    private showSpinner;
     /**
      * Show the current state of the program to the user
      * @param {RunState} state The current state of the run
@@ -102,9 +102,9 @@ export declare class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     addButton(options: ButtonOptions, onClick: () => void): void;
     protected _render(options: CodeRunnerRenderOptions): HTMLElement;
     /**
-     * Run the code that is currently present in the editor
+     * @param {string} code The code to run
      * @return {Promise<void>} Promise of running the code
      */
-    runCode(): Promise<void>;
+    runCode(code: string): Promise<void>;
 }
 export {};
