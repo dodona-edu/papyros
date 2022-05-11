@@ -38,15 +38,46 @@ export interface WorkerAutocompleteContext {
 }
 
 export interface WorkerDiagnostic {
+    /**
+     * 1-based index of the starting line containing the issue
+     */
     lineNr: number;
+    /**
+     * 0-based index of the column in the starting line
+     */
     columnNr: number;
+    /**
+     * 1-based index of the ending line containing the issue
+     * Can be the same as lineNr
+     */
+    endLineNr: number;
+    /**
+     * 0-based index of the column in the ending line
+     */
+    endColumnNr: number;
+    /**
+     * Severity of the issue
+     */
     severity: "info" | "warning" | "error";
+    /**
+     * Message describing the issue
+     */
     message: string;
 }
 
 export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
+    /**
+     * SyncExtras object that grants access to helpful methods
+     * for synchronous operations
+     */
     protected extras: Extras;
+    /**
+     * Callback to handle events published by this Backend
+     */
     protected onEvent: (e: BackendEvent) => any;
+    /**
+     * Queue to handle published events without overloading the thread
+     */
     protected queue: BackendEventQueue;
     /**
      * Constructor is limited as it is meant to be used as a WebWorker

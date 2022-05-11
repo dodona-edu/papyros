@@ -133,9 +133,11 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
                 async view => {
                     const workerDiagnostics = await workerProxy.lintCode(this.editor.getCode());
                     return workerDiagnostics.map(d => {
-                        const line = view.state.doc.line(d.lineNr);
-                        const from = Math.min(line.from + d.columnNr, line.from);
-                        return { ...d, from: from, to: from };
+                        const fromline = view.state.doc.line(d.lineNr);
+                        const toLine = view.state.doc.line(d.endLineNr);
+                        const from = Math.min(fromline.from + d.columnNr, fromline.to);
+                        const to = Math.min(toLine.from + d.endColumnNr, toLine.to);
+                        return { ...d, from: from, to: to };
                     });
                 });
             return resolve(backend);
