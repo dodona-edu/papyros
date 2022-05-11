@@ -7,14 +7,8 @@ import {
     loadPyodideAndPackage,
     PyodideExtras
 } from "pyodide-worker-runner";
-import { LogType, papyrosLog } from "../../util/Logging";
 /* eslint-disable-next-line */
 const pythonPackageUrl = require("!!url-loader!./python_package.tar.gz.load_by_url").default;
-
-async function getPyodide(): Promise<Pyodide> {
-    return await loadPyodideAndPackage({ url: pythonPackageUrl, format: ".tgz" });
-}
-const pyodidePromise = getPyodide();
 
 /**
  * Implementation of a Python backend for Papyros
@@ -44,28 +38,31 @@ class PythonWorker extends Backend<PyodideExtras> {
         return pyodideExpose;
     }
 
-    override async launch(
+    private async getPyodide(): Promise<Pyodide> {
+        return await loadPyodideAndPackage({ url: pythonPackageUrl, format: ".tgz" });
+    }
+
+    public override async launch(
         onEvent: (e: BackendEvent) => void
     ): Promise<void> {
         await super.launch(onEvent);
-        this.pyodide = await pyodidePromise;
+        this.pyodide = await this.getPyodide();
         // Python calls our function with a PyProxy dict or a Js Map,
         // These must be converted to a PapyrosEvent (JS Object) to allow message passing
-        this.papyros = (await Promise.all([
-            this.pyodide.pyimport("papyros").Papyros.callKwargs(
-                {
-                    callback: (e: any) => {
-                        const converted = PythonWorker.convert(e);
-                        return this.onEvent(converted);
-                    },
-                    buffer_constructor: (cb: (e: BackendEvent) => void) => {
-                        this.queue.setCallback(cb);
-                        return this.queue;
-                    }
+        this.papyros = this.pyodide.pyimport("papyros").Papyros.callKwargs(
+            {
+                callback: (e: any) => {
+                    const converted = PythonWorker.convert(e);
+                    return this.onEvent(converted);
+                },
+                buffer_constructor: (cb: (e: BackendEvent) => void) => {
+                    this.queue.setCallback(cb);
+                    return this.queue;
                 }
-            ),
-            (this.pyodide as any).loadPackage("micropip")
-        ]))[0];
+            }
+        );
+        // preload micropip to allow installing packages
+        await (this.pyodide as any).loadPackage("micropip");
     }
 
     /**
@@ -78,7 +75,7 @@ class PythonWorker extends Backend<PyodideExtras> {
             this.installPromise = this.papyros.install_imports.callKwargs({
                 source_code: code,
                 ignore_missing: ignoreMissing
-            }).catch((e: any) => papyrosLog(LogType.Error, "Error during Python imports", e));
+            });
         }
         await this.installPromise;
         this.installPromise = null;
@@ -95,7 +92,7 @@ class PythonWorker extends Backend<PyodideExtras> {
         });
     }
 
-    override async autocomplete(context: WorkerAutocompleteContext):
+    public override async autocomplete(context: WorkerAutocompleteContext):
         Promise<CompletionResult | null> {
         await this.installImports(context.text, true);
         const result: CompletionResult = PythonWorker.convert(
@@ -105,7 +102,7 @@ class PythonWorker extends Backend<PyodideExtras> {
         return result;
     }
 
-    override async lintCode(code: string): Promise<Array<WorkerDiagnostic>> {
+    public override async lintCode(code: string): Promise<Array<WorkerDiagnostic>> {
         await this.installImports(code, true);
         return PythonWorker.convert(this.papyros.lint(code));
     }

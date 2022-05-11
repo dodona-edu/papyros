@@ -1,6 +1,5 @@
 import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
 import { BackendEvent, BackendEventType } from "./BackendEvent";
-import { papyrosLog, LogType } from "./util/Logging";
 import { syncExpose, SyncExtras } from "comsync";
 import { BackendEventQueue } from "./BackendEventQueue";
 
@@ -67,8 +66,18 @@ export interface WorkerDiagnostic {
 }
 
 export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
+    /**
+     * SyncExtras object that grants access to helpful methods
+     * for synchronous operations
+     */
     protected extras: Extras;
+    /**
+     * Callback to handle events published by this Backend
+     */
     protected onEvent: (e: BackendEvent) => any;
+    /**
+     * Queue to handle published events without overloading the thread
+     */
     protected queue: BackendEventQueue;
     /**
      * Constructor is limited as it is meant to be used as a WebWorker
@@ -96,7 +105,7 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
      * @param {function(BackendEvent):void} onEvent Callback for when events occur
      * @return {Promise<void>} Promise of launching
      */
-    launch(
+    public launch(
         onEvent: (e: BackendEvent) => void
     ): Promise<void> {
         this.onEvent = (e: BackendEvent) => {
@@ -134,7 +143,7 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
             return [line.number, (range.head - line.from)];
         })[0];
         const beforeMatch = context.matchBefore(expr);
-        const ret = {
+        return {
             explicit: context.explicit,
             before: beforeMatch,
             pos: context.pos,
@@ -142,8 +151,6 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
             line: lineNr,
             text: context.state.doc.toString()
         };
-        papyrosLog(LogType.Debug, "Worker completion context:", ret);
-        return ret;
     }
 
     /**

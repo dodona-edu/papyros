@@ -10,7 +10,7 @@ import {
 } from "./Constants";
 import { InputManager } from "./InputManager";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
-import { spinningCircle } from "./util/HTMLShapes";
+import { renderSpinningCircle } from "./util/HTMLShapes";
 import { LogType, papyrosLog } from "./util/Logging";
 import {
     addListener, getElement,
@@ -63,11 +63,11 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     /**
      * The editor in which the code is written
      */
-    readonly editor: CodeEditor;
+    public readonly editor: CodeEditor;
     /**
      * Component to request and handle input from the user
      */
-    readonly inputManager: InputManager;
+    public readonly inputManager: InputManager;
     /**
      * The backend that executes the code asynchronously
      */
@@ -100,7 +100,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             id: RUN_BTN_ID,
             buttonText: t("Papyros.run"),
             classNames: "_tw-text-white _tw-bg-blue-500"
-        }, () => this.runCode());
+        }, () => this.runCode(this.editor.getCode()));
         this.addButton({
             id: STOP_BTN_ID,
             buttonText: t("Papyros.stop"),
@@ -114,7 +114,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     /**
      * Start the backend to enable running code
      */
-    async start(): Promise<void> {
+    public async start(): Promise<void> {
         this.setState(RunState.Loading);
         const backend = BackendManager.getBackend(this.programmingLanguage);
         this.editor.setProgrammingLanguage(this.programmingLanguage);
@@ -150,7 +150,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      * Interrupt the currently running code
      * @return {Promise<void>} Promise of stopping
      */
-    async stop(): Promise<void> {
+    public async stop(): Promise<void> {
         this.setState(RunState.Stopping);
         BackendManager.publish({
             type: BackendEventType.End,
@@ -163,7 +163,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      * Set the used programming language to the given one to allow editing and running code
      * @param {ProgrammingLanguage} programmingLanguage The language to use
      */
-    async setProgrammingLanguage(programmingLanguage: ProgrammingLanguage): Promise<void> {
+    public async setProgrammingLanguage(programmingLanguage: ProgrammingLanguage): Promise<void> {
         if (this.programmingLanguage !== programmingLanguage) { // Expensive, so ensure it is needed
             await this.backend.then(b => b.interrupt());
             this.programmingLanguage = programmingLanguage;
@@ -171,21 +171,21 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         }
     }
 
-    getProgrammingLanguage(): ProgrammingLanguage {
+    public getProgrammingLanguage(): ProgrammingLanguage {
         return this.programmingLanguage;
     }
 
     /**
      * Get the button to run the code
      */
-    get runButton(): HTMLButtonElement {
+    public get runButton(): HTMLButtonElement {
         return getElement<HTMLButtonElement>(RUN_BTN_ID);
     }
 
     /**
      * Get the button to interrupt the code
      */
-    get stopButton(): HTMLButtonElement {
+    public get stopButton(): HTMLButtonElement {
         return getElement<HTMLButtonElement>(STOP_BTN_ID);
     }
 
@@ -193,7 +193,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      * Show or hide the spinning circle, representing a running animation
      * @param {boolean} show Whether to show the spinner
      */
-    showSpinner(show: boolean): void {
+    private showSpinner(show: boolean): void {
         getElement(STATE_SPINNER_ID).style.display = show ? "" : "none";
     }
 
@@ -202,7 +202,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      * @param {RunState} state The current state of the run
      * @param {string} message Optional message to indicate the state
      */
-    setState(state: RunState, message?: string): void {
+    public setState(state: RunState, message?: string): void {
         this.state = state;
         this.stopButton.disabled = [RunState.Ready, RunState.Loading].includes(state);
         if (state === RunState.Ready) {
@@ -216,7 +216,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             message || t(`Papyros.states.${state}`);
     }
 
-    getState(): RunState {
+    public getState(): RunState {
         return this.state;
     }
 
@@ -225,7 +225,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      * @param {ButtonOptions} options Options for rendering the button
      * @param {function} onClick Listener for click events on the button
      */
-    addButton(options: ButtonOptions, onClick: () => void): void {
+    public addButton(options: ButtonOptions, onClick: () => void): void {
         this.buttons.push({
             id: options.id,
             buttonHTML: renderButton(options),
@@ -241,7 +241,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     </div>
     <div class="_tw-col-span-1 _tw-flex _tw-flex-row-reverse _tw-items-center">
         <div id="${APPLICATION_STATE_TEXT_ID}"></div>
-        ${spinningCircle(STATE_SPINNER_ID, "_tw-border-gray-200 _tw-border-b-red-500")}
+        ${renderSpinningCircle(STATE_SPINNER_ID, "_tw-border-gray-200 _tw-border-b-red-500")}
     </div>
 </div>`);
         // Buttons are freshly added to the DOM, so attach listeners now
@@ -256,17 +256,16 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     }
 
     /**
-     * Run the code that is currently present in the editor
+     * @param {string} code The code to run
      * @return {Promise<void>} Promise of running the code
      */
-    async runCode(): Promise<void> {
+    public async runCode(code: string): Promise<void> {
         // Setup pre-run
         this.setState(RunState.Running);
         BackendManager.publish({
             type: BackendEventType.Start,
             data: "User started run", contentType: "text/plain"
         });
-        papyrosLog(LogType.Debug, "Running code in Papyros, sending to backend");
         const start = new Date().getTime();
         let endMessage = "Program finishd normally";
         let interrupted = false;
@@ -274,7 +273,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         const backend = await this.backend;
         try {
             await backend.call(
-                backend.workerProxy.runCode, this.editor.getCode()
+                backend.workerProxy.runCode, code
             );
         } catch (error: any) {
             papyrosLog(LogType.Debug, "Error during code run", error);

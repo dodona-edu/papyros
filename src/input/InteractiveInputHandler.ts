@@ -14,25 +14,25 @@ export class InteractiveInputHandler extends UserInputHandler {
     /**
      * Retrieve the button that users can click to send their input
      */
-    get sendButton(): HTMLButtonElement {
+    private get sendButton(): HTMLButtonElement {
         return getElement<HTMLButtonElement>(SEND_INPUT_BTN_ID);
     }
 
-    override getInputMode(): InputMode {
+    public override getInputMode(): InputMode {
         return InputMode.Interactive;
     }
 
-    override hasNext(): boolean {
+    public override hasNext(): boolean {
         return this.waiting; // Allow sending empty lines when the user does this explicitly
     }
 
-    override next(): string {
+    public override next(): string {
         const value = this.inputArea.value;
         this.reset();
         return value;
     }
 
-    override waitWithPrompt(waiting: boolean, prompt?: string): void {
+    public override waitWithPrompt(waiting: boolean, prompt?: string): void {
         super.waitWithPrompt(waiting, prompt);
         this.sendButton.disabled = !waiting;
         this.inputArea.disabled = !waiting;
@@ -43,15 +43,15 @@ export class InteractiveInputHandler extends UserInputHandler {
         }
     }
 
-    override onToggle(): void {
+    public override toggle(): void {
         this.reset();
     }
 
-    override onRunStart(): void {
+    public override onRunStart(): void {
         this.reset();
     }
 
-    override onRunEnd(): void {
+    public override onRunEnd(): void {
         // Intentionally empty
     }
 

@@ -4,8 +4,6 @@ import {
 } from "./Constants";
 import { Papyros, PapyrosConfig } from "./Papyros";
 import { InputMode } from "./InputManager";
-import { papyrosLog, LogType } from "./util/Logging";
-import { BackendManager } from "./BackendManager";
 
 
 async function startPapyros(): Promise<void> {
@@ -41,7 +39,6 @@ async function startPapyros(): Promise<void> {
     });
 
     await papyros.launch();
-    papyrosLog(LogType.Debug, "Using channel: ", BackendManager.channel);
 }
 
 startPapyros();

@@ -23,9 +23,14 @@ Currently, Papyros provides support for the following programming languages:
 
 ## Using Papyros in your own project
 
-You can install Papyros on your system using npm:
+You can add Papyros to your project as follows:
+- npm:
 ```shell
-npm install -g @dodona/papyros
+npm install @dodona/papyros
+```
+- yarn:
+```shell
+yarn add @dodona/papyros
 ```
 
 Papyros currently supports two modes of operation: stand-alone and embedded.
@@ -38,50 +43,61 @@ as the user knows for what purpose Papyros is being used. For example, when used
 scope of a Python exercise in Dodona, there is no need to support other programming languages.
 The locale should also match that of the actual application.
 
-The easiest way to initialize Papyros is by using the static method `Papyros.fromElement`.
-This method expects a parent element that wraps the scratchpad and a `PapyrosConfig` object.
+Using Papyros in your project is done by following a few steps. First, you create a new
+Papyros instance with a `PapyrosConfig` object.
 The following options are supported:
 
 - `standAlone`: Whether to operate in stand-alone or embedded mode as described above.
+- `programmingLanguage`: The [programming language](/src/ProgrammingLanguage.ts) to use in the CodeEditor and Backend.
 - `locale`: The locale to use, currently English and Dutch translations are provided.
-- `programmingLanguage`: The language to use in the CodeEditor and Backend
 - `inputMode`: How the users can provide input, according to the [InputMode enum](/src/InputManager.ts)
+- `example`: Optional name of the selected example, only appliccable in standAlone-mode
+- `channelOptions`: Optional options to provide to the [sync-message](https://github.com/alexmojaki/sync-message) channel. Extra is the serviceWorkerName, which is the relative pathname to the service worker script
 
-Furthermore, you can provide fine-grained configuration in embedded mode by providing `RenderOptions`
-to each main component in the application. You minimally need to specify the ID of the parent element.
-You can also specify attributes, such as `style` or `data`, or `classNames` to be used.
-The main components are the following:
-
-- `code`: the CodeEditor.
-- `panel`: the StatusPanel in the CodeEditor
-- `input`: the field for the user input
-- `output`: the panel for output of the code
+Furthermore, you can provide fine-grained configuration by providing `RenderOptions` to each main component in the application when rendering Papyros. You minimally need to specify the ID of the parent element.
+You can also specify attributes, such as `style`, `data`-attributes or `classNames` to be used.
+The components you can style like this are the following:
+- `standAloneOptions`: for the global application in standAlone mode
+- `codeEditorOptions`: for the CodeEditor.
+- `statusPanelOptions`: for the StatusPanel in the CodeEditor
+- `inputOptions`: for the field that handles the user input
+- `outputOptions`: for the panel that displays the output of the code
 
 ### User input
 
 Important to note is that handling asynchronous input in a synchronous way is not straightforward.
-This requires advanced features which are not available by default in your browser. We support two options
+This requires advanced features which are not available by default in your browser. We support two options based on [sync-message](https://github.com/alexmojaki/sync-message).
 
 The most efficient and practical way is using SharedArrayBuffers, which requires the presence of certain HTTP headers.
 The following headers must be set on resources using Papyros.
-```json
-'Cross-Origin-Opener-Policy': 'same-origin',
-'Cross-Origin-Embedder-Policy': 'require-corp'
+```yaml
+{
+  "Cross-Origin-Opener-Policy": "same-origin",
+  "Cross-Origin-Embedder-Policy": "require-corp"
+}
 ```
-If you are also embedding other components (such as iframes) in those pages, you will also need to set
-'Cross-Origin-Resource-Policy' to 'cross-origin' to make them work correctly. In order to limit the effect of this
-change, it is advised to restrict access using the 'Access-Control-Allow-Origin'-header to prevent abuse of including code.
+If you are also embedding other components (such as iframes, videos or images) in those pages, you will also need to set the `Cross-Origin-Resource-Policy`-header to `cross-origin` to make them work correctly. If these elements come from external URLs, it will likely not be possible to keep using them. An alternative is described below.
 
 If you would like to use this project without enabling these HTTP headers, we provide a solution using a service worker.
-If your application does not use a service worker yet, a default service worker is pre-built and included in the package.
-Simply copy the file located [here](dist/inputServiceWorker.js) to a location of choice in your application where it can be served.
-Then, before launching your instance of Papyros, make a call to configureInput with the location of the folder and the name of the file.
+If your application does not use a service worker yet, you can create one based on the [service worker used in stand-alone mode](src/InputServiceWorker.ts)).
+If you already use a service worker, simply include our [InputWorker](src/workers/input/InputWorker.ts) in your existing service worker using imports (you can import it separately from /dist/workers/input/InputWorker). An example of how to use it can be found in our described service worker. Afterwards, inform Papyros of the location using the channelOptions described earlier.
 
-If you already use a service worker, simply include our functionality in your existing worker using imports. An example can be found [here](src/InputServiceWorker.ts). Afterwards, inform Papyros of this using configureInput as above.
+### Code editor
+
+The editor used in Papyros is powered by [CodeMirror 6](https://codemirror.net/6/). It is accessible in code via an instance of Papyros and by default allows configuring many options:
+- the [programming language](/src/ProgrammingLanguage.ts) of the contents (for e.g. syntax higlighting)
+- the displayed placeholder
+- the indentation unit
+- the shown panel
+- the autocompletion source
+- the linting source
+- the theme used to style the editor
+
+If you need more specific functionality, this can be added in your own code by accessing the internal CodeMirror editorView.
 
 ## Documentation
 
-Visit our web page at <https://docs.dodona.be/papyros/>.
+Visit our documentation page at <https://docs.dodona.be/papyros/>.
 
 ## Building and developing
 

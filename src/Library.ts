@@ -1,19 +1,29 @@
 import { BackendEvent } from "./BackendEvent";
 import { CodeEditor } from "./CodeEditor";
 import { InputManager, InputMode } from "./InputManager";
-import { OutputManager } from "./OutputManager";
-import { Papyros } from "./Papyros";
+import { FriendlyError, OutputManager } from "./OutputManager";
+import { Papyros, PapyrosConfig, PapyrosRenderOptions } from "./Papyros";
 import { CodeRunner, RunState } from "./CodeRunner";
+import { BackendManager } from "./BackendManager";
+import { ProgrammingLanguage } from "./ProgrammingLanguage";
+import { WorkerAutocompleteContext, WorkerDiagnostic } from "./Backend";
+import { ButtonOptions, RenderOptions } from "./util/Rendering";
 
-export * from "./ProgrammingLanguage";
-export type { BackendEvent };
+export type {
+    BackendEvent, FriendlyError,
+    WorkerAutocompleteContext, WorkerDiagnostic,
+    PapyrosConfig, PapyrosRenderOptions,
+    RenderOptions, ButtonOptions
+};
 export {
     Papyros,
+    ProgrammingLanguage,
+    BackendManager,
     CodeEditor,
-    RunState,
     CodeRunner,
+    RunState,
     InputManager,
     InputMode,
-    OutputManager,
+    OutputManager
 };
 

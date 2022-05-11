@@ -4,7 +4,6 @@ import {
     USER_INPUT_WRAPPER_ID
 } from "./Constants";
 import { BackendEvent, BackendEventType } from "./BackendEvent";
-import { papyrosLog, LogType } from "./util/Logging";
 import {
     addListener,
 } from "./util/Util";
@@ -57,13 +56,13 @@ export class InputManager extends Renderable {
     }
 
     public setInputMode(inputMode: InputMode): void {
-        this.inputHandler.onToggle(false);
+        this.inputHandler.toggle(false);
         this.inputMode = inputMode;
         this.render();
-        this.inputHandler.onToggle(true);
+        this.inputHandler.toggle(true);
     }
 
-    get inputHandler(): UserInputHandler {
+    private get inputHandler(): UserInputHandler {
         return this.inputHandlers.get(this.inputMode)!;
     }
 
@@ -94,7 +93,7 @@ ${switchMode}`);
         this.inputHandler.waitWithPrompt(this.waiting, this.prompt);
     }
 
-    private waitWithPrompt(waiting: boolean, prompt=""): void {
+    private waitWithPrompt(waiting: boolean, prompt = ""): void {
         this.waiting = waiting;
         this.prompt = prompt;
         this.inputHandler.waitWithPrompt(this.waiting, this.prompt);
@@ -103,11 +102,9 @@ ${switchMode}`);
     private async onUserInput(): Promise<void> {
         if (this.inputHandler.hasNext()) {
             const line = this.inputHandler.next();
-            papyrosLog(LogType.Debug, "Sending input to user: " + line);
             this.sendInput(line);
             this.waitWithPrompt(false);
         } else {
-            papyrosLog(LogType.Debug, "Had no input to send, still waiting!");
             this.waitWithPrompt(true, this.prompt);
         }
     }
@@ -118,7 +115,6 @@ ${switchMode}`);
      * @return {Promise<void>} Promise of handling the request
      */
     private async onInputRequest(e: BackendEvent): Promise<void> {
-        papyrosLog(LogType.Debug, "Handling input request in Papyros");
         this.prompt = e.data;
         return await this.onUserInput();
     }

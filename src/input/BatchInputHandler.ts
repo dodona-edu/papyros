@@ -26,7 +26,7 @@ export class BatchInputHandler extends UserInputHandler {
         this.previousInput = "";
     }
 
-    override onToggle(active: boolean): void {
+    public override toggle(active: boolean): void {
         if (active) {
             this.inputArea.value = this.previousInput;
         } else {
@@ -34,7 +34,7 @@ export class BatchInputHandler extends UserInputHandler {
         }
     }
 
-    override getInputMode(): InputMode {
+    public override getInputMode(): InputMode {
         return InputMode.Batch;
     }
 
@@ -50,21 +50,21 @@ export class BatchInputHandler extends UserInputHandler {
         return l;
     }
 
-    override hasNext(): boolean {
+    public override hasNext(): boolean {
         return this.lineNr < this.lines.length;
     }
 
-    override next(): string {
+    public override next(): string {
         const nextLine = this.lines[this.lineNr];
         this.lineNr += 1;
         return nextLine;
     }
 
-    override onRunStart(): void {
+    public override onRunStart(): void {
         this.lineNr = 0;
     }
 
-    override onRunEnd(): void {
+    public override onRunEnd(): void {
         // Intentionally empty
     }
 
