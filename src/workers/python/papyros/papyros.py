@@ -124,6 +124,15 @@ class Papyros(python_runner.PyodideRunner):
                     while isinstance(result, Awaitable):
                         result = await result
                     return result
+            except ModuleNotFoundError as mnf:
+                # Try to automatically install missing dependencies
+                # As they sometimes might be hidden within libraries
+                try:
+                    await self.install_imports(f"import {mnf.name}", ignore_missing=False)
+                    return await self.run_async(source_code, mode=mode, top_level_await=top_level_await)
+                except:
+                    # If the module is truly not findable, raise the error again
+                    raise mnf
             except BaseException as e:
                 # Sometimes KeyboardInterrupt is caught by Pyodide and raised as a PythonError
                 # with a js_error containing the reason
