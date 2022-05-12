@@ -88,7 +88,11 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     constructor(programmingLanguage: ProgrammingLanguage) {
         super();
         this.programmingLanguage = programmingLanguage;
-        this.editor = new CodeEditor(() => this.runCode(this.editor.getCode()));
+        this.editor = new CodeEditor(() => {
+            if (this.state === RunState.Ready) {
+                this.runCode(this.editor.getCode());
+            }
+        });
         this.inputManager = new InputManager(async (input: string) => {
             const backend = await this.backend;
             backend.writeMessage(input);
