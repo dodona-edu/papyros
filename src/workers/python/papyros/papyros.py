@@ -128,7 +128,9 @@ class Papyros(python_runner.PyodideRunner):
                 # Try to automatically install missing dependencies
                 # As they sometimes might be hidden within libraries
                 try:
+                    self.callback("loading", data=dict(loading=True, modules=[mnf.name]), contentType="application/json")
                     await self.install_imports(f"import {mnf.name}", ignore_missing=False)
+                    self.callback("loading", data=dict(loading=False, modules=[mnf.name]), contentType="application/json")
                     return await self.run_async(source_code, mode=mode, top_level_await=top_level_await)
                 except:
                     # If the module is truly not findable, raise the error again
@@ -200,5 +202,4 @@ class Papyros(python_runner.PyodideRunner):
         self.set_source_code(code)
         from .linting import lint
         os.devnull = orig_dev_null
-        lint_results = lint(self.filename)
-        return lint_results
+        return lint(code)
