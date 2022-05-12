@@ -326,6 +326,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             } else {
                 interrupted = true;
             }
+            this.loadingPackages = [];
             const end = new Date().getTime();
             this.setState(RunState.Ready, t(
                 interrupted ? "Papyros.interrupted" : "Papyros.finished",

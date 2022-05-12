@@ -131,10 +131,10 @@ class Papyros(python_runner.PyodideRunner):
                     self.callback("loading", data=dict(loading=True, modules=[mnf.name]), contentType="application/json")
                     await self.install_imports(f"import {mnf.name}", ignore_missing=False)
                     self.callback("loading", data=dict(loading=False, modules=[mnf.name]), contentType="application/json")
-                    return await self.run_async(source_code, mode=mode, top_level_await=top_level_await)
                 except:
                     # If the module is truly not findable, raise the error again
                     raise mnf
+                return await self.run_async(source_code, mode=mode, top_level_await=top_level_await)
             except BaseException as e:
                 # Sometimes KeyboardInterrupt is caught by Pyodide and raised as a PythonError
                 # with a js_error containing the reason
