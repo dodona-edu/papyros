@@ -7,7 +7,6 @@ import { Papyros, PapyrosConfig } from "./Papyros";
 import { InputMode } from "./InputManager";
 
 const LOCAL_STORAGE_CODE_KEY = addPapyrosPrefix("previous-code");
-const SAVE_CODE_INTERVAL_TIME = 3000; // in ms
 
 async function startPapyros(): Promise<void> {
     // Retrieve initial locale and programming language from URL
@@ -46,11 +45,9 @@ async function startPapyros(): Promise<void> {
     if (previousCode) {
         papyros.setCode(previousCode);
     }
-    // Save new code every so often
-    function saveCode(): void {
+    window.addEventListener("beforeunload", () => {
         window.localStorage.setItem(LOCAL_STORAGE_CODE_KEY, papyros.getCode());
-    }
-    setInterval(saveCode, SAVE_CODE_INTERVAL_TIME);
+    });
 
     await papyros.launch();
 }
