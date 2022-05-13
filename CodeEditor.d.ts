@@ -17,10 +17,11 @@ export declare class CodeEditor extends Renderable {
     private compartments;
     /**
      * Construct a new CodeEditor
+     * @param {Function} onRunRequest Callback for when the user wants to run the code
      * @param {string} initialCode The initial code to display
      * @param {number} indentLength The length in spaces for the indent unit
      */
-    constructor(initialCode?: string, indentLength?: number);
+    constructor(onRunRequest: () => void, initialCode?: string, indentLength?: number);
     /**
      * Helper method to dispatch configuration changes at runtime
      * @param {Array<[Option, Extension]>} items Array of items to reconfigure
