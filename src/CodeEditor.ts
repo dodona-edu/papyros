@@ -6,7 +6,7 @@ import {
     CompletionSource, autocompletion,
     closeBrackets, closeBracketsKeymap, completionKeymap
 } from "@codemirror/autocomplete";
-import { defaultKeymap, historyKeymap, indentWithTab, history } from "@codemirror/commands";
+import { defaultKeymap, historyKeymap, indentWithTab, history, insertBlankLine } from "@codemirror/commands";
 import { javascript } from "@codemirror/lang-javascript";
 import { python } from "@codemirror/lang-python";
 import {
@@ -54,10 +54,11 @@ export class CodeEditor extends Renderable {
 
     /**
      * Construct a new CodeEditor
+     * @param {Function} onRunRequest Callback for when the user wants to run the code
      * @param {string} initialCode The initial code to display
      * @param {number} indentLength The length in spaces for the indent unit
      */
-    constructor(initialCode = "", indentLength = 4) {
+    constructor(onRunRequest: () => void, initialCode = "", indentLength = 4) {
         super();
         this.compartments = new Map(OPTIONS.map(opt => [opt, new Compartment()]));
         const configurableExtensions = [...this.compartments.values()]
@@ -69,6 +70,18 @@ export class CodeEditor extends Renderable {
                     extensions:
                         [
                             ...configurableExtensions,
+                            keymap.of([
+                                {
+                                    key: "Mod-Enter", run: () => {
+                                        onRunRequest();
+                                        return true;
+                                    }
+                                },
+                                // The original Ctrl-Enter keybind gets assigned to Shift-Enter
+                                {
+                                    key: "Shift-Enter", run: insertBlankLine
+                                }
+                            ]),
                             ...CodeEditor.getExtensions()
                         ]
                 })
