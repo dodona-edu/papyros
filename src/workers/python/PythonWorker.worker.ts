@@ -100,9 +100,7 @@ class PythonWorker extends Backend<PyodideExtras> {
      */
     private async installImports(code: string): Promise<void> {
         if (this.installPromise == null) {
-            this.installPromise = (this.pyodide as any)
-                .loadPackagesFromImports(code,
-                    (msg: string) => this.importMessageCallback(msg));
+            this.installPromise = this.papyros.install_imports(code);
         }
         await this.installPromise;
         this.installPromise = null;

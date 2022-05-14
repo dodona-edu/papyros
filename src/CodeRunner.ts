@@ -11,7 +11,6 @@ import {
 import { InputManager } from "./InputManager";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import { renderSpinningCircle } from "./util/HTMLShapes";
-import { LogType, papyrosLog } from "./util/Logging";
 import {
     addListener, getElement,
     t, downloadResults, parseData
@@ -370,7 +369,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             }
             const packageMessage = t("Papyros.loading", {
                 // limit amount of package names shown
-                packages: this.loadingPackages.slice(0, 3).join(",")
+                packages: this.loadingPackages.slice(0, 3).join(", ")
             });
             this.setState(RunState.Loading, packageMessage);
         } else {

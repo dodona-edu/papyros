@@ -92,13 +92,19 @@ class Papyros(python_runner.PyodideRunner):
 
     async def install_imports(self, source_code, ignore_missing=True):
         try:
-            await install_imports(source_code)
+            await install_imports(source_code, self.import_callback)
         except (ValueError, JsException):
             # Occurs when trying to fetch PyPi files for misspelled imports
             if not ignore_missing:
                 raise
-                
 
+    def import_callback(self, typ, modules):
+        loading = "loading" in typ
+        if not isinstance(modules, list):
+            modules = [modules]
+        module_names = [mod["module"] for mod in modules]
+        self.callback("loading", data=dict(loading=loading, modules=module_names), contentType="application/json")
+                
     @contextmanager
     def _execute_context(self):
         with (
@@ -128,9 +134,7 @@ class Papyros(python_runner.PyodideRunner):
                 # Try to automatically install missing dependencies
                 # As they sometimes might be hidden within libraries
                 try:
-                    self.callback("loading", data=dict(loading=True, modules=[mnf.name]), contentType="application/json")
-                    await self.install_imports(f"import {mnf.name}", ignore_missing=False)
-                    self.callback("loading", data=dict(loading=False, modules=[mnf.name]), contentType="application/json")
+                    await self.install_imports([mnf.name], ignore_missing=False)
                 except:
                     # If the module is truly not findable, raise the error again
                     raise mnf
