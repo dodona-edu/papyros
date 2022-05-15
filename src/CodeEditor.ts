@@ -19,7 +19,7 @@ import { oneDark } from "@codemirror/theme-one-dark";
 import {
     EditorView, showPanel, lineNumbers, highlightActiveLineGutter,
     highlightSpecialChars, drawSelection,
-    rectangularSelection, highlightActiveLine, keymap, placeholder
+    rectangularSelection, highlightActiveLine, keymap, placeholder, ViewUpdate
 } from "@codemirror/view";
 import { Diagnostic, linter, lintGutter, lintKeymap } from "@codemirror/lint";
 
@@ -30,13 +30,14 @@ enum Option {
     Panel = "panel",
     Autocompletion = "autocompletion",
     Linting = "linting",
-    Style = "style"
+    Style = "style",
+    OnChange = "change"
 }
 const OPTIONS = [
     Option.ProgrammingLanguage, Option.Placeholder,
     Option.Indentation, Option.Panel,
     Option.Autocompletion, Option.Linting,
-    Option.Style
+    Option.Style, Option.OnChange
 ];
 
 /**
@@ -171,6 +172,19 @@ export class CodeEditor extends Renderable {
     public setIndentLength(indentLength: number): void {
         this.reconfigure(
             [Option.Indentation, indentUnit.of(CodeEditor.getIndentUnit(indentLength))]
+        );
+    }
+
+    /**
+     * @param {Function} onChange Listener that performs actions on the new contents
+     */
+    public onChange(onChange: ((newContent: string) => void)): void {
+        this.reconfigure(
+            [Option.OnChange, EditorView.updateListener.of((v: ViewUpdate) => {
+                if (v.docChanged) {
+                    onChange(v.state.doc.toString());
+                }
+            })]
         );
     }
 

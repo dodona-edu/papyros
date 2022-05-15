@@ -5,7 +5,7 @@ import { ProgrammingLanguage } from "./ProgrammingLanguage";
  * @param {string} s The value to add a prefix to
  * @return {string} The value with an almost certainly unused prefix
  */
-function addPapyrosPrefix(s: string): string {
+export function addPapyrosPrefix(s: string): string {
     return `__papyros-${s}`;
 }
 /* Default HTML ids for various elements */

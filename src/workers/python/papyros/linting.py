@@ -34,6 +34,8 @@ def process_pylint_output(linting_output):
             _, line_nr, column_nr, end_line, end_column, severity, message = line.rstrip().split(":")
             line_nr = int(line_nr)
             column_nr = int(column_nr)
+            # If Pylint doesn't know the exact cause, just omit it
+            message = message.replace("(<unknown>, ", "(")
             diagnostics.append({
                 "lineNr": line_nr,
                 "columnNr": column_nr,

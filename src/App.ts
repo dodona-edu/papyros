@@ -1,10 +1,12 @@
 import {
+    addPapyrosPrefix,
     DEFAULT_LOCALE, DEFAULT_PROGRAMMING_LANGUAGE,
     DEFAULT_SERVICE_WORKER
 } from "./Constants";
 import { Papyros, PapyrosConfig } from "./Papyros";
 import { InputMode } from "./InputManager";
 
+const LOCAL_STORAGE_CODE_KEY = addPapyrosPrefix("previous-code");
 
 async function startPapyros(): Promise<void> {
     // Retrieve initial locale and programming language from URL
@@ -24,6 +26,7 @@ async function startPapyros(): Promise<void> {
         }
     };
     const papyros = new Papyros(config);
+
     let darkMode = false;
     if (window.matchMedia) {
         darkMode = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -36,6 +39,14 @@ async function startPapyros(): Promise<void> {
             parentElementId: "root"
         },
         darkMode: darkMode
+    });
+    // Restore previous code if it existed
+    const previousCode = window.localStorage.getItem(LOCAL_STORAGE_CODE_KEY);
+    if (previousCode) {
+        papyros.setCode(previousCode);
+    }
+    papyros.codeRunner.editor.onChange(code => {
+        window.localStorage.setItem(LOCAL_STORAGE_CODE_KEY, code);
     });
 
     await papyros.launch();
