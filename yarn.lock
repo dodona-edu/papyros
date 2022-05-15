@@ -4209,10 +4209,10 @@ punycode@^2.1.0, punycode@^2.1.1:
   resolved "https://registry.yarnpkg.com/punycode/-/punycode-2.1.1.tgz#b58b010ac40c22c5657616c8d2c2c02c7bf479ec"
   integrity sha512-XRsRjdf+j5ml+y/6GKHPZbrF/8p2Yga0JPtdqTIY2Xe5ohJPD9saDJJLPvp9+NSBprVvevdXZybnj2cv8OEd0A==
 
-pyodide-worker-runner@^0.0.8:
-  version "0.0.8"
-  resolved "https://registry.yarnpkg.com/pyodide-worker-runner/-/pyodide-worker-runner-0.0.8.tgz#8469060750ee098e4be194bb51efa71403710514"
-  integrity sha512-476A8teV5fI9kidqF5ElDpfAxKpbFmVUszEIxy9phqapJsyhtmZeKV8AjfM7Qy8bQHZ/2TxC3IodOnra1rijpQ==
+pyodide-worker-runner@^0.0.10:
+  version "0.0.10"
+  resolved "https://registry.yarnpkg.com/pyodide-worker-runner/-/pyodide-worker-runner-0.0.10.tgz#0cb2c6f730022b40dd4b43b1385931f88fee49a2"
+  integrity sha512-/7XFoDALhF64qKYfdrK4uVLlEMkwK1rFuy5EfL876q9+g736KZbSw5Uw5K7gChotTYM36/lmhhiMYMXMWdpLow==
   dependencies:
     p-retry "^5.0.0"
 

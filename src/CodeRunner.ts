@@ -11,10 +11,9 @@ import {
 import { InputManager } from "./InputManager";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import { renderSpinningCircle } from "./util/HTMLShapes";
-import { LogType, papyrosLog } from "./util/Logging";
 import {
     addListener, getElement,
-    t, downloadResults
+    t, downloadResults, parseData
 } from "./util/Util";
 import {
     RenderOptions, renderWithOptions,
@@ -52,6 +51,21 @@ export enum RunState {
     Stopping = "stopping",
     Ready = "ready"
 }
+
+/**
+ * Interface to represent information required when handling loading events
+ */
+export interface LoadingData {
+    /**
+     * List of module names that are being loaded
+     */
+    modules: Array<string>;
+    /**
+     * Whether the modules are being loaded or have been loaded
+     */
+    loading: boolean;
+
+}
 /**
  * Helper component to manage and visualize the current RunState
  */
@@ -80,6 +94,15 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      * Buttons managed by this component
      */
     private buttons: Array<DynamicButton>;
+
+    /**
+     * Array of packages that are being installed
+     */
+    private loadingPackages: Array<string>;
+    /**
+     * Previous state to restore when loading is done
+     */
+    private previousState: RunState;
 
     /**
      * Construct a new RunStateManager with the given listeners
@@ -112,6 +135,10 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         }, () => this.stop());
         BackendManager.subscribe(BackendEventType.Input,
             () => this.setState(RunState.AwaitingInput));
+        this.loadingPackages = [];
+        this.previousState = RunState.Ready;
+        BackendManager.subscribe(BackendEventType.Loading,
+            e => this.onLoad(e));
         this.state = RunState.Ready;
     }
 
@@ -280,7 +307,6 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
                 backend.workerProxy.runCode, code
             );
         } catch (error: any) {
-            papyrosLog(LogType.Debug, "Error during code run", error);
             if (error.type === "InterruptError") {
                 // Error signaling forceful interrupt
                 interrupted = true;
@@ -303,6 +329,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             } else {
                 interrupted = true;
             }
+            this.loadingPackages = [];
             const end = new Date().getTime();
             this.setState(RunState.Ready, t(
                 interrupted ? "Papyros.interrupted" : "Papyros.finished",
@@ -317,6 +344,40 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
                     .map(e => e.data).join("\n");
                 downloadResults(overflowResults, "overflow-results.txt");
             });
+        }
+    }
+
+    /**
+     * Callback to handle loading events
+     * @param {BackendEvent} e The loading event
+     */
+    private onLoad(e: BackendEvent): void {
+        const loadingData = parseData(e.data, e.contentType) as LoadingData;
+        if (loadingData.loading) {
+            loadingData.modules.forEach(m => {
+                if (!this.loadingPackages.includes(m)) {
+                    this.loadingPackages.push(m);
+                }
+            });
+        } else {
+            loadingData.modules.forEach(m => {
+                const index = this.loadingPackages.indexOf(m);
+                if (index !== -1) {
+                    this.loadingPackages.splice(index, 1);
+                }
+            });
+        }
+        if (this.loadingPackages.length > 0) {
+            if (this.state !== RunState.Loading) {
+                this.previousState = this.state;
+            }
+            const packageMessage = t("Papyros.loading", {
+                // limit amount of package names shown
+                packages: this.loadingPackages.slice(0, 3).join(", ")
+            });
+            this.setState(RunState.Loading, packageMessage);
+        } else {
+            this.setState(this.previousState);
         }
     }
 }
