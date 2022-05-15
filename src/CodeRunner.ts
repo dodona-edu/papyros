@@ -236,8 +236,8 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     public setState(state: RunState, message?: string): void {
         this.state = state;
         this.stopButton.disabled = [RunState.Ready, RunState.Loading].includes(state);
-        if (state === RunState.Ready) {
-            this.showSpinner(false);
+        if ([RunState.Ready, RunState.Loading].includes(state)) {
+            this.showSpinner(state == RunState.Loading);
             this.runButton.disabled = false;
         } else {
             this.showSpinner(true);
