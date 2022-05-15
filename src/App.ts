@@ -45,8 +45,8 @@ async function startPapyros(): Promise<void> {
     if (previousCode) {
         papyros.setCode(previousCode);
     }
-    window.addEventListener("beforeunload", () => {
-        window.localStorage.setItem(LOCAL_STORAGE_CODE_KEY, papyros.getCode());
+    papyros.codeRunner.editor.onChange(code => {
+        window.localStorage.setItem(LOCAL_STORAGE_CODE_KEY, code);
     });
 
     await papyros.launch();
