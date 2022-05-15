@@ -6,7 +6,9 @@ import { EDITOR_WRAPPER_ID } from "../../src/Constants";
 
 describe("CodeEditor", () => {
     document.body.innerHTML = `<div id=${EDITOR_WRAPPER_ID}></div>`;
-    const editor = new CodeEditor();
+    const editor = new CodeEditor(() => {
+        /* No need to run code*/
+    });
     editor.render({
         parentElementId: EDITOR_WRAPPER_ID
     });

@@ -1,7 +1,7 @@
 import * as Comlink from "comlink";
 import { Backend, WorkerAutocompleteContext, WorkerDiagnostic } from "../../Backend";
 import { CompletionResult } from "@codemirror/autocomplete";
-import { BackendEvent } from "../../BackendEvent";
+import { BackendEvent, BackendEventType } from "../../BackendEvent";
 import {
     pyodideExpose, Pyodide,
     loadPyodideAndPackage,
@@ -66,16 +66,41 @@ class PythonWorker extends Backend<PyodideExtras> {
     }
 
     /**
+     * Private helper to parse Pyodide loading messages into Loading events
+     * @param {string} m The Pyodide loading message
+     */
+    private importMessageCallback(m: string): void {
+        if (m.startsWith("Loading ")) {
+            const packageStart = "Loading ".length;
+            // message optionally contains a "from <source>" part
+            const packageEnd = m.includes(" from") ? m.indexOf(" from") : m.length;
+            this.onEvent({
+                type: BackendEventType.Loading,
+                contentType: "application/json",
+                data: {
+                    loading: true,
+                    modules: m.slice(packageStart, packageEnd).split(", ")
+                }
+            });
+        } else if (m.startsWith("Loaded")) {
+            this.onEvent({
+                type: BackendEventType.Loading,
+                data: {
+                    loading: false,
+                    modules: m.slice("Loaded ".length).split(", ")
+                },
+                contentType: "application/json"
+            });
+        }
+    }
+
+    /**
      * Helper method to install imports and prevent race conditions with double downloading
      * @param {string} code The code containing import statements
-     * @param {boolean} ignoreMissing Whether to ignore failures on missing modules
      */
-    private async installImports(code: string, ignoreMissing: boolean): Promise<void> {
+    private async installImports(code: string): Promise<void> {
         if (this.installPromise == null) {
-            this.installPromise = this.papyros.install_imports.callKwargs({
-                source_code: code,
-                ignore_missing: ignoreMissing
-            });
+            this.installPromise = this.papyros.install_imports(code);
         }
         await this.installPromise;
         this.installPromise = null;
@@ -86,7 +111,7 @@ class PythonWorker extends Backend<PyodideExtras> {
         if (extras.interruptBuffer) {
             this.pyodide.setInterruptBuffer(extras.interruptBuffer);
         }
-        await this.installImports(code, true);
+        await this.installImports(code);
         return await this.papyros.run_async.callKwargs({
             source_code: code,
         });
@@ -94,7 +119,7 @@ class PythonWorker extends Backend<PyodideExtras> {
 
     public override async autocomplete(context: WorkerAutocompleteContext):
         Promise<CompletionResult | null> {
-        await this.installImports(context.text, true);
+        await this.installImports(context.text);
         const result: CompletionResult = PythonWorker.convert(
             this.papyros.autocomplete(context)
         );
@@ -103,7 +128,7 @@ class PythonWorker extends Backend<PyodideExtras> {
     }
 
     public override async lintCode(code: string): Promise<Array<WorkerDiagnostic>> {
-        await this.installImports(code, true);
+        await this.installImports(code);
         return PythonWorker.convert(this.papyros.lint(code));
     }
 }
