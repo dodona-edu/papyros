@@ -1,4 +1,10 @@
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
+/**
+ * Add a prefix to a string, ensuring uniqueness in the page
+ * @param {string} s The value to add a prefix to
+ * @return {string} The value with an almost certainly unused prefix
+ */
+export declare function addPapyrosPrefix(s: string): string;
 export declare const MAIN_APP_ID: string;
 export declare const OUTPUT_AREA_WRAPPER_ID: string;
 export declare const OUTPUT_AREA_ID: string;
