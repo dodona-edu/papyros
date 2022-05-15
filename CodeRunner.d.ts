@@ -27,6 +27,19 @@ export declare enum RunState {
     Ready = "ready"
 }
 /**
+ * Interface to represent information required when handling loading events
+ */
+export interface LoadingData {
+    /**
+     * List of module names that are being loaded
+     */
+    modules: Array<string>;
+    /**
+     * Whether the modules are being loaded or have been loaded
+     */
+    loading: boolean;
+}
+/**
  * Helper component to manage and visualize the current RunState
  */
 export declare class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
@@ -54,6 +67,14 @@ export declare class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      * Buttons managed by this component
      */
     private buttons;
+    /**
+     * Array of packages that are being installed
+     */
+    private loadingPackages;
+    /**
+     * Previous state to restore when loading is done
+     */
+    private previousState;
     /**
      * Construct a new RunStateManager with the given listeners
      * @param {ProgrammingLanguage} programmingLanguage The language to use
@@ -106,5 +127,10 @@ export declare class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      * @return {Promise<void>} Promise of running the code
      */
     runCode(code: string): Promise<void>;
+    /**
+     * Callback to handle loading events
+     * @param {BackendEvent} e The loading event
+     */
+    private onLoad;
 }
 export {};
