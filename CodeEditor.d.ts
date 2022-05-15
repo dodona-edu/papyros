@@ -53,6 +53,10 @@ export declare class CodeEditor extends Renderable {
      */
     setIndentLength(indentLength: number): void;
     /**
+     * @param {Function} onChange Listener that performs actions on the new contents
+     */
+    onChange(onChange: ((newContent: string) => void)): void;
+    /**
      * @param {HTMLElement} panel The panel to display at the bottom of the editor
      */
     setPanel(panel: HTMLElement): void;
