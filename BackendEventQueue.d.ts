@@ -26,6 +26,14 @@ export declare class BackendEventQueue {
      */
     private overflow;
     /**
+     * Callback for when overflow occurs
+     */
+    private onOverflow;
+    /**
+     * Keep track whether the queue reached its limit this run
+     */
+    private overflown;
+    /**
      * Time in milliseconds when the last flush occurred
      */
     private lastFlushTime;
@@ -38,11 +46,12 @@ export declare class BackendEventQueue {
      */
     private decoder;
     /**
-     * @param {Function} callback Function to process events in the queue
+     * @param {function(BackendEvent):void} callback Function to process events in the queue
+     * @param {function():void} onOverflow Callback for when overflow occurs
      * @param {number} limit The maximal amount of output lines to send before overflowing
      * @param {number} flushTime The time in milliseconds before sending events through
      */
-    constructor(callback: (e: BackendEvent) => void, limit?: number, flushTime?: number);
+    constructor(callback: (e: BackendEvent) => void, onOverflow: () => void, limit?: number, flushTime?: number);
     /**
      * Add an element to the queue
      * @param {BackendEventType} type The type of the event

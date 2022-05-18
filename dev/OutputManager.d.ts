@@ -55,7 +55,7 @@ export declare class OutputManager extends Renderable {
      * @param {string} html Safe string version of the next child to render
      * @param {boolean} isNewElement Whether this a newly generated element
      */
-    renderNextElement(html: string, isNewElement?: boolean): void;
+    private renderNextElement;
     /**
      * Convert a piece of text to a span element for displaying
      * @param {string} text The text content for the span
@@ -69,6 +69,10 @@ export declare class OutputManager extends Renderable {
      * @param {BackendEvent} output Event containing the output data
      */
     showOutput(output: BackendEvent): void;
+    /**
+     * Display to the user that overflow has occurred, limiting the shown output
+     * @param {function():void | null} downloadCallback Optional callback to download overflow
+     */
     onOverflow(downloadCallback: (() => void) | null): void;
     /**
      * Display an error to the user

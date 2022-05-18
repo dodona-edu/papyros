@@ -37,6 +37,14 @@ export declare class OutputManager extends Renderable {
      * Store the HTML that is rendered to restore when changing language/theme
      */
     private content;
+    /**
+     * Whether overflow has occurred
+     */
+    private overflown;
+    /**
+     * Function to call when the user wants to download overflow results
+     */
+    private downloadCallback;
     constructor();
     /**
      * Retrieve the parent element containing all output parts
@@ -61,6 +69,11 @@ export declare class OutputManager extends Renderable {
      * @param {BackendEvent} output Event containing the output data
      */
     showOutput(output: BackendEvent): void;
+    /**
+     * Display to the user that overflow has occurred, limiting the shown output
+     * @param {function():void | null} downloadCallback Optional callback to download overflow
+     */
+    onOverflow(downloadCallback: (() => void) | null): void;
     /**
      * Display an error to the user
      * @param {BackendEvent} error Event containing the error data
