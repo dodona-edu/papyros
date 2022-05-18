@@ -38,15 +38,16 @@ class PythonWorker extends Backend<PyodideExtras> {
         return pyodideExpose;
     }
 
-    private async getPyodide(): Promise<Pyodide> {
+    private static async getPyodide(): Promise<Pyodide> {
         return await loadPyodideAndPackage({ url: pythonPackageUrl, format: ".tgz" });
     }
 
-    public override async launch(
-        onEvent: (e: BackendEvent) => void
+    public async launch(
+        onEvent: (e: BackendEvent) => void,
+        onOverflow: () => void
     ): Promise<void> {
-        await super.launch(onEvent);
-        this.pyodide = await this.getPyodide();
+        await super.launch(onEvent, onOverflow);
+        this.pyodide = await PythonWorker.getPyodide();
         // Python calls our function with a PyProxy dict or a Js Map,
         // These must be converted to a PapyrosEvent (JS Object) to allow message passing
         this.papyros = this.pyodide.pyimport("papyros").Papyros.callKwargs(

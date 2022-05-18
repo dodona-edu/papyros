@@ -11,7 +11,7 @@ import {
     Renderable,
     RenderOptions, renderWithOptions
 } from "./util/Rendering";
-import { OUTPUT_AREA_ID, OUTPUT_OVERFLOW_ID } from "./Constants";
+import { OUTPUT_AREA_ID } from "./Constants";
 
 /**
  * Shape of Error objects that are easy to interpret
@@ -73,7 +73,7 @@ export class OutputManager extends Renderable {
      * @param {string} html Safe string version of the next child to render
      * @param {boolean} isNewElement Whether this a newly generated element
      */
-    private renderNextElement(html: string, isNewElement = true): void {
+    public renderNextElement(html: string, isNewElement = true): void {
         if (isNewElement) { // Only save new ones to prevent duplicating
             this.content.push(html);
         }
@@ -154,9 +154,6 @@ export class OutputManager extends Renderable {
      _tw-max-h-3/5 _tw-overflow-auto papyros-font-family
     _tw-py-1 _tw-px-2 _tw-whitespace-pre _tw-rounded-lg dark:_tw-border-dark-mode-content
     with-placeholder" data-placeholder="${t("Papyros.output_placeholder")}"></div>
-    <a id="${OUTPUT_OVERFLOW_ID}" hidden
-    class="hover:_tw-cursor-pointer _tw-text-blue-500">${t("Papyros.output_overflow")}
-    </a>
     `);
         // Restore previously rendered items
         this.content.forEach(html => this.renderNextElement(html, false));
