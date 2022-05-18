@@ -6,7 +6,10 @@ import {
     CompletionSource, autocompletion,
     closeBrackets, closeBracketsKeymap, completionKeymap
 } from "@codemirror/autocomplete";
-import { defaultKeymap, historyKeymap, indentWithTab, history, insertBlankLine } from "@codemirror/commands";
+import {
+    defaultKeymap, historyKeymap, indentWithTab,
+    history, insertBlankLine
+} from "@codemirror/commands";
 import { javascript } from "@codemirror/lang-javascript";
 import { python } from "@codemirror/lang-python";
 import {

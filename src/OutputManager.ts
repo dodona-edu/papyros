@@ -84,7 +84,7 @@ export class OutputManager extends Renderable {
      * @param {string} html Safe string version of the next child to render
      * @param {boolean} isNewElement Whether this a newly generated element
      */
-    public renderNextElement(html: string, isNewElement = true): void {
+    private renderNextElement(html: string, isNewElement = true): void {
         if (isNewElement) { // Only save new ones to prevent duplicating
             this.content.push(html);
         }
@@ -128,6 +128,10 @@ export class OutputManager extends Renderable {
         }
     }
 
+    /**
+     * Display to the user that overflow has occurred, limiting the shown output
+     * @param {function():void | null} downloadCallback Optional callback to download overflow
+     */
     public onOverflow(downloadCallback: (() => void) | null): void {
         this.overflown = true;
         this.downloadCallback = downloadCallback;
