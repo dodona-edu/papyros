@@ -5,7 +5,7 @@ import { BackendEvent, BackendEventType } from "./BackendEvent";
 import { BackendManager } from "./BackendManager";
 import { CodeEditor } from "./CodeEditor";
 import {
-    APPLICATION_STATE_TEXT_ID, OUTPUT_OVERFLOW_ID, RUN_BTN_ID,
+    APPLICATION_STATE_TEXT_ID, RUN_BTN_ID,
     STATE_SPINNER_ID, STOP_BTN_ID
 } from "./Constants";
 import { InputManager } from "./InputManager";
@@ -174,7 +174,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
                     proxy((e: BackendEvent) => BackendManager.publish(e)),
                     proxy(() => {
                         this.overflown = true;
-                        this.onOverflow();
+                        this.outputManager.onOverflow(null);
                     })
                 );
             this.editor.setCompletionSource(async context => {
@@ -302,9 +302,6 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         this.setState(this.state);
         this.inputManager.render(options.inputOptions);
         this.outputManager.render(options.outputOptions);
-        if (this.overflown) {
-            this.onOverflow();
-        }
         this.editor.render(options.codeEditorOptions);
         this.editor.setPanel(rendered);
         // Set language again to update the placeholder
@@ -364,32 +361,16 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             if (terminated) {
                 await this.start();
             } else if (await backend.workerProxy.hasOverflow()) {
-                this.onOverflow();
+                this.outputManager.onOverflow(async () => {
+                    const backend = await this.backend;
+                    const overflowResults = (await backend.workerProxy.getOverflow())
+                        .map(e => e.data).join("");
+                    downloadResults(
+                        overflowResults,
+                        "overflow-results.txt"
+                    );
+                });
             }
-        }
-    }
-
-    private onOverflow(): void {
-        if (document.getElementById(OUTPUT_OVERFLOW_ID) == null) {
-            this.outputManager.renderNextElement(`
-<div id=${OUTPUT_OVERFLOW_ID}>${t("Papyros.output_overflow")}
-<a class="hover:_tw-cursor-pointer _tw-text-blue-500"
- hidden>${t("Papyros.output_overflow_download")}</a>
-</div>`, false);
-        }
-        const overflowDiv = getElement(OUTPUT_OVERFLOW_ID);
-        if (this.state === RunState.Ready) {
-            const overflowLink = overflowDiv.lastElementChild as HTMLElement;
-            overflowLink.hidden = false;
-            overflowLink.addEventListener("click", async () => {
-                const backend = await this.backend;
-                const overflowResults = (await backend.workerProxy.getOverflow())
-                    .map(e => e.data).join("");
-                downloadResults(
-                    overflowResults,
-                    "overflow-results.txt"
-                );
-            });
         }
     }
 

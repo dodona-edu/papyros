@@ -11,7 +11,7 @@ import {
     Renderable,
     RenderOptions, renderWithOptions
 } from "./util/Rendering";
-import { OUTPUT_AREA_ID } from "./Constants";
+import { OUTPUT_AREA_ID, OUTPUT_OVERFLOW_ID } from "./Constants";
 
 /**
  * Shape of Error objects that are easy to interpret
@@ -52,9 +52,20 @@ export class OutputManager extends Renderable {
      */
     private content: Array<string>;
 
+    /**
+     * Whether overflow has occurred
+     */
+    private overflown: boolean;
+    /**
+     * Function to call when the user wants to download overflow results
+     */
+    private downloadCallback: (() => void) | null;
+
     constructor() {
         super();
         this.content = [];
+        this.overflown = false;
+        this.downloadCallback = null;
         BackendManager.subscribe(BackendEventType.Start, () => this.reset());
         BackendManager.subscribe(BackendEventType.Output, e => this.showOutput(e));
         BackendManager.subscribe(BackendEventType.Error, e => this.showError(e));
@@ -78,6 +89,11 @@ export class OutputManager extends Renderable {
             this.content.push(html);
         }
         this.outputArea.insertAdjacentHTML("beforeend", html);
+        // Ensure overflowElement is at the bottom
+        const overflowElement = document.getElementById(OUTPUT_OVERFLOW_ID);
+        if (overflowElement) {
+            this.outputArea.append(overflowElement);
+        }
         // Scroll to bottom to show latest output
         this.outputArea.scrollTop = this.outputArea.scrollHeight;
     }
@@ -109,6 +125,25 @@ export class OutputManager extends Renderable {
             this.renderNextElement(`<img src="data:${output.contentType}, ${data}"></img>`);
         } else {
             this.renderNextElement(this.spanify(data, false));
+        }
+    }
+
+    public onOverflow(downloadCallback: (() => void) | null): void {
+        this.overflown = true;
+        this.downloadCallback = downloadCallback;
+        if (document.getElementById(OUTPUT_OVERFLOW_ID) == null) {
+            this.renderNextElement(`
+<div id=${OUTPUT_OVERFLOW_ID}><span class="_tw-text-red-500
+ _tw-text-bold">${t("Papyros.output_overflow")}</span>
+<a class="hover:_tw-cursor-pointer _tw-text-blue-500"
+ hidden>${t("Papyros.output_overflow_download")}</a>
+</div>`, false);
+        }
+        const overflowDiv = getElement(OUTPUT_OVERFLOW_ID);
+        if (this.downloadCallback !== null) {
+            const overflowLink = overflowDiv.lastElementChild as HTMLElement;
+            overflowLink.hidden = false;
+            overflowLink.addEventListener("click", this.downloadCallback);
         }
     }
 
@@ -157,6 +192,9 @@ export class OutputManager extends Renderable {
     `);
         // Restore previously rendered items
         this.content.forEach(html => this.renderNextElement(html, false));
+        if (this.overflown) {
+            this.onOverflow(this.downloadCallback);
+        }
     }
 
     /**
@@ -164,6 +202,8 @@ export class OutputManager extends Renderable {
      */
     public reset(): void {
         this.content = [];
+        this.overflown = false;
+        this.downloadCallback = null;
         this.render();
     }
 
