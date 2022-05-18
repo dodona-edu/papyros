@@ -112,10 +112,6 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      * Previous state to restore when loading is done
      */
     private previousState: RunState;
-    /**
-     * Whether overflow occurred this run
-     */
-    private overflown: boolean;
 
     /**
      * Construct a new RunStateManager with the given listeners
@@ -154,7 +150,6 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         BackendManager.subscribe(BackendEventType.Loading,
             e => this.onLoad(e));
         this.state = RunState.Ready;
-        this.overflown = false;
     }
 
     /**
@@ -173,7 +168,6 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
                 .launch(
                     proxy((e: BackendEvent) => BackendManager.publish(e)),
                     proxy(() => {
-                        this.overflown = true;
                         this.outputManager.onOverflow(null);
                     })
                 );
@@ -320,7 +314,6 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             type: BackendEventType.Start,
             data: "User started run", contentType: "text/plain"
         });
-        this.overflown = false;
         const start = new Date().getTime();
         let endMessage = "Program finishd normally";
         let interrupted = false;
