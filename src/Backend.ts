@@ -103,10 +103,12 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
     /**
      * Initialize the backend by doing all setup-related work
      * @param {function(BackendEvent):void} onEvent Callback for when events occur
+     * @param {function():void} onOverflow Callback for when overflow occurs
      * @return {Promise<void>} Promise of launching
      */
-    public launch(
-        onEvent: (e: BackendEvent) => void
+    public async launch(
+        onEvent: (e: BackendEvent) => void,
+        onOverflow: () => void
     ): Promise<void> {
         this.onEvent = (e: BackendEvent) => {
             onEvent(e);
@@ -116,7 +118,7 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
                 return this.extras.readMessage();
             }
         };
-        this.queue = new BackendEventQueue(this.onEvent.bind(this));
+        this.queue = new BackendEventQueue(this.onEvent.bind(this), onOverflow);
         return Promise.resolve();
     }
 

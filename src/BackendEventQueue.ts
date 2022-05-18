@@ -28,6 +28,14 @@ export class BackendEventQueue {
      */
     private overflow: Array<BackendEvent>;
     /**
+     * Callback for when overflow occurs
+     */
+    private onOverflow: () => void;
+    /**
+     * Keep track whether the queue reached its limit this run
+     */
+    private overflown: boolean;
+    /**
      * Time in milliseconds when the last flush occurred
      */
     private lastFlushTime: number;
@@ -41,11 +49,13 @@ export class BackendEventQueue {
     private decoder: TextDecoder;
 
     /**
-     * @param {Function} callback Function to process events in the queue
+     * @param {function(BackendEvent):void} callback Function to process events in the queue
+     * @param {function():void} onOverflow Callback for when overflow occurs
      * @param {number} limit The maximal amount of output lines to send before overflowing
      * @param {number} flushTime The time in milliseconds before sending events through
      */
     constructor(callback: (e: BackendEvent) => void,
+        onOverflow: () => void,
         limit = 1000, flushTime = 100) {
         this.callback = callback;
         this.limit = limit;
@@ -53,6 +63,8 @@ export class BackendEventQueue {
 
         this.queue = [];
         this.overflow = [];
+        this.onOverflow = onOverflow;
+        this.overflown = false;
         this.lastFlushTime = new Date().getTime();
         this.sendCount = 0;
         this.decoder = new TextDecoder();
@@ -118,6 +130,7 @@ export class BackendEventQueue {
     public reset(): void {
         this.queue = [];
         this.overflow = [];
+        this.overflown = false;
         this.lastFlushTime = new Date().getTime();
         this.sendCount = 0;
     }
@@ -140,6 +153,9 @@ export class BackendEventQueue {
                 if (this.sendCount < this.limit) {
                     this.sendCount += BackendEventQueue.lines(e);
                     this.callback(e);
+                } else if (!this.overflown) {
+                    this.overflown = true;
+                    this.onOverflow();
                 }
             } else {
                 this.callback(e);
