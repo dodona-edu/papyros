@@ -89,9 +89,10 @@ export declare abstract class Backend<Extras extends SyncExtras = SyncExtras> {
     /**
      * Initialize the backend by doing all setup-related work
      * @param {function(BackendEvent):void} onEvent Callback for when events occur
+     * @param {function():void} onOverflow Callback for when overflow occurs
      * @return {Promise<void>} Promise of launching
      */
-    launch(onEvent: (e: BackendEvent) => void): Promise<void>;
+    launch(onEvent: (e: BackendEvent) => void, onOverflow: () => void): Promise<void>;
     /**
      * Executes the given code
      * @param {Extras} extras Helper properties to run code

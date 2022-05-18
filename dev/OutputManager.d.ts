@@ -37,6 +37,14 @@ export declare class OutputManager extends Renderable {
      * Store the HTML that is rendered to restore when changing language/theme
      */
     private content;
+    /**
+     * Whether overflow has occurred
+     */
+    private overflown;
+    /**
+     * Function to call when the user wants to download overflow results
+     */
+    private downloadCallback;
     constructor();
     /**
      * Retrieve the parent element containing all output parts
@@ -47,7 +55,7 @@ export declare class OutputManager extends Renderable {
      * @param {string} html Safe string version of the next child to render
      * @param {boolean} isNewElement Whether this a newly generated element
      */
-    private renderNextElement;
+    renderNextElement(html: string, isNewElement?: boolean): void;
     /**
      * Convert a piece of text to a span element for displaying
      * @param {string} text The text content for the span
@@ -61,6 +69,7 @@ export declare class OutputManager extends Renderable {
      * @param {BackendEvent} output Event containing the output data
      */
     showOutput(output: BackendEvent): void;
+    onOverflow(downloadCallback: (() => void) | null): void;
     /**
      * Display an error to the user
      * @param {BackendEvent} error Event containing the error data
