@@ -74,5 +74,6 @@ module.exports = {
       backgroundColor: COLORS
     },
   },
-  plugins: [borderPlugin]
+  plugins: [borderPlugin],
+  important: true
 };
