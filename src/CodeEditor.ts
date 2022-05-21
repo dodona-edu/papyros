@@ -33,15 +33,23 @@ enum Option {
     Panel = "panel",
     Autocompletion = "autocompletion",
     Linting = "linting",
-    Style = "style",
-    OnChange = "change"
+    Style = "style"
 }
 const OPTIONS = [
     Option.ProgrammingLanguage, Option.Placeholder,
     Option.Indentation, Option.Panel,
     Option.Autocompletion, Option.Linting,
-    Option.Style, Option.OnChange
+    Option.Style
 ];
+
+export interface CodeChangeListener {
+    onChange: (code: string) => void;
+    delay?: number;
+}
+interface TimeoutData {
+    lastCalled: number;
+    timeout: NodeJS.Timeout | null;
+}
 
 /**
  * Component that provides useful features to users writing code
@@ -57,6 +65,11 @@ export class CodeEditor extends Renderable {
     private compartments: Map<Option, Compartment>;
 
     /**
+     * Mapping for each change listener to its timeout identifier and last call time
+     */
+    private listenerTimeouts: Map<CodeChangeListener, TimeoutData>;
+
+    /**
      * Construct a new CodeEditor
      * @param {Function} onRunRequest Callback for when the user wants to run the code
      * @param {string} initialCode The initial code to display
@@ -64,6 +77,7 @@ export class CodeEditor extends Renderable {
      */
     constructor(onRunRequest: () => void, initialCode = "", indentLength = 4) {
         super();
+        this.listenerTimeouts = new Map();
         this.compartments = new Map(OPTIONS.map(opt => [opt, new Compartment()]));
         const configurableExtensions = [...this.compartments.values()]
             .map(compartment => compartment.of([]));
@@ -74,6 +88,11 @@ export class CodeEditor extends Renderable {
                     extensions:
                         [
                             ...configurableExtensions,
+                            EditorView.updateListener.of((v: ViewUpdate) => {
+                                if (v.docChanged) {
+                                    this.handleChange();
+                                }
+                            }),
                             keymap.of([
                                 {
                                     key: "Mod-Enter", run: () => {
@@ -178,17 +197,25 @@ export class CodeEditor extends Renderable {
         );
     }
 
+    private handleChange(): void {
+        const currentDoc = this.getCode();
+        const now = Date.now();
+        this.listenerTimeouts.forEach((timeoutData, listener) => {
+            if (timeoutData.timeout === null && timeoutData.lastCalled < now) {
+                const newData = {
+                    timeout: setTimeout(() => listener.onChange(currentDoc), listener.delay),
+                    lastCalled: now
+                };
+                this.listenerTimeouts.set(listener, newData);
+            }
+        });
+    }
+
     /**
-     * @param {Function} onChange Listener that performs actions on the new contents
+     * @param {CodeChangeListener} changeListener Listener that performs actions on the new contents
      */
-    public onChange(onChange: ((newContent: string) => void)): void {
-        this.reconfigure(
-            [Option.OnChange, EditorView.updateListener.of((v: ViewUpdate) => {
-                if (v.docChanged) {
-                    onChange(v.state.doc.toString());
-                }
-            })]
-        );
+    public onChange(changeListener: CodeChangeListener): void {
+        this.listenerTimeouts.set(changeListener, { timeout: null, lastCalled: 0 });
     }
 
     /**

@@ -45,9 +45,14 @@ async function startPapyros(): Promise<void> {
     if (previousCode) {
         papyros.setCode(previousCode);
     }
-    papyros.codeRunner.editor.onChange(code => {
-        window.localStorage.setItem(LOCAL_STORAGE_CODE_KEY, code);
-    });
+    papyros.codeRunner.editor.onChange(
+        {
+            onChange: (code: string) => {
+                window.localStorage.setItem(LOCAL_STORAGE_CODE_KEY, code);
+            },
+            delay: 0
+        }
+    );
 
     await papyros.launch();
 }
