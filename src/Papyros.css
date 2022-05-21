@@ -77,7 +77,7 @@ Use the modern Firefox focus style for all focusable elements.
 Removes the default spacing and border for appropriate elements.
 */
 .tailwind p {
-  margin: 0 !important;
+  margin: 0;
 }
 
 /*
