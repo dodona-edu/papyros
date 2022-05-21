@@ -201,13 +201,14 @@ export class CodeEditor extends Renderable {
         const currentDoc = this.getCode();
         const now = Date.now();
         this.listenerTimeouts.forEach((timeoutData, listener) => {
-            if (timeoutData.timeout === null && timeoutData.lastCalled < now) {
-                const newData = {
-                    timeout: setTimeout(() => listener.onChange(currentDoc), listener.delay),
-                    lastCalled: now
-                };
-                this.listenerTimeouts.set(listener, newData);
+            if (timeoutData.timeout !== null) {
+                clearTimeout(timeoutData.timeout);
             }
+            timeoutData.timeout = setTimeout(() => {
+                timeoutData.timeout = null;
+                listener.onChange(currentDoc);
+            }, listener.delay);
+            timeoutData.lastCalled = now;
         });
     }
 
