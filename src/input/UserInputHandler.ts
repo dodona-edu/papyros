@@ -64,6 +64,10 @@ export abstract class UserInputHandler extends Renderable {
         return getElement<HTMLInputElement>(INPUT_TA_ID);
     }
 
+    protected setPlaceholder(placeholder: string): void {
+        this.inputArea.setAttribute("placeholder", placeholder);
+    }
+
     /**
      * Wait for input of the user for a certain prompt
      * @param {boolean} waiting Whether we are waiting for input
@@ -71,8 +75,7 @@ export abstract class UserInputHandler extends Renderable {
      */
     public waitWithPrompt(waiting: boolean, prompt = ""): void {
         this.waiting = waiting;
-        this.inputArea.setAttribute("placeholder",
-            prompt || t(`Papyros.input_placeholder.${this.getInputMode()}`));
+        this.setPlaceholder(prompt || t(`Papyros.input_placeholder.${this.getInputMode()}`));
         if (waiting) {
             // Focusing is a rendering operation
             // Subclasses can execute code after this operation, skipping the rendering
