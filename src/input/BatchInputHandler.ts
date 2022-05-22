@@ -68,13 +68,17 @@ export class BatchInputHandler extends UserInputHandler {
         // Intentionally empty
     }
 
+    protected setPlaceholder(placeholder: string): void {
+        this.inputArea.setAttribute("data-placeholder", placeholder);
+    }
+
     protected override _render(options: RenderOptions): void {
         renderWithOptions(options, `
-<textarea id="${INPUT_TA_ID}"
-class="_tw-border-2 _tw-h-auto _tw-w-full _tw-max-h-1/4 _tw-px-1 _tw-overflow-auto _tw-rounded-lg
-dark:_tw-border-dark-mode-content dark:_tw-bg-dark-mode-bg placeholder:_tw-text-placeholder-grey
-_tw-resize-y focus:_tw-outline-none focus:_tw-ring-1 focus:_tw-ring-blue-500" rows="5">
-</textarea>`);
+<div id="${INPUT_TA_ID}"
+class="_tw-border-2 _tw-w-full _tw-max-h-1/4 _tw-min-h-1/8 _tw-px-1 _tw-overflow-auto _tw-rounded-lg
+dark:_tw-border-dark-mode-content dark:_tw-bg-dark-mode-bg with-placeholder
+_tw-resize-y focus:_tw-outline-none focus:_tw-ring-1 focus:_tw-ring-blue-500"
+contenteditable="true"></div>`);
         this.inputArea.addEventListener("keydown", (ev: KeyboardEvent) => {
             if (this.waiting && ev.key.toLowerCase() === "enter") {
                 // If user replaced lines, use them
