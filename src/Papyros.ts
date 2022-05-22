@@ -114,7 +114,7 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
         // Load translations as other components depend on them
         loadTranslations();
         I18n.locale = config.locale;
-        this.codeRunner = new CodeRunner(config.programmingLanguage);
+        this.codeRunner = new CodeRunner(config.programmingLanguage, config.inputMode);
     }
 
     /**

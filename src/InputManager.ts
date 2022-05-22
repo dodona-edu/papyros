@@ -28,10 +28,10 @@ export class InputManager extends Renderable {
 
     private sendInput: (input: string) => void;
 
-    constructor(sendInput: (input: string) => void) {
+    constructor(sendInput: (input: string) => void, inputMode: InputMode) {
         super();
         this.inputHandlers = this.buildInputHandlerMap();
-        this.inputMode = InputMode.Interactive;
+        this.inputMode = inputMode;
         this.sendInput = sendInput;
         this.waiting = false;
         this.prompt = "";
