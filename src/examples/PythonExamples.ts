@@ -58,10 +58,6 @@ def wrong_factorial(n):
     265252859812191058636308480000000
     """
     return 0
-
-if __name__ == "__main__":
-    import doctest
-    doctest.testmod()
 `,
     "Async":
         `import asyncio
