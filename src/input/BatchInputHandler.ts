@@ -4,6 +4,7 @@ import { UserInputHandler } from "./UserInputHandler";
 import {
     RenderOptions, renderWithOptions
 } from "../util/Rendering";
+import { placeCaretAtEnd } from "../util/Util";
 
 export class BatchInputHandler extends UserInputHandler {
     /**
@@ -43,7 +44,7 @@ export class BatchInputHandler extends UserInputHandler {
      * @return {Array<string>} The entered lines
      */
     protected get lines(): Array<string> {
-        const l = this.inputArea.value.split("\n");
+        const l = this.inputArea.innerText.split("\n");
         if (!l[l.length - 1]) { // last line is empty
             l.splice(l.length - 1); // do not consider it valid input
         }
@@ -70,6 +71,11 @@ export class BatchInputHandler extends UserInputHandler {
 
     protected setPlaceholder(placeholder: string): void {
         this.inputArea.setAttribute("data-placeholder", placeholder);
+    }
+
+    protected focus(): void {
+        // Properly handle contentenditable div
+        placeCaretAtEnd(this.inputArea);
     }
 
     protected override _render(options: RenderOptions): void {

@@ -140,3 +140,25 @@ export function cleanCurrentUrl(endingSlash = false): string {
     }
     return url;
 }
+
+/**
+ * Focus an element, setting the user's caret at the end of the contents
+ * Needed to ensure focusing a contenteditable element works as expected
+ * @param {HTMLElement} el The element to focus
+ */
+export function placeCaretAtEnd(el: HTMLElement): void {
+    // eslint-disable-next-line max-len
+    // Source: https://stackoverflow.com/questions/4233265/contenteditable-set-caret-at-the-end-of-the-text-cross-browser
+    el.focus();
+    if (typeof window.getSelection !== "undefined" &&
+        typeof document.createRange !== "undefined") {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        range.collapse(false);
+        const sel = window.getSelection();
+        if (sel) {
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
+    }
+}
