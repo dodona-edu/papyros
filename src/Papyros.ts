@@ -20,7 +20,7 @@ import { AtomicsChannelOptions, makeChannel, ServiceWorkerChannelOptions } from 
 import { BackendManager } from "./BackendManager";
 import {
     RenderOptions, renderWithOptions, renderSelect, renderSelectOptions,
-    ButtonOptions, Renderable, renderLabel
+    ButtonOptions, Renderable, renderLabel, appendClasses
 } from "./util/Rendering";
 
 const LANGUAGE_MAP = new Map([
@@ -226,6 +226,7 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
         ]) {
             const elementOptions: RenderOptions = (renderOptions as any)[option] || {};
             elementOptions.darkMode = renderOptions.darkMode;
+            appendClasses(elementOptions, "tailwind");
             (renderOptions as any)[option] = Object.assign(
                 { parentElementId: defaultParentId }, elementOptions);
         }

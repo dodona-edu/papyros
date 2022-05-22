@@ -1,6 +1,6 @@
 {
   "name": "@dodona/papyros",
-  "version": "0.3.6",
+  "version": "0.3.7-scoped",
   "private": false,
   "homepage": ".",
   "devDependencies": {
@@ -51,7 +51,7 @@
     "sync-message": "^0.0.10"
   },
   "scripts": {
-    "start": "yarn setup && webpack serve --mode development",
+    "start": "webpack serve --mode development",
     "setup": "bash scripts/setup.sh",
     "build:app": "bash scripts/build_package.sh development",
     "build:library": "bash scripts/build_package.sh production",
