@@ -129,15 +129,13 @@ class Papyros(python_runner.PyodideRunner):
                 main_start += 1
             if main_start < len(lines):
                 main_end = main_start + 1
-            indent_amount = None
-            while main_end < len(lines) and (match := re.match("^(( |\t)*)", lines[main_end])):
-                if indent_amount is None:
-                    indent_amount = match.span[1]
-                current_indent_len = match.span[1]
-                if current_indent_len == 0 or current_indent_len != indent_amount:
-                    break
-                main_end += 1
-            source_code = "\n".join(lines[0:main_start] + lines[main_end:])
+                while main_end < len(lines) and (match := re.match("^(( |\t)*)", lines[main_end])):
+                    current_indent_len = match.span()[1]
+                    if current_indent_len == 0:
+                        break
+                    main_end += 1
+                source_code = "\n".join(lines[0:main_start] + lines[main_end:])
+            source_code += "\nif __name__ == \"__main__\":\n    import doctest\n    doctest.testmod()"
         return super().pre_run(source_code, mode=mode, top_level_await=top_level_await)
 
     async def run_async(self, source_code, mode="exec", top_level_await=True):
@@ -228,8 +226,8 @@ class Papyros(python_runner.PyodideRunner):
         return lint(code)
 
     def has_doctests(self, code):
-        self.set_source_code(code)
+        self.pre_run(code)
         m = sys.modules.get("__main__")
-        finder = doctest.DocTestFinder(exclude_empty=True)
+        finder = doctest.DocTestFinder(exclude_empty=True, verbose=True)
         tests = finder.find(m, m.__name__)
         return bool(tests)

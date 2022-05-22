@@ -1,7 +1,7 @@
 import * as Comlink from "comlink";
-import { Backend, WorkerAutocompleteContext, WorkerDiagnostic } from "../../Backend";
+import { Backend, RunMode, WorkerAutocompleteContext, WorkerDiagnostic } from "../../Backend";
 import { CompletionResult } from "@codemirror/autocomplete";
-import { BackendEvent, BackendEventType } from "../../BackendEvent";
+import { BackendEvent } from "../../BackendEvent";
 import {
     pyodideExpose, Pyodide,
     loadPyodideAndPackage,
@@ -67,35 +67,6 @@ class PythonWorker extends Backend<PyodideExtras> {
     }
 
     /**
-     * Private helper to parse Pyodide loading messages into Loading events
-     * @param {string} m The Pyodide loading message
-     */
-    private importMessageCallback(m: string): void {
-        if (m.startsWith("Loading ")) {
-            const packageStart = "Loading ".length;
-            // message optionally contains a "from <source>" part
-            const packageEnd = m.includes(" from") ? m.indexOf(" from") : m.length;
-            this.onEvent({
-                type: BackendEventType.Loading,
-                contentType: "application/json",
-                data: {
-                    loading: true,
-                    modules: m.slice(packageStart, packageEnd).split(", ")
-                }
-            });
-        } else if (m.startsWith("Loaded")) {
-            this.onEvent({
-                type: BackendEventType.Loading,
-                data: {
-                    loading: false,
-                    modules: m.slice("Loaded ".length).split(", ")
-                },
-                contentType: "application/json"
-            });
-        }
-    }
-
-    /**
      * Helper method to install imports and prevent race conditions with double downloading
      * @param {string} code The code containing import statements
      */
@@ -107,7 +78,16 @@ class PythonWorker extends Backend<PyodideExtras> {
         this.installPromise = null;
     }
 
-    public async runCode(extras: PyodideExtras, code: string): Promise<any> {
+    public runModes(code: string): Array<RunMode> {
+        const modes = super.runModes(code);
+        modes.push({
+            mode: "doctest",
+            active: this.papyros.has_doctests(code)
+        });
+        return modes;
+    }
+
+    public async runCode(extras: PyodideExtras, code: string, mode = "exec"): Promise<any> {
         this.extras = extras;
         if (extras.interruptBuffer) {
             this.pyodide.setInterruptBuffer(extras.interruptBuffer);
@@ -115,6 +95,7 @@ class PythonWorker extends Backend<PyodideExtras> {
         await this.installImports(code);
         return await this.papyros.run_async.callKwargs({
             source_code: code,
+            mode: mode
         });
     }
 

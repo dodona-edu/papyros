@@ -5,7 +5,8 @@ import { BackendEvent, BackendEventType } from "./BackendEvent";
 import { BackendManager } from "./BackendManager";
 import { CodeEditor } from "./CodeEditor";
 import {
-    APPLICATION_STATE_TEXT_ID, RUN_BTN_ID,
+    addPapyrosPrefix,
+    APPLICATION_STATE_TEXT_ID, CODE_BUTTONS_WRAPPER_ID, DEFAULT_EDITOR_DELAY, RUN_BTN_ID,
     STATE_SPINNER_ID, STOP_BTN_ID
 } from "./Constants";
 import { InputManager } from "./InputManager";
@@ -143,6 +144,29 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             buttonText: t("Papyros.stop"),
             classNames: "_tw-text-white _tw-bg-red-500"
         }, () => this.stop());
+        this.editor.onChange({
+            onChange: async code => {
+                console.log("Called onChange in CodeRunner");
+                const backend = await this.backend;
+                const modes = await backend.workerProxy.runModes(code);
+                console.log("Supported modes are: ", modes);
+                modes.forEach(mode => {
+                    const id = addPapyrosPrefix(mode.mode);
+                    if (mode.active) {
+                        this.addButton({
+                            id: id,
+                            buttonText: t(`Papyros.run_modes.${mode.mode}`),
+                            classNames: "_tw-text-white _tw-bg-green-500"
+                        }, () => this.runCode(this.editor.getCode(), mode.mode));
+                    } else {
+                        this.removeButton(id);
+                    }
+                });
+                this.renderButtons();
+            },
+            delay: DEFAULT_EDITOR_DELAY
+        });
+
         BackendManager.subscribe(BackendEventType.Input,
             () => this.setState(RunState.AwaitingInput));
         this.loadingPackages = [];
@@ -267,12 +291,20 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         return this.state;
     }
 
+    public removeButton(id: string): void {
+        const existingIndex = this.buttons.findIndex(b => b.id === id);
+        if (existingIndex !== -1) {
+            this.buttons.splice(existingIndex, 1);
+        }
+    }
+
     /**
      * Add a button to display to the user
      * @param {ButtonOptions} options Options for rendering the button
      * @param {function} onClick Listener for click events on the button
      */
     public addButton(options: ButtonOptions, onClick: () => void): void {
+        this.removeButton(options.id);
         this.buttons.push({
             id: options.id,
             buttonHTML: renderButton(options),
@@ -280,19 +312,24 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         });
     }
 
+    private renderButtons(): void {
+        getElement(CODE_BUTTONS_WRAPPER_ID).innerHTML =
+            this.buttons.map(b => b.buttonHTML).join("\n");
+        // Buttons are freshly added to the DOM, so attach listeners now
+        this.buttons.forEach(b => addListener(b.id, b.onClick, "click"));
+    }
+
     protected override _render(options: CodeRunnerRenderOptions): HTMLElement {
         const rendered = renderWithOptions(options.statusPanelOptions, `
 <div class="_tw-grid _tw-grid-cols-2 _tw-items-center _tw-mx-1">
-    <div class="_tw-col-span-1 _tw-flex _tw-flex-row">
-        ${this.buttons.map(b => b.buttonHTML).join("\n")}
+    <div id="${CODE_BUTTONS_WRAPPER_ID}" class="_tw-col-span-1 _tw-flex _tw-flex-row">
     </div>
     <div class="_tw-col-span-1 _tw-flex _tw-flex-row-reverse _tw-items-center">
         <div id="${APPLICATION_STATE_TEXT_ID}"></div>
         ${renderSpinningCircle(STATE_SPINNER_ID, "_tw-border-gray-200 _tw-border-b-red-500")}
     </div>
 </div>`);
-        // Buttons are freshly added to the DOM, so attach listeners now
-        this.buttons.forEach(b => addListener(b.id, b.onClick, "click"));
+        this.renderButtons();
         this.setState(this.state);
         this.inputManager.render(options.inputOptions);
         this.outputManager.render(options.outputOptions);
@@ -305,9 +342,10 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
 
     /**
      * @param {string} code The code to run
+     * @param {string} mode The mode to run with
      * @return {Promise<void>} Promise of running the code
      */
-    public async runCode(code: string): Promise<void> {
+    public async runCode(code: string, mode?: string): Promise<void> {
         // Setup pre-run
         this.setState(RunState.Running);
         BackendManager.publish({
@@ -321,7 +359,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         const backend = await this.backend;
         try {
             await backend.call(
-                backend.workerProxy.runCode, code
+                backend.workerProxy.runCode, code, mode
             );
         } catch (error: any) {
             if (error.type === "InterruptError") {

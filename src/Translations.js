@@ -47,7 +47,10 @@ const ENGLISH_TRANSLATION = {
     "no_output": "The code did not produce any output.",
     "service_worker_error": "The service worker failed to load.",
     "launch_error": "Papyros failed to load. Do you want to reload?",
-    "loading": "Loading %{packages}."
+    "loading": "Loading %{packages}.",
+    "run_modes": {
+        "doctest": "Doctests"
+    }
 };
 
 const DUTCH_TRANSLATION = {
@@ -95,7 +98,10 @@ const DUTCH_TRANSLATION = {
     "no_output": "De code produceerde geen uitvoer.",
     "service_worker_error": "Er liep iets fout bij het laden van de service worker.",
     "launch_error": "Er liep iets fout bij het laden van Papyros. Wil je herladen?",
-    "loading": "Bezig met het installeren van %{packages}."
+    "loading": "Bezig met het installeren van %{packages}.",
+    "run_modes": {
+        "doctest": "Doctests"
+    }
 };
 
 const TRANSLATIONS = {
