@@ -9,7 +9,7 @@ import {
     APPLICATION_STATE_TEXT_ID, CODE_BUTTONS_WRAPPER_ID, DEFAULT_EDITOR_DELAY, RUN_BTN_ID,
     STATE_SPINNER_ID, STOP_BTN_ID
 } from "./Constants";
-import { InputManager } from "./InputManager";
+import { InputManager, InputMode } from "./InputManager";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import { renderSpinningCircle } from "./util/HTMLShapes";
 import {
@@ -117,8 +117,9 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     /**
      * Construct a new RunStateManager with the given listeners
      * @param {ProgrammingLanguage} programmingLanguage The language to use
+     * @param {InputMode} inputMode The input mode to use
      */
-    constructor(programmingLanguage: ProgrammingLanguage) {
+    constructor(programmingLanguage: ProgrammingLanguage, inputMode: InputMode) {
         super();
         this.programmingLanguage = programmingLanguage;
         this.editor = new CodeEditor(() => {
@@ -130,7 +131,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             const backend = await this.backend;
             backend.writeMessage(input);
             this.setState(RunState.Running);
-        });
+        }, inputMode);
         this.outputManager = new OutputManager();
         this.backend = Promise.resolve({} as SyncClient<Backend>);
         this.buttons = [];

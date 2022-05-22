@@ -143,7 +143,7 @@ export class CodeEditor extends Renderable {
         // CodeMirror dom resets its classList, so that is not an option
         const wrappingDiv = document.createElement("div");
         wrappingDiv.classList
-            .add("_tw-overflow-auto", "_tw-max-h-9/10", "_tw-min-h-1/4",
+            .add("papyros-code-editor", "_tw-overflow-auto", "_tw-max-h-9/10", "_tw-min-h-1/4",
                 "_tw-border-solid", "_tw-border-gray-200", "_tw-border-2",
                 "_tw-rounded-lg", "dark:_tw-border-dark-mode-content");
         wrappingDiv.replaceChildren(this.editorView.dom);

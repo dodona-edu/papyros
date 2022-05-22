@@ -20,7 +20,7 @@ async function startPapyros(): Promise<void> {
         standAlone: true,
         programmingLanguage: language,
         locale: locale,
-        inputMode: InputMode.Interactive,
+        inputMode: InputMode.Batch,
         channelOptions: {
             serviceWorkerName: DEFAULT_SERVICE_WORKER
         }
