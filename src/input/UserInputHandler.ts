@@ -64,8 +64,18 @@ export abstract class UserInputHandler extends Renderable {
         return getElement<HTMLInputElement>(INPUT_TA_ID);
     }
 
+    /**
+     * @param {string} placeholder The placeholder to show
+     */
     protected setPlaceholder(placeholder: string): void {
         this.inputArea.setAttribute("placeholder", placeholder);
+    }
+
+    /**
+     * Focus the area in which the user enters input
+     */
+    protected focus(): void {
+        this.inputArea.focus();
     }
 
     /**
@@ -82,7 +92,7 @@ export abstract class UserInputHandler extends Renderable {
             // Using setTimeout ensures rendering will be done when the main thread has time
             // eslint-disable-next-line max-len
             // More info here: https://stackoverflow.com/questions/1096436/document-getelementbyidid-focus-is-not-working-for-firefox-or-chrome
-            setTimeout(() => this.inputArea.focus(), 0);
+            setTimeout(() => this.focus(), 0);
         }
     }
 
