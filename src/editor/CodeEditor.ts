@@ -21,31 +21,21 @@ import { oneDark } from "@codemirror/theme-one-dark";
 import {
     EditorView, showPanel, lineNumbers, highlightActiveLineGutter,
     highlightSpecialChars, drawSelection,
-    rectangularSelection, highlightActiveLine, keymap, placeholder
+    rectangularSelection, highlightActiveLine, keymap
 } from "@codemirror/view";
 import { Diagnostic, linter, lintGutter, lintKeymap } from "@codemirror/lint";
 import { CodeMirrorEditor } from "./CodeMirrorEditor";
-
-enum Option {
-    ProgrammingLanguage = "programming_language",
-    Placeholder = "placeholder",
-    Indentation = "indentation",
-    Panel = "panel",
-    Autocompletion = "autocompletion",
-    Linting = "linting",
-    Style = "style"
-}
-const OPTIONS = [
-    Option.ProgrammingLanguage, Option.Placeholder,
-    Option.Indentation, Option.Panel,
-    Option.Autocompletion, Option.Linting,
-    Option.Style
-];
 
 /**
  * Component that provides useful features to users writing code
  */
 export class CodeEditor extends CodeMirrorEditor {
+    public static PROGRAMMING_LANGUAGE = "programming_language";
+    public static INDENTATION = "indentation";
+    public static PANEL = "panel";
+    public static AUTOCOMPLETION = "autocompletion";
+    public static LINTING = "linting";
+
     /**
      * Construct a new CodeEditor
      * @param {Function} onRunRequest Callback for when the user wants to run the code
@@ -53,7 +43,10 @@ export class CodeEditor extends CodeMirrorEditor {
      * @param {number} indentLength The length in spaces for the indent unit
      */
     constructor(onRunRequest: () => void, initialCode = "", indentLength = 4) {
-        super(OPTIONS, {
+        super(new Set([
+            CodeEditor.PROGRAMMING_LANGUAGE, CodeEditor.INDENTATION,
+            CodeEditor.PANEL, CodeEditor.AUTOCOMPLETION, CodeEditor.LINTING
+        ]), {
             classes: ["papyros-code-editor", "_tw-overflow-auto",
                 "_tw-border-solid", "_tw-border-gray-200", "_tw-border-2",
                 "_tw-rounded-lg", "dark:_tw-border-dark-mode-content"],
@@ -80,14 +73,14 @@ export class CodeEditor extends CodeMirrorEditor {
         this.setIndentLength(indentLength);
     }
 
-    public setDarkMode(darkMode: boolean): void {
+    public override setDarkMode(darkMode: boolean): void {
         let styleExtensions: Extension = [];
         if (darkMode) {
             styleExtensions = oneDark;
         } else {
             styleExtensions = syntaxHighlighting(defaultHighlightStyle, { fallback: true });
         }
-        this.reconfigure(["style", styleExtensions]);
+        this.reconfigure([CodeMirrorEditor.STYLE, styleExtensions]);
     }
 
     /**
@@ -96,10 +89,10 @@ export class CodeEditor extends CodeMirrorEditor {
     public setProgrammingLanguage(language: ProgrammingLanguage)
         : void {
         this.reconfigure(
-            [Option.ProgrammingLanguage, CodeEditor.getLanguageSupport(language)],
-            [Option.Placeholder, placeholder(t("Papyros.code_placeholder",
-                { programmingLanguage: language }))]
+            [CodeEditor.PROGRAMMING_LANGUAGE, CodeEditor.getLanguageSupport(language)]
         );
+        this.setPlaceholder(t("Papyros.code_placeholder",
+            { programmingLanguage: language }));
     }
 
     /**
@@ -107,7 +100,7 @@ export class CodeEditor extends CodeMirrorEditor {
      */
     public setCompletionSource(completionSource: CompletionSource): void {
         this.reconfigure(
-            [Option.Autocompletion, autocompletion({ override: [completionSource] })]
+            [CodeEditor.AUTOCOMPLETION, autocompletion({ override: [completionSource] })]
         );
     }
 
@@ -119,7 +112,7 @@ export class CodeEditor extends CodeMirrorEditor {
         : void {
         this.reconfigure(
             [
-                Option.Linting,
+                CodeEditor.LINTING,
                 linter(lintSource)
             ]
         );
@@ -130,7 +123,7 @@ export class CodeEditor extends CodeMirrorEditor {
      */
     public setIndentLength(indentLength: number): void {
         this.reconfigure(
-            [Option.Indentation, indentUnit.of(CodeEditor.getIndentUnit(indentLength))]
+            [CodeEditor.INDENTATION, indentUnit.of(CodeEditor.getIndentUnit(indentLength))]
         );
     }
 
@@ -139,7 +132,7 @@ export class CodeEditor extends CodeMirrorEditor {
      */
     public setPanel(panel: HTMLElement): void {
         this.reconfigure(
-            [Option.Panel, showPanel.of(() => {
+            [CodeEditor.PANEL, showPanel.of(() => {
                 return { dom: panel };
             })]
         );
@@ -198,6 +191,7 @@ export class CodeEditor extends CodeMirrorEditor {
     */
     private static getExtensions(): Array<Extension> {
         return [
+            lintGutter(),
             lineNumbers(),
             highlightSpecialChars(),
             history(),
@@ -212,7 +206,6 @@ export class CodeEditor extends CodeMirrorEditor {
             highlightActiveLine(),
             highlightActiveLineGutter(),
             highlightSelectionMatches(),
-            lintGutter(),
             keymap.of([
                 ...closeBracketsKeymap,
                 ...defaultKeymap,

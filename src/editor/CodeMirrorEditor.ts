@@ -1,46 +1,106 @@
 import { Compartment, EditorState, Extension, StateEffect } from "@codemirror/state";
-import { EditorView, ViewUpdate } from "@codemirror/view";
+import { EditorView, placeholder, ViewUpdate } from "@codemirror/view";
 import { Renderable, RenderOptions, renderWithOptions } from "../util/Rendering";
 import { StyleSpec } from "style-mod";
 import { oneDark } from "@codemirror/theme-one-dark";
 
+/**
+ * Data structure containing common elements for styling
+ */
 export interface EditorStyling {
+    /**
+     * Array of HTML classes to apply to this editor
+     */
     classes: Array<string>;
+    /**
+     * The maximum height of the editor
+     */
     maxHeight: string;
+    /**
+     * The minimum height of the editor
+     */
     minHeight: string;
+    /**
+     * Extra theme options to be passed to EditorView.theme
+     */
     theme?: {
         [selectorSpec: string]: StyleSpec
     }
 }
 
-export interface CodeChangeListener {
+/**
+ * Interface for listeners to textual changes in the editor
+ */
+export interface DocChangeListener {
+    /**
+     * Method to call with the new document value
+     */
     onChange: (code: string) => void;
+    /**
+     * How many milliseconds should pass since the last change
+     * before notifying (in case computations are expensive)
+     */
     delay?: number;
 }
+
+/**
+ * Interface for storing data related to delayed function calls
+ */
 interface TimeoutData {
+    /**
+     * The time in ms at which the last call occurred
+     */
     lastCalled: number;
+    /**
+     * The timeout identifier associated with the delayed call
+     * null if not currently scheduled
+     */
     timeout: NodeJS.Timeout | null;
 }
 
+
+/**
+ * Base class for Editors implemented using CodeMirror 6
+ * https://codemirror.net/6/
+ */
 export abstract class CodeMirrorEditor extends Renderable {
-    readonly editorView: EditorView;
+    public static STYLE = "style";
+    public static PLACEHOLDER = "placeholder";
+    /**
+     * CodeMirror EditorView representing the internal editor
+     */
+    public readonly editorView: EditorView;
+    /**
+     * Mapping of strings to Compartments associated with that property
+     */
     protected compartments: Map<string, Compartment>;
-    protected htmlClasses: Array<string>;
+    /**
+     * Data to style this Editor
+     */
+    protected styling: EditorStyling;
     /**
      * Mapping for each change listener to its timeout identifier and last call time
      */
-    protected listenerTimeouts: Map<CodeChangeListener, TimeoutData>;
+    protected listenerTimeouts: Map<DocChangeListener, TimeoutData>;
 
-    constructor(compartments: Array<string>, styling: EditorStyling) {
+    /**
+     * @param {Set<string>} compartments Identifiers for configurable extensions
+     * @param {EditorStyling} styling Data to style this editor
+     */
+    constructor(compartments: Set<string>, styling: EditorStyling) {
         super();
-        this.htmlClasses = styling.classes;
+        this.styling = styling;
         this.listenerTimeouts = new Map();
-        if (!compartments.includes("style")) {
-            compartments.push("style");
-        }
-        this.compartments = new Map(compartments.map(opt => [opt, new Compartment()]));
-        const configurableExtensions = [...this.compartments.values()]
-            .map(compartment => compartment.of([]));
+        // Ensure default compartments are present
+        compartments.add(CodeMirrorEditor.STYLE);
+        compartments.add(CodeMirrorEditor.PLACEHOLDER);
+        this.compartments = new Map();
+        const configurableExtensions: Array<Extension> = [];
+        compartments.forEach(opt => {
+            const compartment = new Compartment();
+            this.compartments.set(opt, compartment);
+            configurableExtensions.push(compartment.of([]));
+        });
         this.editorView = new EditorView({
             state: EditorState.create({
                 extensions: [
@@ -61,6 +121,9 @@ export abstract class CodeMirrorEditor extends Renderable {
         });
     }
 
+    /**
+     * @param {Extension} extension The extension to add to the Editor
+     */
     protected addExtension(extension: Extension): void {
         this.editorView.dispatch({
             effects: StateEffect.appendConfig.of(extension)
@@ -95,10 +158,26 @@ export abstract class CodeMirrorEditor extends Renderable {
         });
     }
 
+    /**
+     * Apply focus to the Editor
+     */
     public focus(): void {
         this.editorView.focus();
     }
 
+    /**
+     * @param {string} placeholderValue The contents of the placeholder
+     */
+    public setPlaceholder(placeholderValue: string): void {
+        this.reconfigure([
+            CodeMirrorEditor.PLACEHOLDER,
+            placeholder(placeholderValue)
+        ]);
+    }
+
+    /**
+     * @param {boolean} darkMode Whether to use dark mode
+     */
     public setDarkMode(darkMode: boolean): void {
         let styleExtensions: Extension = [];
         if (darkMode) {
@@ -106,21 +185,25 @@ export abstract class CodeMirrorEditor extends Renderable {
         } else {
             styleExtensions = [];
         }
-        this.reconfigure(["style", styleExtensions]);
+        this.reconfigure([CodeMirrorEditor.STYLE, styleExtensions]);
     }
 
     protected override _render(options: RenderOptions): void {
         this.setDarkMode(options.darkMode || false);
         const wrappingDiv = document.createElement("div");
-        wrappingDiv.classList.add(...this.htmlClasses);
+        wrappingDiv.classList.add(...this.styling.classes);
         wrappingDiv.replaceChildren(this.editorView.dom);
         renderWithOptions(options, wrappingDiv);
     }
 
+    /**
+     * Process the changes by informing the listeners of the new contents
+     */
     private handleChange(): void {
         const currentDoc = this.getText();
         const now = Date.now();
         this.listenerTimeouts.forEach((timeoutData, listener) => {
+            // Clear existing scheduled calls
             if (timeoutData.timeout !== null) {
                 clearTimeout(timeoutData.timeout);
             }
@@ -133,9 +216,9 @@ export abstract class CodeMirrorEditor extends Renderable {
     }
 
     /**
-     * @param {CodeChangeListener} changeListener Listener that performs actions on the new contents
+     * @param {DocChangeListener} changeListener Listener that performs actions on the new contents
      */
-    public onChange(changeListener: CodeChangeListener): void {
+    public onChange(changeListener: DocChangeListener): void {
         this.listenerTimeouts.set(changeListener, { timeout: null, lastCalled: 0 });
     }
 }
