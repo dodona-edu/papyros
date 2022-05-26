@@ -274,7 +274,11 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      * @param {string} message Optional message to indicate the state
      */
     public setState(state: RunState, message?: string): void {
-        this.state = state;
+        if (state !== this.state) {
+            getElement(APPLICATION_STATE_TEXT_ID).innerText =
+                message || t(`Papyros.states.${state}`);
+            this.state = state;
+        }
         this.stopButton.disabled = [RunState.Ready, RunState.Loading].includes(state);
         if ([RunState.Ready, RunState.Loading].includes(state)) {
             this.showSpinner(state == RunState.Loading);
@@ -283,8 +287,6 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             this.showSpinner(true);
             this.runButton.disabled = true;
         }
-        getElement(APPLICATION_STATE_TEXT_ID).innerText =
-            message || t(`Papyros.states.${state}`);
     }
 
     public getState(): RunState {
@@ -317,6 +319,8 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             this.buttons.map(b => b.buttonHTML).join("\n");
         // Buttons are freshly added to the DOM, so attach listeners now
         this.buttons.forEach(b => addListener(b.id, b.onClick, "click"));
+        // Ensure buttons are shown properly
+        this.setState(this.state);
     }
 
     protected override _render(options: CodeRunnerRenderOptions): HTMLElement {
@@ -330,7 +334,6 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     </div>
 </div>`);
         this.renderButtons();
-        this.setState(this.state);
         this.inputManager.render(options.inputOptions);
         this.outputManager.render(options.outputOptions);
         this.editor.render(options.codeEditorOptions);
