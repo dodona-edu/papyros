@@ -49,6 +49,14 @@ export declare abstract class UserInputHandler extends Renderable {
      */
     get inputArea(): HTMLInputElement;
     /**
+     * @param {string} placeholder The placeholder to show
+     */
+    protected setPlaceholder(placeholder: string): void;
+    /**
+     * Focus the area in which the user enters input
+     */
+    protected focus(): void;
+    /**
      * Wait for input of the user for a certain prompt
      * @param {boolean} waiting Whether we are waiting for input
      * @param {string} prompt Optional message to display if waiting

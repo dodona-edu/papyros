@@ -1,5 +1,5 @@
 import { CodeEditor } from "./CodeEditor";
-import { InputManager } from "./InputManager";
+import { InputManager, InputMode } from "./InputManager";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import { RenderOptions, ButtonOptions, Renderable } from "./util/Rendering";
 import { OutputManager } from "./OutputManager";
@@ -87,8 +87,9 @@ export declare class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     /**
      * Construct a new RunStateManager with the given listeners
      * @param {ProgrammingLanguage} programmingLanguage The language to use
+     * @param {InputMode} inputMode The input mode to use
      */
-    constructor(programmingLanguage: ProgrammingLanguage);
+    constructor(programmingLanguage: ProgrammingLanguage, inputMode: InputMode);
     /**
      * Start the backend to enable running code
      */

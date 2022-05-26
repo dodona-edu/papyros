@@ -10,7 +10,7 @@ export declare class InputManager extends Renderable {
     private waiting;
     private prompt;
     private sendInput;
-    constructor(sendInput: (input: string) => void);
+    constructor(sendInput: (input: string) => void, inputMode: InputMode);
     private buildInputHandlerMap;
     getInputMode(): InputMode;
     setInputMode(inputMode: InputMode): void;
