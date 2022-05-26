@@ -3,8 +3,7 @@ import { UserInputHandler } from "./UserInputHandler";
 import {
     RenderOptions,
 } from "../util/Rendering";
-import { EditorView, placeholder, ViewUpdate } from "@codemirror/view";
-import { EditorState } from "@codemirror/state";
+import { placeholder } from "@codemirror/view";
 import { UsedInputGutterInfo, UsedInputGutters } from "../editor/Gutters";
 import { t } from "../util/Util";
 import { CodeMirrorEditor } from "../editor/CodeMirrorEditor";
@@ -36,6 +35,21 @@ class BatchInputEditor extends CodeMirrorEditor {
             this.usedInputGutters.setMarker(this.editorView, info);
         });
     }
+
+    public getLines(): Array<string> {
+        const lines = [];
+        // Always need to call next atleast once
+        let lineIterator = this.editorView.state.doc.iterLines().next();
+        while (!lineIterator.done) {
+            lines.push(lineIterator.value);
+            lineIterator = lineIterator.next();
+        }
+        if (lines.length > 0 && lines[lines.length - 1] === "") {
+            // Don't count last line as actual input
+            lines.splice(lines.length - 1, 1);
+        }
+        return lines;
+    }
 }
 
 export class BatchInputHandler extends UserInputHandler {
@@ -44,7 +58,6 @@ export class BatchInputHandler extends UserInputHandler {
      */
     private lineNr: number;
     private prompts: Array<string>;
-    private inputAreaView: EditorView;
 
     private batchEditor: BatchInputEditor;
     /**
@@ -52,7 +65,6 @@ export class BatchInputHandler extends UserInputHandler {
      * Is restored upon switching back to InputMode.Batch
      */
     private previousInput: string;
-    private highlightInputGutters: UsedInputGutters;
 
     /**
      * Construct a new BatchInputHandler
@@ -64,24 +76,14 @@ export class BatchInputHandler extends UserInputHandler {
         this.previousInput = "";
         this.prompts = [];
         this.batchEditor = new BatchInputEditor();
-        this.highlightInputGutters = new UsedInputGutters();
-        this.inputAreaView = new EditorView({
-            state: EditorState.create({
-                extensions: [
-                    EditorView.updateListener.of((v: ViewUpdate) => {
-                        if (v.docChanged) {
-                            this.handleInputChanged(v.state.doc.toString());
-                        }
-                    }),
-                    this.highlightInputGutters.toExtension()
-                ]
-            })
+        this.batchEditor.onChange({
+            onChange: this.handleInputChanged.bind(this),
+            delay: 0
         });
     }
 
     private handleInputChanged(newInput: string): void {
         if (!newInput) {
-            console.log("Highlighting with false");
             this.highlight(() => false);
         } else {
             const newLines = newInput.split("\n");

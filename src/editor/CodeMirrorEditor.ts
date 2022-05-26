@@ -1,5 +1,5 @@
 import { Compartment, EditorState, Extension, StateEffect } from "@codemirror/state";
-import { EditorView } from "@codemirror/view";
+import { EditorView, ViewUpdate } from "@codemirror/view";
 import { Renderable, RenderOptions, renderWithOptions } from "../util/Rendering";
 import { StyleSpec } from "style-mod";
 
@@ -11,13 +11,29 @@ export interface EditorStyling {
         [selectorSpec: string]: StyleSpec
     }
 }
+
+export interface CodeChangeListener {
+    onChange: (code: string) => void;
+    delay?: number;
+}
+interface TimeoutData {
+    lastCalled: number;
+    timeout: NodeJS.Timeout | null;
+}
+
 export abstract class CodeMirrorEditor extends Renderable {
     readonly editorView: EditorView;
     protected compartments: Map<string, Compartment>;
     protected htmlClasses: Array<string>;
+    /**
+     * Mapping for each change listener to its timeout identifier and last call time
+     */
+    protected listenerTimeouts: Map<CodeChangeListener, TimeoutData>;
+
     constructor(compartments: Array<string>, styling: EditorStyling) {
         super();
         this.htmlClasses = styling.classes;
+        this.listenerTimeouts = new Map();
         this.compartments = new Map(compartments.map(opt => [opt, new Compartment()]));
         const configurableExtensions = [...this.compartments.values()]
             .map(compartment => compartment.of([]));
@@ -25,6 +41,11 @@ export abstract class CodeMirrorEditor extends Renderable {
             state: EditorState.create({
                 extensions: [
                     configurableExtensions,
+                    EditorView.updateListener.of((v: ViewUpdate) => {
+                        if (v.docChanged) {
+                            this.handleChange();
+                        }
+                    }),
                     EditorView.theme({
                         ".cm-scroller": { overflow: "auto" },
                         "&": { maxHeight: styling.maxHeight },
@@ -47,16 +68,6 @@ export abstract class CodeMirrorEditor extends Renderable {
      */
     public getText(): string {
         return this.editorView.state.doc.toString();
-    }
-
-    public getLines(): Array<string> {
-        const lines = [];
-        let lineIterator = this.editorView.state.doc.iterLines();
-        while (!lineIterator.done) {
-            lines.push(lineIterator.value);
-            lineIterator = lineIterator.next();
-        }
-        return lines;
     }
 
     /**
@@ -89,5 +100,27 @@ export abstract class CodeMirrorEditor extends Renderable {
         wrappingDiv.classList.add(...this.htmlClasses);
         wrappingDiv.replaceChildren(this.editorView.dom);
         renderWithOptions(options, wrappingDiv);
+    }
+
+    private handleChange(): void {
+        const currentDoc = this.getText();
+        const now = Date.now();
+        this.listenerTimeouts.forEach((timeoutData, listener) => {
+            if (timeoutData.timeout !== null) {
+                clearTimeout(timeoutData.timeout);
+            }
+            timeoutData.timeout = setTimeout(() => {
+                timeoutData.timeout = null;
+                listener.onChange(currentDoc);
+            }, listener.delay);
+            timeoutData.lastCalled = now;
+        });
+    }
+
+    /**
+     * @param {CodeChangeListener} changeListener Listener that performs actions on the new contents
+     */
+    public onChange(changeListener: CodeChangeListener): void {
+        this.listenerTimeouts.set(changeListener, { timeout: null, lastCalled: 0 });
     }
 }
