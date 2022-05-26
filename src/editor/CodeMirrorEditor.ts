@@ -207,10 +207,15 @@ export abstract class CodeMirrorEditor extends Renderable {
             if (timeoutData.timeout !== null) {
                 clearTimeout(timeoutData.timeout);
             }
-            timeoutData.timeout = setTimeout(() => {
-                timeoutData.timeout = null;
+            timeoutData.lastCalled = now;
+            if (listener.delay && listener.delay > 0) {
+                timeoutData.timeout = setTimeout(() => {
+                    timeoutData.timeout = null;
+                    listener.onChange(currentDoc);
+                }, listener.delay);
+            } else {
                 listener.onChange(currentDoc);
-            }, listener.delay);
+            }
             timeoutData.lastCalled = now;
         });
     }

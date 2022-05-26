@@ -62,7 +62,7 @@ export class InputManager extends Renderable {
         this.inputHandler.toggle(true);
     }
 
-    private get inputHandler(): UserInputHandler {
+    public get inputHandler(): UserInputHandler {
         return this.inputHandlers.get(this.inputMode)!;
     }
 
@@ -99,7 +99,7 @@ ${switchMode}`);
         this.inputHandler.waitWithPrompt(this.waiting, this.prompt);
     }
 
-    private async onUserInput(): Promise<void> {
+    private onUserInput(): void {
         if (this.inputHandler.hasNext()) {
             const line = this.inputHandler.next();
             this.sendInput(line);
@@ -112,11 +112,10 @@ ${switchMode}`);
     /**
      * Asynchronously handle an input request by prompting the user for input
      * @param {BackendEvent} e Event containing the input data
-     * @return {Promise<void>} Promise of handling the request
      */
-    private async onInputRequest(e: BackendEvent): Promise<void> {
+    private onInputRequest(e: BackendEvent): void {
         this.prompt = e.data;
-        return await this.onUserInput();
+        this.onUserInput();
     }
 
     private onRunStart(): void {
