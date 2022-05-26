@@ -5,13 +5,16 @@ import {
 } from "../util/Rendering";
 import { EditorView, placeholder, ViewUpdate } from "@codemirror/view";
 import { Compartment, EditorState } from "@codemirror/state";
+import { UsedInputGutters } from "../editor/Gutters";
+import { t } from "../util/Util";
 
 export class BatchInputHandler extends UserInputHandler {
-    private static HIGHLIGHT_CLASSES = ["_tw-bg-sky-200", "_tw-text-white"];
+    private static HIGHLIGHT_CLASSES = ["cm-activeLine"];// "_tw-bg-sky-200", "_tw-text-white"];
     /**
      * The index of the next line in lines to send
      */
     private lineNr: number;
+    private prompts: Array<string>;
     private promptCompartment: Compartment;
     private inputAreaView: EditorView;
     /**
@@ -19,6 +22,7 @@ export class BatchInputHandler extends UserInputHandler {
      * Is restored upon switching back to InputMode.Batch
      */
     private previousInput: string;
+    private highlightInputGutters: UsedInputGutters;
 
     /**
      * Construct a new BatchInputHandler
@@ -28,7 +32,9 @@ export class BatchInputHandler extends UserInputHandler {
         super(inputCallback);
         this.lineNr = 0;
         this.previousInput = "";
+        this.prompts = [];
         this.promptCompartment = new Compartment();
+        this.highlightInputGutters = new UsedInputGutters();
         this.inputAreaView = new EditorView({
             state: EditorState.create({
                 extensions: [
@@ -37,25 +43,25 @@ export class BatchInputHandler extends UserInputHandler {
                         if (v.docChanged) {
                             this.handleInputChanged(v.state.doc.toString());
                         }
-                    })
+                    }),
+                    this.highlightInputGutters.toExtension()
                 ]
             })
         });
     }
 
     private handleInputChanged(newInput: string): void {
-        const newLines = newInput.split("\n");
-        const oldLines = this.previousInput.split("\n");
-        console.log("Handling input change", newLines, oldLines, this.lineNr, this.waiting);
-        if (this.waiting && newLines.length > this.lineNr + 1) {
-            // Require explicitly pressing enter
-            this.inputCallback();
-        }
-        if (newLines.length < this.lineNr) {
-            // Used removed lines, update and re-highlight
-            this.lineNr = newLines.length - 1;
+        if (!newInput) {
+            this.highlight(() => false);
+        } else {
+            const newLines = newInput.split("\n");
+            if (this.waiting && newLines.length > this.lineNr + 1) {
+                // Require explicitly pressing enter
+                this.inputCallback();
+            }
             this.highlight();
         }
+
         this.previousInput = newInput;
     }
 
@@ -95,17 +101,25 @@ export class BatchInputHandler extends UserInputHandler {
         return this.lineNr < this.lines.length;
     }
 
-    private highlight(): void {
+    private highlight(whichLines = (i: number) => i < this.lineNr): void {
         this.inputAreaView.dom.querySelectorAll(".cm-line").forEach((line, i) => {
+            const shouldShow = whichLines(i);
             BatchInputHandler.HIGHLIGHT_CLASSES.forEach(c => {
-                line.classList.toggle(c, i < this.lineNr);
+                line.classList.toggle(c, shouldShow);
             });
+            let message = t("Papyros.used_input");
+            if (i < this.prompts.length && this.prompts[i]) {
+                message = t("Papyros.used_input_with_prompt",
+                    { prompt: this.prompts[i] });
+            }
+            const info = { lineNr: i + 1, on: shouldShow, title: message };
+            this.highlightInputGutters.setMarker(this.inputAreaView,
+                info);
         });
     }
 
     public override next(): string {
         const nextLine = this.lines[this.lineNr];
-        console.log("Called next for line: ", this.lineNr, nextLine, this.lines);
         this.lineNr += 1;
         this.highlight();
         return nextLine;
@@ -113,11 +127,18 @@ export class BatchInputHandler extends UserInputHandler {
 
     public override onRunStart(): void {
         this.lineNr = 0;
-        this.highlight();
+        this.highlight(() => false);
     }
 
     public override onRunEnd(): void {
         // Intentionally empty
+    }
+
+    public override waitWithPrompt(waiting: boolean, prompt?: string): void {
+        if (waiting) {
+            this.prompts.push(prompt || "");
+        }
+        super.waitWithPrompt(waiting, prompt);
     }
 
     protected setPlaceholder(promptPlaceholder: string): void {
@@ -133,11 +154,10 @@ export class BatchInputHandler extends UserInputHandler {
     protected override _render(options: RenderOptions): void {
         const wrappingDiv = document.createElement("div");
         wrappingDiv.classList
-            .add("papyros-input-editor", "_tw-w-full", "_tw-max-h-1/4", "_tw-min-h-1/8",
-                "_tw-px-1", "_tw-overflow-auto", "_tw-border-2", "_tw-rounded-lg",
-                "dark:_tw-border-dark-mode-content", "dark:_tw-bg-dark-mode-bg",
+            .add("papyros-input-editor", "_tw-overflow-auto", "_tw-max-h-1/4", "_tw-min-h-1/8",
+                "_tw-border-solid", "_tw-border-gray-200", "_tw-border-2", "_tw-rounded-lg",
+                "dark:_tw-bg-dark-mode-bg", "dark:_tw-border-dark-mode-content",
                 "focus:_tw-outline-none", "focus:_tw-ring-1", "focus:_tw-ring-blue-500");
-
         wrappingDiv.replaceChildren(this.inputAreaView.dom);
         renderWithOptions(options, wrappingDiv);
     }
