@@ -3,7 +3,6 @@ import { UserInputHandler } from "./UserInputHandler";
 import {
     RenderOptions,
 } from "../util/Rendering";
-import { placeholder } from "@codemirror/view";
 import { t } from "../util/Util";
 import { BatchInputEditor } from "../editor/BatchInputEditor";
 
@@ -12,8 +11,13 @@ export class BatchInputHandler extends UserInputHandler {
      * The index of the next line in lines to send
      */
     private lineNr: number;
+    /**
+     * Messages used when asking for user input
+     */
     private prompts: Array<string>;
-
+    /**
+     * Editor containing the input of the user
+     */
     private batchEditor: BatchInputEditor;
     /**
      * The previous input of the user
@@ -37,6 +41,10 @@ export class BatchInputHandler extends UserInputHandler {
         });
     }
 
+    /**
+     * Handle new input, potentially sending it to the awaiting receiver
+     * @param {string} newInput The new user input
+     */
     private handleInputChanged(newInput: string): void {
         if (!newInput) {
             this.highlight(() => false);
@@ -112,8 +120,8 @@ export class BatchInputHandler extends UserInputHandler {
         super.waitWithPrompt(waiting, prompt);
     }
 
-    protected setPlaceholder(promptPlaceholder: string): void {
-        this.batchEditor.reconfigure(["placeholder", placeholder(promptPlaceholder)]);
+    protected setPlaceholder(placeholderValue: string): void {
+        this.batchEditor.setPlaceholder(placeholderValue);
     }
 
     public focus(): void {
