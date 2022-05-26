@@ -7,6 +7,7 @@ export declare class BatchInputHandler extends UserInputHandler {
      * The index of the next line in lines to send
      */
     private lineNr;
+    private prompts;
     private promptCompartment;
     private inputAreaView;
     /**
@@ -14,6 +15,7 @@ export declare class BatchInputHandler extends UserInputHandler {
      * Is restored upon switching back to InputMode.Batch
      */
     private previousInput;
+    private highlightInputGutters;
     /**
      * Construct a new BatchInputHandler
      * @param {function()} inputCallback  Callback for when the user has entered a value
@@ -32,6 +34,7 @@ export declare class BatchInputHandler extends UserInputHandler {
     next(): string;
     onRunStart(): void;
     onRunEnd(): void;
+    waitWithPrompt(waiting: boolean, prompt?: string): void;
     protected setPlaceholder(promptPlaceholder: string): void;
     protected focus(): void;
     protected _render(options: RenderOptions): void;
