@@ -1,4 +1,4 @@
-import { CodeEditor } from "../../src/CodeEditor";
+import { CodeEditor } from "../../src/editor/CodeEditor";
 import { ProgrammingLanguage } from "../../src/ProgrammingLanguage";
 import { Diagnostic } from "@codemirror/lint";
 import { startCompletion } from "@codemirror/autocomplete";
@@ -14,19 +14,19 @@ describe("CodeEditor", () => {
     });
 
     beforeEach(() => {
-        editor.setCode("");
+        editor.setText("");
     });
 
     it("can set and get code", () => {
-        expect(editor.getCode()).toEqual("");
+        expect(editor.getText()).toEqual("");
         const newCode = "print(input())";
-        editor.setCode(newCode);
-        expect(editor.getCode()).toEqual(newCode);
+        editor.setText(newCode);
+        expect(editor.getText()).toEqual(newCode);
     });
 
     it("uses syntax highlighting", () => {
         editor.setProgrammingLanguage(ProgrammingLanguage.Python);
-        editor.setCode("def test():\n    return 42");
+        editor.setText("def test():\n    return 42");
 
         // Def should have markup in Python
         let defSpans = Array.from(document.querySelectorAll("span"))
@@ -49,7 +49,7 @@ describe("CodeEditor", () => {
             ];
         });
         editor.setLintingSource(lintMock);
-        editor.setCode("x=5");
+        editor.setText("x=5");
         // CodeMirror waits until editor is idle to call linter
         return new Promise<void>(resolve => {
             setTimeout(() => {

@@ -18,7 +18,7 @@ export class BatchInputHandler extends UserInputHandler {
     /**
      * Editor containing the input of the user
      */
-    private batchEditor: BatchInputEditor;
+    public readonly batchEditor: BatchInputEditor;
     /**
      * The previous input of the user
      * Is restored upon switching back to InputMode.Batch
