@@ -74,7 +74,7 @@ export abstract class UserInputHandler extends Renderable {
     /**
      * Focus the area in which the user enters input
      */
-    protected focus(): void {
+    public focus(): void {
         this.inputArea.focus();
     }
 
