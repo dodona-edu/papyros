@@ -50,7 +50,9 @@ const ENGLISH_TRANSLATION = {
     "loading": "Loading %{packages}.",
     "run_modes": {
         "doctest": "Doctests"
-    }
+    },
+    "used_input": "This line was used as input by your code.",
+    "used_input_with_prompt": "This line was used as input for the following prompt: %{prompt}"
 };
 
 const DUTCH_TRANSLATION = {
@@ -101,7 +103,9 @@ const DUTCH_TRANSLATION = {
     "loading": "Bezig met het installeren van %{packages}.",
     "run_modes": {
         "doctest": "Doctests"
-    }
+    },
+    "used_input": "Deze regel werd gebruikt als invoer.",
+    "used_input_with_prompt": "Deze regel werd gebruikt als invoer voor de volgende vraag: %{prompt}"
 };
 
 const TRANSLATIONS = {
