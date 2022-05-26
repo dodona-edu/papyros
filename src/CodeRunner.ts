@@ -147,10 +147,8 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         }, () => this.stop());
         this.editor.onChange({
             onChange: async code => {
-                console.log("Called onChange in CodeRunner");
                 const backend = await this.backend;
                 const modes = await backend.workerProxy.runModes(code);
-                console.log("Supported modes are: ", modes);
                 modes.forEach(mode => {
                     const id = addPapyrosPrefix(mode.mode);
                     if (mode.active) {
