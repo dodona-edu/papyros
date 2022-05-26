@@ -84,7 +84,7 @@ const DUTCH_TRANSLATION = {
         "nl": "Nederlands"
     },
     "switch_input_mode_to": {
-        "interactive": "Wissen naar interactieve invoer",
+        "interactive": "Wisselen naar interactieve invoer",
         "batch": "Geef invoer vooraf in"
     },
     "enter": "Enter",
