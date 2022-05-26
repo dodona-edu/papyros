@@ -45,10 +45,4 @@ export declare function downloadResults(data: string, filename: string): void;
  * @return {string} The current url
  */
 export declare function cleanCurrentUrl(endingSlash?: boolean): string;
-/**
- * Focus an element, setting the user's caret at the end of the contents
- * Needed to ensure focusing a contenteditable element works as expected
- * @param {HTMLElement} el The element to focus
- */
-export declare function placeCaretAtEnd(el: HTMLElement): void;
 export {};
