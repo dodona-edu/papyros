@@ -66,6 +66,7 @@ interface TimeoutData {
 export abstract class CodeMirrorEditor extends Renderable {
     public static STYLE = "style";
     public static PLACEHOLDER = "placeholder";
+    public static THEME = "theme";
     /**
      * CodeMirror EditorView representing the internal editor
      */
@@ -94,6 +95,7 @@ export abstract class CodeMirrorEditor extends Renderable {
         // Ensure default compartments are present
         compartments.add(CodeMirrorEditor.STYLE);
         compartments.add(CodeMirrorEditor.PLACEHOLDER);
+        compartments.add(CodeMirrorEditor.THEME);
         this.compartments = new Map();
         const configurableExtensions: Array<Extension> = [];
         compartments.forEach(opt => {
@@ -109,16 +111,11 @@ export abstract class CodeMirrorEditor extends Renderable {
                         if (v.docChanged) {
                             this.handleChange();
                         }
-                    }),
-                    EditorView.theme({
-                        ".cm-scroller": { overflow: "auto" },
-                        "&": { maxHeight: styling.maxHeight },
-                        ".cm-gutter,.cm-content": { minHeight: styling.minHeight },
-                        ...(styling.theme || {})
                     })
                 ]
             })
         });
+        this.setStyling(styling);
     }
 
     /**
@@ -186,6 +183,27 @@ export abstract class CodeMirrorEditor extends Renderable {
             styleExtensions = [];
         }
         this.reconfigure([CodeMirrorEditor.STYLE, styleExtensions]);
+    }
+
+    /**
+     * Override the style used by this Editor
+     * @param {any} styling Object with keys of EditorStyling to override styles
+     */
+    public setStyling(styling: any): void {
+        for (const key of Object.keys(this.styling)) {
+            if (styling[key]) {
+                this.styling[key as keyof EditorStyling] = styling[key];
+            }
+        }
+        this.reconfigure([
+            CodeMirrorEditor.THEME,
+            EditorView.theme({
+                ".cm-scroller": { overflow: "auto" },
+                "&": { maxHeight: this.styling.maxHeight },
+                ".cm-gutter,.cm-content": { minHeight: this.styling.minHeight },
+                ...(this.styling.theme || {})
+            })
+        ]);
     }
 
     protected override _render(options: RenderOptions): void {
