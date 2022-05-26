@@ -1,7 +1,6 @@
 /* eslint-disable valid-jsdoc */
-import { ProgrammingLanguage } from "./ProgrammingLanguage";
-import { t } from "./util/Util";
-import { Renderable, RenderOptions, renderWithOptions } from "./util/Rendering";
+import { ProgrammingLanguage } from "../ProgrammingLanguage";
+import { t } from "../util/Util";
 import {
     CompletionSource, autocompletion,
     closeBrackets, closeBracketsKeymap, completionKeymap
@@ -17,14 +16,15 @@ import {
     foldGutter, indentOnInput, bracketMatching, foldKeymap, syntaxHighlighting
 } from "@codemirror/language";
 import { highlightSelectionMatches, searchKeymap } from "@codemirror/search";
-import { Compartment, EditorState, Extension } from "@codemirror/state";
+import { EditorState, Extension } from "@codemirror/state";
 import { oneDark } from "@codemirror/theme-one-dark";
 import {
     EditorView, showPanel, lineNumbers, highlightActiveLineGutter,
     highlightSpecialChars, drawSelection,
-    rectangularSelection, highlightActiveLine, keymap, placeholder, ViewUpdate
+    rectangularSelection, highlightActiveLine, keymap, placeholder
 } from "@codemirror/view";
 import { Diagnostic, linter, lintGutter, lintKeymap } from "@codemirror/lint";
+import { CodeMirrorEditor } from "./CodeMirrorEditor";
 
 enum Option {
     ProgrammingLanguage = "programming_language",
@@ -42,33 +42,10 @@ const OPTIONS = [
     Option.Style
 ];
 
-export interface CodeChangeListener {
-    onChange: (code: string) => void;
-    delay?: number;
-}
-interface TimeoutData {
-    lastCalled: number;
-    timeout: NodeJS.Timeout | null;
-}
-
 /**
  * Component that provides useful features to users writing code
  */
-export class CodeEditor extends Renderable {
-    /**
-     * Reference to the user interface of the editor
-     */
-    public readonly editorView: EditorView;
-    /**
-     * Mapping from CodeEditorOptions to a configurable compartment
-     */
-    private compartments: Map<Option, Compartment>;
-
-    /**
-     * Mapping for each change listener to its timeout identifier and last call time
-     */
-    private listenerTimeouts: Map<CodeChangeListener, TimeoutData>;
-
+export class CodeEditor extends CodeMirrorEditor {
     /**
      * Construct a new CodeEditor
      * @param {Function} onRunRequest Callback for when the user wants to run the code
@@ -76,78 +53,41 @@ export class CodeEditor extends Renderable {
      * @param {number} indentLength The length in spaces for the indent unit
      */
     constructor(onRunRequest: () => void, initialCode = "", indentLength = 4) {
-        super();
-        this.listenerTimeouts = new Map();
-        this.compartments = new Map(OPTIONS.map(opt => [opt, new Compartment()]));
-        const configurableExtensions = [...this.compartments.values()]
-            .map(compartment => compartment.of([]));
-        this.editorView = new EditorView(
-            {
-                state: EditorState.create({
-                    doc: initialCode,
-                    extensions:
-                        [
-                            ...configurableExtensions,
-                            EditorView.updateListener.of((v: ViewUpdate) => {
-                                if (v.docChanged) {
-                                    this.handleChange();
-                                }
-                            }),
-                            keymap.of([
-                                {
-                                    key: "Mod-Enter", run: () => {
-                                        onRunRequest();
-                                        return true;
-                                    }
-                                },
-                                // The original Ctrl-Enter keybind gets assigned to Shift-Enter
-                                {
-                                    key: "Shift-Enter", run: insertBlankLine
-                                }
-                            ]),
-                            ...CodeEditor.getExtensions()
-                        ]
-                })
-            });
+        super(OPTIONS, {
+            classes: ["papyros-code-editor", "_tw-overflow-auto",
+                "_tw-border-solid", "_tw-border-gray-200", "_tw-border-2",
+                "_tw-rounded-lg", "dark:_tw-border-dark-mode-content"],
+            minHeight: "20vh",
+            maxHeight: "72vh",
+            theme: {}
+        });
+        this.addExtension([
+            keymap.of([
+                {
+                    key: "Mod-Enter", run: () => {
+                        onRunRequest();
+                        return true;
+                    }
+                },
+                // The original Ctrl-Enter keybind gets assigned to Shift-Enter
+                {
+                    key: "Shift-Enter", run: insertBlankLine
+                }
+            ]),
+            ...CodeEditor.getExtensions()
+        ]);
+        this.setText(initialCode);
         this.setIndentLength(indentLength);
     }
 
-    /**
-     * Helper method to dispatch configuration changes at runtime
-     * @param {Array<[Option, Extension]>} items Array of items to reconfigure
-     * The option indicates the relevant compartment
-     * The extension indicates the new configuration
-     */
-    private reconfigure(...items: Array<[Option, Extension]>): void {
-        this.editorView.dispatch({
-            effects: items.map(([opt, ext]) => this.compartments.get(opt)!.reconfigure(ext))
-        });
-    }
-
-    /**
-     * Render the editor with the given options and panel
-     * @param {RenderOptions} options Options for rendering
-     * @param {HTMLElement} panel The panel to display at the bottom
-     * @return {HTMLElement} The rendered element
-     */
-    protected override _render(options: RenderOptions): void {
+    public setDarkMode(darkMode: boolean): void {
         let styleExtensions: Extension = [];
-        if (options.darkMode) {
+        if (darkMode) {
             styleExtensions = oneDark;
         } else {
             styleExtensions = syntaxHighlighting(defaultHighlightStyle, { fallback: true });
         }
-        this.reconfigure([Option.Style, styleExtensions]);
-        // Ensure that the classes are added to a child of the parent so that
-        // dark mode classes are properly activated
-        // CodeMirror dom resets its classList, so that is not an option
-        const wrappingDiv = document.createElement("div");
-        wrappingDiv.classList
-            .add("papyros-code-editor", "_tw-overflow-auto", "_tw-max-h-9/10", "_tw-min-h-1/4",
-                "_tw-border-solid", "_tw-border-gray-200", "_tw-border-2",
-                "_tw-rounded-lg", "dark:_tw-border-dark-mode-content");
-        wrappingDiv.replaceChildren(this.editorView.dom);
-        renderWithOptions(options, wrappingDiv);
+        this.reconfigure(["style", styleExtensions]);
     }
 
     /**
@@ -180,10 +120,7 @@ export class CodeEditor extends Renderable {
         this.reconfigure(
             [
                 Option.Linting,
-                [
-                    linter(lintSource),
-                    lintGutter()
-                ]
+                linter(lintSource)
             ]
         );
     }
@@ -197,28 +134,6 @@ export class CodeEditor extends Renderable {
         );
     }
 
-    private handleChange(): void {
-        const currentDoc = this.getCode();
-        const now = Date.now();
-        this.listenerTimeouts.forEach((timeoutData, listener) => {
-            if (timeoutData.timeout !== null) {
-                clearTimeout(timeoutData.timeout);
-            }
-            timeoutData.timeout = setTimeout(() => {
-                timeoutData.timeout = null;
-                listener.onChange(currentDoc);
-            }, listener.delay);
-            timeoutData.lastCalled = now;
-        });
-    }
-
-    /**
-     * @param {CodeChangeListener} changeListener Listener that performs actions on the new contents
-     */
-    public onChange(changeListener: CodeChangeListener): void {
-        this.listenerTimeouts.set(changeListener, { timeout: null, lastCalled: 0 });
-    }
-
     /**
      * @param {HTMLElement} panel The panel to display at the bottom of the editor
      */
@@ -228,29 +143,6 @@ export class CodeEditor extends Renderable {
                 return { dom: panel };
             })]
         );
-    }
-
-    /**
-     * @return {string} The code within the editor
-     */
-    public getCode(): string {
-        return this.editorView.state.doc.toString();
-    }
-
-    /**
-     * @param {string} code The new code to be shown in the editor
-     */
-    public setCode(code: string): void {
-        this.editorView.dispatch(
-            { changes: { from: 0, to: this.getCode().length, insert: code } }
-        );
-    }
-
-    /**
-     * Put focus on the CodeEditor
-     */
-    public focus(): void {
-        this.editorView.focus();
     }
 
     /**
@@ -294,6 +186,7 @@ export class CodeEditor extends Renderable {
     *  - active line highlighting
     *  - active line gutter highlighting
     *  - selection match highlighting
+    *  - gutter for linting
     * Keymaps:
     *  - the default command bindings
     *  - bracket closing
@@ -319,6 +212,7 @@ export class CodeEditor extends Renderable {
             highlightActiveLine(),
             highlightActiveLineGutter(),
             highlightSelectionMatches(),
+            lintGutter(),
             keymap.of([
                 ...closeBracketsKeymap,
                 ...defaultKeymap,

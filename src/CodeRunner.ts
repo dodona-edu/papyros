@@ -3,7 +3,7 @@ import { SyncClient } from "comsync";
 import { Backend } from "./Backend";
 import { BackendEvent, BackendEventType } from "./BackendEvent";
 import { BackendManager } from "./BackendManager";
-import { CodeEditor } from "./CodeEditor";
+import { CodeEditor } from "./editor/CodeEditor";
 import {
     addPapyrosPrefix,
     APPLICATION_STATE_TEXT_ID, CODE_BUTTONS_WRAPPER_ID, DEFAULT_EDITOR_DELAY, RUN_BTN_ID,
@@ -124,7 +124,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         this.programmingLanguage = programmingLanguage;
         this.editor = new CodeEditor(() => {
             if (this.state === RunState.Ready) {
-                this.runCode(this.editor.getCode());
+                this.runCode(this.editor.getText());
             }
         });
         this.inputManager = new InputManager(async (input: string) => {
@@ -139,7 +139,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             id: RUN_BTN_ID,
             buttonText: t("Papyros.run"),
             classNames: "_tw-text-white _tw-bg-blue-500"
-        }, () => this.runCode(this.editor.getCode()));
+        }, () => this.runCode(this.editor.getText()));
         this.addButton({
             id: STOP_BTN_ID,
             buttonText: t("Papyros.stop"),
@@ -156,7 +156,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
                             id: id,
                             buttonText: t(`Papyros.run_modes.${mode.mode}`),
                             classNames: "_tw-text-white _tw-bg-green-500"
-                        }, () => this.runCode(this.editor.getCode(), mode.mode));
+                        }, () => this.runCode(this.editor.getText(), mode.mode));
                     } else {
                         this.removeButton(id);
                     }
@@ -200,7 +200,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             });
             this.editor.setLintingSource(
                 async view => {
-                    const workerDiagnostics = await workerProxy.lintCode(this.editor.getCode());
+                    const workerDiagnostics = await workerProxy.lintCode(this.editor.getText());
                     return workerDiagnostics.map(d => {
                         const fromline = view.state.doc.line(d.lineNr);
                         const toLine = view.state.doc.line(d.endLineNr);

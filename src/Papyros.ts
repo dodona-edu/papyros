@@ -177,14 +177,14 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
      * @param {string} code The code to use in the editor
      */
     public setCode(code: string): void {
-        this.codeRunner.editor.setCode(code);
+        this.codeRunner.editor.setText(code);
     }
 
     /**
      * @return {string} The currently written code
      */
     public getCode(): string {
-        return this.codeRunner.editor.getCode();
+        return this.codeRunner.editor.getText();
     }
 
     /**

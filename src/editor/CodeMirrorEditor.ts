@@ -2,6 +2,7 @@ import { Compartment, EditorState, Extension, StateEffect } from "@codemirror/st
 import { EditorView, ViewUpdate } from "@codemirror/view";
 import { Renderable, RenderOptions, renderWithOptions } from "../util/Rendering";
 import { StyleSpec } from "style-mod";
+import { oneDark } from "@codemirror/theme-one-dark";
 
 export interface EditorStyling {
     classes: Array<string>;
@@ -34,6 +35,9 @@ export abstract class CodeMirrorEditor extends Renderable {
         super();
         this.htmlClasses = styling.classes;
         this.listenerTimeouts = new Map();
+        if (!compartments.includes("style")) {
+            compartments.push("style");
+        }
         this.compartments = new Map(compartments.map(opt => [opt, new Compartment()]));
         const configurableExtensions = [...this.compartments.values()]
             .map(compartment => compartment.of([]));
@@ -95,7 +99,18 @@ export abstract class CodeMirrorEditor extends Renderable {
         this.editorView.focus();
     }
 
+    public setDarkMode(darkMode: boolean): void {
+        let styleExtensions: Extension = [];
+        if (darkMode) {
+            styleExtensions = oneDark;
+        } else {
+            styleExtensions = [];
+        }
+        this.reconfigure(["style", styleExtensions]);
+    }
+
     protected override _render(options: RenderOptions): void {
+        this.setDarkMode(options.darkMode || false);
         const wrappingDiv = document.createElement("div");
         wrappingDiv.classList.add(...this.htmlClasses);
         wrappingDiv.replaceChildren(this.editorView.dom);
