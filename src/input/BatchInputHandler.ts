@@ -122,5 +122,6 @@ export class BatchInputHandler extends UserInputHandler {
 
     protected override _render(options: RenderOptions): void {
         this.batchEditor.render(options);
+        this.highlight();
     }
 }
