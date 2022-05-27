@@ -9,7 +9,7 @@ import {
     APPLICATION_STATE_TEXT_ID, CODE_BUTTONS_WRAPPER_ID, DEFAULT_EDITOR_DELAY, RUN_BTN_ID,
     STATE_SPINNER_ID, STOP_BTN_ID
 } from "./Constants";
-import { InputManager, InputMode } from "./InputManager";
+import { InputManager, InputManagerRenderOptions, InputMode } from "./InputManager";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import { renderSpinningCircle } from "./util/HTMLShapes";
 import {
@@ -36,7 +36,7 @@ interface CodeRunnerRenderOptions {
     /**
      * Options for rendering the InputManager
      */
-    inputOptions: RenderOptions;
+    inputOptions: InputManagerRenderOptions;
     /**
      * Options for rendering the editor
      */

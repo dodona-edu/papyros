@@ -1,8 +1,5 @@
-import { InputMode } from "../InputManager";
+import { InputManagerRenderOptions, InputMode } from "../InputManager";
 import { UserInputHandler } from "./UserInputHandler";
-import {
-    RenderOptions,
-} from "../util/Rendering";
 import { t } from "../util/Util";
 import { BatchInputEditor } from "../editor/BatchInputEditor";
 
@@ -128,8 +125,11 @@ export class BatchInputHandler extends UserInputHandler {
         this.batchEditor.focus();
     }
 
-    protected override _render(options: RenderOptions): void {
+    protected override _render(options: InputManagerRenderOptions): void {
         this.batchEditor.render(options);
+        if (options.inputStyling) {
+            this.batchEditor.setStyling(options.inputStyling);
+        }
         this.highlight();
     }
 }
