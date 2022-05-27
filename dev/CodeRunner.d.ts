@@ -1,5 +1,5 @@
-import { CodeEditor } from "./CodeEditor";
-import { InputManager } from "./InputManager";
+import { CodeEditor } from "./editor/CodeEditor";
+import { InputManager, InputMode } from "./InputManager";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import { RenderOptions, ButtonOptions, Renderable } from "./util/Rendering";
 import { OutputManager } from "./OutputManager";
@@ -87,8 +87,9 @@ export declare class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     /**
      * Construct a new RunStateManager with the given listeners
      * @param {ProgrammingLanguage} programmingLanguage The language to use
+     * @param {InputMode} inputMode The input mode to use
      */
-    constructor(programmingLanguage: ProgrammingLanguage);
+    constructor(programmingLanguage: ProgrammingLanguage, inputMode: InputMode);
     /**
      * Start the backend to enable running code
      */
@@ -124,18 +125,21 @@ export declare class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      */
     setState(state: RunState, message?: string): void;
     getState(): RunState;
+    removeButton(id: string): void;
     /**
      * Add a button to display to the user
      * @param {ButtonOptions} options Options for rendering the button
      * @param {function} onClick Listener for click events on the button
      */
     addButton(options: ButtonOptions, onClick: () => void): void;
+    private renderButtons;
     protected _render(options: CodeRunnerRenderOptions): HTMLElement;
     /**
      * @param {string} code The code to run
+     * @param {string} mode The mode to run with
      * @return {Promise<void>} Promise of running the code
      */
-    runCode(code: string): Promise<void>;
+    runCode(code: string, mode?: string): Promise<void>;
     /**
      * Callback to handle loading events
      * @param {BackendEvent} e The loading event

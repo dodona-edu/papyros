@@ -1,5 +1,5 @@
 import { BackendEvent } from "./BackendEvent";
-import { CodeEditor } from "./CodeEditor";
+import { CodeEditor } from "./editor/CodeEditor";
 import { InputManager, InputMode } from "./InputManager";
 import { FriendlyError, OutputManager } from "./OutputManager";
 import { Papyros, PapyrosConfig, PapyrosRenderOptions } from "./Papyros";

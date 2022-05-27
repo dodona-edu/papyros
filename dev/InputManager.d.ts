@@ -1,3 +1,4 @@
+import { UserInputHandler } from "./input/UserInputHandler";
 import { Renderable, RenderOptions } from "./util/Rendering";
 export declare enum InputMode {
     Interactive = "interactive",
@@ -10,11 +11,11 @@ export declare class InputManager extends Renderable {
     private waiting;
     private prompt;
     private sendInput;
-    constructor(sendInput: (input: string) => void);
+    constructor(sendInput: (input: string) => void, inputMode: InputMode);
     private buildInputHandlerMap;
     getInputMode(): InputMode;
     setInputMode(inputMode: InputMode): void;
-    private get inputHandler();
+    get inputHandler(): UserInputHandler;
     isWaiting(): boolean;
     protected _render(options: RenderOptions): void;
     private waitWithPrompt;
@@ -22,7 +23,6 @@ export declare class InputManager extends Renderable {
     /**
      * Asynchronously handle an input request by prompting the user for input
      * @param {BackendEvent} e Event containing the input data
-     * @return {Promise<void>} Promise of handling the request
      */
     private onInputRequest;
     private onRunStart;
