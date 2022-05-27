@@ -60,6 +60,11 @@ export declare abstract class Gutters<Info extends GutterInfo = GutterInfo, Conf
      */
     setMarker(view: EditorView, info: Info): void;
     /**
+     * @param {EditorView} view The view in which the Gutters live
+     * @return {Set<number>} The 1-based line numbers with a breakpoint
+     */
+    getMarkedLines(view: EditorView): Set<number>;
+    /**
      * @return {Extension} The Gutters as a CodeMirror Extension
      */
     toExtension(): Extension;
@@ -70,11 +75,6 @@ export declare abstract class Gutters<Info extends GutterInfo = GutterInfo, Conf
 export declare class BreakpointsGutter extends Gutters {
     constructor();
     protected marker(): GutterMarker;
-    /**
-     * @param {EditorView} view The view in which the Gutters live
-     * @return {Set<number>} The 1-based line numbers with a breakpoint
-     */
-    getBreakpoints(view: EditorView): Set<number>;
 }
 /**
  * Extra data used to represent input gutters

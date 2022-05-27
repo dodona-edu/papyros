@@ -1,11 +1,18 @@
 import { UserInputHandler } from "./input/UserInputHandler";
 import { Renderable, RenderOptions } from "./util/Rendering";
+import { EditorStyling } from "./editor/CodeMirrorEditor";
 export declare enum InputMode {
     Interactive = "interactive",
     Batch = "batch"
 }
 export declare const INPUT_MODES: InputMode[];
-export declare class InputManager extends Renderable {
+export interface InputManagerRenderOptions extends RenderOptions {
+    /**
+     * Option to allow styling the editor area of the input handler
+     */
+    inputStyling?: Partial<EditorStyling>;
+}
+export declare class InputManager extends Renderable<InputManagerRenderOptions> {
     private inputMode;
     private inputHandlers;
     private waiting;
@@ -17,7 +24,7 @@ export declare class InputManager extends Renderable {
     setInputMode(inputMode: InputMode): void;
     get inputHandler(): UserInputHandler;
     isWaiting(): boolean;
-    protected _render(options: RenderOptions): void;
+    protected _render(options: InputManagerRenderOptions): void;
     private waitWithPrompt;
     private onUserInput;
     /**

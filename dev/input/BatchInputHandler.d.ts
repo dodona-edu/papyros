@@ -1,6 +1,5 @@
-import { InputMode } from "../InputManager";
+import { InputManagerRenderOptions, InputMode } from "../InputManager";
 import { UserInputHandler } from "./UserInputHandler";
-import { RenderOptions } from "../util/Rendering";
 import { BatchInputEditor } from "../editor/BatchInputEditor";
 export declare class BatchInputHandler extends UserInputHandler {
     /**
@@ -11,6 +10,10 @@ export declare class BatchInputHandler extends UserInputHandler {
      * Messages used when asking for user input
      */
     private prompts;
+    /**
+     * Whether a run is occurring
+     */
+    private running;
     /**
      * Editor containing the input of the user
      */
@@ -45,5 +48,5 @@ export declare class BatchInputHandler extends UserInputHandler {
     waitWithPrompt(waiting: boolean, prompt?: string): void;
     protected setPlaceholder(placeholderValue: string): void;
     focus(): void;
-    protected _render(options: RenderOptions): void;
+    protected _render(options: InputManagerRenderOptions): void;
 }

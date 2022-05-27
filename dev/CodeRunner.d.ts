@@ -1,5 +1,5 @@
 import { CodeEditor } from "./editor/CodeEditor";
-import { InputManager, InputMode } from "./InputManager";
+import { InputManager, InputManagerRenderOptions, InputMode } from "./InputManager";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import { RenderOptions, ButtonOptions, Renderable } from "./util/Rendering";
 import { OutputManager } from "./OutputManager";
@@ -11,7 +11,7 @@ interface CodeRunnerRenderOptions {
     /**
      * Options for rendering the InputManager
      */
-    inputOptions: RenderOptions;
+    inputOptions: InputManagerRenderOptions;
     /**
      * Options for rendering the editor
      */

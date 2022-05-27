@@ -116,9 +116,9 @@ export declare abstract class CodeMirrorEditor extends Renderable {
     setDarkMode(darkMode: boolean): void;
     /**
      * Override the style used by this Editor
-     * @param {any} styling Object with keys of EditorStyling to override styles
+     * @param {Partial<EditorStyling>} styling Object with keys of EditorStyling to override styles
      */
-    setStyling(styling: any): void;
+    setStyling(styling: Partial<EditorStyling>): void;
     protected _render(options: RenderOptions): void;
     /**
      * Process the changes by informing the listeners of the new contents
