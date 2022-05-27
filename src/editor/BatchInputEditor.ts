@@ -30,15 +30,17 @@ export class BatchInputEditor extends CodeMirrorEditor {
 
     /**
      * Apply highlighting to the lines in the Editor
+     * @param {boolean} disable Whether to disable editing the lines if marked
      * @param {function(number): UsedInputGutterInfo} getInfo Function to obtain gutter
      * info per line (1-based indexing)
      */
-    public highlight(getInfo: (lineNr: number) => UsedInputGutterInfo): void {
+    public highlight(disable: boolean, getInfo: (lineNr: number) => UsedInputGutterInfo): void {
         this.editorView.dom.querySelectorAll(".cm-line").forEach((line, i) => {
             const info = getInfo(i + 1);
             BatchInputEditor.HIGHLIGHT_CLASSES.forEach(c => {
                 line.classList.toggle(c, info.on);
             });
+            line.setAttribute("contenteditable", "" + (!disable || !info.on));
             this.usedInputGutters.setMarker(this.editorView, info);
         });
     }

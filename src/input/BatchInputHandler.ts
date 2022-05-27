@@ -13,6 +13,10 @@ export class BatchInputHandler extends UserInputHandler {
      */
     private prompts: Array<string>;
     /**
+     * Whether a run is occurring
+     */
+    private running: boolean;
+    /**
      * Editor containing the input of the user
      */
     public readonly batchEditor: BatchInputEditor;
@@ -30,6 +34,7 @@ export class BatchInputHandler extends UserInputHandler {
         super(inputCallback);
         this.lineNr = 0;
         this.previousInput = "";
+        this.running = false;
         this.prompts = [];
         this.batchEditor = new BatchInputEditor();
         this.batchEditor.onChange({
@@ -43,17 +48,15 @@ export class BatchInputHandler extends UserInputHandler {
      * @param {string} newInput The new user input
      */
     private handleInputChanged(newInput: string): void {
-        if (!newInput) {
-            this.highlight(() => false);
-        } else {
-            const newLines = newInput.split("\n");
-            if (this.waiting && newLines.length > this.lineNr + 1) {
-                // Require explicitly pressing enter
-                this.inputCallback();
-            }
-            this.highlight();
+        const newLines = newInput ? newInput.split("\n") : [];
+        if (newLines.length < this.lineNr) {
+            this.lineNr = newLines.length;
         }
-
+        if (this.waiting && newLines.length > this.lineNr + 1) {
+            // Require explicitly pressing enter
+            this.inputCallback();
+        }
+        this.highlight(this.running);
         this.previousInput = newInput;
     }
 
@@ -81,8 +84,8 @@ export class BatchInputHandler extends UserInputHandler {
         return this.lineNr < this.lines.length;
     }
 
-    private highlight(whichLines = (i: number) => i < this.lineNr): void {
-        this.batchEditor.highlight((lineNr: number) => {
+    private highlight(disable: boolean, whichLines = (i: number) => i < this.lineNr): void {
+        this.batchEditor.highlight(disable, (lineNr: number) => {
             let message = t("Papyros.used_input");
             const index = lineNr - 1;
             const shouldShow = whichLines(index);
@@ -97,17 +100,19 @@ export class BatchInputHandler extends UserInputHandler {
     public override next(): string {
         const nextLine = this.lines[this.lineNr];
         this.lineNr += 1;
-        this.highlight();
+        this.highlight(true);
         return nextLine;
     }
 
     public override onRunStart(): void {
+        this.running = true;
         this.lineNr = 0;
-        this.highlight(() => false);
+        this.highlight(false, () => false);
     }
 
     public override onRunEnd(): void {
-        // Intentionally empty
+        this.running = false;
+        this.highlight(false);
     }
 
     public override waitWithPrompt(waiting: boolean, prompt?: string): void {
@@ -130,6 +135,6 @@ export class BatchInputHandler extends UserInputHandler {
         if (options.inputStyling) {
             this.batchEditor.setStyling(options.inputStyling);
         }
-        this.highlight();
+        this.highlight(this.running);
     }
 }

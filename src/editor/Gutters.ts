@@ -103,6 +103,21 @@ export abstract class Gutters<
     }
 
     /**
+     * @param {EditorView} view The view in which the Gutters live
+     * @return {Set<number>} The 1-based line numbers with a breakpoint
+     */
+    public getMarkedLines(view: EditorView): Set<number> {
+        const markedLines: Set<number> = new Set();
+        const guttersInfo: Map<number, GutterInfo> = view.state.field(this.state);
+        guttersInfo.forEach((info: GutterInfo, lineNr: number) => {
+            if (info.on) {
+                markedLines.add(lineNr);
+            }
+        });
+        return markedLines;
+    }
+
+    /**
      * @return {Extension} The Gutters as a CodeMirror Extension
      */
     toExtension(): Extension {
@@ -169,21 +184,6 @@ export class BreakpointsGutter extends Gutters {
 
     protected override marker(): GutterMarker {
         return new SimpleMarker(() => document.createTextNode("🔴"));
-    }
-
-    /**
-     * @param {EditorView} view The view in which the Gutters live
-     * @return {Set<number>} The 1-based line numbers with a breakpoint
-     */
-    public getBreakpoints(view: EditorView): Set<number> {
-        const breakpoints: Set<number> = new Set();
-        const guttersInfo: Map<number, GutterInfo> = view.state.field(this.state);
-        guttersInfo.forEach((info: GutterInfo, lineNr: number) => {
-            if (info.on) {
-                breakpoints.add(lineNr);
-            }
-        });
-        return breakpoints;
     }
 }
 
