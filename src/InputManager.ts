@@ -12,6 +12,7 @@ import { UserInputHandler } from "./input/UserInputHandler";
 import { BatchInputHandler } from "./input/BatchInputHandler";
 import { BackendManager } from "./BackendManager";
 import { Renderable, RenderOptions, renderWithOptions } from "./util/Rendering";
+import { EditorStyling } from "./editor/CodeMirrorEditor";
 
 export enum InputMode {
     Interactive = "interactive",
@@ -20,7 +21,14 @@ export enum InputMode {
 
 export const INPUT_MODES = [InputMode.Batch, InputMode.Interactive];
 
-export class InputManager extends Renderable {
+export interface InputManagerRenderOptions extends RenderOptions {
+    /**
+     * Option to allow styling the editor area of the input handler
+     */
+    inputStyling?: Partial<EditorStyling>;
+}
+
+export class InputManager extends Renderable<InputManagerRenderOptions> {
     private inputMode: InputMode;
     private inputHandlers: Map<InputMode, UserInputHandler>;
     private waiting: boolean;
@@ -70,7 +78,7 @@ export class InputManager extends Renderable {
         return this.waiting;
     }
 
-    protected override _render(options: RenderOptions): void {
+    protected override _render(options: InputManagerRenderOptions): void {
         let switchMode = "";
         const otherMode = this.inputMode === InputMode.Interactive ?
             InputMode.Batch : InputMode.Interactive;
@@ -88,7 +96,8 @@ ${switchMode}`);
 
         this.inputHandler.render({
             parentElementId: USER_INPUT_WRAPPER_ID,
-            darkMode: options.darkMode
+            darkMode: options.darkMode,
+            inputStyling: options.inputStyling
         });
         this.inputHandler.waitWithPrompt(this.waiting, this.prompt);
     }

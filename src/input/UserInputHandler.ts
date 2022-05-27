@@ -1,17 +1,18 @@
-import { INPUT_TA_ID } from "../Constants";
-import { InputMode } from "../InputManager";
-import { t, getElement } from "../util/Util";
+import { InputManagerRenderOptions, InputMode } from "../InputManager";
+import { t } from "../util/Util";
 import { Renderable } from "../util/Rendering";
 
 /**
  * Base class for components that handle input from the user
  */
-export abstract class UserInputHandler extends Renderable {
+export abstract class UserInputHandler extends Renderable<InputManagerRenderOptions> {
     /**
      * Whether we are waiting for the user to input data
      */
     protected waiting: boolean;
-
+    /**
+     * Function to call when the user provided new input
+     */
     protected inputCallback: () => void;
 
     /**
@@ -58,25 +59,14 @@ export abstract class UserInputHandler extends Renderable {
     public abstract toggle(active: boolean): void;
 
     /**
-     * Retrieve the HTMLInputElement for this InputHandler
-     */
-    public get inputArea(): HTMLInputElement {
-        return getElement<HTMLInputElement>(INPUT_TA_ID);
-    }
-
-    /**
      * @param {string} placeholder The placeholder to show
      */
-    protected setPlaceholder(placeholder: string): void {
-        this.inputArea.setAttribute("placeholder", placeholder);
-    }
+    protected abstract setPlaceholder(placeholder: string): void;
 
     /**
      * Focus the area in which the user enters input
      */
-    public focus(): void {
-        this.inputArea.focus();
-    }
+    public abstract focus(): void;
 
     /**
      * Wait for input of the user for a certain prompt
@@ -100,6 +90,6 @@ export abstract class UserInputHandler extends Renderable {
      * Helper method to reset internal state
      */
     protected reset(): void {
-        this.inputArea.value = "";
+        this.waiting = false;
     }
 }
