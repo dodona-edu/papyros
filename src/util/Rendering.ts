@@ -104,7 +104,7 @@ export interface ButtonOptions {
  */
 export function renderButton(options: ButtonOptions): string {
     appendClasses(options,
-        "_tw-m-1 _tw-px-3 _tw-py-1 _tw-rounded-lg _tw-cursor-pointer disabled:_tw-opacity-50 disabled:_tw-cursor-not-allowed");
+        "papyros-button");
     return `
 <button id="${options.id}" type="button"
     class="${options.classNames}">
