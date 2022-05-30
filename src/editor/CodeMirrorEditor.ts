@@ -3,6 +3,8 @@ import { EditorView, placeholder, ViewUpdate } from "@codemirror/view";
 import { Renderable, RenderOptions, renderWithOptions } from "../util/Rendering";
 import { StyleSpec } from "style-mod";
 import { darkTheme } from "./DarkTheme";
+import { CODE_MIRROR_TRANSLATIONS } from "../Translations";
+import I18n from "i18n-js";
 
 /**
  * Data structure containing common elements for styling
@@ -67,6 +69,7 @@ export abstract class CodeMirrorEditor extends Renderable {
     public static STYLE = "style";
     public static PLACEHOLDER = "placeholder";
     public static THEME = "theme";
+    public static LANGUAGE = "language";
     /**
      * CodeMirror EditorView representing the internal editor
      */
@@ -96,6 +99,7 @@ export abstract class CodeMirrorEditor extends Renderable {
         compartments.add(CodeMirrorEditor.STYLE);
         compartments.add(CodeMirrorEditor.PLACEHOLDER);
         compartments.add(CodeMirrorEditor.THEME);
+        compartments.add(CodeMirrorEditor.LANGUAGE);
         this.compartments = new Map();
         const configurableExtensions: Array<Extension> = [];
         compartments.forEach(opt => {
@@ -207,6 +211,10 @@ export abstract class CodeMirrorEditor extends Renderable {
     protected override _render(options: RenderOptions): void {
         this.setStyling(this.styling);
         this.setDarkMode(options.darkMode || false);
+        this.reconfigure([
+            CodeMirrorEditor.LANGUAGE,
+            EditorState.phrases.of(CODE_MIRROR_TRANSLATIONS[I18n.locale])
+        ]);
         const wrappingDiv = document.createElement("div");
         wrappingDiv.classList.add(...this.styling.classes);
         wrappingDiv.replaceChildren(this.editorView.dom);

@@ -108,9 +108,45 @@ const DUTCH_TRANSLATION = {
     "used_input_with_prompt": "Deze regel werd gebruikt als invoer voor de volgende vraag: %{prompt}"
 };
 
+const DUTCH_PHRASES = {
+    // @codemirror/view
+    "Control character": "Controlekarakter",
+    // @codemirror/fold
+    "Folded lines": "Ingeklapte regels",
+    "Unfolded lines": "Uitgeklapte regels",
+    "to": "tot",
+    "folded code": "ingeklapte code",
+    "unfold": "uitklappen",
+    "Fold line": "Regel inklappen",
+    "Unfold line": "Regel uitklappen",
+    // @codemirror/search
+    "Go to line": "Spring naar regel",
+    "go": "OK",
+    "Find": "Zoeken",
+    "Replace": "Vervangen",
+    "next": "volgende",
+    "previous": "vorige",
+    "all": "alle",
+    "match case": "Hoofdlettergevoelig",
+    "replace": "vervangen",
+    "replace all": "alles vervangen",
+    "close": "sluiten",
+    "current match": "huidige overeenkomst",
+    "on line": "op regel",
+    // @codemirror/lint
+    "Diagnostics": "Problemen",
+    "No diagnostics": "Geen problemen",
+  }
+
 const TRANSLATIONS = {
     en: { "Papyros": ENGLISH_TRANSLATION },
     nl: { "Papyros": DUTCH_TRANSLATION }
 };
+
+const CODE_MIRROR_TRANSLATIONS = {
+    en: {},
+    nl: DUTCH_PHRASES
+};
 // JS exports to allow use in TS and JS files
 module.exports.TRANSLATIONS = TRANSLATIONS;
+module.exports.CODE_MIRROR_TRANSLATIONS = CODE_MIRROR_TRANSLATIONS;
