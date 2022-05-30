@@ -127,7 +127,7 @@ const DUTCH_PHRASES = {
     "next": "volgende",
     "previous": "vorige",
     "all": "alle",
-    "match case": "Hoofdlettergevoelig",
+    "match case": "hoofdlettergevoelig",
     "replace": "vervangen",
     "replace all": "alles vervangen",
     "close": "sluiten",
