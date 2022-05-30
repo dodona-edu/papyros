@@ -2,10 +2,23 @@
  * I18n translations object:
  *
  */
-interface Translations {
+interface Translation {
+    /**
+     * Phrase for given translation key
+     */
+    [key: string]: string;
+}
+interface NestedTranslations {
     /**
      * Each key yields a translated string or a nested object
      */
-    [key: string]: string | Translations;
+    [key: string]: Translation | NestedTranslations;
 }
-export declare const TRANSLATIONS: Translations;
+interface CodeMirrorTranslations {
+    /**
+     * CodeMirror expects a flat object per language
+     */
+    [key: string]: Translation
+}
+export declare const TRANSLATIONS: NestedTranslations;
+export declare const CODE_MIRROR_TRANSLATIONS: CodeMirrorTranslations;
