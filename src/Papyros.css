@@ -156,6 +156,11 @@ Ensure the default browser behavior of the `hidden` attribute.
   color: #888;
 }
 
-.papyros-button {
+/* Also override CodeMirror buttons to use this style */
+.papyros-button, .cm-button {
   @apply _tw-m-1 _tw-px-3 _tw-py-1 _tw-rounded-lg _tw-cursor-pointer disabled:_tw-opacity-50 disabled:_tw-cursor-not-allowed !important;
+}
+
+.cm-textfield {
+  @apply _tw-rounded-lg !important;
 }
