@@ -160,7 +160,7 @@ Ensure the default browser behavior of the `hidden` attribute.
 .papyros-button, .cm-button {
   @apply _tw-m-1 _tw-px-3 _tw-py-1 _tw-rounded-lg _tw-cursor-pointer disabled:_tw-opacity-50 disabled:_tw-cursor-not-allowed !important;
 }
-
+/* Round the corners of textfields created by CodeMirror */
 .cm-textfield {
   @apply _tw-rounded-lg !important;
 }
