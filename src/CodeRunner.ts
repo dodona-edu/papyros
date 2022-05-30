@@ -135,16 +135,6 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         this.outputManager = new OutputManager();
         this.backend = Promise.resolve({} as SyncClient<Backend>);
         this.buttons = [];
-        this.addButton({
-            id: RUN_BTN_ID,
-            buttonText: t("Papyros.run"),
-            classNames: "_tw-text-white _tw-bg-blue-500"
-        }, () => this.runCode(this.editor.getText()));
-        this.addButton({
-            id: STOP_BTN_ID,
-            buttonText: t("Papyros.stop"),
-            classNames: "_tw-text-white _tw-bg-red-500"
-        }, () => this.stop());
         this.editor.onChange({
             onChange: async code => {
                 const backend = await this.backend;
@@ -241,22 +231,11 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         }
     }
 
+    /**
+     * @return {ProgrammingLanguage} The current programming language
+     */
     public getProgrammingLanguage(): ProgrammingLanguage {
         return this.programmingLanguage;
-    }
-
-    /**
-     * Get the button to run the code
-     */
-    public get runButton(): HTMLButtonElement {
-        return getElement<HTMLButtonElement>(RUN_BTN_ID);
-    }
-
-    /**
-     * Get the button to interrupt the code
-     */
-    public get stopButton(): HTMLButtonElement {
-        return getElement<HTMLButtonElement>(STOP_BTN_ID);
     }
 
     /**
@@ -278,21 +257,22 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
                 message || t(`Papyros.states.${state}`);
             this.state = state;
         }
-        this.stopButton.disabled = [RunState.Ready, RunState.Loading].includes(state);
-        if ([RunState.Ready, RunState.Loading].includes(state)) {
-            this.showSpinner(state == RunState.Loading);
-            this.runButton.disabled = false;
-        } else {
-            this.showSpinner(true);
-            this.runButton.disabled = true;
-        }
+        this.showSpinner(state !== RunState.Ready);
+        this.renderButtons();
     }
 
+    /**
+     * @return {RunState} The state of the current run
+     */
     public getState(): RunState {
         return this.state;
     }
 
-    public removeButton(id: string): void {
+    /**
+     * Remove a button from the internal button list. Requires a re-render to update
+     * @param {string} id Identifier of the button to remove
+     */
+    private removeButton(id: string): void {
         const existingIndex = this.buttons.findIndex(b => b.id === id);
         if (existingIndex !== -1) {
             this.buttons.splice(existingIndex, 1);
@@ -313,13 +293,45 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         });
     }
 
+    /**
+     * Generate a button that the user can click to process code
+     * Can either run the code or interrupt it if already running
+     * @return {DynamicButton} A button to interact with the code according to the current state
+     */
+    private getCodeActionButton(): DynamicButton {
+        let buttonOptions: ButtonOptions;
+        let buttonHandler: () => void;
+        if ([RunState.Ready, RunState.Loading].includes(this.state)) {
+            buttonOptions = {
+                id: RUN_BTN_ID,
+                buttonText: t("Papyros.run"),
+                classNames: "_tw-text-white _tw-bg-blue-500"
+            };
+            buttonHandler = () => this.runCode(this.editor.getText());
+        } else {
+            buttonOptions = {
+                id: STOP_BTN_ID,
+                buttonText: t("Papyros.stop"),
+                classNames: "_tw-text-white _tw-bg-red-500"
+            };
+            buttonHandler = () => this.stop();
+        }
+        return {
+            id: buttonOptions.id,
+            buttonHTML: renderButton(buttonOptions),
+            onClick: buttonHandler
+        };
+    }
+
+    /**
+     * Specific helper method to render only the buttons required by the user
+     */
     private renderButtons(): void {
+        const buttons = [this.getCodeActionButton(), ...this.buttons];
         getElement(CODE_BUTTONS_WRAPPER_ID).innerHTML =
-            this.buttons.map(b => b.buttonHTML).join("\n");
+            buttons.map(b => b.buttonHTML).join("\n");
         // Buttons are freshly added to the DOM, so attach listeners now
-        this.buttons.forEach(b => addListener(b.id, b.onClick, "click"));
-        // Ensure buttons are shown properly
-        this.setState(this.state);
+        buttons.forEach(b => addListener(b.id, b.onClick, "click"));
     }
 
     protected override _render(options: CodeRunnerRenderOptions): HTMLElement {
@@ -332,7 +344,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         ${renderSpinningCircle(STATE_SPINNER_ID, "_tw-border-gray-200 _tw-border-b-red-500")}
     </div>
 </div>`);
-        this.renderButtons();
+        this.setState(this.state);
         this.inputManager.render(options.inputOptions);
         this.outputManager.render(options.outputOptions);
         this.editor.render(options.codeEditorOptions);
