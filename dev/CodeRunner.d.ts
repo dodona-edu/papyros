@@ -40,9 +40,9 @@ export interface LoadingData {
      */
     modules: Array<string>;
     /**
-     * The status of the import
+     * Whether the modules are being loaded or have been loaded
      */
-    status: "loading" | "loaded" | "failed";
+    loading: boolean;
 }
 /**
  * Helper component to manage and visualize the current RunState

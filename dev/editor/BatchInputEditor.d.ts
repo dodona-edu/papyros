@@ -15,10 +15,11 @@ export declare class BatchInputEditor extends CodeMirrorEditor {
     constructor();
     /**
      * Apply highlighting to the lines in the Editor
+     * @param {boolean} disable Whether to disable editing the lines if marked
      * @param {function(number): UsedInputGutterInfo} getInfo Function to obtain gutter
      * info per line (1-based indexing)
      */
-    highlight(getInfo: (lineNr: number) => UsedInputGutterInfo): void;
+    highlight(disable: boolean, getInfo: (lineNr: number) => UsedInputGutterInfo): void;
     /**
      * @return {Array<string>} Array of valid user input
      * Data in the last line that is not terminated by a newline is omitted
