@@ -66,9 +66,9 @@ export interface LoadingData {
      */
     modules: Array<string>;
     /**
-     * Whether the modules are being loaded or have been loaded
+     * The status of the import
      */
-    loading: boolean;
+    status: "loading" | "loaded" | "failed";
 
 }
 /**
@@ -373,19 +373,24 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      */
     private onLoad(e: BackendEvent): void {
         const loadingData = parseData(e.data, e.contentType) as LoadingData;
-        if (loadingData.loading) {
+        if (loadingData.status === "loading") {
             loadingData.modules.forEach(m => {
                 if (!this.loadingPackages.includes(m)) {
                     this.loadingPackages.push(m);
                 }
             });
-        } else {
+        } else if (loadingData.status === "loaded") {
             loadingData.modules.forEach(m => {
                 const index = this.loadingPackages.indexOf(m);
                 if (index !== -1) {
                     this.loadingPackages.splice(index, 1);
                 }
             });
+        } else { // failed
+            // If it is a true module, an Exception will be raised when running
+            // So this does not need to be handled here, as it is often an incomplete package-name
+            // that causes micropip to not find the correct wheel
+            this.loadingPackages = [];
         }
         if (this.loadingPackages.length > 0) {
             if (this.state !== RunState.Loading) {

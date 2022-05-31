@@ -94,16 +94,18 @@ class Papyros(python_runner.PyodideRunner):
         try:
             await install_imports(source_code, self.import_callback)
         except (ValueError, JsException):
+            # Notify of import failure
+            self.callback("loading", data=dict(status="failed", modules=[]), contentType="application/json")
             # Occurs when trying to fetch PyPi files for misspelled imports
             if not ignore_missing:
                 raise
 
     def import_callback(self, typ, modules):
-        loading = "loading" in typ
+        status = "loading" if "loading" in typ else "loaded"
         if not isinstance(modules, list):
             modules = [modules]
         module_names = [mod["module"] for mod in modules]
-        self.callback("loading", data=dict(loading=loading, modules=module_names), contentType="application/json")
+        self.callback("loading", data=dict(status=status, modules=module_names), contentType="application/json")
                 
     @contextmanager
     def _execute_context(self):
