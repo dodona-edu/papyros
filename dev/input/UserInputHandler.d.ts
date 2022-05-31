@@ -11,12 +11,12 @@ export declare abstract class UserInputHandler extends Renderable<InputManagerRe
     /**
      * Function to call when the user provided new input
      */
-    protected inputCallback: () => void;
+    protected inputCallback: (line: string) => void;
     /**
      * Construct a new UserInputHandler
      * @param {function()} inputCallback  Callback for when the user has entered a value
      */
-    constructor(inputCallback: () => void);
+    constructor(inputCallback: (line: string) => void);
     /**
      * Whether this handler has input ready
      */
