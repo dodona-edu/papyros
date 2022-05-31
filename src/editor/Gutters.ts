@@ -2,6 +2,7 @@ import { StateEffectType, StateField } from "@codemirror/state";
 import { Extension, StateEffect } from "@codemirror/state";
 import { BlockInfo, gutter, GutterMarker } from "@codemirror/view";
 import { EditorView } from "@codemirror/view";
+import { appendClasses } from "../util/Rendering";
 
 /**
  * Helper class to create markers in the gutter
@@ -38,6 +39,10 @@ export interface IGutterConfig<Info extends GutterInfo> {
      * Name of this Gutter
      */
     name: string;
+    /**
+     * HTML class names for the marker icons
+     */
+    markerClasses?: string;
     /**
      * Handler for when a Gutter element is clicked
      */
@@ -91,6 +96,13 @@ export abstract class Gutters<
      */
     protected abstract marker(info: Info): GutterMarker;
 
+    private applyClasses(marker: GutterMarker): GutterMarker {
+        const classes = { classNames: this.config.markerClasses };
+        appendClasses(classes, "_tw-px-1 papyros-gutter-marker");
+        marker.elementClass += classes.classNames;
+        return marker;
+    }
+
     /**
      * Set a marker with the given info
      * @param {EditorView} view View in which the Gutters live
@@ -141,7 +153,7 @@ export abstract class Gutters<
                     const guttersInfo: Map<number, Info> = view.state.field(this.state);
                     const lineNr = view.state.doc.lineAt(line.from).number;
                     if (guttersInfo.has(lineNr) && guttersInfo.get(lineNr)!.on) {
-                        return this.marker(guttersInfo.get(lineNr)!);
+                        return this.applyClasses(this.marker(guttersInfo.get(lineNr)!));
                     } else {
                         return null;
                     }
@@ -150,7 +162,7 @@ export abstract class Gutters<
                     return update.startState.field(this.state) !== update.state.field(this.state);
                 },
                 initialSpacer: () => {
-                    return this.marker({ lineNr: -1, on: true } as Info)!;
+                    return this.applyClasses(this.marker({ lineNr: -1, on: true } as Info)!);
                 },
                 domEventHandlers: handlers
             }),
@@ -209,7 +221,6 @@ export class UsedInputGutters extends Gutters<UsedInputGutterInfo> {
     protected override marker(info: UsedInputGutterInfo): GutterMarker {
         return new SimpleMarker(() => {
             const node = document.createElement("div");
-            node.classList.add("_tw-text-lime-400");
             node.replaceChildren(document.createTextNode("✔"));
             node.setAttribute("title", info.title);
             // Text interface tells us that more complex node will be processed into Text nodes
