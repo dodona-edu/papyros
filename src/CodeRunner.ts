@@ -18,7 +18,7 @@ import {
 } from "./util/Util";
 import {
     RenderOptions, renderWithOptions,
-    renderButton, ButtonOptions, Renderable
+    renderButton, ButtonOptions, Renderable, appendClasses
 } from "./util/Rendering";
 import { OutputManager } from "./OutputManager";
 
@@ -316,6 +316,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             };
             buttonHandler = () => this.stop();
         }
+        appendClasses(buttonOptions, "_tw-min-w-[60px]");
         return {
             id: buttonOptions.id,
             buttonHTML: renderButton(buttonOptions),
