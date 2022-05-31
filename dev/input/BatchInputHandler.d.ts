@@ -11,6 +11,10 @@ export declare class BatchInputHandler extends UserInputHandler {
      */
     private prompts;
     /**
+     * Whether a run is occurring
+     */
+    private running;
+    /**
      * Editor containing the input of the user
      */
     readonly batchEditor: BatchInputEditor;
@@ -23,7 +27,7 @@ export declare class BatchInputHandler extends UserInputHandler {
      * Construct a new BatchInputHandler
      * @param {function()} inputCallback  Callback for when the user has entered a value
      */
-    constructor(inputCallback: () => void);
+    constructor(inputCallback: (line: string) => void);
     /**
      * Handle new input, potentially sending it to the awaiting receiver
      * @param {string} newInput The new user input
