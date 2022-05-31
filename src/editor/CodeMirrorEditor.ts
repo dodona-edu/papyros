@@ -203,6 +203,10 @@ export abstract class CodeMirrorEditor extends Renderable {
                     "font-size": "14px" // use proper size to align gutters with editor
                 },
                 ".cm-gutter,.cm-content": { minHeight: this.styling.minHeight },
+                ".cm-button": {
+                    "background-color": "#455A64",
+                    "color": "white", "background-image": "none"
+                },
                 ...(this.styling.theme || {})
             })
         ]);
