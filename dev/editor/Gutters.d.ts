@@ -24,10 +24,6 @@ export interface IGutterConfig<Info extends GutterInfo> {
      */
     name: string;
     /**
-     * HTML class names for the marker icons
-     */
-    markerClasses?: string;
-    /**
      * Handler for when a Gutter element is clicked
      */
     onClick?: (view: EditorView, info: Info) => void;
@@ -57,19 +53,12 @@ export declare abstract class Gutters<Info extends GutterInfo = GutterInfo, Conf
      * Will only be called when info.on is True
      */
     protected abstract marker(info: Info): GutterMarker;
-    private applyClasses;
-    hasMarker(view: EditorView, lineNr: number): boolean;
     /**
      * Set a marker with the given info
      * @param {EditorView} view View in which the Gutters live
      * @param {Info} info Info used to render the marker
      */
     setMarker(view: EditorView, info: Info): void;
-    /**
-     * @param {EditorView} view The view in which the Gutters live
-     * @return {Set<number>} The 1-based line numbers with a breakpoint
-     */
-    getMarkedLines(view: EditorView): Set<number>;
     /**
      * @return {Extension} The Gutters as a CodeMirror Extension
      */
@@ -81,6 +70,11 @@ export declare abstract class Gutters<Info extends GutterInfo = GutterInfo, Conf
 export declare class BreakpointsGutter extends Gutters {
     constructor();
     protected marker(): GutterMarker;
+    /**
+     * @param {EditorView} view The view in which the Gutters live
+     * @return {Set<number>} The 1-based line numbers with a breakpoint
+     */
+    getBreakpoints(view: EditorView): Set<number>;
 }
 /**
  * Extra data used to represent input gutters

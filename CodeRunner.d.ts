@@ -85,6 +85,10 @@ export declare class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      */
     private previousState;
     /**
+     * Time at which the setState call occurred
+     */
+    private runStartTime;
+    /**
      * Construct a new RunStateManager with the given listeners
      * @param {ProgrammingLanguage} programmingLanguage The language to use
      * @param {InputMode} inputMode The input mode to use
@@ -156,5 +160,6 @@ export declare class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      * @param {BackendEvent} e The loading event
      */
     private onLoad;
+    private onStart;
 }
 export {};

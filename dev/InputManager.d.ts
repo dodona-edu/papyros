@@ -18,7 +18,7 @@ export declare class InputManager extends Renderable<InputManagerRenderOptions> 
     private waiting;
     private prompt;
     private sendInput;
-    constructor(sendInput: (input: string) => Promise<void>, inputMode: InputMode);
+    constructor(sendInput: (input: string) => void, inputMode: InputMode);
     private buildInputHandlerMap;
     getInputMode(): InputMode;
     setInputMode(inputMode: InputMode): void;

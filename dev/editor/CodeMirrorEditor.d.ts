@@ -1,6 +1,6 @@
 /// <reference types="node" />
 import { Compartment, Extension } from "@codemirror/state";
-import { EditorView, ViewUpdate } from "@codemirror/view";
+import { EditorView } from "@codemirror/view";
 import { Renderable, RenderOptions } from "../util/Rendering";
 import { StyleSpec } from "style-mod";
 /**
@@ -83,7 +83,6 @@ export declare abstract class CodeMirrorEditor extends Renderable {
      * @param {EditorStyling} styling Data to style this editor
      */
     constructor(compartments: Set<string>, styling: EditorStyling);
-    protected onViewUpdate(v: ViewUpdate): void;
     /**
      * @param {Extension} extension The extension to add to the Editor
      */
