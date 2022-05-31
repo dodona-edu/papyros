@@ -1,17 +1,20 @@
-import { ProgrammingLanguage } from "../ProgrammingLanguage";
+import { ProgrammingLanguage } from "./ProgrammingLanguage";
+import { Renderable, RenderOptions } from "./util/Rendering";
 import { CompletionSource } from "@codemirror/autocomplete";
 import { EditorView } from "@codemirror/view";
 import { Diagnostic } from "@codemirror/lint";
-import { CodeMirrorEditor } from "./CodeMirrorEditor";
 /**
  * Component that provides useful features to users writing code
  */
-export declare class CodeEditor extends CodeMirrorEditor {
-    static PROGRAMMING_LANGUAGE: string;
-    static INDENTATION: string;
-    static PANEL: string;
-    static AUTOCOMPLETION: string;
-    static LINTING: string;
+export declare class CodeEditor extends Renderable {
+    /**
+     * Reference to the user interface of the editor
+     */
+    readonly editorView: EditorView;
+    /**
+     * Mapping from CodeEditorOptions to a configurable compartment
+     */
+    private compartments;
     /**
      * Construct a new CodeEditor
      * @param {Function} onRunRequest Callback for when the user wants to run the code
@@ -19,7 +22,20 @@ export declare class CodeEditor extends CodeMirrorEditor {
      * @param {number} indentLength The length in spaces for the indent unit
      */
     constructor(onRunRequest: () => void, initialCode?: string, indentLength?: number);
-    setDarkMode(darkMode: boolean): void;
+    /**
+     * Helper method to dispatch configuration changes at runtime
+     * @param {Array<[Option, Extension]>} items Array of items to reconfigure
+     * The option indicates the relevant compartment
+     * The extension indicates the new configuration
+     */
+    private reconfigure;
+    /**
+     * Render the editor with the given options and panel
+     * @param {RenderOptions} options Options for rendering
+     * @param {HTMLElement} panel The panel to display at the bottom
+     * @return {HTMLElement} The rendered element
+     */
+    protected _render(options: RenderOptions): void;
     /**
      * @param {ProgrammingLanguage} language The language to use
      */
@@ -37,9 +53,25 @@ export declare class CodeEditor extends CodeMirrorEditor {
      */
     setIndentLength(indentLength: number): void;
     /**
+     * @param {Function} onChange Listener that performs actions on the new contents
+     */
+    onChange(onChange: ((newContent: string) => void)): void;
+    /**
      * @param {HTMLElement} panel The panel to display at the bottom of the editor
      */
     setPanel(panel: HTMLElement): void;
+    /**
+     * @return {string} The code within the editor
+     */
+    getCode(): string;
+    /**
+     * @param {string} code The new code to be shown in the editor
+     */
+    setCode(code: string): void;
+    /**
+     * Put focus on the CodeEditor
+     */
+    focus(): void;
     /**
      * @param {number} indentLength The amount of spaces to use
      * @return {string} The indentation unit to be used by CodeMirror
@@ -65,7 +97,6 @@ export declare class CodeEditor extends CodeMirrorEditor {
     *  - active line highlighting
     *  - active line gutter highlighting
     *  - selection match highlighting
-    *  - gutter for linting
     * Keymaps:
     *  - the default command bindings
     *  - bracket closing
