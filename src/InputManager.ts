@@ -5,7 +5,7 @@ import {
 } from "./Constants";
 import { BackendEvent, BackendEventType } from "./BackendEvent";
 import {
-    addListener,
+    addListener, getElement,
 } from "./util/Util";
 import { InteractiveInputHandler } from "./input/InteractiveInputHandler";
 import { UserInputHandler } from "./input/UserInputHandler";
@@ -34,10 +34,11 @@ export class InputManager extends Renderable<InputManagerRenderOptions> {
     private waiting: boolean;
     private prompt: string;
 
-    private sendInput: (input: string) => void;
+    private sendInput: (input: string) => Promise<void>;
 
-    constructor(sendInput: (input: string) => void, inputMode: InputMode) {
+    constructor(sendInput: (input: string) => Promise<void>, inputMode: InputMode) {
         super();
+        this.onUserInput = this.onUserInput.bind(this);
         this.inputHandlers = this.buildInputHandlerMap();
         this.inputMode = inputMode;
         this.sendInput = sendInput;
@@ -50,9 +51,9 @@ export class InputManager extends Renderable<InputManagerRenderOptions> {
 
     private buildInputHandlerMap(): Map<InputMode, UserInputHandler> {
         const interactiveInputHandler: UserInputHandler =
-            new InteractiveInputHandler(() => this.onUserInput());
+            new InteractiveInputHandler(this.onUserInput);
         const batchInputHandler: UserInputHandler =
-            new BatchInputHandler(() => this.onUserInput());
+            new BatchInputHandler(this.onUserInput);
         return new Map([
             [InputMode.Interactive, interactiveInputHandler],
             [InputMode.Batch, batchInputHandler]
@@ -108,14 +109,9 @@ ${switchMode}`);
         this.inputHandler.waitWithPrompt(this.waiting, this.prompt);
     }
 
-    private onUserInput(): void {
-        if (this.inputHandler.hasNext()) {
-            const line = this.inputHandler.next();
-            this.sendInput(line);
-            this.waitWithPrompt(false);
-        } else {
-            this.waitWithPrompt(true, this.prompt);
-        }
+    private async onUserInput(line: string): Promise<void> {
+        await this.sendInput(line);
+        this.waitWithPrompt(false);
     }
 
     /**
@@ -123,16 +119,18 @@ ${switchMode}`);
      * @param {BackendEvent} e Event containing the input data
      */
     private onInputRequest(e: BackendEvent): void {
-        this.prompt = e.data;
-        this.onUserInput();
+        this.waitWithPrompt(true, e.data);
     }
 
     private onRunStart(): void {
+        // Prevent switching input mode during runs
+        getElement(SWITCH_INPUT_MODE_A_ID).hidden = true;
         this.waitWithPrompt(false);
         this.inputHandler.onRunStart();
     }
 
     private onRunEnd(): void {
+        getElement(SWITCH_INPUT_MODE_A_ID).hidden = false;
         this.inputHandler.onRunEnd();
         this.waitWithPrompt(false);
     }

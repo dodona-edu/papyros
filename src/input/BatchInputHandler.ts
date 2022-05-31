@@ -30,7 +30,7 @@ export class BatchInputHandler extends UserInputHandler {
      * Construct a new BatchInputHandler
      * @param {function()} inputCallback  Callback for when the user has entered a value
      */
-    constructor(inputCallback: () => void) {
+    constructor(inputCallback: (line: string) => void) {
         super(inputCallback);
         this.lineNr = 0;
         this.previousInput = "";
@@ -54,7 +54,7 @@ export class BatchInputHandler extends UserInputHandler {
         }
         if (this.waiting && newLines.length > this.lineNr + 1) {
             // Require explicitly pressing enter
-            this.inputCallback();
+            this.inputCallback(this.next());
         }
         this.highlight(this.running);
         this.previousInput = newInput;
@@ -110,6 +110,7 @@ export class BatchInputHandler extends UserInputHandler {
     public override onRunStart(): void {
         this.running = true;
         this.lineNr = 0;
+        this.prompts = [];
         this.highlight(true, () => false);
     }
 
@@ -119,10 +120,13 @@ export class BatchInputHandler extends UserInputHandler {
     }
 
     public override waitWithPrompt(waiting: boolean, prompt?: string): void {
-        if (waiting) {
-            this.prompts.push(prompt || "");
-        }
         super.waitWithPrompt(waiting, prompt);
+        if (this.waiting) {
+            this.prompts.push(prompt || "");
+            if (this.hasNext()) {
+                this.inputCallback(this.next());
+            }
+        }
     }
 
     protected setPlaceholder(placeholderValue: string): void {

@@ -13,13 +13,13 @@ export abstract class UserInputHandler extends Renderable<InputManagerRenderOpti
     /**
      * Function to call when the user provided new input
      */
-    protected inputCallback: () => void;
+    protected inputCallback: (line: string) => void;
 
     /**
      * Construct a new UserInputHandler
      * @param {function()} inputCallback  Callback for when the user has entered a value
      */
-    constructor(inputCallback: () => void) {
+    constructor(inputCallback: (line: string) => void) {
         super();
         this.waiting = false;
         this.inputCallback = inputCallback;
@@ -76,7 +76,7 @@ export abstract class UserInputHandler extends Renderable<InputManagerRenderOpti
     public waitWithPrompt(waiting: boolean, prompt = ""): void {
         this.waiting = waiting;
         this.setPlaceholder(prompt || t(`Papyros.input_placeholder.${this.getInputMode()}`));
-        if (waiting) {
+        if (this.waiting) {
             // Focusing is a rendering operation
             // Subclasses can execute code after this operation, skipping the rendering
             // Using setTimeout ensures rendering will be done when the main thread has time

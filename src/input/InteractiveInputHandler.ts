@@ -40,18 +40,20 @@ export class InteractiveInputHandler extends UserInputHandler {
     }
 
     public override waitWithPrompt(waiting: boolean, prompt?: string): void {
-        super.waitWithPrompt(waiting, prompt);
+        this.waiting = waiting;
         this.sendButton.disabled = !waiting;
         this.inputArea.disabled = !waiting;
-        if (this.inputArea.disabled) {
-            // Remove placeholder as it is disabled
-            this.inputArea.setAttribute("placeholder", "");
-            this.inputArea.setAttribute("title", t("Papyros.input_disabled"));
-        }
+        super.waitWithPrompt(waiting, prompt);
     }
 
     protected override setPlaceholder(placeholder: string): void {
-        this.inputArea.setAttribute("placeholder", placeholder);
+        if (this.waiting) {
+            this.inputArea.setAttribute("placeholder", placeholder);
+            this.inputArea.setAttribute("title", "");
+        } else {
+            this.inputArea.setAttribute("placeholder", "");
+            this.inputArea.setAttribute("title", t("Papyros.input_disabled"));
+        }
     }
 
     public focus(): void {
@@ -87,10 +89,10 @@ export class InteractiveInputHandler extends UserInputHandler {
     </input>
     ${buttonHTML}
 </div>`);
-        addListener(SEND_INPUT_BTN_ID, () => this.inputCallback(), "click");
+        addListener(SEND_INPUT_BTN_ID, () => this.inputCallback(this.next()), "click");
         this.inputArea.addEventListener("keydown", (ev: KeyboardEvent) => {
             if (this.waiting && ev.key && ev.key.toLowerCase() === "enter") {
-                this.inputCallback();
+                this.inputCallback(this.next());
             }
         });
     }
