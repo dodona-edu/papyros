@@ -103,6 +103,9 @@ class Papyros(python_runner.PyodideRunner):
                 raise
 
     def import_callback(self, typ, modules):
+        if typ in ["loading_one", "loaded_all"]:
+            # Can ignore these types and focus on loading_all and loaded_one
+            return
         status = "loading" if "loading" in typ else "loaded"
         if not isinstance(modules, list):
             modules = [modules]
@@ -143,9 +146,11 @@ class Papyros(python_runner.PyodideRunner):
             try:
                 code_obj = self.pre_run(source_code, mode=mode, top_level_await=top_level_await)
                 if code_obj:
+                    self.callback("start", data="RunCode", contentType="text/plain")
                     result = self.execute(code_obj, mode)
                     while isinstance(result, Awaitable):
                         result = await result
+                    self.callback("end", data="CodeFinished", contentType="text/plain")
                     return result
             except ModuleNotFoundError as mnf:
                 # Try to automatically install missing dependencies
