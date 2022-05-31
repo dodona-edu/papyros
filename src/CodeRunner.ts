@@ -344,8 +344,11 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     }
 
     protected override _render(options: CodeRunnerRenderOptions): HTMLElement {
+        appendClasses(options.statusPanelOptions,
+            // eslint-disable-next-line max-len
+            "_tw-border-solid _tw-border-gray-200 _tw-border-b-2 dark:_tw-border-dark-mode-content");
         const rendered = renderWithOptions(options.statusPanelOptions, `
-<div class="_tw-grid _tw-grid-cols-2 _tw-items-center _tw-mx-1">
+<div class="_tw-grid _tw-grid-cols-2 _tw-items-center _tw-px-1">
     <div id="${CODE_BUTTONS_WRAPPER_ID}" class="_tw-col-span-1 _tw-flex _tw-flex-row">
     </div>
     <div class="_tw-col-span-1 _tw-flex _tw-flex-row-reverse _tw-items-center">
