@@ -259,14 +259,14 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      * @param {string} message Optional message to indicate the state
      */
     public setState(state: RunState, message?: string): void {
+        getElement(APPLICATION_STATE_TEXT_ID).innerText =
+            message || t(`Papyros.states.${state}`);
         if (state !== this.state) {
-            getElement(APPLICATION_STATE_TEXT_ID).innerText =
-                message || t(`Papyros.states.${state}`);
             this.stateTime = new Date().getTime();
             this.previousState = this.state;
             this.state = state;
         }
-        this.showSpinner(state !== RunState.Ready);
+        this.showSpinner(this.state !== RunState.Ready);
         this.renderButtons();
     }
 
