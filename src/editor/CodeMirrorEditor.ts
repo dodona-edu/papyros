@@ -198,6 +198,7 @@ export abstract class CodeMirrorEditor extends Renderable {
                 ".cm-scroller": { overflow: "auto" },
                 "&": { maxHeight: this.styling.maxHeight, height: "100%" },
                 ".cm-gutter,.cm-content": { minHeight: this.styling.minHeight },
+                ".cm-gutters": { "padding-top": "3px" }, // ensure gutters are aligned with text
                 ...(this.styling.theme || {})
             })
         ]);
