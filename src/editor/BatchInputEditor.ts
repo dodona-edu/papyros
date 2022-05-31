@@ -37,12 +37,15 @@ export class BatchInputEditor extends CodeMirrorEditor {
     public highlight(disable: boolean, getInfo: (lineNr: number) => UsedInputGutterInfo): void {
         this.editorView.dom.querySelectorAll(".cm-line").forEach((line, i) => {
             const info = getInfo(i + 1);
+            console.log("Toggling classes: ", line.classList, info.on);
             BatchInputEditor.HIGHLIGHT_CLASSES.forEach(c => {
                 line.classList.toggle(c, info.on);
             });
+            console.log(i+1, info, line.classList);
             line.setAttribute("contenteditable", "" + (!disable || !info.on));
             this.usedInputGutters.setMarker(this.editorView, info);
         });
+        console.log(this.editorView.dom.innerHTML);
     }
 
     /**
