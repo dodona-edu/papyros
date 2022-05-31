@@ -138,7 +138,18 @@ class JavaScriptWorker extends Backend<SyncExtras> {
             Object.keys(newContext).map(k => `${k} = ctx['${k}'];`).join("\n")
         )(newContext);
         try { // run the user's code
-            return Promise.resolve(eval(code));
+            this.onEvent({
+                type: BackendEventType.Start,
+                contentType: "text/plain",
+                data: "RunCode"
+            });
+            const result = Promise.resolve(eval(code));
+            this.onEvent({
+                type: BackendEventType.End,
+                contentType: "text/plain",
+                data: "CodeFinished"
+            });
+            return result;
         } catch (error: any) { // try to create a friendly traceback
             Error.captureStackTrace(error);
             return Promise.resolve(this.onEvent({

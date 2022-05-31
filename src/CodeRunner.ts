@@ -113,6 +113,10 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      * Previous state to restore when loading is done
      */
     private previousState: RunState;
+    /**
+     * Time at which the setState call occurred
+     */
+    private runStartTime: number;
 
     /**
      * Construct a new RunStateManager with the given listeners
@@ -159,9 +163,12 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         BackendManager.subscribe(BackendEventType.Input,
             () => this.setState(RunState.AwaitingInput));
         this.loadingPackages = [];
-        this.previousState = RunState.Ready;
         BackendManager.subscribe(BackendEventType.Loading,
             e => this.onLoad(e));
+        BackendManager.subscribe(BackendEventType.Start,
+            e => this.onStart(e));
+        this.previousState = RunState.Ready;
+        this.runStartTime = new Date().getTime();
         this.state = RunState.Ready;
     }
 
@@ -252,12 +259,13 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      * @param {string} message Optional message to indicate the state
      */
     public setState(state: RunState, message?: string): void {
+        getElement(APPLICATION_STATE_TEXT_ID).innerText =
+            message || t(`Papyros.states.${state}`);
         if (state !== this.state) {
-            getElement(APPLICATION_STATE_TEXT_ID).innerText =
-                message || t(`Papyros.states.${state}`);
+            this.previousState = this.state;
             this.state = state;
         }
-        this.showSpinner(state !== RunState.Ready);
+        this.showSpinner(this.state !== RunState.Ready);
         this.renderButtons();
     }
 
@@ -362,13 +370,13 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      */
     public async runCode(code: string, mode?: string): Promise<void> {
         // Setup pre-run
-        this.setState(RunState.Running);
+        this.setState(RunState.Loading);
+        // Ensure we go back to Loading after finishing any remaining installs
+        this.previousState = RunState.Loading;
         BackendManager.publish({
             type: BackendEventType.Start,
-            data: "User started run", contentType: "text/plain"
+            data: "StartClicked", contentType: "text/plain"
         });
-        const start = new Date().getTime();
-        let endMessage = "Program finishd normally";
         let interrupted = false;
         let terminated = false;
         const backend = await this.backend;
@@ -387,23 +395,15 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
                     data: JSON.stringify(error),
                     contentType: "text/json"
                 });
-                endMessage = "Program terminated due to error: " + error.constructor.name;
             }
         } finally {
-            if (this.state !== RunState.Stopping) {
+            if (this.state === RunState.Stopping) {
                 // Was interrupted, End message already published
-                BackendManager.publish({
-                    type: BackendEventType.End,
-                    data: endMessage, contentType: "text/plain"
-                });
-            } else {
                 interrupted = true;
             }
-            this.loadingPackages = [];
-            const end = new Date().getTime();
             this.setState(RunState.Ready, t(
                 interrupted ? "Papyros.interrupted" : "Papyros.finished",
-                { time: (end - start) / 1000 }));
+                { time: (new Date().getTime() - this.runStartTime) / 1000 }));
             if (terminated) {
                 await this.start();
             } else if (await backend.workerProxy.hasOverflow()) {
@@ -446,9 +446,6 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             this.loadingPackages = [];
         }
         if (this.loadingPackages.length > 0) {
-            if (this.state !== RunState.Loading) {
-                this.previousState = this.state;
-            }
             const packageMessage = t("Papyros.loading", {
                 // limit amount of package names shown
                 packages: this.loadingPackages.slice(0, 3).join(", ")
@@ -456,6 +453,14 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             this.setState(RunState.Loading, packageMessage);
         } else {
             this.setState(this.previousState);
+        }
+    }
+
+    private onStart(e: BackendEvent): void {
+        const startData = parseData(e.data, e.contentType) as string;
+        if (startData.includes("RunCode")) {
+            this.runStartTime = new Date().getTime();
+            this.setState(RunState.Running);
         }
     }
 }
