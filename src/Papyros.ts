@@ -7,7 +7,7 @@ import {
     PANEL_WRAPPER_ID, DARK_MODE_TOGGLE_ID,
     MAIN_APP_ID, OUTPUT_AREA_WRAPPER_ID
 } from "./Constants";
-import { InputMode } from "./InputManager";
+import { InputManagerRenderOptions, InputMode } from "./InputManager";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import {
     t, loadTranslations, getLocales,
@@ -80,7 +80,7 @@ export interface PapyrosRenderOptions {
     /**
      * RenderOptions for the input field
      */
-    inputOptions?: RenderOptions;
+    inputOptions?: InputManagerRenderOptions;
     /**
      * RenderOptions for the output field
      */
@@ -114,7 +114,7 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
         // Load translations as other components depend on them
         loadTranslations();
         I18n.locale = config.locale;
-        this.codeRunner = new CodeRunner(config.programmingLanguage);
+        this.codeRunner = new CodeRunner(config.programmingLanguage, config.inputMode);
     }
 
     /**
@@ -177,14 +177,14 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
      * @param {string} code The code to use in the editor
      */
     public setCode(code: string): void {
-        this.codeRunner.editor.setCode(code);
+        this.codeRunner.editor.setText(code);
     }
 
     /**
      * @return {string} The currently written code
      */
     public getCode(): string {
-        return this.codeRunner.editor.getCode();
+        return this.codeRunner.editor.getText();
     }
 
     /**

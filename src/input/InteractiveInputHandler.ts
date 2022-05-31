@@ -18,6 +18,13 @@ export class InteractiveInputHandler extends UserInputHandler {
         return getElement<HTMLButtonElement>(SEND_INPUT_BTN_ID);
     }
 
+    /**
+     * Retrieve the HTMLInputElement for this InputHandler
+     */
+    private get inputArea(): HTMLInputElement {
+        return getElement<HTMLInputElement>(INPUT_TA_ID);
+    }
+
     public override getInputMode(): InputMode {
         return InputMode.Interactive;
     }
@@ -43,6 +50,14 @@ export class InteractiveInputHandler extends UserInputHandler {
         }
     }
 
+    protected override setPlaceholder(placeholder: string): void {
+        this.inputArea.setAttribute("placeholder", placeholder);
+    }
+
+    public focus(): void {
+        this.inputArea.focus();
+    }
+
     public override toggle(): void {
         this.reset();
     }
@@ -65,7 +80,7 @@ export class InteractiveInputHandler extends UserInputHandler {
         renderWithOptions(options, `
 <div class="_tw-flex _tw-flex-row _tw-my-1">
     <input id="${INPUT_TA_ID}" type="text"
-    class="_tw-border _tw-border-transparent _tw-w-full _tw-mr-0.5 _tw-px-1 _tw-rounded-lg
+    class="_tw-border _tw-w-full _tw-mr-0.5 _tw-px-1 _tw-rounded-lg
     dark:_tw-border-dark-mode-content dark:_tw-bg-dark-mode-bg
     placeholder:_tw-text-placeholder-grey disabled:_tw-cursor-not-allowed
     focus:_tw-outline-none focus:_tw-ring-1 focus:_tw-ring-blue-500">
@@ -78,5 +93,10 @@ export class InteractiveInputHandler extends UserInputHandler {
                 this.inputCallback();
             }
         });
+    }
+
+    protected reset(): void {
+        super.reset();
+        this.inputArea.value = "";
     }
 }

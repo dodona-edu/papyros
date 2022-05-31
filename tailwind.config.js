@@ -3,6 +3,7 @@ const flattenColorPalette = require('tailwindcss/lib/util/flattenColorPalette').
 // Scale sizes according to 80vh to prevent overflows
 const HEIGHTS = {
   "0": "0",
+  "1/8": "10vh",
   "1/5": "16vh",
   "1/4": "20vh",
   "2/5": "32vh",
@@ -17,7 +18,8 @@ const COLORS = {
   "dark-mode-bg": "#263238",
   "dark-mode-content": "#37474F",
   "dark-mode-blue": "#0277BD",
-  "placeholder-grey": "#888"
+  "placeholder-grey": "#888",
+  "neutral-bg": "#455A64"
 };
 
 /**

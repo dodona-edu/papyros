@@ -1,6 +1,8 @@
 import os
 import sys
 import json
+import doctest
+import re
 import python_runner
 import friendly_traceback
 
@@ -121,6 +123,19 @@ class Papyros(python_runner.PyodideRunner):
 
     def pre_run(self, source_code, mode="exec", top_level_await=False):
         self.override_globals()
+        if mode == "doctest":
+            # remove if __name__ == "__main__" and replace it
+            lines = source_code.split("\n")
+            main_start = 0
+            while main_start < len(lines) and not re.match("^if(\s)+__name__(\s)*==(\s)*\"__main__\"(\s)*:", lines[main_start]):
+                main_start += 1
+            if main_start < len(lines):
+                # Strip away indented lines making up the main block
+                main_end = main_start + 1
+                while main_end < len(lines) and re.match("^(( |\t)+)", lines[main_end]):
+                    main_end += 1
+                source_code = "\n".join(lines[0:main_start] + lines[main_end:])
+            source_code += "\nif __name__ == \"__main__\":\n    import doctest\n    doctest.testmod(verbose=True)"
         return super().pre_run(source_code, mode=mode, top_level_await=top_level_await)
 
     async def run_async(self, source_code, mode="exec", top_level_await=True):
@@ -209,3 +224,8 @@ class Papyros(python_runner.PyodideRunner):
         from .linting import lint
         os.devnull = orig_dev_null
         return lint(code)
+
+    def has_doctests(self, code):
+        parser = doctest.DocTestParser()
+        tests = parser.get_examples(code)
+        return bool(tests)

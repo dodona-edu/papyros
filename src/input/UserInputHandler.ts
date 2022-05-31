@@ -1,17 +1,18 @@
-import { INPUT_TA_ID } from "../Constants";
-import { InputMode } from "../InputManager";
-import { t, getElement } from "../util/Util";
+import { InputManagerRenderOptions, InputMode } from "../InputManager";
+import { t } from "../util/Util";
 import { Renderable } from "../util/Rendering";
 
 /**
  * Base class for components that handle input from the user
  */
-export abstract class UserInputHandler extends Renderable {
+export abstract class UserInputHandler extends Renderable<InputManagerRenderOptions> {
     /**
      * Whether we are waiting for the user to input data
      */
     protected waiting: boolean;
-
+    /**
+     * Function to call when the user provided new input
+     */
     protected inputCallback: () => void;
 
     /**
@@ -58,11 +59,14 @@ export abstract class UserInputHandler extends Renderable {
     public abstract toggle(active: boolean): void;
 
     /**
-     * Retrieve the HTMLInputElement for this InputHandler
+     * @param {string} placeholder The placeholder to show
      */
-    public get inputArea(): HTMLInputElement {
-        return getElement<HTMLInputElement>(INPUT_TA_ID);
-    }
+    protected abstract setPlaceholder(placeholder: string): void;
+
+    /**
+     * Focus the area in which the user enters input
+     */
+    public abstract focus(): void;
 
     /**
      * Wait for input of the user for a certain prompt
@@ -71,15 +75,14 @@ export abstract class UserInputHandler extends Renderable {
      */
     public waitWithPrompt(waiting: boolean, prompt = ""): void {
         this.waiting = waiting;
-        this.inputArea.setAttribute("placeholder",
-            prompt || t(`Papyros.input_placeholder.${this.getInputMode()}`));
+        this.setPlaceholder(prompt || t(`Papyros.input_placeholder.${this.getInputMode()}`));
         if (waiting) {
             // Focusing is a rendering operation
             // Subclasses can execute code after this operation, skipping the rendering
             // Using setTimeout ensures rendering will be done when the main thread has time
             // eslint-disable-next-line max-len
             // More info here: https://stackoverflow.com/questions/1096436/document-getelementbyidid-focus-is-not-working-for-firefox-or-chrome
-            setTimeout(() => this.inputArea.focus(), 0);
+            setTimeout(() => this.focus(), 0);
         }
     }
 
@@ -87,6 +90,6 @@ export abstract class UserInputHandler extends Renderable {
      * Helper method to reset internal state
      */
     protected reset(): void {
-        this.inputArea.value = "";
+        this.waiting = false;
     }
 }

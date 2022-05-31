@@ -1,15 +1,21 @@
-import { INPUT_TA_ID } from "../Constants";
-import { InputMode } from "../InputManager";
+import { InputManagerRenderOptions, InputMode } from "../InputManager";
 import { UserInputHandler } from "./UserInputHandler";
-import {
-    RenderOptions, renderWithOptions
-} from "../util/Rendering";
+import { t } from "../util/Util";
+import { BatchInputEditor } from "../editor/BatchInputEditor";
 
 export class BatchInputHandler extends UserInputHandler {
     /**
      * The index of the next line in lines to send
      */
     private lineNr: number;
+    /**
+     * Messages used when asking for user input
+     */
+    private prompts: Array<string>;
+    /**
+     * Editor containing the input of the user
+     */
+    public readonly batchEditor: BatchInputEditor;
     /**
      * The previous input of the user
      * Is restored upon switching back to InputMode.Batch
@@ -24,13 +30,38 @@ export class BatchInputHandler extends UserInputHandler {
         super(inputCallback);
         this.lineNr = 0;
         this.previousInput = "";
+        this.prompts = [];
+        this.batchEditor = new BatchInputEditor();
+        this.batchEditor.onChange({
+            onChange: this.handleInputChanged.bind(this),
+            delay: 0
+        });
+    }
+
+    /**
+     * Handle new input, potentially sending it to the awaiting receiver
+     * @param {string} newInput The new user input
+     */
+    private handleInputChanged(newInput: string): void {
+        if (!newInput) {
+            this.highlight(() => false);
+        } else {
+            const newLines = newInput.split("\n");
+            if (this.waiting && newLines.length > this.lineNr + 1) {
+                // Require explicitly pressing enter
+                this.inputCallback();
+            }
+            this.highlight();
+        }
+
+        this.previousInput = newInput;
     }
 
     public override toggle(active: boolean): void {
         if (active) {
-            this.inputArea.value = this.previousInput;
+            this.batchEditor.setText(this.previousInput);
         } else {
-            this.previousInput = this.inputArea.value;
+            this.previousInput = this.batchEditor.getText();
         }
     }
 
@@ -43,50 +74,62 @@ export class BatchInputHandler extends UserInputHandler {
      * @return {Array<string>} The entered lines
      */
     protected get lines(): Array<string> {
-        const l = this.inputArea.value.split("\n");
-        if (!l[l.length - 1]) { // last line is empty
-            l.splice(l.length - 1); // do not consider it valid input
-        }
-        return l;
+        return this.batchEditor.getLines();
     }
 
     public override hasNext(): boolean {
         return this.lineNr < this.lines.length;
     }
 
+    private highlight(whichLines = (i: number) => i < this.lineNr): void {
+        this.batchEditor.highlight((lineNr: number) => {
+            let message = t("Papyros.used_input");
+            const index = lineNr - 1;
+            const shouldShow = whichLines(index);
+            if (index < this.prompts.length && this.prompts[index]) {
+                message = t("Papyros.used_input_with_prompt",
+                    { prompt: this.prompts[index] });
+            }
+            return { lineNr, on: shouldShow, title: message };
+        });
+    }
+
     public override next(): string {
         const nextLine = this.lines[this.lineNr];
         this.lineNr += 1;
+        this.highlight();
         return nextLine;
     }
 
     public override onRunStart(): void {
         this.lineNr = 0;
+        this.highlight(() => false);
     }
 
     public override onRunEnd(): void {
         // Intentionally empty
     }
 
-    protected override _render(options: RenderOptions): void {
-        renderWithOptions(options, `
-<textarea id="${INPUT_TA_ID}"
-class="_tw-border-2 _tw-h-auto _tw-w-full _tw-max-h-1/4 _tw-px-1 _tw-overflow-auto _tw-rounded-lg
-dark:_tw-border-dark-mode-content dark:_tw-bg-dark-mode-bg placeholder:_tw-text-placeholder-grey
-_tw-resize-y focus:_tw-outline-none focus:_tw-ring-1 focus:_tw-ring-blue-500" rows="5">
-</textarea>`);
-        this.inputArea.addEventListener("keydown", (ev: KeyboardEvent) => {
-            if (this.waiting && ev.key.toLowerCase() === "enter") {
-                // If user replaced lines, use them
-                if (this.lines.length < this.lineNr) {
-                    this.lineNr = this.lines.length - 1;
-                }
-                this.inputCallback();
-            }
-        });
-        this.inputArea.addEventListener("change", () => {
-            this.previousInput = this.inputArea.value;
-        });
-        this.inputArea.value = this.previousInput;
+    public override waitWithPrompt(waiting: boolean, prompt?: string): void {
+        if (waiting) {
+            this.prompts.push(prompt || "");
+        }
+        super.waitWithPrompt(waiting, prompt);
+    }
+
+    protected setPlaceholder(placeholderValue: string): void {
+        this.batchEditor.setPlaceholder(placeholderValue);
+    }
+
+    public focus(): void {
+        this.batchEditor.focus();
+    }
+
+    protected override _render(options: InputManagerRenderOptions): void {
+        this.batchEditor.render(options);
+        if (options.inputStyling) {
+            this.batchEditor.setStyling(options.inputStyling);
+        }
+        this.highlight();
     }
 }

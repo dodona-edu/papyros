@@ -12,6 +12,7 @@ import { UserInputHandler } from "./input/UserInputHandler";
 import { BatchInputHandler } from "./input/BatchInputHandler";
 import { BackendManager } from "./BackendManager";
 import { Renderable, RenderOptions, renderWithOptions } from "./util/Rendering";
+import { EditorStyling } from "./editor/CodeMirrorEditor";
 
 export enum InputMode {
     Interactive = "interactive",
@@ -20,7 +21,14 @@ export enum InputMode {
 
 export const INPUT_MODES = [InputMode.Batch, InputMode.Interactive];
 
-export class InputManager extends Renderable {
+export interface InputManagerRenderOptions extends RenderOptions {
+    /**
+     * Option to allow styling the editor area of the input handler
+     */
+    inputStyling?: Partial<EditorStyling>;
+}
+
+export class InputManager extends Renderable<InputManagerRenderOptions> {
     private inputMode: InputMode;
     private inputHandlers: Map<InputMode, UserInputHandler>;
     private waiting: boolean;
@@ -28,10 +36,10 @@ export class InputManager extends Renderable {
 
     private sendInput: (input: string) => void;
 
-    constructor(sendInput: (input: string) => void) {
+    constructor(sendInput: (input: string) => void, inputMode: InputMode) {
         super();
         this.inputHandlers = this.buildInputHandlerMap();
-        this.inputMode = InputMode.Interactive;
+        this.inputMode = inputMode;
         this.sendInput = sendInput;
         this.waiting = false;
         this.prompt = "";
@@ -62,7 +70,7 @@ export class InputManager extends Renderable {
         this.inputHandler.toggle(true);
     }
 
-    private get inputHandler(): UserInputHandler {
+    public get inputHandler(): UserInputHandler {
         return this.inputHandlers.get(this.inputMode)!;
     }
 
@@ -70,7 +78,7 @@ export class InputManager extends Renderable {
         return this.waiting;
     }
 
-    protected override _render(options: RenderOptions): void {
+    protected override _render(options: InputManagerRenderOptions): void {
         let switchMode = "";
         const otherMode = this.inputMode === InputMode.Interactive ?
             InputMode.Batch : InputMode.Interactive;
@@ -88,7 +96,8 @@ ${switchMode}`);
 
         this.inputHandler.render({
             parentElementId: USER_INPUT_WRAPPER_ID,
-            darkMode: options.darkMode
+            darkMode: options.darkMode,
+            inputStyling: options.inputStyling
         });
         this.inputHandler.waitWithPrompt(this.waiting, this.prompt);
     }
@@ -99,7 +108,7 @@ ${switchMode}`);
         this.inputHandler.waitWithPrompt(this.waiting, this.prompt);
     }
 
-    private async onUserInput(): Promise<void> {
+    private onUserInput(): void {
         if (this.inputHandler.hasNext()) {
             const line = this.inputHandler.next();
             this.sendInput(line);
@@ -112,11 +121,10 @@ ${switchMode}`);
     /**
      * Asynchronously handle an input request by prompting the user for input
      * @param {BackendEvent} e Event containing the input data
-     * @return {Promise<void>} Promise of handling the request
      */
-    private async onInputRequest(e: BackendEvent): Promise<void> {
+    private onInputRequest(e: BackendEvent): void {
         this.prompt = e.data;
-        return await this.onUserInput();
+        this.onUserInput();
     }
 
     private onRunStart(): void {

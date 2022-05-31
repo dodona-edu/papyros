@@ -65,6 +65,11 @@ export interface WorkerDiagnostic {
     message: string;
 }
 
+export interface RunMode {
+    mode: string;
+    active: boolean;
+}
+
 export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
     /**
      * SyncExtras object that grants access to helpful methods
@@ -123,12 +128,23 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
     }
 
     /**
+     * Determine whether the modes supported by this Backend are active
+     * @param {string} code The current code in the editor
+     * @return {Array<RunMode>} The run modes of this Backend
+     */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public runModes(code: string): Array<RunMode> {
+        return [];
+    }
+
+    /**
      * Executes the given code
      * @param {Extras} extras Helper properties to run code
      * @param {string} code The code to run
+     * @param {string} mode The mode to run the code in
      * @return {Promise<void>} Promise of execution
      */
-    public abstract runCode(extras: Extras, code: string): Promise<void>;
+    public abstract runCode(extras: Extras, code: string, mode?: string): Promise<void>;
 
     /**
      * Converts the context to a cloneable object containing useful properties
