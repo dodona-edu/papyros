@@ -84,16 +84,19 @@ export class BatchInputHandler extends UserInputHandler {
         return this.lineNr < this.lines.length;
     }
 
-    private highlight(disable: boolean, whichLines = (i: number) => i < this.lineNr): void {
-        this.batchEditor.highlight(disable, (lineNr: number) => {
-            let message = t("Papyros.used_input");
-            const index = lineNr - 1;
-            const shouldShow = whichLines(index);
-            if (index < this.prompts.length && this.prompts[index]) {
-                message = t("Papyros.used_input_with_prompt",
-                    { prompt: this.prompts[index] });
+    private highlight(running: boolean, whichLines = (i: number) => i < this.lineNr): void {
+        this.batchEditor.highlight({
+            running,
+            getInfo: (lineNr: number) => {
+                let message = t("Papyros.used_input");
+                const index = lineNr - 1;
+                const shouldShow = whichLines(index);
+                if (index < this.prompts.length && this.prompts[index]) {
+                    message = t("Papyros.used_input_with_prompt",
+                        { prompt: this.prompts[index] });
+                }
+                return { lineNr, on: shouldShow, title: message };
             }
-            return { lineNr, on: shouldShow, title: message };
         });
     }
 
@@ -107,7 +110,7 @@ export class BatchInputHandler extends UserInputHandler {
     public override onRunStart(): void {
         this.running = true;
         this.lineNr = 0;
-        this.highlight(false, () => false);
+        this.highlight(true, () => false);
     }
 
     public override onRunEnd(): void {

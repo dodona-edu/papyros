@@ -103,15 +103,22 @@ export abstract class Gutters<
         return marker;
     }
 
+    public hasMarker(view: EditorView, lineNr: number): boolean {
+        const guttersInfo: Map<number, GutterInfo> = view.state.field(this.state);
+        return guttersInfo.has(lineNr) && guttersInfo.get(lineNr)!.on;
+    }
+
     /**
      * Set a marker with the given info
      * @param {EditorView} view View in which the Gutters live
      * @param {Info} info Info used to render the marker
      */
     public setMarker(view: EditorView, info: Info): void {
-        view.dispatch({
-            effects: this.effect.of(info)
-        });
+        if (this.hasMarker(view, info.lineNr) !== info.on) {
+            view.dispatch({
+                effects: this.effect.of(info)
+            });
+        }
     }
 
     /**

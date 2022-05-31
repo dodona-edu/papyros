@@ -107,15 +107,16 @@ export abstract class CodeMirrorEditor extends Renderable {
             state: EditorState.create({
                 extensions: [
                     configurableExtensions,
-                    EditorView.updateListener.of((v: ViewUpdate) => {
-                        if (v.docChanged) {
-                            this.handleChange();
-                        }
-                    })
+                    EditorView.updateListener.of(this.onViewUpdate.bind(this))
                 ]
             })
         });
-        this.setStyling(styling);
+    }
+
+    protected onViewUpdate(v: ViewUpdate): void {
+        if (v.docChanged) {
+            this.handleChange();
+        }
     }
 
     /**
@@ -204,6 +205,7 @@ export abstract class CodeMirrorEditor extends Renderable {
 
     protected override _render(options: RenderOptions): void {
         this.setDarkMode(options.darkMode || false);
+        this.setStyling(this.styling);
         const wrappingDiv = document.createElement("div");
         wrappingDiv.classList.add(...this.styling.classes);
         wrappingDiv.replaceChildren(this.editorView.dom);

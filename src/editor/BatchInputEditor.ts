@@ -1,18 +1,29 @@
 import { CodeMirrorEditor } from "./CodeMirrorEditor";
 import { UsedInputGutters, UsedInputGutterInfo } from "./Gutters";
+import { ViewUpdate } from "@codemirror/view";
 
+/**
+ * Arguments used to higlight lines in the Editor
+ */
+interface HighlightArgs {
+    /**
+     * Whether the user's code is currently running and using input
+     */
+    running: boolean;
+    /**
+     * Function to obtain gutter info per line (1-based indexing)
+     */
+    getInfo: (lineInfo: number) => UsedInputGutterInfo;
+}
 /**
  * Editor to handle and highlight user input
  */
 export class BatchInputEditor extends CodeMirrorEditor {
     /**
-     * Style classes used to highlight lines
-     */
-    private static HIGHLIGHT_CLASSES = ["cm-activeLine"];
-    /**
      * Gutters to show which lines were used
      */
     private usedInputGutters: UsedInputGutters;
+    private lastHighlightArgs?: HighlightArgs;
 
     constructor() {
         super(new Set([CodeMirrorEditor.PLACEHOLDER, CodeMirrorEditor.STYLE]), {
@@ -21,31 +32,54 @@ export class BatchInputEditor extends CodeMirrorEditor {
                 "dark:_tw-bg-dark-mode-bg", "dark:_tw-border-dark-mode-content",
                 "focus:_tw-outline-none", "focus:_tw-ring-1", "focus:_tw-ring-blue-500"],
             minHeight: "10vh",
-            maxHeight: "20vh"
-        }
-        );
+            maxHeight: "20vh",
+            theme: {}
+        });
         this.usedInputGutters = new UsedInputGutters();
         this.addExtension(this.usedInputGutters.toExtension());
     }
 
+    private getLastHighlightArgs(): HighlightArgs {
+        return this.lastHighlightArgs || {
+            running: false,
+            getInfo: lineNr => {
+                return {
+                    lineNr,
+                    on: false,
+                    title: ""
+                };
+            }
+        };
+    }
+
+    protected override onViewUpdate(v: ViewUpdate): void {
+        super.onViewUpdate(v);
+        this.highlight(this.getLastHighlightArgs());
+    }
+
     /**
      * Apply highlighting to the lines in the Editor
-     * @param {boolean} disable Whether to disable editing the lines if marked
-     * @param {function(number): UsedInputGutterInfo} getInfo Function to obtain gutter
-     * info per line (1-based indexing)
+     * @param {HightlightArgs} args Arguments for highlighting
+     * @param {Array<string>} highlightClasses HTML classes to use for consumed lines
      */
-    public highlight(disable: boolean, getInfo: (lineNr: number) => UsedInputGutterInfo): void {
+    public highlight(args: HighlightArgs, highlightClasses = ["_tw-bg-cyan-200"]): void {
+        this.lastHighlightArgs = args;
+        const {
+            running, getInfo
+        } = args;
+        let nextLineToUse = 0;
         this.editorView.dom.querySelectorAll(".cm-line").forEach((line, i) => {
             const info = getInfo(i + 1);
-            console.log("Toggling classes: ", line.classList, info.on);
-            BatchInputEditor.HIGHLIGHT_CLASSES.forEach(c => {
-                line.classList.toggle(c, info.on);
+            if (info.on) {
+                nextLineToUse += 1;
+            }
+            line.classList.toggle("cm-activeLine", running && i === nextLineToUse);
+            highlightClasses.forEach(className => {
+                line.classList.toggle(className, i !== nextLineToUse && info.on);
             });
-            console.log(i+1, info, line.classList);
-            line.setAttribute("contenteditable", "" + (!disable || !info.on));
+            line.setAttribute("contenteditable", "" + (!running || !info.on));
             this.usedInputGutters.setMarker(this.editorView, info);
         });
-        console.log(this.editorView.dom.innerHTML);
     }
 
     /**
