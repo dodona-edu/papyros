@@ -1,13 +1,16 @@
-import { InputMode } from "../InputManager";
+import { InputManagerRenderOptions, InputMode } from "../InputManager";
 import { Renderable } from "../util/Rendering";
 /**
  * Base class for components that handle input from the user
  */
-export declare abstract class UserInputHandler extends Renderable {
+export declare abstract class UserInputHandler extends Renderable<InputManagerRenderOptions> {
     /**
      * Whether we are waiting for the user to input data
      */
     protected waiting: boolean;
+    /**
+     * Function to call when the user provided new input
+     */
     protected inputCallback: () => void;
     /**
      * Construct a new UserInputHandler
@@ -45,9 +48,13 @@ export declare abstract class UserInputHandler extends Renderable {
      */
     abstract toggle(active: boolean): void;
     /**
-     * Retrieve the HTMLInputElement for this InputHandler
+     * @param {string} placeholder The placeholder to show
      */
-    get inputArea(): HTMLInputElement;
+    protected abstract setPlaceholder(placeholder: string): void;
+    /**
+     * Focus the area in which the user enters input
+     */
+    abstract focus(): void;
     /**
      * Wait for input of the user for a certain prompt
      * @param {boolean} waiting Whether we are waiting for input

@@ -1,5 +1,5 @@
-import { CodeEditor } from "./CodeEditor";
-import { InputManager } from "./InputManager";
+import { CodeEditor } from "./editor/CodeEditor";
+import { InputManager, InputManagerRenderOptions, InputMode } from "./InputManager";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import { RenderOptions, ButtonOptions, Renderable } from "./util/Rendering";
 import { OutputManager } from "./OutputManager";
@@ -11,7 +11,7 @@ interface CodeRunnerRenderOptions {
     /**
      * Options for rendering the InputManager
      */
-    inputOptions: RenderOptions;
+    inputOptions: InputManagerRenderOptions;
     /**
      * Options for rendering the editor
      */
@@ -87,8 +87,9 @@ export declare class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     /**
      * Construct a new RunStateManager with the given listeners
      * @param {ProgrammingLanguage} programmingLanguage The language to use
+     * @param {InputMode} inputMode The input mode to use
      */
-    constructor(programmingLanguage: ProgrammingLanguage);
+    constructor(programmingLanguage: ProgrammingLanguage, inputMode: InputMode);
     /**
      * Start the backend to enable running code
      */
@@ -103,15 +104,10 @@ export declare class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      * @param {ProgrammingLanguage} programmingLanguage The language to use
      */
     setProgrammingLanguage(programmingLanguage: ProgrammingLanguage): Promise<void>;
+    /**
+     * @return {ProgrammingLanguage} The current programming language
+     */
     getProgrammingLanguage(): ProgrammingLanguage;
-    /**
-     * Get the button to run the code
-     */
-    get runButton(): HTMLButtonElement;
-    /**
-     * Get the button to interrupt the code
-     */
-    get stopButton(): HTMLButtonElement;
     /**
      * Show or hide the spinning circle, representing a running animation
      * @param {boolean} show Whether to show the spinner
@@ -123,19 +119,38 @@ export declare class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      * @param {string} message Optional message to indicate the state
      */
     setState(state: RunState, message?: string): void;
+    /**
+     * @return {RunState} The state of the current run
+     */
     getState(): RunState;
+    /**
+     * Remove a button from the internal button list. Requires a re-render to update
+     * @param {string} id Identifier of the button to remove
+     */
+    private removeButton;
     /**
      * Add a button to display to the user
      * @param {ButtonOptions} options Options for rendering the button
      * @param {function} onClick Listener for click events on the button
      */
     addButton(options: ButtonOptions, onClick: () => void): void;
+    /**
+     * Generate a button that the user can click to process code
+     * Can either run the code or interrupt it if already running
+     * @return {DynamicButton} A button to interact with the code according to the current state
+     */
+    private getCodeActionButton;
+    /**
+     * Specific helper method to render only the buttons required by the user
+     */
+    private renderButtons;
     protected _render(options: CodeRunnerRenderOptions): HTMLElement;
     /**
      * @param {string} code The code to run
+     * @param {string} mode The mode to run with
      * @return {Promise<void>} Promise of running the code
      */
-    runCode(code: string): Promise<void>;
+    runCode(code: string, mode?: string): Promise<void>;
     /**
      * Callback to handle loading events
      * @param {BackendEvent} e The loading event
