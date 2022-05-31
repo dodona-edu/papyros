@@ -34,9 +34,9 @@ export class InputManager extends Renderable<InputManagerRenderOptions> {
     private waiting: boolean;
     private prompt: string;
 
-    private sendInput: (input: string) => Promise<void>;
+    private sendInput: (input: string) => void;
 
-    constructor(sendInput: (input: string) => Promise<void>, inputMode: InputMode) {
+    constructor(sendInput: (input: string) => void, inputMode: InputMode) {
         super();
         this.onUserInput = this.onUserInput.bind(this);
         this.inputHandlers = this.buildInputHandlerMap();
@@ -109,8 +109,8 @@ ${switchMode}`);
         this.inputHandler.waitWithPrompt(this.waiting, this.prompt);
     }
 
-    private async onUserInput(line: string): Promise<void> {
-        await this.sendInput(line);
+    private onUserInput(line: string): void {
+        this.sendInput(line);
         this.waitWithPrompt(false);
     }
 
