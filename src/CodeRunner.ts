@@ -116,7 +116,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     /**
      * Time at which the setState call occurred
      */
-    private stateTime: number;
+    private runStartTime: number;
 
     /**
      * Construct a new RunStateManager with the given listeners
@@ -168,7 +168,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         BackendManager.subscribe(BackendEventType.Start,
             e => this.onStart(e));
         this.previousState = RunState.Ready;
-        this.stateTime = new Date().getTime();
+        this.runStartTime = new Date().getTime();
         this.state = RunState.Ready;
     }
 
@@ -262,7 +262,6 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         getElement(APPLICATION_STATE_TEXT_ID).innerText =
             message || t(`Papyros.states.${state}`);
         if (state !== this.state) {
-            this.stateTime = new Date().getTime();
             this.previousState = this.state;
             this.state = state;
         }
@@ -404,7 +403,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             }
             this.setState(RunState.Ready, t(
                 interrupted ? "Papyros.interrupted" : "Papyros.finished",
-                { time: (new Date().getTime() - this.stateTime) / 1000 }));
+                { time: (new Date().getTime() - this.runStartTime) / 1000 }));
             if (terminated) {
                 await this.start();
             } else if (await backend.workerProxy.hasOverflow()) {
@@ -460,6 +459,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     private onStart(e: BackendEvent): void {
         const startData = parseData(e.data, e.contentType) as string;
         if (startData.includes("RunCode")) {
+            this.runStartTime = new Date().getTime();
             this.setState(RunState.Running);
         }
     }
