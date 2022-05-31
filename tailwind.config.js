@@ -18,7 +18,8 @@ const COLORS = {
   "dark-mode-bg": "#263238",
   "dark-mode-content": "#37474F",
   "dark-mode-blue": "#0277BD",
-  "placeholder-grey": "#888"
+  "placeholder-grey": "#888",
+  "neutral-bg": "#455A64"
 };
 
 /**

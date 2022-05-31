@@ -145,7 +145,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
                         this.addButton({
                             id: id,
                             buttonText: t(`Papyros.run_modes.${mode.mode}`),
-                            classNames: "_tw-text-white _tw-bg-green-500"
+                            classNames: "_tw-text-white _tw-bg-neutral-bg"
                         }, () => this.runCode(this.editor.getText(), mode.mode));
                     } else {
                         this.removeButton(id);
