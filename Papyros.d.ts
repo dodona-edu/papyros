@@ -1,5 +1,5 @@
 import "./Papyros.css";
-import { InputMode } from "./InputManager";
+import { InputManagerRenderOptions, InputMode } from "./InputManager";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import { RunState, CodeRunner } from "./CodeRunner";
 import { AtomicsChannelOptions, ServiceWorkerChannelOptions } from "sync-message";
@@ -54,7 +54,7 @@ export interface PapyrosRenderOptions {
     /**
      * RenderOptions for the input field
      */
-    inputOptions?: RenderOptions;
+    inputOptions?: InputManagerRenderOptions;
     /**
      * RenderOptions for the output field
      */

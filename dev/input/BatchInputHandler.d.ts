@@ -11,10 +11,6 @@ export declare class BatchInputHandler extends UserInputHandler {
      */
     private prompts;
     /**
-     * Whether a run is occurring
-     */
-    private running;
-    /**
      * Editor containing the input of the user
      */
     readonly batchEditor: BatchInputEditor;
