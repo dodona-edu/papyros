@@ -62,6 +62,7 @@ export declare abstract class CodeMirrorEditor extends Renderable {
     static STYLE: string;
     static PLACEHOLDER: string;
     static THEME: string;
+    static LANGUAGE: string;
     /**
      * CodeMirror EditorView representing the internal editor
      */
