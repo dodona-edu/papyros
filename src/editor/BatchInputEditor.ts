@@ -67,7 +67,7 @@ export class BatchInputEditor extends CodeMirrorEditor {
      * @param {Array<string>} highlightClasses HTML classes to use for consumed lines
      */
     public highlight(args: HighlightArgs,
-        highlightClasses = ["_tw-bg-cyan-200", "dark:_tw-bg-slate-500"]): void {
+        highlightClasses = ["_tw-bg-slate-300", "dark:_tw-bg-slate-500"]): void {
         this.lastHighlightArgs = args;
         const {
             running, getInfo
