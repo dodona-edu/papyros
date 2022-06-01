@@ -5,8 +5,28 @@ import {
 } from "./Constants";
 import { Papyros, PapyrosConfig } from "./Papyros";
 import { InputMode } from "./InputManager";
+import { BatchInputHandler } from "./input/BatchInputHandler";
+import { CodeMirrorEditor } from "./editor/CodeMirrorEditor";
 
-const LOCAL_STORAGE_CODE_KEY = addPapyrosPrefix("previous-code");
+const LOCAL_STORAGE_KEYS = {
+    code: addPapyrosPrefix("previous-code"),
+    input: addPapyrosPrefix("previous-batch-input")
+};
+
+function setUpEditor(editor: CodeMirrorEditor, storageKey: string): void {
+    const previousValue = window.localStorage.getItem(storageKey);
+    if (previousValue) {
+        editor.setText(previousValue);
+    }
+    editor.onChange(
+        {
+            onChange: (text: string) => {
+                window.localStorage.setItem(storageKey, text);
+            },
+            delay: 0
+        }
+    );
+}
 
 async function startPapyros(): Promise<void> {
     // Retrieve initial locale and programming language from URL
@@ -40,19 +60,11 @@ async function startPapyros(): Promise<void> {
         },
         darkMode: darkMode
     });
-    // Restore previous code if it existed
-    const previousCode = window.localStorage.getItem(LOCAL_STORAGE_CODE_KEY);
-    if (previousCode) {
-        papyros.setCode(previousCode);
+    setUpEditor(papyros.codeRunner.editor, LOCAL_STORAGE_KEYS.code);
+    const handler = papyros.codeRunner.inputManager.getInputHandler(InputMode.Batch);
+    if (handler instanceof BatchInputHandler) {
+        setUpEditor((handler as BatchInputHandler).batchEditor, LOCAL_STORAGE_KEYS.input);
     }
-    papyros.codeRunner.editor.onChange(
-        {
-            onChange: (code: string) => {
-                window.localStorage.setItem(LOCAL_STORAGE_CODE_KEY, code);
-            },
-            delay: 0
-        }
-    );
 
     await papyros.launch();
 }

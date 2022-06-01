@@ -71,8 +71,12 @@ export class InputManager extends Renderable<InputManagerRenderOptions> {
         this.inputHandler.toggle(true);
     }
 
+    public getInputHandler(inputMode: InputMode): UserInputHandler {
+        return this.inputHandlers.get(inputMode)!;
+    }
+
     public get inputHandler(): UserInputHandler {
-        return this.inputHandlers.get(this.inputMode)!;
+        return this.getInputHandler(this.inputMode)!;
     }
 
     public isWaiting(): boolean {
