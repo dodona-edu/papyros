@@ -2,7 +2,7 @@ import { Compartment, EditorState, Extension, StateEffect } from "@codemirror/st
 import { EditorView, placeholder, ViewUpdate } from "@codemirror/view";
 import { Renderable, RenderOptions, renderWithOptions } from "../util/Rendering";
 import { StyleSpec } from "style-mod";
-import { oneDark } from "@codemirror/theme-one-dark";
+import { darkTheme } from "./DarkTheme";
 
 /**
  * Data structure containing common elements for styling
@@ -179,10 +179,9 @@ export abstract class CodeMirrorEditor extends Renderable {
     public setDarkMode(darkMode: boolean): void {
         let styleExtensions: Extension = [];
         if (darkMode) {
-            styleExtensions = oneDark;
-        } else {
-            styleExtensions = [];
+            styleExtensions = [darkTheme];
         }
+        console.log("Setting style", styleExtensions);
         this.reconfigure([CodeMirrorEditor.STYLE, styleExtensions]);
     }
 
@@ -205,8 +204,8 @@ export abstract class CodeMirrorEditor extends Renderable {
     }
 
     protected override _render(options: RenderOptions): void {
-        this.setDarkMode(options.darkMode || false);
         this.setStyling(this.styling);
+        this.setDarkMode(options.darkMode || false);
         const wrappingDiv = document.createElement("div");
         wrappingDiv.classList.add(...this.styling.classes);
         wrappingDiv.replaceChildren(this.editorView.dom);
