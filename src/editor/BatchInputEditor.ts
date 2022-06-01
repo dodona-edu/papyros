@@ -54,7 +54,11 @@ export class BatchInputEditor extends CodeMirrorEditor {
 
     protected override onViewUpdate(v: ViewUpdate): void {
         super.onViewUpdate(v);
-        this.highlight(this.getLastHighlightArgs());
+        // Ensure that highlighting occurs after CodeMirrors internal update
+        // so that the style classes are not overwritten
+        setTimeout(() => {
+            this.highlight(this.getLastHighlightArgs());
+        }, 10);
     }
 
     /**
