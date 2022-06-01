@@ -22,6 +22,7 @@ export declare class InputManager extends Renderable<InputManagerRenderOptions> 
     private buildInputHandlerMap;
     getInputMode(): InputMode;
     setInputMode(inputMode: InputMode): void;
+    getInputHandler(inputMode: InputMode): UserInputHandler;
     get inputHandler(): UserInputHandler;
     isWaiting(): boolean;
     protected _render(options: InputManagerRenderOptions): void;
