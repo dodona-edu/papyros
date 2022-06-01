@@ -181,7 +181,6 @@ export abstract class CodeMirrorEditor extends Renderable {
         if (darkMode) {
             styleExtensions = [darkTheme];
         }
-        console.log("Setting style", styleExtensions);
         this.reconfigure([CodeMirrorEditor.STYLE, styleExtensions]);
     }
 
@@ -195,9 +194,11 @@ export abstract class CodeMirrorEditor extends Renderable {
             CodeMirrorEditor.THEME,
             EditorView.theme({
                 ".cm-scroller": { overflow: "auto" },
-                "&": { maxHeight: this.styling.maxHeight, height: "100%" },
+                "&": {
+                    "maxHeight": this.styling.maxHeight, "height": "100%",
+                    "font-size": "14px" // use proper size to align gutters with editor
+                },
                 ".cm-gutter,.cm-content": { minHeight: this.styling.minHeight },
-                ".cm-gutters": { "padding-top": "3px" }, // ensure gutters are aligned with text
                 ...(this.styling.theme || {})
             })
         ]);
