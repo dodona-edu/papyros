@@ -2,7 +2,7 @@ import { Compartment, EditorState, Extension, StateEffect } from "@codemirror/st
 import { EditorView, placeholder, ViewUpdate } from "@codemirror/view";
 import { Renderable, RenderOptions, renderWithOptions } from "../util/Rendering";
 import { StyleSpec } from "style-mod";
-import { oneDark } from "@codemirror/theme-one-dark";
+import { darkTheme } from "./DarkTheme";
 
 /**
  * Data structure containing common elements for styling
@@ -107,15 +107,16 @@ export abstract class CodeMirrorEditor extends Renderable {
             state: EditorState.create({
                 extensions: [
                     configurableExtensions,
-                    EditorView.updateListener.of((v: ViewUpdate) => {
-                        if (v.docChanged) {
-                            this.handleChange();
-                        }
-                    })
+                    EditorView.updateListener.of(this.onViewUpdate.bind(this))
                 ]
             })
         });
-        this.setStyling(styling);
+    }
+
+    protected onViewUpdate(v: ViewUpdate): void {
+        if (v.docChanged) {
+            this.handleChange();
+        }
     }
 
     /**
@@ -178,9 +179,7 @@ export abstract class CodeMirrorEditor extends Renderable {
     public setDarkMode(darkMode: boolean): void {
         let styleExtensions: Extension = [];
         if (darkMode) {
-            styleExtensions = oneDark;
-        } else {
-            styleExtensions = [];
+            styleExtensions = [darkTheme];
         }
         this.reconfigure([CodeMirrorEditor.STYLE, styleExtensions]);
     }
@@ -195,7 +194,10 @@ export abstract class CodeMirrorEditor extends Renderable {
             CodeMirrorEditor.THEME,
             EditorView.theme({
                 ".cm-scroller": { overflow: "auto" },
-                "&": { maxHeight: this.styling.maxHeight, height: "100%" },
+                "&": {
+                    "maxHeight": this.styling.maxHeight, "height": "100%",
+                    "font-size": "14px" // use proper size to align gutters with editor
+                },
                 ".cm-gutter,.cm-content": { minHeight: this.styling.minHeight },
                 ...(this.styling.theme || {})
             })
@@ -203,6 +205,7 @@ export abstract class CodeMirrorEditor extends Renderable {
     }
 
     protected override _render(options: RenderOptions): void {
+        this.setStyling(this.styling);
         this.setDarkMode(options.darkMode || false);
         const wrappingDiv = document.createElement("div");
         wrappingDiv.classList.add(...this.styling.classes);

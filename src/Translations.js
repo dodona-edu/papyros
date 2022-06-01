@@ -51,7 +51,7 @@ const ENGLISH_TRANSLATION = {
     "run_modes": {
         "doctest": "Run doctests"
     },
-    "used_input": "This line was used as input by your code.",
+    "used_input": "This line has already been used as input.",
     "used_input_with_prompt": "This line was used as input for the following prompt: %{prompt}"
 };
 
@@ -104,7 +104,7 @@ const DUTCH_TRANSLATION = {
     "run_modes": {
         "doctest": "Run doctests"
     },
-    "used_input": "Deze regel werd gebruikt als invoer.",
+    "used_input": "Deze regel werd al gebruikt als invoer.",
     "used_input_with_prompt": "Deze regel werd gebruikt als invoer voor de volgende vraag: %{prompt}"
 };
 

@@ -2,6 +2,7 @@ import { StateEffectType, StateField } from "@codemirror/state";
 import { Extension, StateEffect } from "@codemirror/state";
 import { BlockInfo, gutter, GutterMarker } from "@codemirror/view";
 import { EditorView } from "@codemirror/view";
+import { appendClasses } from "../util/Rendering";
 
 /**
  * Helper class to create markers in the gutter
@@ -38,6 +39,10 @@ export interface IGutterConfig<Info extends GutterInfo> {
      * Name of this Gutter
      */
     name: string;
+    /**
+     * HTML class names for the marker icons
+     */
+    markerClasses?: string;
     /**
      * Handler for when a Gutter element is clicked
      */
@@ -91,15 +96,44 @@ export abstract class Gutters<
      */
     protected abstract marker(info: Info): GutterMarker;
 
+    private applyClasses(marker: GutterMarker): GutterMarker {
+        const classes = { classNames: this.config.markerClasses };
+        appendClasses(classes, "_tw-px-1 papyros-gutter-marker");
+        marker.elementClass += classes.classNames;
+        return marker;
+    }
+
+    public hasMarker(view: EditorView, lineNr: number): boolean {
+        const guttersInfo: Map<number, GutterInfo> = view.state.field(this.state);
+        return guttersInfo.has(lineNr) && guttersInfo.get(lineNr)!.on;
+    }
+
     /**
      * Set a marker with the given info
      * @param {EditorView} view View in which the Gutters live
      * @param {Info} info Info used to render the marker
      */
     public setMarker(view: EditorView, info: Info): void {
-        view.dispatch({
-            effects: this.effect.of(info)
+        if (this.hasMarker(view, info.lineNr) !== info.on) {
+            view.dispatch({
+                effects: this.effect.of(info)
+            });
+        }
+    }
+
+    /**
+     * @param {EditorView} view The view in which the Gutters live
+     * @return {Set<number>} The 1-based line numbers with a breakpoint
+     */
+    public getMarkedLines(view: EditorView): Set<number> {
+        const markedLines: Set<number> = new Set();
+        const guttersInfo: Map<number, GutterInfo> = view.state.field(this.state);
+        guttersInfo.forEach((info: GutterInfo, lineNr: number) => {
+            if (info.on) {
+                markedLines.add(lineNr);
+            }
         });
+        return markedLines;
     }
 
     /**
@@ -126,7 +160,7 @@ export abstract class Gutters<
                     const guttersInfo: Map<number, Info> = view.state.field(this.state);
                     const lineNr = view.state.doc.lineAt(line.from).number;
                     if (guttersInfo.has(lineNr) && guttersInfo.get(lineNr)!.on) {
-                        return this.marker(guttersInfo.get(lineNr)!);
+                        return this.applyClasses(this.marker(guttersInfo.get(lineNr)!));
                     } else {
                         return null;
                     }
@@ -135,7 +169,7 @@ export abstract class Gutters<
                     return update.startState.field(this.state) !== update.state.field(this.state);
                 },
                 initialSpacer: () => {
-                    return this.marker({ lineNr: -1, on: true } as Info)!;
+                    return this.applyClasses(this.marker({ lineNr: -1, on: true } as Info)!);
                 },
                 domEventHandlers: handlers
             }),
@@ -170,21 +204,6 @@ export class BreakpointsGutter extends Gutters {
     protected override marker(): GutterMarker {
         return new SimpleMarker(() => document.createTextNode("🔴"));
     }
-
-    /**
-     * @param {EditorView} view The view in which the Gutters live
-     * @return {Set<number>} The 1-based line numbers with a breakpoint
-     */
-    public getBreakpoints(view: EditorView): Set<number> {
-        const breakpoints: Set<number> = new Set();
-        const guttersInfo: Map<number, GutterInfo> = view.state.field(this.state);
-        guttersInfo.forEach((info: GutterInfo, lineNr: number) => {
-            if (info.on) {
-                breakpoints.add(lineNr);
-            }
-        });
-        return breakpoints;
-    }
 }
 
 /**
@@ -209,7 +228,6 @@ export class UsedInputGutters extends Gutters<UsedInputGutterInfo> {
     protected override marker(info: UsedInputGutterInfo): GutterMarker {
         return new SimpleMarker(() => {
             const node = document.createElement("div");
-            node.classList.add("_tw-text-lime-400");
             node.replaceChildren(document.createTextNode("✔"));
             node.setAttribute("title", info.title);
             // Text interface tells us that more complex node will be processed into Text nodes

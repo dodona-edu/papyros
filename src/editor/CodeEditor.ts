@@ -17,7 +17,7 @@ import {
 } from "@codemirror/language";
 import { highlightSelectionMatches, searchKeymap } from "@codemirror/search";
 import { EditorState, Extension } from "@codemirror/state";
-import { oneDark } from "@codemirror/theme-one-dark";
+import { oneDarkHighlightStyle } from "@codemirror/theme-one-dark";
 import {
     EditorView, showPanel, lineNumbers, highlightActiveLineGutter,
     highlightSpecialChars, drawSelection,
@@ -25,6 +25,7 @@ import {
 } from "@codemirror/view";
 import { Diagnostic, linter, lintGutter, lintKeymap } from "@codemirror/lint";
 import { CodeMirrorEditor } from "./CodeMirrorEditor";
+import { darkTheme } from "./DarkTheme";
 
 /**
  * Component that provides useful features to users writing code
@@ -76,9 +77,9 @@ export class CodeEditor extends CodeMirrorEditor {
     public override setDarkMode(darkMode: boolean): void {
         let styleExtensions: Extension = [];
         if (darkMode) {
-            styleExtensions = oneDark;
+            styleExtensions = [darkTheme, syntaxHighlighting(oneDarkHighlightStyle)];
         } else {
-            styleExtensions = syntaxHighlighting(defaultHighlightStyle, { fallback: true });
+            styleExtensions = syntaxHighlighting(defaultHighlightStyle);
         }
         this.reconfigure([CodeMirrorEditor.STYLE, styleExtensions]);
     }
