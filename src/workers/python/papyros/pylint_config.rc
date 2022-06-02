@@ -42,5 +42,5 @@ const-rgx=[_A-Za-z0-9]{1,30}$
 # I0011 Warning locally suppressed using disable-msg
 # I0012 Warning locally suppressed using disable-msg
 # old version: disable=I0011,I0012,W0704,W0142,W0212,W0232,W0702,R0201,W0614,R0914,R0912,R0915,R0913,R0904,R0801,C0303,C0111,C0304,R0903,W0141,W0621,C0301,W0631,R0911,C1001
-disable=W0142,W0621,W0622,R0902,R0903,C0111,C0301,C0303,C0304,C0330,C0413,I0011,I0012
+disable=W0621,W0622,R0902,R0903,C0111,C0301,C0303,C0304,C0413,I0011
 evaluation=max(10.0 - ((float(5 * error + warning + refactor + convention) / statement) * 10), 0)
