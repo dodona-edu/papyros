@@ -34,7 +34,7 @@
   },
   "dependencies": {
     "@codemirror/autocomplete": "^0.20.0",
-    "@codemirror/commands": "^0.20.0",
+    "@codemirror/commands": "^6.0.0",
     "@codemirror/lang-javascript": "^0.20.0",
     "@codemirror/lang-python": "^0.20.0",
     "@codemirror/language": "^0.20.0",
