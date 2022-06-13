@@ -383,6 +383,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         let interrupted = false;
         let terminated = false;
         const backend = await this.backend;
+        this.runStartTime = new Date().getTime();
         try {
             await backend.call(
                 backend.workerProxy.runCode, code, mode
