@@ -134,9 +134,13 @@ plt.plot(x, np.sin(x))
 plt.show()
 `,
     "Sleep": `import time
-print("See you in a few seconds!")
-time.sleep(3)
-print("Good to see you again!")
+text = """What is the air-speed velocity of an unladen swallow?
+What do you mean? An African or European swallow?
+What? I, I don't know that.
+"""
+for character in text:
+    print(character, end="")
+    time.sleep(0.1)
 `,
     "Overflow": `from functools import lru_cache
 
@@ -146,5 +150,10 @@ def fibonacci(n):
 
 for index in range(5000):
     print(f'{index}: {fibonacci(index)}')
+`,
+    "Interrupt": `i = 0
+while i >= 0:
+    print(i)
+    i += 1
 `
 };
