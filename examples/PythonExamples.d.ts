@@ -10,4 +10,5 @@ export declare const PYTHON_EXAMPLES: {
     Matplotlib: string;
     Sleep: string;
     Overflow: string;
+    Interrupt: string;
 };
