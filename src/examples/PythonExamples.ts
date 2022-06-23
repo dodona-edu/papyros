@@ -125,11 +125,22 @@ with open("names.txt", "r") as in_file:
         print(line.rstrip())
 `,
     "Matplotlib":
-        `import numpy as np
-import matplotlib.pyplot as plt
+        `import matplotlib.pyplot as plt
+import networkx as nx
 
-x = np.linspace(0, 10, 1000)
-plt.plot(x, np.sin(x))
+plt.rcParams["font.size"] = 10
+plt.figure()
+plt.title('Random graph')
+
+plt.tick_params(
+    axis='both', left='off', top='off', right='off', 
+    bottom='off', labelleft='off', labeltop='off', 
+    labelright='off', labelbottom='off'
+)
+G = nx.random_geometric_graph(512, 0.125)
+pos=nx.spring_layout(G)
+nx.draw_networkx_edges(G, pos, alpha=0.2)
+nx.draw_networkx_nodes(G, pos, node_color='r', node_size=12)
 
 plt.show()
 `,
