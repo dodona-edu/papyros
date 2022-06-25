@@ -117,7 +117,7 @@ class JavaScriptWorker extends Backend<SyncExtras> {
         };
     }
 
-    public override runCode(extras: SyncExtras, code: string): Promise<any> {
+    public override async runCode(extras: SyncExtras, code: string): Promise<any> {
         this.extras = extras;
         this.queue.reset();
         // Builtins to store before execution and restore afterwards
@@ -137,22 +137,17 @@ class JavaScriptWorker extends Backend<SyncExtras> {
         new Function("ctx",
             Object.keys(newContext).map(k => `${k} = ctx['${k}'];`).join("\n")
         )(newContext);
+        let result = null;
         try { // run the user's code
             this.onEvent({
                 type: BackendEventType.Start,
                 contentType: "text/plain",
                 data: "RunCode"
             });
-            const result = Promise.resolve(eval(code));
-            this.onEvent({
-                type: BackendEventType.End,
-                contentType: "text/plain",
-                data: "CodeFinished"
-            });
-            return result;
+            result = await eval(code);
         } catch (error: any) { // try to create a friendly traceback
             Error.captureStackTrace(error);
-            return Promise.resolve(this.onEvent({
+            result = await this.onEvent({
                 type: BackendEventType.Error,
                 contentType: "application/json",
                 data: {
@@ -160,13 +155,19 @@ class JavaScriptWorker extends Backend<SyncExtras> {
                     what: error.message,
                     traceback: error.stack
                 }
-            }));
+            });
         } finally { // restore the old builtins
             new Function("ctx",
                 Object.keys(oldContent).map(k => `${k} = ctx['${k}'];`).join("\n")
             )(oldContent);
             this.queue.flush();
+            this.onEvent({
+                type: BackendEventType.End,
+                contentType: "text/plain",
+                data: "CodeFinished"
+            });
         }
+        return result;
     }
 
     public override async lintCode(): Promise<Array<WorkerDiagnostic>> {
