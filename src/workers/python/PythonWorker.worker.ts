@@ -82,7 +82,7 @@ class PythonWorker extends Backend<PyodideExtras> {
         this.installPromise = null;
     }
 
-    public runModes(code: string): Array<RunMode> {
+    public override runModes(code: string): Array<RunMode> {
         const modes = super.runModes(code);
         modes.push({
             mode: "doctest",
@@ -91,7 +91,8 @@ class PythonWorker extends Backend<PyodideExtras> {
         return modes;
     }
 
-    public async runCode(extras: PyodideExtras, code: string, mode = "exec"): Promise<any> {
+    public override async runCode(extras: PyodideExtras, code: string, mode = "exec"):
+        Promise<any> {
         this.extras = extras;
         if (extras.interruptBuffer) {
             this.pyodide.setInterruptBuffer(extras.interruptBuffer);
