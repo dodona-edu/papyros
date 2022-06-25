@@ -399,16 +399,15 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
                     data: JSON.stringify(error),
                     contentType: "text/json"
                 });
+                BackendManager.publish({
+                    type: BackendEventType.End,
+                    data: "RunError", contentType: "text/plain"
+                });
             }
         } finally {
             if (this.state === RunState.Stopping) {
                 // Was interrupted, End message already published
                 interrupted = true;
-            } else {
-                BackendManager.publish({
-                    type: BackendEventType.End,
-                    data: "RunError", contentType: "text/plain"
-                });
             }
             this.setState(RunState.Ready, t(
                 interrupted ? "Papyros.interrupted" : "Papyros.finished",
