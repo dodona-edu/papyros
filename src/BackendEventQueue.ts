@@ -169,9 +169,7 @@ export class BackendEventQueue {
      * @return {boolean} Whether too many output events were generated
      */
     public hasOverflow(): boolean {
-        return this.overflow.length > this.limit ||
-            this.overflow.map(BackendEventQueue.lines)
-                .reduce((acc, next) => acc + next, 0) > this.limit;
+        return this.overflown;
     }
 
     /**
