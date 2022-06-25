@@ -7,8 +7,7 @@ export namespace TRANSLATIONS {
     }
 }
 export namespace CODE_MIRROR_TRANSLATIONS {
-    const en_1: {};
-    export { en_1 as en };
+    export { ENGLISH_PHRASES as en };
     export { DUTCH_PHRASES as nl };
 }
 declare namespace ENGLISH_TRANSLATION {
@@ -40,8 +39,8 @@ declare namespace ENGLISH_TRANSLATION {
         const JavaScript: string;
     }
     export namespace locales {
-        const en_2: string;
-        export { en_2 as en };
+        const en_1: string;
+        export { en_1 as en };
         const nl_1: string;
         export { nl_1 as nl };
     }
@@ -120,8 +119,8 @@ declare namespace DUTCH_TRANSLATION {
     }
     export { programming_languages_1 as programming_languages };
     export namespace locales_1 {
-        const en_3: string;
-        export { en_3 as en };
+        const en_2: string;
+        export { en_2 as en };
         const nl_2: string;
         export { nl_2 as nl };
     }
@@ -161,6 +160,19 @@ declare namespace DUTCH_TRANSLATION {
     const used_input_with_prompt_1: string;
     export { used_input_with_prompt_1 as used_input_with_prompt };
 }
+declare const ENGLISH_PHRASES: {
+    "Go to line": string;
+    go: string;
+    Find: string;
+    Replace: string;
+    next: string;
+    previous: string;
+    all: string;
+    "match case": string;
+    replace: string;
+    "replace all": string;
+    close: string;
+};
 declare const DUTCH_PHRASES: {
     "Control character": string;
     "Folded lines": string;
