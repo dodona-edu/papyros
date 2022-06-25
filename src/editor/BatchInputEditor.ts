@@ -92,24 +92,7 @@ export class BatchInputEditor extends CodeMirrorEditor {
      * Data in the last line that is not terminated by a newline is omitted
      */
     public getLines(): Array<string> {
-        const lines = [];
-        // Always need to call next atleast once
-        // Use iter to have line-separating information
-        let lineIterator = this.editorView.state.doc.iter().next();
-        while (!lineIterator.done) {
-            lines.push(lineIterator.value);
-            lineIterator = lineIterator.next();
-        }
-        // Filter lines based on presence of line separators
-        let last = lines.length - 1;
-        while (last >= 0) {
-            const removed = lines.splice(last, 1)[0];
-            if (removed === "\n") { // Line followed by separator
-                last -= 2;
-            } else { // Last line without separator, omit it
-                last -= 1;
-            }
-        }
-        return lines;
+        const lines = this.editorView.state.doc.toString().split("\n");
+        return lines.slice(0, lines.length - 1);
     }
 }
