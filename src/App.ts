@@ -61,6 +61,7 @@ async function startPapyros(): Promise<void> {
         darkMode: darkMode
     });
     setUpEditor(papyros.codeRunner.editor, LOCAL_STORAGE_KEYS.code);
+    papyros.codeRunner.editor.focus();
     const handler = papyros.codeRunner.inputManager.getInputHandler(InputMode.Batch);
     if (handler instanceof BatchInputHandler) {
         setUpEditor((handler as BatchInputHandler).batchEditor, LOCAL_STORAGE_KEYS.input);

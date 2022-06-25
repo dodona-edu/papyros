@@ -5,6 +5,7 @@ import { StyleSpec } from "style-mod";
 import { darkTheme } from "./DarkTheme";
 import { CODE_MIRROR_TRANSLATIONS } from "../Translations";
 import I18n from "i18n-js";
+import { cursorDocEnd } from "@codemirror/commands";
 
 /**
  * Data structure containing common elements for styling
@@ -165,6 +166,7 @@ export abstract class CodeMirrorEditor extends Renderable {
      */
     public focus(): void {
         this.editorView.focus();
+        cursorDocEnd(this.editorView);
     }
 
     /**

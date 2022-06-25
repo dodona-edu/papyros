@@ -3,7 +3,7 @@ import { ProgrammingLanguage } from "../ProgrammingLanguage";
 import { t } from "../util/Util";
 import {
     CompletionSource, autocompletion,
-    closeBrackets, closeBracketsKeymap, completionKeymap
+    closeBrackets, closeBracketsKeymap, completionKeymap, startCompletion
 } from "@codemirror/autocomplete";
 import {
     defaultKeymap, historyKeymap, indentWithTab,
@@ -103,6 +103,7 @@ export class CodeEditor extends CodeMirrorEditor {
         this.reconfigure(
             [CodeEditor.AUTOCOMPLETION, autocompletion({ override: [completionSource] })]
         );
+        startCompletion(this.editorView);
     }
 
     /**

@@ -108,6 +108,22 @@ const DUTCH_TRANSLATION = {
     "used_input_with_prompt": "Deze regel werd gebruikt als invoer voor de volgende vraag: %{prompt}"
 };
 
+// Override some default English phrases to also use capitalized text
+const ENGLISH_PHRASES = {
+    // @codemirror/search
+    "Go to line": "Go to line",
+    "go": "OK",
+    "Find": "Find",
+    "Replace": "Replace",
+    "next": "Next",
+    "previous": "Previous",
+    "all": "All",
+    "match case": "match case",
+    "replace": "Replace",
+    "replace all": "Replace all",
+    "close": "Sluiten",
+}
+
 const DUTCH_PHRASES = {
     // @codemirror/view
     "Control character": "Controlekarakter",
@@ -130,7 +146,7 @@ const DUTCH_PHRASES = {
     "match case": "hoofdlettergevoelig",
     "replace": "Vervangen",
     "replace all": "Alles vervangen",
-    "close": "sluiten",
+    "close": "Sluiten",
     "current match": "huidige overeenkomst",
     "on line": "op regel",
     // @codemirror/lint
@@ -144,7 +160,7 @@ const TRANSLATIONS = {
 };
 
 const CODE_MIRROR_TRANSLATIONS = {
-    en: {},
+    en: ENGLISH_PHRASES,
     nl: DUTCH_PHRASES
 };
 // JS exports to allow use in TS and JS files

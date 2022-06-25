@@ -118,6 +118,10 @@ Ensure the default browser behavior of the `hidden` attribute.
 [hidden] {
   display: none !important;
 }
+/* CodeMirror search panel close button*/
+.cm-search > [name="close"] {
+  cursor: pointer;
+}
 
 .cm-content,
 .papyros-font-family {
