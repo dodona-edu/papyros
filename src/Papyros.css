@@ -111,12 +111,10 @@ Removes the default spacing and border for appropriate elements.
   /* 2 */
 }
 
-/*
-Ensure the default browser behavior of the `hidden` attribute.
-*/
-
+/* Ensure the default browser behavior of the `hidden` attribute. */
 [hidden] {
-  display: none !important;
+  /* Make it invisible while keeping page layout */
+  visibility: hidden !important; 
 }
 /* CodeMirror search panel close button*/
 .cm-search > [name="close"] {
