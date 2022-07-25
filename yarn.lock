@@ -395,9 +395,9 @@
     "@lezer/common" "^1.0.0"
 
 "@codemirror/lang-javascript@^6.0.0":
-  version "6.0.0"
-  resolved "https://registry.yarnpkg.com/@codemirror/lang-javascript/-/lang-javascript-6.0.0.tgz#ae23b623456d333ca175f7f9801824426a113aed"
-  integrity sha512-IQLfR+pgydwLxP3AQYOhjGfLWlAZz5SEH+M1tnUXVvp2+KZhn3iDTQX/7HZgoJ3w0oySKOxPjdq6jmkTCW6/sg==
+  version "6.0.2"
+  resolved "https://registry.yarnpkg.com/@codemirror/lang-javascript/-/lang-javascript-6.0.2.tgz#1468de7898c2fd477cfdd24207e62c7af822d234"
+  integrity sha512-BZRJ9u/zl16hLkSpDAWm73mrfIR7HJrr0lvnhoSOCQVea5BglguWI/slxexhvUb0CB5cXgKWuo2bM+N9EhIaZw==
   dependencies:
     "@codemirror/autocomplete" "^6.0.0"
     "@codemirror/language" "^6.0.0"
