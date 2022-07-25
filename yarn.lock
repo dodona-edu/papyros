@@ -416,9 +416,9 @@
     "@lezer/python" "^1.0.0"
 
 "@codemirror/language@^6.0.0", "@codemirror/language@^6.1.0":
-  version "6.1.0"
-  resolved "https://registry.yarnpkg.com/@codemirror/language/-/language-6.1.0.tgz#7686f0ecafd958c35332c3cc2aa3d564fd33dc44"
-  integrity sha512-CeqY80nvUFrJcXcBW115aNi06D0PS8NSW6nuJRSwbrYFkE0SfJnPfyLGrcM90AV95lqg5+4xUi99BCmzNaPGJg==
+  version "6.2.1"
+  resolved "https://registry.yarnpkg.com/@codemirror/language/-/language-6.2.1.tgz#cb10cd785a76e50ecd2fe2dc59ff66af8a41b87a"
+  integrity sha512-MC3svxuvIj0MRpFlGHxLS6vPyIdbTr2KKPEW46kCoCXw2ktb4NTkpkPBI/lSP/FoNXLCBJ0mrnUi1OoZxtpW1Q==
   dependencies:
     "@codemirror/state" "^6.0.0"
     "@codemirror/view" "^6.0.0"
