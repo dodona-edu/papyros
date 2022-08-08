@@ -1035,10 +1035,10 @@
     "@types/mime" "^1"
     "@types/node" "*"
 
-"@types/serviceworker@^0.0.47":
-  version "0.0.47"
-  resolved "https://registry.yarnpkg.com/@types/serviceworker/-/serviceworker-0.0.47.tgz#cb746abb9c77adc9d4bb595341cd3d67aaa9fdd2"
-  integrity sha512-0vfhBQPWdM3J+tkiPsKVpp5JcamlQmv3KUrj4iRjsO6ZpmCGYx3xZ8reb9bPniFrpRgptGMEOTN361XLwjehlw==
+"@types/serviceworker@^0.0.50":
+  version "0.0.50"
+  resolved "https://registry.yarnpkg.com/@types/serviceworker/-/serviceworker-0.0.50.tgz#de7ebf5dbd7ac30af373ab5f851f2123d43cb7eb"
+  integrity sha512-ECID8bzO7aChQrWk3BpJqH6/3Rrzcs7wlFR+AAqMhy0A0zTlVMlNgVniTYp8l72NZZtQ4DETzLen3mpAjypuoA==
 
 "@types/sockjs@^0.3.33":
   version "0.3.33"
