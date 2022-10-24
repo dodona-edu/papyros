@@ -408,9 +408,9 @@
     "@lezer/javascript" "^1.0.0"
 
 "@codemirror/lang-python@^6.0.0":
-  version "6.0.2"
-  resolved "https://registry.yarnpkg.com/@codemirror/lang-python/-/lang-python-6.0.2.tgz#244c15983eb70f4f12f6d2911fe2e095e7ccf543"
-  integrity sha512-5BidNrfhab3s9LYNSN7JWFjL1+1zGAIw0dxUyalNwsUN+uCVE62sTk3uJlMZux4SsyT6fR8LbOLtWu52XQL6Yw==
+  version "6.0.3"
+  resolved "https://registry.yarnpkg.com/@codemirror/lang-python/-/lang-python-6.0.3.tgz#bd0f244386ce6106e8ffc3a50f5a7b46a313cef2"
+  integrity sha512-slheQbeaqiCupODYtpZ10mbJwMlo0AHYozauWpfao5J9TDJlcPPccWJ3nH03hrhsbEAwYElLM0bhq5oMVjccEw==
   dependencies:
     "@codemirror/language" "^6.0.0"
     "@lezer/python" "^1.0.0"
