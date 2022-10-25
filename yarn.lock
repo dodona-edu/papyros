@@ -461,9 +461,9 @@
     "@lezer/highlight" "^1.0.0"
 
 "@codemirror/view@^6.0.0", "@codemirror/view@^6.0.2":
-  version "6.3.1"
-  resolved "https://registry.yarnpkg.com/@codemirror/view/-/view-6.3.1.tgz#c2f1d8ad569351eb9f8d57956536fc63cd61aaa9"
-  integrity sha512-NKPBphoV9W2Q6tKXk+ge4q5EhMOOC0rpwdGS80/slNSfsVqkN4gwXIEqSprXJFlf9aUKZU7WhPvqRBMNH+hJkQ==
+  version "6.4.0"
+  resolved "https://registry.yarnpkg.com/@codemirror/view/-/view-6.4.0.tgz#f8c213ab6dfec56048b372d2c378213428e2b4e5"
+  integrity sha512-Kv32b6Tn7QVwFbj/EDswTLSocjk5kgggF6zzBFAL4o4hZ/vmtFD155+EjH1pVlbfoDyVC2M6SedPsMrwYscgNg==
   dependencies:
     "@codemirror/state" "^6.0.0"
     style-mod "^4.0.0"
