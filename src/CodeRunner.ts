@@ -14,7 +14,7 @@ import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import { renderSpinningCircle } from "./util/HTMLShapes";
 import {
     addListener, getElement,
-    t, downloadResults, parseData
+    i18n, downloadResults, parseData
 } from "./util/Util";
 import {
     RenderOptions, renderWithOptions,
@@ -148,7 +148,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
                     if (mode.active) {
                         this.addButton({
                             id: id,
-                            buttonText: t(`Papyros.run_modes.${mode.mode}`),
+                            buttonText: i18n.t(`Papyros.run_modes.${mode.mode}`),
                             classNames: "_tw-text-white _tw-bg-neutral-bg"
                         }, () => this.runCode(this.editor.getText(), mode.mode));
                     } else {
@@ -260,7 +260,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      */
     public setState(state: RunState, message?: string): void {
         getElement(APPLICATION_STATE_TEXT_ID).innerText =
-            message || t(`Papyros.states.${state}`);
+            message || i18n.t(`Papyros.states.${state}`);
         if (state !== this.state) {
             this.previousState = this.state;
             this.state = state;
@@ -312,14 +312,14 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         if ([RunState.Ready, RunState.Loading].includes(this.state)) {
             buttonOptions = {
                 id: RUN_BTN_ID,
-                buttonText: t("Papyros.run"),
+                buttonText: i18n.t("Papyros.run"),
                 classNames: "_tw-text-white _tw-bg-blue-500"
             };
             buttonHandler = () => this.runCode(this.editor.getText());
         } else {
             buttonOptions = {
                 id: STOP_BTN_ID,
-                buttonText: t("Papyros.stop"),
+                buttonText: i18n.t("Papyros.stop"),
                 classNames: "_tw-text-white _tw-bg-red-500"
             };
             buttonHandler = () => this.stop();
@@ -409,7 +409,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
                 // Was interrupted, End message already published
                 interrupted = true;
             }
-            this.setState(RunState.Ready, t(
+            this.setState(RunState.Ready, i18n.t(
                 interrupted ? "Papyros.interrupted" : "Papyros.finished",
                 { time: (new Date().getTime() - this.runStartTime) / 1000 }));
             if (terminated) {
@@ -454,7 +454,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             this.loadingPackages = [];
         }
         if (this.loadingPackages.length > 0) {
-            const packageMessage = t("Papyros.loading", {
+            const packageMessage = i18n.t("Papyros.loading", {
                 // limit amount of package names shown
                 packages: this.loadingPackages.slice(0, 3).join(", ")
             });

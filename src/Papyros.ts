@@ -1,6 +1,5 @@
 /* eslint-disable max-len */
 import "./Papyros.css";
-import I18n from "i18n-js";
 import {
     EDITOR_WRAPPER_ID, PROGRAMMING_LANGUAGE_SELECT_ID,
     LOCALE_SELECT_ID, INPUT_AREA_WRAPPER_ID, EXAMPLE_SELECT_ID,
@@ -10,7 +9,7 @@ import {
 import { InputManagerRenderOptions, InputMode } from "./InputManager";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import {
-    t, loadTranslations, getLocales,
+    i18n, loadTranslations, getLocales,
     removeSelection,
     addListener, getElement, cleanCurrentUrl
 } from "./util/Util";
@@ -113,7 +112,7 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
         this.config = config;
         // Load translations as other components depend on them
         loadTranslations();
-        I18n.locale = config.locale;
+        i18n.locale = config.locale;
         this.codeRunner = new CodeRunner(config.programmingLanguage, config.inputMode);
     }
 
@@ -130,12 +129,12 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
      */
     public async launch(): Promise<Papyros> {
         if (!await this.configureInput()) {
-            alert(t("Papyros.service_worker_error"));
+            alert(i18n.t("Papyros.service_worker_error"));
         } else {
             try {
                 await this.codeRunner.start();
             } catch (error: any) {
-                if (confirm(t("Papyros.launch_error"))) {
+                if (confirm(i18n.t("Papyros.launch_error"))) {
                     return this.launch();
                 }
             }
@@ -158,7 +157,7 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
     public setLocale(locale: string): void {
         if (locale !== this.config.locale) {
             this.config.locale = locale;
-            I18n.locale = locale;
+            i18n.locale = locale;
             this.render();
         }
     }
@@ -237,18 +236,18 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
             } = this.config;
             const programmingLanguageSelect =
                 renderSelect(PROGRAMMING_LANGUAGE_SELECT_ID, new Array(...LANGUAGE_MAP.values()),
-                    l => t(`Papyros.programming_languages.${l}`), programmingLanguage, t("Papyros.programming_language"));
+                    l => i18n.t(`Papyros.programming_languages.${l}`), programmingLanguage, i18n.t("Papyros.programming_language"));
             const exampleSelect =
                 renderSelect(EXAMPLE_SELECT_ID, getExampleNames(programmingLanguage),
-                    name => name, this.config.example, t("Papyros.examples"));
+                    name => name, this.config.example, i18n.t("Papyros.examples"));
             const locales = [locale, ...getLocales().filter(l => l != locale)];
             const toggleIconClasses = renderOptions.darkMode ? "mdi-toggle-switch _tw-text-[#FF8F00]" : "mdi-toggle-switch-off _tw-text-white";
             const navOptions = `
             <div class="_tw-flex _tw-flex-row-reverse dark:_tw-text-white _tw-items-center">
                 <!-- row-reverse to start at the right, so put elements in order of display -->
                 <i id=${DARK_MODE_TOGGLE_ID} class="mdi ${toggleIconClasses} hover:_tw-cursor-pointer _tw-text-4xl"></i>
-                <p class="_tw-text-white">${t("Papyros.dark_mode")}</p>
-                ${renderSelect(LOCALE_SELECT_ID, locales, l => t(`Papyros.locales.${l}`), locale)}
+                <p class="_tw-text-white">${i18n.t("Papyros.dark_mode")}</p>
+                ${renderSelect(LOCALE_SELECT_ID, locales, l => i18n.t(`Papyros.locales.${l}`), locale)}
                 <i class="mdi mdi-web _tw-text-4xl _tw-text-white"></i>
             </div>
             `;
@@ -256,7 +255,7 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
             <div class="_tw-bg-blue-500 _tw-text-white _tw-text-lg _tw-p-4 _tw-grid _tw-grid-cols-8
             _tw-items-center _tw-max-h-1/5 dark:_tw-bg-dark-mode-blue">
                 <div class="_tw-col-span-6 _tw-text-4xl _tw-font-medium">
-                    ${t("Papyros.Papyros")}
+                    ${i18n.t("Papyros.Papyros")}
                 </div>
                 <div class="_tw-col-span-2 _tw-text-black">
                     ${navOptions}
@@ -279,15 +278,15 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
             <div class="_tw-grid _tw-grid-cols-2 _tw-gap-4 _tw-box-border _tw-max-h-full">
                 <!-- Code section-->
                 <div>
-                    ${renderLabel(t("Papyros.code"), renderOptions.codeEditorOptions!.parentElementId)}
+                    ${renderLabel(i18n.t("Papyros.code"), renderOptions.codeEditorOptions!.parentElementId)}
                     <div id="${renderOptions.codeEditorOptions!.parentElementId}"></div>
                     <div id="${renderOptions.statusPanelOptions!.parentElementId}"></div>
                 </div>
                 <!-- User input and output section-->
                 <div>
-                    ${renderLabel(t("Papyros.output"), renderOptions.outputOptions!.parentElementId)}
+                    ${renderLabel(i18n.t("Papyros.output"), renderOptions.outputOptions!.parentElementId)}
                     <div id="${renderOptions.outputOptions!.parentElementId}"></div>
-                    ${renderLabel(t("Papyros.input"), renderOptions.inputOptions!.parentElementId)}
+                    ${renderLabel(i18n.t("Papyros.input"), renderOptions.inputOptions!.parentElementId)}
                     <div id="${renderOptions.inputOptions!.parentElementId}"></div>
                 </div>
             </div>
@@ -302,7 +301,7 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
                     removeSelection(EXAMPLE_SELECT_ID);
                     this.config.example = undefined;
                     // Modify search query params without reloading page
-                    history.pushState(null, "", `?locale=${I18n.locale}&language=${pl}`);
+                    history.pushState(null, "", `?locale=${i18n.locale}&language=${pl}`);
                 }, "change", "value"
             );
             addListener(LOCALE_SELECT_ID, locale => {
