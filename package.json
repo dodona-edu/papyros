@@ -48,6 +48,7 @@
     "comsync": "^0.0.8",
     "escape-html": "^1.0.3",
     "i18n-js": "^4.1.1",
+    "node-polyglot": "^2.4.2",
     "pyodide-worker-runner": "^0.0.10",
     "sync-message": "^0.0.10"
   },
