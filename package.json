@@ -47,11 +47,7 @@
     "comlink": "^4.3.1",
     "comsync": "^0.0.8",
     "escape-html": "^1.0.3",
-<<<<<<< HEAD
-    "i18n-js": "^4.1.1",
-=======
     "node-polyglot": "^2.4.2",
->>>>>>> ba0071fe77f37aadeb7b33da5d400773794167ed
     "pyodide-worker-runner": "^0.0.10",
     "sync-message": "^0.0.10"
   },
