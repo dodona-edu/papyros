@@ -4,7 +4,7 @@ import { Renderable, RenderOptions, renderWithOptions } from "../util/Rendering"
 import { StyleSpec } from "style-mod";
 import { darkTheme } from "./DarkTheme";
 import { CODE_MIRROR_TRANSLATIONS } from "../Translations";
-import I18n from "i18n-js";
+import { i18n } from "../util/Util";
 import { cursorDocEnd } from "@codemirror/commands";
 
 /**
@@ -219,7 +219,7 @@ export abstract class CodeMirrorEditor extends Renderable {
         this.setDarkMode(options.darkMode || false);
         this.reconfigure([
             CodeMirrorEditor.LANGUAGE,
-            EditorState.phrases.of(CODE_MIRROR_TRANSLATIONS[I18n.locale])
+            EditorState.phrases.of(CODE_MIRROR_TRANSLATIONS[i18n.locale()])
         ]);
         const wrappingDiv = document.createElement("div");
         wrappingDiv.classList.add(...this.styling.classes);

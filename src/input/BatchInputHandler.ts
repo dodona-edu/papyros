@@ -1,6 +1,6 @@
 import { InputManagerRenderOptions, InputMode } from "../InputManager";
 import { UserInputHandler } from "./UserInputHandler";
-import { t } from "../util/Util";
+import { i18n } from "../util/Util";
 import { BatchInputEditor } from "../editor/BatchInputEditor";
 
 export class BatchInputHandler extends UserInputHandler {
@@ -88,11 +88,11 @@ export class BatchInputHandler extends UserInputHandler {
         this.batchEditor.highlight({
             running,
             getInfo: (lineNr: number) => {
-                let message = t("Papyros.used_input");
+                let message = i18n.t("Papyros.used_input");
                 const index = lineNr - 1;
                 const shouldShow = whichLines(index);
                 if (index < this.prompts.length && this.prompts[index]) {
-                    message = t("Papyros.used_input_with_prompt",
+                    message = i18n.t("Papyros.used_input_with_prompt",
                         { prompt: this.prompts[index] });
                 }
                 return { lineNr, on: shouldShow, title: message };
