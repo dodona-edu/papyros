@@ -1,6 +1,6 @@
 import { INPUT_TA_ID, SEND_INPUT_BTN_ID } from "../Constants";
 import { InputMode } from "../InputManager";
-import { addListener, getElement, i18n } from "../util/Util";
+import { addListener, getElement, t } from "../util/Util";
 import { UserInputHandler } from "./UserInputHandler";
 import {
     renderButton,
@@ -52,7 +52,7 @@ export class InteractiveInputHandler extends UserInputHandler {
             this.inputArea.setAttribute("title", "");
         } else {
             this.inputArea.setAttribute("placeholder", "");
-            this.inputArea.setAttribute("title", i18n.t("Papyros.input_disabled"));
+            this.inputArea.setAttribute("title", t("Papyros.input_disabled"));
         }
     }
 
@@ -77,7 +77,7 @@ export class InteractiveInputHandler extends UserInputHandler {
             id: SEND_INPUT_BTN_ID,
             // eslint-disable-next-line max-len
             classNames: "_tw-text-black _tw-bg-white _tw-border-2 dark:_tw-text-white dark:_tw-bg-dark-mode-bg",
-            buttonText: i18n.t("Papyros.enter")
+            buttonText: t("Papyros.enter")
         });
         renderWithOptions(options, `
 <div class="_tw-flex _tw-flex-row _tw-my-1">

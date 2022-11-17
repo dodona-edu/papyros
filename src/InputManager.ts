@@ -1,4 +1,4 @@
-import { i18n } from "./util/Util";
+import { t } from "i18n-js";
 import {
     SWITCH_INPUT_MODE_A_ID,
     USER_INPUT_WRAPPER_ID
@@ -89,7 +89,7 @@ export class InputManager extends Renderable<InputManagerRenderOptions> {
             InputMode.Batch : InputMode.Interactive;
         switchMode = `<a id="${SWITCH_INPUT_MODE_A_ID}" data-value="${otherMode}"
         class="_tw-flex _tw-flex-row-reverse hover:_tw-cursor-pointer _tw-text-blue-500">
-            ${i18n.t(`Papyros.switch_input_mode_to.${otherMode}`)}
+            ${t(`Papyros.switch_input_mode_to.${otherMode}`)}
         </a>`;
 
         renderWithOptions(options, `

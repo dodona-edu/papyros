@@ -1,6 +1,6 @@
 /* eslint-disable valid-jsdoc */
 import { ProgrammingLanguage } from "../ProgrammingLanguage";
-import { i18n } from "../util/Util";
+import { t } from "../util/Util";
 import {
     CompletionSource, autocompletion,
     closeBrackets, closeBracketsKeymap, completionKeymap, startCompletion
@@ -92,7 +92,7 @@ export class CodeEditor extends CodeMirrorEditor {
         this.reconfigure(
             [CodeEditor.PROGRAMMING_LANGUAGE, CodeEditor.getLanguageSupport(language)]
         );
-        this.setPlaceholder(i18n.t("Papyros.code_placeholder",
+        this.setPlaceholder(t("Papyros.code_placeholder",
             { programmingLanguage: language }));
     }
 

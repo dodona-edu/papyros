@@ -1,10 +1,9 @@
+import I18n from "i18n-js";
 import { TRANSLATIONS } from "../Translations";
 import { LogType, papyrosLog } from "./Logging";
-import { I18n } from "i18n-js";
 
 // Shorthand for ease of use
-export const i18n = new I18n();
-//export const t = I18n.t;
+export const t = I18n.t;
 
 /**
  * Add the translations for Papyros to the I18n instance
@@ -12,8 +11,8 @@ export const i18n = new I18n();
 export function loadTranslations(): void {
     for (const [language, translations] of Object.entries(TRANSLATIONS)) {
         // Add keys to already existing translations if they exist
-        i18n.translations[language] = Object.assign(
-            (i18n.translations[language] || {}),
+        I18n.translations[language] = Object.assign(
+            (I18n.translations[language] || {}),
             translations
         );
     }

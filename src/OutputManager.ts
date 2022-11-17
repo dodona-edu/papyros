@@ -4,7 +4,7 @@ import { BackendManager } from "./BackendManager";
 import { renderInCircle } from "./util/HTMLShapes";
 import {
     getElement, parseData,
-    i18n
+    t
 } from "./util/Util";
 import { LogType, papyrosLog } from "./util/Logging";
 import {
@@ -138,9 +138,9 @@ export class OutputManager extends Renderable {
         if (document.getElementById(OUTPUT_OVERFLOW_ID) == null) {
             this.renderNextElement(`
 <div id=${OUTPUT_OVERFLOW_ID}><span class="_tw-text-red-500
- _tw-text-bold">${i18n.t("Papyros.output_overflow")}</span>
+ _tw-text-bold">${t("Papyros.output_overflow")}</span>
 <a class="hover:_tw-cursor-pointer _tw-text-blue-500"
- hidden>${i18n.t("Papyros.output_overflow_download")}</a>
+ hidden>${t("Papyros.output_overflow_download")}</a>
 </div>`, false);
         }
         const overflowDiv = getElement(OUTPUT_OVERFLOW_ID);
@@ -192,7 +192,7 @@ export class OutputManager extends Renderable {
     <div id=${OUTPUT_AREA_ID} class="_tw-border-2 _tw-w-full _tw-min-h-1/4
      _tw-max-h-3/5 _tw-overflow-auto papyros-font-family
     _tw-py-1 _tw-px-2 _tw-whitespace-pre _tw-rounded-lg dark:_tw-border-dark-mode-content
-    with-placeholder" data-placeholder="${i18n.t("Papyros.output_placeholder")}"></div>
+    with-placeholder" data-placeholder="${t("Papyros.output_placeholder")}"></div>
     `);
         // Restore previously rendered items
         this.content.forEach(html => this.renderNextElement(html, false));
@@ -213,7 +213,7 @@ export class OutputManager extends Renderable {
 
     private onRunEnd(): void {
         if (this.outputArea.childElementCount === 0) {
-            this.outputArea.setAttribute("data-placeholder", i18n.t("Papyros.no_output"));
+            this.outputArea.setAttribute("data-placeholder", t("Papyros.no_output"));
         }
     }
 }

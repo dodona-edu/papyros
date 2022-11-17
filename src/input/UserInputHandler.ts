@@ -1,5 +1,5 @@
 import { InputManagerRenderOptions, InputMode } from "../InputManager";
-import { i18n } from "../util/Util";
+import { t } from "../util/Util";
 import { Renderable } from "../util/Rendering";
 
 /**
@@ -75,7 +75,7 @@ export abstract class UserInputHandler extends Renderable<InputManagerRenderOpti
      */
     public waitWithPrompt(waiting: boolean, prompt = ""): void {
         this.waiting = waiting;
-        this.setPlaceholder(prompt || i18n.t(`Papyros.input_placeholder.${this.getInputMode()}`));
+        this.setPlaceholder(prompt || t(`Papyros.input_placeholder.${this.getInputMode()}`));
         if (this.waiting) {
             // Focusing is a rendering operation
             // Subclasses can execute code after this operation, skipping the rendering
