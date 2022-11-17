@@ -20,14 +20,17 @@ export class I18n extends Polyglot {
     }
 
     t(key: string, options?: Record<string, unknown>): string {
-        console.log(this);
         if (Array.isArray(this.phrases[key])) {
             return this.phrases[key];
         }
         return super.t(key, options);
     }
 
-    locale(locale?: string): string {
+    get locale(): string {
+        return super.locale();
+    }
+
+    set locale(locale: string) {
         if (locale == "en" || locale == "nl") {
             let translation = {};
             for (const [language, translations] of Object.entries(TRANSLATIONS)) {
@@ -39,7 +42,6 @@ export class I18n extends Polyglot {
             }
             super.replace(translation[locale]);
         }
-        return super.locale(locale);
     }
 
     formatNumber(number: number, options?: Record<string, unknown>): string {

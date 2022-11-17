@@ -112,7 +112,7 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
         super();
         this.config = config;
         // Load translations as other components depend on them
-        i18n.locale(config.locale)
+        i18n.locale = config.locale;
         this.codeRunner = new CodeRunner(config.programmingLanguage, config.inputMode);
     }
 
@@ -157,7 +157,7 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
     public setLocale(locale: string): void {
         if (locale !== this.config.locale) {
             this.config.locale = locale;
-            i18n.locale(locale);
+            i18n.locale = locale;
             this.render();
         }
     }
@@ -301,7 +301,7 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
                     removeSelection(EXAMPLE_SELECT_ID);
                     this.config.example = undefined;
                     // Modify search query params without reloading page
-                    history.pushState(null, "", `?locale=${i18n.locale()}&language=${pl}`);
+                    history.pushState(null, "", `?locale=${i18n.locale}&language=${pl}`);
                 }, "change", "value"
             );
             addListener(LOCALE_SELECT_ID, locale => {
