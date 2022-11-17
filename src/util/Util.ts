@@ -4,6 +4,7 @@ import { I18n } from "i18n-js";
 
 // Shorthand for ease of use
 export const i18n = new I18n();
+//export const t = I18n.t;
 
 /**
  * Add the translations for Papyros to the I18n instance
