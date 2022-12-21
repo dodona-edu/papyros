@@ -22,6 +22,8 @@ import {
     RenderOptions, renderWithOptions, renderSelect, renderSelectOptions,
     ButtonOptions, Renderable, renderLabel, appendClasses
 } from "./util/Rendering";
+import { TraceGenerator } from "pyodide-trace-library";
+import {ExecutionVisualizer} from './pytutor';
 
 const LANGUAGE_MAP = new Map([
     ["python", ProgrammingLanguage.Python],
@@ -104,6 +106,8 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
      */
     public readonly codeRunner: CodeRunner;
 
+    private traceGenerator: TraceGenerator;
+
     /**
      * Construct a new Papyros instance
      * @param {PapyrosConfig} config Properties to configure this instance
@@ -114,6 +118,7 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
         // Load translations as other components depend on them
         loadTranslations();
         I18n.locale = config.locale;
+        this.traceGenerator = new TraceGenerator();
         this.codeRunner = new CodeRunner(config.programmingLanguage, config.inputMode);
     }
 
@@ -276,7 +281,7 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
         <div class="_tw-m-10">
             ${header}
             <!--Body of the application-->
-            <div class="_tw-grid _tw-grid-cols-2 _tw-gap-4 _tw-box-border _tw-max-h-full">
+            <div class="_tw-grid _tw-grid-cols-3 _tw-gap-4 _tw-box-border _tw-max-h-full">
                 <!-- Code section-->
                 <div>
                     ${renderLabel(t("Papyros.code"), renderOptions.codeEditorOptions!.parentElementId)}
@@ -290,7 +295,11 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
                     ${renderLabel(t("Papyros.input"), renderOptions.inputOptions!.parentElementId)}
                     <div id="${renderOptions.inputOptions!.parentElementId}"></div>
                 </div>
-            </div>
+                <div>
+                    <div>Python Tutor:</div>
+                    <div id="demoViz"/>
+                </div>
+            </div>       
         </div>
     </div>
     `);
@@ -322,6 +331,16 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
                 this.setDarkMode(!renderOptions.darkMode);
             }, "click");
         }
+        this.addButton({
+            id: "1",
+            buttonText: "Visualise",
+            classNames: "_tw-text-white _tw-bg-neutral-bg"
+        }, () => this.traceGenerator.generateTrace(this.getCode()).then(res => {
+            new ExecutionVisualizer("demoViz", JSON.parse(res), { embeddedMode: true,
+                lang: "py3",
+                startingInstruction: 0,
+            });
+        }));
         this.codeRunner.render({
             statusPanelOptions: renderOptions.statusPanelOptions!,
             inputOptions: renderOptions.inputOptions!,

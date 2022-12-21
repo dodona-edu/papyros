@@ -1,4 +1,5 @@
 const path = require("path");
+const webpack = require('webpack');
 const TerserPlugin = require('terser-webpack-plugin');
 
 const PUBLIC_DIR = "public";
@@ -53,6 +54,16 @@ module.exports = function (webpackEnv, argv) {
 				}
 			]
 		},
+		plugins: [
+			new webpack.ProvidePlugin({
+				// Automtically detect jQuery and $ as free var in modules
+				// and inject the jquery library
+				// This is required by many jquery plugins
+				jquery: "jquery",
+				jQuery: "jquery",
+				$: "jquery"
+			  }),
+		],
 		resolve: {
 			extensions: [".ts", ".js"],
 		},
