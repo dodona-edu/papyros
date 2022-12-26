@@ -446,9 +446,9 @@
     crelt "^1.0.5"
 
 "@codemirror/state@^6.0.0", "@codemirror/state@^6.0.1":
-  version "6.1.3"
-  resolved "https://registry.yarnpkg.com/@codemirror/state/-/state-6.1.3.tgz#39bf545c589f51b6978716d188d34f7d7c483350"
-  integrity sha512-0Rn7vadZ6EgHaKdIOwyhBWLdPDh1JM5USYqXjxwrvpmTKWu4wQ77twgAYEg1MU282XcrnV4ZqFf+00bu6UPCyg==
+  version "6.2.0"
+  resolved "https://registry.yarnpkg.com/@codemirror/state/-/state-6.2.0.tgz#a0fb08403ced8c2a68d1d0acee926bd20be922f2"
+  integrity sha512-69QXtcrsc3RYtOtd+GsvczJ319udtBf1PTrr2KbLWM/e2CXUPnh0Nz9AUo8WfhSQ7GeL8dPVNUmhQVgpmuaNGA==
 
 "@codemirror/theme-one-dark@^6.0.0":
   version "6.1.0"
