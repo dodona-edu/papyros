@@ -105,9 +105,6 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
      * Component to run code entered by the user
      */
     public readonly codeRunner: CodeRunner;
-
-    private traceGenerator: TraceGenerator;
-
     /**
      * Construct a new Papyros instance
      * @param {PapyrosConfig} config Properties to configure this instance
@@ -118,7 +115,6 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
         // Load translations as other components depend on them
         loadTranslations();
         I18n.locale = config.locale;
-        this.traceGenerator = new TraceGenerator();
         this.codeRunner = new CodeRunner(config.programmingLanguage, config.inputMode);
     }
 
@@ -331,16 +327,6 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
                 this.setDarkMode(!renderOptions.darkMode);
             }, "click");
         }
-        this.addButton({
-            id: "1",
-            buttonText: "Visualise",
-            classNames: "_tw-text-white _tw-bg-neutral-bg"
-        }, () => this.traceGenerator.generateTrace(this.getCode()).then(res => {
-            new ExecutionVisualizer("demoViz", JSON.parse(res), { embeddedMode: true,
-                lang: "py3",
-                startingInstruction: 0,
-            });
-        }));
         this.codeRunner.render({
             statusPanelOptions: renderOptions.statusPanelOptions!,
             inputOptions: renderOptions.inputOptions!,

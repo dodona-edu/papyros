@@ -21,6 +21,8 @@ import {
     renderButton, ButtonOptions, Renderable, appendClasses
 } from "./util/Rendering";
 import { OutputManager } from "./OutputManager";
+import { TraceGenerator } from "pyodide-trace-library";
+import { ExecutionVisualizer } from "./pytutor";
 
 interface DynamicButton {
     id: string;
@@ -119,6 +121,10 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     private runStartTime: number;
 
     /**
+     * Handles the trace generation that will be visualized
+     */
+    private traceGenerator: TraceGenerator;
+    /**
      * Construct a new RunStateManager with the given listeners
      * @param {ProgrammingLanguage} programmingLanguage The language to use
      * @param {InputMode} inputMode The input mode to use
@@ -159,6 +165,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             },
             delay: DEFAULT_EDITOR_DELAY
         });
+        this.traceGenerator = new TraceGenerator();
 
         BackendManager.subscribe(BackendEventType.Input,
             () => this.setState(RunState.AwaitingInput));
@@ -208,8 +215,20 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
                 });
             return resolve(backend);
         });
+        await this.traceGenerator.setup();
         this.editor.focus();
         this.setState(RunState.Ready);
+    }
+
+    private visualizeCode(): void {
+        const code: string = this.editor.getText();
+        this.traceGenerator.generateTrace(code, true).then((trace: string) => {
+            new ExecutionVisualizer("demoViz", JSON.parse(trace), {
+                embeddedMode: true,
+                lang: "py3",
+                startingInstruction: 0,
+            });
+        });
     }
 
     /**
@@ -339,7 +358,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             classNames: "_tw-text-white _tw-bg-neutral-bg"
         };
         const buttonHandler: () => void = (() => {
-            console.log("Hello world");
+            this.visualizeCode();
         });
         appendClasses(buttonOptions, "_tw-min-w-[60px]");
         return {
