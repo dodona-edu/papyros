@@ -17,6 +17,7 @@ const ENGLISH_TRANSLATION = {
     "output_placeholder": "The output of your code will appear here.",
     "run": "Run",
     "stop": "Stop",
+    "visualize": "Visualize",
     "finished": "Code executed in %{time} s",
     "interrupted": "Code interrupted after %{time} s",
     "states": {
@@ -70,6 +71,7 @@ const DUTCH_TRANSLATION = {
     "output_placeholder": "Hier komt de uitvoer van je code.",
     "run": "Run",
     "stop": "Stop",
+    "visualize": "Visualiseer",
     "states": {
         "running": "Aan het uitvoeren",
         "stopping": "Aan het stoppen",

@@ -23,6 +23,7 @@ export const APPLICATION_STATE_TEXT_ID = addPapyrosPrefix("application-state-tex
 export const CODE_BUTTONS_WRAPPER_ID = addPapyrosPrefix("code-buttons");
 export const RUN_BTN_ID = addPapyrosPrefix("run-code-btn");
 export const STOP_BTN_ID = addPapyrosPrefix("stop-btn");
+export const VISUALIZE_BTN_ID = addPapyrosPrefix("visualize-code-btn");
 export const SEND_INPUT_BTN_ID = addPapyrosPrefix("send-input-btn");
 export const SWITCH_INPUT_MODE_A_ID = addPapyrosPrefix("switch-input-mode");
 export const EXAMPLE_SELECT_ID = addPapyrosPrefix("example-select");

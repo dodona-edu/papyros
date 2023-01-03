@@ -7,7 +7,7 @@ import { CodeEditor } from "./editor/CodeEditor";
 import {
     addPapyrosPrefix,
     APPLICATION_STATE_TEXT_ID, CODE_BUTTONS_WRAPPER_ID, DEFAULT_EDITOR_DELAY, RUN_BTN_ID,
-    STATE_SPINNER_ID, STOP_BTN_ID
+    STATE_SPINNER_ID, STOP_BTN_ID, VISUALIZE_BTN_ID
 } from "./Constants";
 import { InputManager, InputManagerRenderOptions, InputMode } from "./InputManager";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
@@ -332,11 +332,32 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         };
     }
 
+    private getVisualizeCodeButton(): DynamicButton {
+        const buttonOptions: ButtonOptions = {
+            id: VISUALIZE_BTN_ID,
+            buttonText: t("Papyros.visualize"),
+            classNames: "_tw-text-white _tw-bg-neutral-bg"
+        };
+        const buttonHandler: () => void = (() => {
+            console.log("Hello world");
+        });
+        appendClasses(buttonOptions, "_tw-min-w-[60px]");
+        return {
+            id: buttonOptions.id,
+            buttonHTML: renderButton(buttonOptions),
+            onClick: buttonHandler
+        };
+    }
+
     /**
      * Specific helper method to render only the buttons required by the user
      */
     private renderButtons(): void {
-        const buttons = [this.getCodeActionButton(), ...this.buttons];
+        const buttons = [
+            this.getCodeActionButton(),
+            this.getVisualizeCodeButton(),
+            ...this.buttons
+        ];
         getElement(CODE_BUTTONS_WRAPPER_ID).innerHTML =
             buttons.map(b => b.buttonHTML).join("\n");
         // Buttons are freshly added to the DOM, so attach listeners now
