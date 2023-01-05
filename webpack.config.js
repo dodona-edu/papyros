@@ -50,7 +50,17 @@ module.exports = function (webpackEnv, argv) {
 						"css-loader",
 						"postcss-loader"
 					],
-				}
+				},
+				{
+					test: /\.js$/,
+					enforce: "pre",
+					use: ["source-map-loader"],
+				},
+				{
+					test: /\.mjs$/,
+					enforce: "pre",
+					use: ["source-map-loader"],
+				},
 			]
 		},
 		resolve: {
