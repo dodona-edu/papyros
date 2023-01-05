@@ -104,7 +104,8 @@ class PythonWorker extends Backend<PyodideExtras> {
         });
     }
 
-    public override async generateTrace(code: string, mode?: string): Promise<string> {
+    public override async generateTrace(code: string, mode: string): Promise<string> {
+        console.log("Generating trace code");
         return "Not implemented";
     }
 

@@ -359,7 +359,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             classNames: "_tw-text-white _tw-bg-neutral-bg"
         };
         const buttonHandler: () => void = (() => {
-            this.visualizeCode();
+            this.generateTrace(this.editor.getText());
         });
         appendClasses(buttonOptions, "_tw-min-w-[60px]");
         return {
@@ -443,6 +443,68 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
                 BackendManager.publish({
                     type: BackendEventType.End,
                     data: "RunError", contentType: "text/plain"
+                });
+            }
+        } finally {
+            if (this.state === RunState.Stopping) {
+                // Was interrupted, End message already published
+                interrupted = true;
+            }
+            this.setState(RunState.Ready, t(
+                interrupted ? "Papyros.interrupted" : "Papyros.finished",
+                { time: (new Date().getTime() - this.runStartTime) / 1000 }));
+            if (terminated) {
+                await this.start();
+            } else if (await backend.workerProxy.hasOverflow()) {
+                this.outputManager.onOverflow(async () => {
+                    const backend = await this.backend;
+                    const overflowResults = (await backend.workerProxy.getOverflow())
+                        .map(e => e.data).join("");
+                    downloadResults(
+                        overflowResults,
+                        "overflow-results.txt"
+                    );
+                });
+            }
+        }
+    }
+
+    /**
+     * @param {string} code The code to generate the trace for
+     * @param {string} mode The mode to run the trace generation for
+     * @return {Promise<string>} Promise of the resulting trace code
+     */
+    public async generateTrace(code: string, mode?: string): Promise<void> {
+        // Setup pre-run
+        this.setState(RunState.Loading);
+        // Ensure we go back to Loading after finishing any remaining installs
+        this.previousState = RunState.Loading;
+        BackendManager.publish({
+            type: BackendEventType.Start, // Temporarily keep this
+            data: "VisualizeClicked", contentType: "text/plain"
+        });
+        let interrupted = false;
+        let terminated = false;
+        const backend = await this.backend;
+        this.runStartTime = new Date().getTime();
+        try {
+            await backend.call(
+                backend.workerProxy.generateTrace, code, mode
+            );
+        } catch (error: any) {
+            if (error.type === "InterruptError") {
+                // Error signaling forceful interrupt
+                interrupted = true;
+                terminated = true;
+            } else {
+                BackendManager.publish({
+                    type: BackendEventType.Error,
+                    data: JSON.stringify(error),
+                    contentType: "text/json"
+                });
+                BackendManager.publish({
+                    type: BackendEventType.End,
+                    data: "VisualizeError", contentType: "text/plain"
                 });
             }
         } finally {
