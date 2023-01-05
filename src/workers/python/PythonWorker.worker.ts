@@ -40,6 +40,7 @@ class PythonWorker extends Backend<PyodideExtras> {
     }
 
     private static async getPyodide(): Promise<PyodideInterface> {
+        console.log("Loading Pyodide");
         return await loadPyodideAndPackage({ url: pythonPackageUrl, format: ".tgz" });
     }
 
@@ -49,6 +50,7 @@ class PythonWorker extends Backend<PyodideExtras> {
     ): Promise<void> {
         await super.launch(onEvent, onOverflow);
         this.pyodide = await PythonWorker.getPyodide();
+        console.log("Loaded Pyodide");
         // Python calls our function with a PyProxy dict or a Js Map,
         // These must be converted to a PapyrosEvent (JS Object) to allow message passing
         this.papyros = this.pyodide.pyimport("papyros").Papyros.callKwargs(
