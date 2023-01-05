@@ -221,17 +221,6 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         this.setState(RunState.Ready);
     }
 
-    private visualizeCode(): void {
-        const code: string = this.editor.getText();
-        this.traceGenerator.generateTrace(code, true).then((trace: string) => {
-            new ExecutionVisualizer("demoViz", JSON.parse(trace), {
-                embeddedMode: true,
-                lang: "py3",
-                startingInstruction: 0,
-            });
-        });
-    }
-
     /**
      * Interrupt the currently running code
      * @return {Promise<void>} Promise of stopping
@@ -479,6 +468,16 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         }
     }
 
+    private visualizeCode(code: string, mode?: string): void {
+        this.traceGenerator.generateTrace(code, true).then((trace: string) => {
+            new ExecutionVisualizer("demoViz", JSON.parse(trace), {
+                embeddedMode: true,
+                lang: "py3",
+                startingInstruction: 0,
+            });
+        });
+    }
+
     /**
      * @param {string} code The code to generate the trace for
      * @param {string} mode The mode to run the trace generation for
@@ -498,9 +497,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         const backend = await this.backend;
         this.runStartTime = new Date().getTime();
         try {
-            await backend.call(
-                backend.workerProxy.generateTrace, code, mode
-            );
+            this.visualizeCode(code, mode);
         } catch (error: any) {
             if (error.type === "InterruptError") {
                 // Error signaling forceful interrupt
