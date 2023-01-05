@@ -7,7 +7,7 @@ import { CodeEditor } from "./editor/CodeEditor";
 import {
     addPapyrosPrefix,
     APPLICATION_STATE_TEXT_ID, CODE_BUTTONS_WRAPPER_ID, DEFAULT_EDITOR_DELAY, RUN_BTN_ID,
-    STATE_SPINNER_ID, STOP_BTN_ID, VISUALIZE_BTN_ID
+    STATE_SPINNER_ID, STOP_BTN_ID, STOP_VISUALIZE_BTN_ID, VISUALIZE_BTN_ID
 } from "./Constants";
 import { InputManager, InputManagerRenderOptions, InputMode } from "./InputManager";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
@@ -353,14 +353,24 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     }
 
     private getVisualizeCodeButton(): DynamicButton {
-        const buttonOptions: ButtonOptions = {
-            id: VISUALIZE_BTN_ID,
-            buttonText: t("Papyros.visualize"),
-            classNames: "_tw-text-white _tw-bg-neutral-bg"
-        };
-        const buttonHandler: () => void = (() => {
-            this.generateTrace(this.editor.getText());
-        });
+        let buttonOptions: ButtonOptions;
+        let buttonHandler: () => void;
+
+        if ([RunState.Ready, RunState.Loading].includes(this.state)) {
+            buttonOptions = {
+                id: VISUALIZE_BTN_ID,
+                buttonText: t("Papyros.visualize"),
+                classNames: "_tw-text-white _tw-bg-blue-500"
+            };
+            buttonHandler = () =>this.generateTrace(this.editor.getText());
+        } else {
+            buttonOptions = {
+                id: STOP_VISUALIZE_BTN_ID,
+                buttonText: t("Papyros.stop"),
+                classNames: "_tw-text-white _tw-bg-red-500"
+            };
+            buttonHandler = () => this.stop();
+        }
         appendClasses(buttonOptions, "_tw-min-w-[60px]");
         return {
             id: buttonOptions.id,
@@ -480,7 +490,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         // Ensure we go back to Loading after finishing any remaining installs
         this.previousState = RunState.Loading;
         BackendManager.publish({
-            type: BackendEventType.Start, // Temporarily keep this
+            type: BackendEventType.StartVisualization, // Temporarily keep this
             data: "VisualizeClicked", contentType: "text/plain"
         });
         let interrupted = false;
@@ -503,7 +513,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
                     contentType: "text/json"
                 });
                 BackendManager.publish({
-                    type: BackendEventType.End,
+                    type: BackendEventType.EndVisualization,
                     data: "VisualizeError", contentType: "text/plain"
                 });
             }

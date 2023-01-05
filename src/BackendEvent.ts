@@ -4,6 +4,8 @@
 export enum BackendEventType {
     Start = "start",
     End = "end",
+    StartVisualization = "startVisualization",
+    EndVisualization = "endVisualization",
     Input = "input",
     Output = "output",
     Sleep = "sleep",
@@ -16,6 +18,7 @@ export enum BackendEventType {
  */
 export const BACKEND_EVENT_TYPES = [
     BackendEventType.Start, BackendEventType.End,
+    BackendEventType.StartVisualization, BackendEventType.EndVisualization,
     BackendEventType.Input, BackendEventType.Output,
     BackendEventType.Sleep, BackendEventType.Error,
     BackendEventType.Interrupt, BackendEventType.Loading
