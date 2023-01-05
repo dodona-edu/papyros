@@ -2,8 +2,9 @@ import * as Comlink from "comlink";
 import { Backend, RunMode, WorkerAutocompleteContext, WorkerDiagnostic } from "../../Backend";
 import { CompletionResult } from "@codemirror/autocomplete";
 import { BackendEvent } from "../../BackendEvent";
+import { PyodideInterface } from "pyodide";
 import {
-    pyodideExpose, Pyodide,
+    pyodideExpose,
     loadPyodideAndPackage,
     PyodideExtras
 } from "pyodide-worker-runner";
@@ -15,7 +16,7 @@ const pythonPackageUrl = require("!!url-loader!./python_package.tar.gz.load_by_u
  * Powered by Pyodide (https://pyodide.org/)
  */
 class PythonWorker extends Backend<PyodideExtras> {
-    private pyodide: Pyodide;
+    private pyodide: PyodideInterface;
     private papyros: any;
     /**
      * Promise to asynchronously install imports needed by the code
@@ -23,7 +24,7 @@ class PythonWorker extends Backend<PyodideExtras> {
     private installPromise: Promise<void> | null;
     constructor() {
         super();
-        this.pyodide = {} as Pyodide;
+        this.pyodide = {} as PyodideInterface;
         this.installPromise = null;
     }
 
@@ -38,7 +39,8 @@ class PythonWorker extends Backend<PyodideExtras> {
         return pyodideExpose;
     }
 
-    private static async getPyodide(): Promise<Pyodide> {
+    private static async getPyodide(): Promise<PyodideInterface> {
+        console.log("Loading Pyodide");
         return await loadPyodideAndPackage({ url: pythonPackageUrl, format: ".tgz" });
     }
 
@@ -48,6 +50,7 @@ class PythonWorker extends Backend<PyodideExtras> {
     ): Promise<void> {
         await super.launch(onEvent, onOverflow);
         this.pyodide = await PythonWorker.getPyodide();
+        console.log("Loaded Pyodide");
         // Python calls our function with a PyProxy dict or a Js Map,
         // These must be converted to a PapyrosEvent (JS Object) to allow message passing
         this.papyros = this.pyodide.pyimport("papyros").Papyros.callKwargs(

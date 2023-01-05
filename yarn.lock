@@ -1351,7 +1351,7 @@
   resolved "https://registry.yarnpkg.com/@xtuc/long/-/long-4.2.2.tgz#d291c6a4e97989b5c61d9acf396ae4fe133a718d"
   integrity sha512-NuHqBY1PB/D8xU6s/thBgOAiAP7HOYDQ32+BFZILJ8ivkUkAHQnWfn6WhL79Owj1qmUnoN/YPhktdIoucipkAQ==
 
-abab@^2.0.3, abab@^2.0.5:
+abab@^2.0.3, abab@^2.0.5, abab@^2.0.6:
   version "2.0.6"
   resolved "https://registry.yarnpkg.com/abab/-/abab-2.0.6.tgz#41b80f2c871d19686216b82309231cfd3cb3d291"
   integrity sha512-j2afSsaIENvHZN2B8GOpF566vZ5WVk5opAiMTvWgaQT8DkbOqsTfvNAvHoRGU2zzP8cPoqys+xHTRDWW8L+/BA==
@@ -2925,7 +2925,7 @@ iconv-lite@0.4.24:
   dependencies:
     safer-buffer ">= 2.1.2 < 3"
 
-iconv-lite@^0.6.2:
+iconv-lite@^0.6.2, iconv-lite@^0.6.3:
   version "0.6.3"
   resolved "https://registry.yarnpkg.com/iconv-lite/-/iconv-lite-0.6.3.tgz#a52f80bf38da1952eb5c681790719871a1a72501"
   integrity sha512-4fCk79wshMdzMp2rH06qWrJE4iolqLhCUH+OiuIgU++RB0+94NlDL81atO7GX55uUKueo0txHNtvEyI6D7WdMw==
@@ -4323,39 +4323,32 @@ punycode@^2.1.0, punycode@^2.1.1:
   resolved "https://registry.yarnpkg.com/punycode/-/punycode-2.1.1.tgz#b58b010ac40c22c5657616c8d2c2c02c7bf479ec"
   integrity sha512-XRsRjdf+j5ml+y/6GKHPZbrF/8p2Yga0JPtdqTIY2Xe5ohJPD9saDJJLPvp9+NSBprVvevdXZybnj2cv8OEd0A==
 
-pyodide-trace-library@^1.4.0:
-  version "1.4.0"
-  resolved "https://registry.yarnpkg.com/pyodide-trace-library/-/pyodide-trace-library-1.4.0.tgz#05b76bdecd0003c41eb35ca328700692711a4760"
-  integrity sha512-ojgLSAq7Vl3azhpDq0SxLMVeXJfKBAnHDsV2kWRL7hX51Cp9CKX/yjs11M8l12KLQjqwBk95cnuo0f0NLqETYw==
+pyodide-trace-library@^1.4.2:
+  version "1.4.2"
+  resolved "https://registry.yarnpkg.com/pyodide-trace-library/-/pyodide-trace-library-1.4.2.tgz#c587a8c96209faa1d5d1a3dcdcead954c38544d7"
+  integrity sha512-8n8S5QYTan53SziSoIK4reOEcmem6Y+Uj1GW69DovzeO5iYO69jPr/Oe/fBPwn4fgsbKPfeAhkXyLSXFI9N3Xg==
   dependencies:
     "@types/node" "^18.11.15"
     comlink "^4.3.1"
     comsync "^0.0.8"
     file-loader "^6.2.0"
     fs "^0.0.1-security"
-    pyodide "^0.21.3"
-    pyodide-worker-runner "^1.3.0"
+    pyodide "^0.22.0"
+    pyodide-worker-runner "^1.3.1"
     sync-message "^0.0.10"
     typescript "^4.9.4"
 
-pyodide-worker-runner@^0.0.10:
-  version "0.0.10"
-  resolved "https://registry.yarnpkg.com/pyodide-worker-runner/-/pyodide-worker-runner-0.0.10.tgz#0cb2c6f730022b40dd4b43b1385931f88fee49a2"
-  integrity sha512-/7XFoDALhF64qKYfdrK4uVLlEMkwK1rFuy5EfL876q9+g736KZbSw5Uw5K7gChotTYM36/lmhhiMYMXMWdpLow==
+pyodide-worker-runner@^1.3.1:
+  version "1.3.1"
+  resolved "https://registry.yarnpkg.com/pyodide-worker-runner/-/pyodide-worker-runner-1.3.1.tgz#f0e7f0e825c5e5163952f2f66160648ccdb65fd3"
+  integrity sha512-tXxj9X4PK7n05g2utDrge75mwQ3ds9nEFAR5mnLXvZCTn8F5f9ZItPVSkwPCtXf+ReKJJodpX1r1xkB/fXcWjg==
   dependencies:
     p-retry "^5.0.0"
 
-pyodide-worker-runner@^1.3.0:
-  version "1.3.0"
-  resolved "https://registry.yarnpkg.com/pyodide-worker-runner/-/pyodide-worker-runner-1.3.0.tgz#109994d444ceaf9b72674ada841deebd11707322"
-  integrity sha512-+YRPuB/159BBxzC6+2KRjVC04imRiiicDxRl9iuwgzyob2dyozlIX5gMdJ2+RP1uQRmtj8KV5gNQuUzzbQwaTg==
-  dependencies:
-    p-retry "^5.0.0"
-
-pyodide@^0.21.3:
-  version "0.21.3"
-  resolved "https://registry.yarnpkg.com/pyodide/-/pyodide-0.21.3.tgz#0be64868231fa59a5372a1191d157a9e8d83e9d7"
-  integrity sha512-5fu5P8ys8V8tKTsK9lag0HattbZQuFRdnNzv1LLOLCieM9A96OPs2cF29lPpcD9N+8GuUtfrGCWEMKiupTHUlA==
+pyodide@^0.22.0:
+  version "0.22.0"
+  resolved "https://registry.yarnpkg.com/pyodide/-/pyodide-0.22.0.tgz#44c264e26d5c054e676b051cc5a15a1d14e259c6"
+  integrity sha512-H5BV2m3dDXisZSxKZpPXDudsoAcRRo7Zq9ca4nlj5WjzSC2SY0+Q3fiZDMosgiz7W1BQz5FJUv3EDTmmscJRvA==
   dependencies:
     base-64 "^1.0.0"
     node-fetch "^2.6.1"
@@ -4708,6 +4701,15 @@ source-map-js@^1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/source-map-js/-/source-map-js-1.0.2.tgz#adbc361d9c62df380125e7f161f71c826f1e490c"
   integrity sha512-R0XvVJ9WusLiqTCEiGCmICCMplcCkIwwR11mOSD9CR5u+IXYdiseeEuXCVAjS54zqwkLcPNnmU4OeJ6tUrWhDw==
+
+source-map-loader@^4.0.1:
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/source-map-loader/-/source-map-loader-4.0.1.tgz#72f00d05f5d1f90f80974eda781cbd7107c125f2"
+  integrity sha512-oqXpzDIByKONVY8g1NUPOTQhe0UTU5bWUl32GSkqK2LjJj0HmwTMVKxcUip0RgAYhY1mqgOxjbQM48a0mmeNfA==
+  dependencies:
+    abab "^2.0.6"
+    iconv-lite "^0.6.3"
+    source-map-js "^1.0.2"
 
 source-map-support@^0.5.16, source-map-support@^0.5.6, source-map-support@~0.5.20:
   version "0.5.21"
