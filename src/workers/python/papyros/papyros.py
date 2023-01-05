@@ -10,7 +10,7 @@ from friendly_traceback.core import FriendlyTraceback
 from collections.abc import Awaitable
 from contextlib import contextmanager, redirect_stdout, redirect_stderr
 from pyodide_worker_runner import install_imports
-from pyodide import JsException, create_proxy
+from pyodide.ffi import JsException, create_proxy
 
 from .util import to_py
 from .autocomplete import autocomplete
