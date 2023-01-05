@@ -135,5 +135,6 @@ export abstract class BackendManager {
         BackendManager.halted = false;
         BackendManager.subscribe(BackendEventType.End, () => BackendManager.halt());
         BackendManager.subscribe(BackendEventType.Interrupt, () => BackendManager.halt());
+        BackendManager.subscribe(BackendEventType.Input, () => console.log("Input!"));
     }
 }

@@ -147,6 +147,13 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
     public abstract runCode(extras: Extras, code: string, mode?: string): Promise<void>;
 
     /**
+     * @param code the code to debug
+     * @param mode the mode to debug the code in
+     * @return {Promise><tring>} Promise of the code trace
+     */
+    public abstract generateTrace(code: string, mode?: string): Promise<string>;
+
+    /**
      * Converts the context to a cloneable object containing useful properties
      * to generate autocompletion suggestions with
      * Class instances are not passable to workers, so we extract the useful information

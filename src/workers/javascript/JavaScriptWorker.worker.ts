@@ -170,6 +170,10 @@ class JavaScriptWorker extends Backend<SyncExtras> {
         return result;
     }
 
+    public override async generateTrace(code: string, mode?: string): Promise<string> {
+        return "Not supported";
+    }
+
     public override async lintCode(): Promise<Array<WorkerDiagnostic>> {
         return Promise.resolve([]);
     }

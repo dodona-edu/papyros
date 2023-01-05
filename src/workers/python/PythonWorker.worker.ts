@@ -104,6 +104,10 @@ class PythonWorker extends Backend<PyodideExtras> {
         });
     }
 
+    public override async generateTrace(code: string, mode?: string): Promise<string> {
+        return "Not implemented";
+    }
+
     public override async autocomplete(context: WorkerAutocompleteContext):
         Promise<CompletionResult | null> {
         await this.installImports(context.text);

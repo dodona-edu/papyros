@@ -277,21 +277,22 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
         <div class="_tw-m-10">
             ${header}
             <!--Body of the application-->
-            <div class="_tw-grid _tw-grid-cols-3 _tw-gap-4 _tw-box-border _tw-max-h-full">
+            <div class="_tw-flex _tw-gap-4 _tw-box-border _tw-max-h-full">
                 <!-- Code section-->
-                <div>
+                <div class="_tw-w-2/6">
                     ${renderLabel(t("Papyros.code"), renderOptions.codeEditorOptions!.parentElementId)}
                     <div id="${renderOptions.codeEditorOptions!.parentElementId}"></div>
                     <div id="${renderOptions.statusPanelOptions!.parentElementId}"></div>
                 </div>
                 <!-- User input and output section-->
-                <div>
+                <div class="_tw-w-1/6">
                     ${renderLabel(t("Papyros.output"), renderOptions.outputOptions!.parentElementId)}
                     <div id="${renderOptions.outputOptions!.parentElementId}"></div>
                     ${renderLabel(t("Papyros.input"), renderOptions.inputOptions!.parentElementId)}
                     <div id="${renderOptions.inputOptions!.parentElementId}"></div>
                 </div>
-                <div>
+                <!-- Python Tutor visualization section-->
+                <div class="_tw-w-3/6">
                     <div>Python Tutor:</div>
                     <div id="demoViz"/>
                 </div>

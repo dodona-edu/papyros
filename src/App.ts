@@ -54,6 +54,7 @@ async function startPapyros(): Promise<void> {
             papyros.setDarkMode(e.matches);
         });
     }
+    darkMode = false;
     papyros.render({
         standAloneOptions: {
             parentElementId: "root"

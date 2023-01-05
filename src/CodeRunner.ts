@@ -140,6 +140,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         this.inputManager = new InputManager(async (input: string) => {
             const backend = await this.backend;
             backend.writeMessage(input);
+            console.log(input);
             this.setState(RunState.Running);
         }, inputMode);
         this.outputManager = new OutputManager();
