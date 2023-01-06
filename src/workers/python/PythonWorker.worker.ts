@@ -8,6 +8,7 @@ import {
     loadPyodideAndPackage,
     PyodideExtras
 } from "pyodide-worker-runner";
+import { PythonTraceGeneratorWorker } from "pyodide-trace-library";
 /* eslint-disable-next-line */
 const pythonPackageUrl = require("!!url-loader!./python_package.tar.gz.load_by_url").default;
 
@@ -18,6 +19,7 @@ const pythonPackageUrl = require("!!url-loader!./python_package.tar.gz.load_by_u
 class PythonWorker extends Backend<PyodideExtras> {
     private pyodide: PyodideInterface;
     private papyros: any;
+    private traceWorker: PythonTraceGeneratorWorker;
     /**
      * Promise to asynchronously install imports needed by the code
      */
@@ -26,6 +28,7 @@ class PythonWorker extends Backend<PyodideExtras> {
         super();
         this.pyodide = {} as PyodideInterface;
         this.installPromise = null;
+        this.traceWorker = {} as PythonTraceGeneratorWorker;
     }
 
     private static convert(data: any): any {
@@ -65,8 +68,13 @@ class PythonWorker extends Backend<PyodideExtras> {
                 }
             }
         );
+        this.traceWorker = new PythonTraceGeneratorWorker(this.pyodide,
+            this.pyodide.pyimport("python-tutor.code_example"));
+
         // preload micropip to allow installing packages
         await (this.pyodide as any).loadPackage("micropip");
+
+        console.log("Here");
     }
 
     /**
@@ -101,13 +109,15 @@ class PythonWorker extends Backend<PyodideExtras> {
             this.pyodide.setInterruptBuffer(extras.interruptBuffer);
         }
         await this.installImports(code);
+        const res = await this.traceWorker.generateTraceCode(extras, code);
+        console.log(res);
         return await this.papyros.run_async.callKwargs({
             source_code: code,
             mode: mode
         });
     }
 
-    public override async generateTrace(code: string, mode: string): Promise<string> {
+    public override async generateTraceCode(code: string, mode: string): Promise<string> {
         console.log("Generating trace code");
         return "Not implemented";
     }

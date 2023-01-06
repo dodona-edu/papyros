@@ -20,13 +20,14 @@ def tarfile_filter(tar_info):
 def create_package(package_name, dependencies, extra_deps):
     shutil.rmtree(package_name, ignore_errors=True)
     install_dependencies(dependencies.split(" "), package_name)
-    try:
-        dest_dir = os.path.join(package_name, extra_deps)
-        shutil.rmtree(dest_dir, ignore_errors=True)
-        shutil.copytree(extra_deps, dest_dir)
-    except Exception as e:
-        # Always seems to result in a harmless permission denied error
-        pass
+    for dep in extra_deps:
+        try:
+            dest_dir = os.path.join(package_name, dep)
+            shutil.rmtree(dest_dir, ignore_errors=True)
+            shutil.copytree(dep, dest_dir)
+        except Exception as e:
+            # Always seems to result in a harmless permission denied error
+            pass
     tar_name = f"{package_name}.tar.gz.load_by_url"
     if os.path.exists(tar_name):
         os.remove(tar_name)
@@ -45,5 +46,5 @@ def check_tar(tarname, out_dir="."):
 
 
 if __name__ == "__main__":
-    create_package("python_package", "python-runner friendly_traceback jedi pylint", extra_deps="papyros")
+    create_package("python_package", "python-runner friendly_traceback jedi pylint", extra_deps=["papyros", "python-tutor"])
     #check_tar("python_package.tar.gz.load_by_url", out_dir="test")

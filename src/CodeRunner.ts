@@ -216,7 +216,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
                 });
             return resolve(backend);
         });
-        await this.traceGenerator.setup();
+        // await this.traceGenerator.setup();
         this.editor.focus();
         this.setState(RunState.Ready);
     }
