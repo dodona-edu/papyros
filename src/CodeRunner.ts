@@ -175,6 +175,8 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             e => this.onLoad(e));
         BackendManager.subscribe(BackendEventType.Start,
             e => this.onStart(e));
+        BackendManager.subscribe(BackendEventType.EndVisualization,
+            e => this.visualizeCode(e));
         this.previousState = RunState.Ready;
         this.runStartTime = new Date().getTime();
         this.state = RunState.Ready;
@@ -475,7 +477,6 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      */
     public async generateTrace(code: string, mode?: string): Promise<void> {
         // Setup pre-run
-        console.log("Running");
         this.setState(RunState.Loading);
         // Ensure we go back to Loading after finishing any remaining installs
         this.previousState = RunState.Loading;
@@ -531,6 +532,11 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
                 });
             }
         }
+    }
+
+    private visualizeCode(e: BackendEvent): void {
+        const visualizer = new ExecutionVisualizer("demoViz", e.data, {
+        });
     }
 
     /**

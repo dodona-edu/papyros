@@ -132,10 +132,6 @@ body {
     text-decoration: none;
   }
   
-  tt {
-    /*font-size: 85%;*/
-  }
-  
   div#embedPane {
     margin-right: 5px;
     border: 5px solid #5a7973;

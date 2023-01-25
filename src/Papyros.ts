@@ -22,8 +22,6 @@ import {
     RenderOptions, renderWithOptions, renderSelect, renderSelectOptions,
     ButtonOptions, Renderable, renderLabel, appendClasses
 } from "./util/Rendering";
-import { TraceGenerator } from "pyodide-trace-library";
-import {ExecutionVisualizer} from './pytutor';
 
 const LANGUAGE_MAP = new Map([
     ["python", ProgrammingLanguage.Python],
@@ -292,9 +290,9 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
                     <div id="${renderOptions.inputOptions!.parentElementId}"></div>
                 </div>
                 <!-- Python Tutor visualization section-->
-                <div class="_tw-w-3/6">
+                <div class="_tw-w-3/6 _tw-px-10">
                     <div>Python Tutor:</div>
-                    <div id="demoViz"/>
+                    <div id="demoViz" class="_tw-px-10 _tw-pt-6" style="overflow: auto;"/>
                 </div>
             </div>       
         </div>
