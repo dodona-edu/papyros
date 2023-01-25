@@ -170,7 +170,8 @@ class JavaScriptWorker extends Backend<SyncExtras> {
         return result;
     }
 
-    public override async generateTraceCode(code: string, mode?: string): Promise<string> {
+    public override async generateTraceCode(extras: SyncExtras, code: string, mode?: string):
+    Promise<string> {
         return "Not supported";
     }
 

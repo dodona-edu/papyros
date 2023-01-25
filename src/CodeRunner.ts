@@ -485,6 +485,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      */
     public async generateTrace(code: string, mode?: string): Promise<void> {
         // Setup pre-run
+        console.log("Running");
         this.setState(RunState.Loading);
         // Ensure we go back to Loading after finishing any remaining installs
         this.previousState = RunState.Loading;
@@ -497,7 +498,10 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         const backend = await this.backend;
         this.runStartTime = new Date().getTime();
         try {
-            this.visualizeCode(code, mode);
+            await backend.call(
+                backend.workerProxy.generateTraceCode, code, mode
+            );
+            // this.visualizeCode(code, mode);
         } catch (error: any) {
             if (error.type === "InterruptError") {
                 // Error signaling forceful interrupt

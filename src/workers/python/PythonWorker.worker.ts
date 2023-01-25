@@ -73,8 +73,6 @@ class PythonWorker extends Backend<PyodideExtras> {
 
         // preload micropip to allow installing packages
         await (this.pyodide as any).loadPackage("micropip");
-
-        console.log("Here");
     }
 
     /**
@@ -109,6 +107,8 @@ class PythonWorker extends Backend<PyodideExtras> {
             this.pyodide.setInterruptBuffer(extras.interruptBuffer);
         }
         await this.installImports(code);
+        console.log(extras, code);
+
         const res = await this.traceWorker.generateTraceCode(extras, code);
         console.log(res);
         return await this.papyros.run_async.callKwargs({
@@ -117,8 +117,24 @@ class PythonWorker extends Backend<PyodideExtras> {
         });
     }
 
-    public override async generateTraceCode(code: string, mode: string): Promise<string> {
-        console.log("Generating trace code");
+    public override async generateTraceCode(
+        extras: PyodideExtras,
+        code: string,
+        mode = "exec"):
+    Promise<string> {
+        this.extras = extras;
+        if (extras.interruptBuffer) {
+            this.pyodide.setInterruptBuffer(extras.interruptBuffer);
+        }
+        await this.installImports(code);
+
+        console.log("Generating trace code in " + mode);
+
+        console.log(extras, code);
+
+        const res = await this.traceWorker.generateTraceCode(extras, code);
+        console.log(res);
+
         return "Not implemented";
     }
 
