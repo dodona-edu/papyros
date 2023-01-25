@@ -152,7 +152,7 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
      * @param mode the mode to debug the code in
      * @return {Promise><tring>} Promise of the code trace
      */
-    public abstract generateTraceCode(extras: Extras, code: string, mode?: string): Promise<string>;
+    public abstract generateTraceCode(extras: Extras, code: string, mode?: string): Promise<void>;
 
     /**
      * Converts the context to a cloneable object containing useful properties

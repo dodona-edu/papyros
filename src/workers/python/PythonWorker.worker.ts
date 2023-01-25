@@ -1,7 +1,7 @@
 import * as Comlink from "comlink";
 import { Backend, RunMode, WorkerAutocompleteContext, WorkerDiagnostic } from "../../Backend";
 import { CompletionResult } from "@codemirror/autocomplete";
-import { BackendEvent } from "../../BackendEvent";
+import { BackendEvent, BackendEventType } from "../../BackendEvent";
 import { PyodideInterface } from "pyodide";
 import {
     pyodideExpose,
@@ -107,10 +107,7 @@ class PythonWorker extends Backend<PyodideExtras> {
             this.pyodide.setInterruptBuffer(extras.interruptBuffer);
         }
         await this.installImports(code);
-        console.log(extras, code);
 
-        const res = await this.traceWorker.generateTraceCode(extras, code);
-        console.log(res);
         return await this.papyros.run_async.callKwargs({
             source_code: code,
             mode: mode
@@ -121,21 +118,19 @@ class PythonWorker extends Backend<PyodideExtras> {
         extras: PyodideExtras,
         code: string,
         mode = "exec"):
-    Promise<string> {
+    Promise<any> {
         this.extras = extras;
         if (extras.interruptBuffer) {
             this.pyodide.setInterruptBuffer(extras.interruptBuffer);
         }
         await this.installImports(code);
 
-        console.log("Generating trace code in " + mode);
-
-        console.log(extras, code);
-
-        const res = await this.traceWorker.generateTraceCode(extras, code);
-        console.log(res);
-
-        return "Not implemented";
+        await this.traceWorker.generateTraceCode(extras, code).then((trace => {
+            this.onEvent({
+                type: BackendEventType.EndVisualization,
+                data: JSON.parse(trace),
+            });
+        }));
     }
 
     public override async autocomplete(context: WorkerAutocompleteContext):

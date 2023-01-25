@@ -468,16 +468,6 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         }
     }
 
-    private visualizeCode(code: string, mode?: string): void {
-        this.traceGenerator.generateTrace(code, true).then((trace: string) => {
-            new ExecutionVisualizer("demoViz", JSON.parse(trace), {
-                embeddedMode: true,
-                lang: "py3",
-                startingInstruction: 0,
-            });
-        });
-    }
-
     /**
      * @param {string} code The code to generate the trace for
      * @param {string} mode The mode to run the trace generation for
@@ -523,6 +513,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
                 // Was interrupted, End message already published
                 interrupted = true;
             }
+            console.log("Done");
             this.setState(RunState.Ready, t(
                 interrupted ? "Papyros.interrupted" : "Papyros.finished",
                 { time: (new Date().getTime() - this.runStartTime) / 1000 }));
