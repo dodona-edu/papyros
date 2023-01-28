@@ -176,7 +176,7 @@ div.ExecutionVisualizer textarea#vizDescriptionEditor {
 
   overflow: auto; /* to look pretty on IE */
   /* make sure textarea doesn't grow and stretch */
-  resize: none;
+  resize: none !important;
 }
 
 

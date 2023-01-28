@@ -5,7 +5,7 @@ import {
     EDITOR_WRAPPER_ID, PROGRAMMING_LANGUAGE_SELECT_ID,
     LOCALE_SELECT_ID, INPUT_AREA_WRAPPER_ID, EXAMPLE_SELECT_ID,
     PANEL_WRAPPER_ID, DARK_MODE_TOGGLE_ID,
-    MAIN_APP_ID, OUTPUT_AREA_WRAPPER_ID
+    MAIN_APP_ID, OUTPUT_AREA_WRAPPER_ID, DEBUG_AREA_ID
 } from "./Constants";
 import { InputManagerRenderOptions, InputMode } from "./InputManager";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
@@ -85,6 +85,10 @@ export interface PapyrosRenderOptions {
      * RenderOptions for the output field
      */
     outputOptions?: RenderOptions;
+    /**
+     * RenderOptions for the visualization field
+     */
+    debugOptions?: RenderOptions;
     /**
      * Whether to render in dark mode
      */
@@ -221,7 +225,7 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
         for (const [option, defaultParentId] of [
             ["inputOptions", INPUT_AREA_WRAPPER_ID], ["statusPanelOptions", PANEL_WRAPPER_ID],
             ["codeEditorOptions", EDITOR_WRAPPER_ID], ["outputOptions", OUTPUT_AREA_WRAPPER_ID],
-            ["standAloneOptions", MAIN_APP_ID]
+            ["standAloneOptions", MAIN_APP_ID], ["debugOptions", DEBUG_AREA_ID]
         ]) {
             const elementOptions: RenderOptions = (renderOptions as any)[option] || {};
             elementOptions.darkMode = renderOptions.darkMode;
@@ -291,8 +295,9 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
                 </div>
                 <!-- Python Tutor visualization section-->
                 <div class="_tw-w-3/6 _tw-px-10">
-                    <div>Python Tutor:</div>
-                    <div id="demoViz" class="_tw-px-10 _tw-pt-6" style="overflow: auto;"/>
+                    ${renderLabel(t("Papyros.visualization"), renderOptions.debugOptions!.parentElementId)}
+                    <div id="${renderOptions.debugOptions!.parentElementId}"></div>
+                    <div id="demoViz" class="_tw-px-10 _tw-pt-6 _tw-h-full" style="overflow: auto;"/>
                 </div>
             </div>       
         </div>
@@ -330,7 +335,8 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
             statusPanelOptions: renderOptions.statusPanelOptions!,
             inputOptions: renderOptions.inputOptions!,
             codeEditorOptions: renderOptions.codeEditorOptions!,
-            outputOptions: renderOptions.outputOptions!
+            outputOptions: renderOptions.outputOptions!,
+            debugOptions: renderOptions.debugOptions!
         });
     }
 
