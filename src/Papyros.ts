@@ -297,7 +297,6 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
                 <div class="_tw-w-3/6 _tw-px-10">
                     ${renderLabel(t("Papyros.visualization"), renderOptions.debugOptions!.parentElementId)}
                     <div id="${renderOptions.debugOptions!.parentElementId}"></div>
-                    <div id="demoViz" class="_tw-px-10 _tw-pt-6 _tw-h-full" style="overflow: auto;"/>
                 </div>
             </div>       
         </div>
