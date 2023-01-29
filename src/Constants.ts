@@ -14,6 +14,7 @@ export const OUTPUT_AREA_WRAPPER_ID = addPapyrosPrefix("code-output-area-wrapper
 export const OUTPUT_AREA_ID = addPapyrosPrefix("code-output-area");
 export const OUTPUT_OVERFLOW_ID = addPapyrosPrefix("output-overflow");
 export const DEBUG_AREA_ID = addPapyrosPrefix("debug-area");
+export const VISUALIZE_SWITCH_ID = addPapyrosPrefix("toggle-visualization");
 export const INPUT_AREA_WRAPPER_ID = addPapyrosPrefix("code-input-area-wrapper");
 export const INPUT_TA_ID = addPapyrosPrefix("code-input-area");
 export const USER_INPUT_WRAPPER_ID = addPapyrosPrefix("user-input-wrapper");

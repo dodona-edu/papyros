@@ -5,7 +5,7 @@ import {
     EDITOR_WRAPPER_ID, PROGRAMMING_LANGUAGE_SELECT_ID,
     LOCALE_SELECT_ID, INPUT_AREA_WRAPPER_ID, EXAMPLE_SELECT_ID,
     PANEL_WRAPPER_ID, DARK_MODE_TOGGLE_ID,
-    MAIN_APP_ID, OUTPUT_AREA_WRAPPER_ID, DEBUG_AREA_ID
+    MAIN_APP_ID, OUTPUT_AREA_WRAPPER_ID, DEBUG_AREA_ID, VISUALIZE_SWITCH_ID
 } from "./Constants";
 import { InputManagerRenderOptions, InputMode } from "./InputManager";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
@@ -90,9 +90,13 @@ export interface PapyrosRenderOptions {
      */
     outputOptions?: RenderOptions;
     /**
-     * RenderOptions for the visualization field
+     * RenderOptions for the visualization field. TODO: Is this required?
      */
     debugOptions?: RenderOptions;
+    /**
+     * Whether to render the code trace visualization
+     */
+    visualizationMode?: boolean;
     /**
      * Whether to render in dark mode
      */
@@ -176,6 +180,13 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
     public setDarkMode(darkMode: boolean): void {
         if (darkMode !== this.renderOptions.darkMode) {
             this.renderOptions.darkMode = darkMode;
+            this.render();
+        }
+    }
+
+    public setVisualizationMode(visualization: boolean): void {
+        if (visualization !== this.renderOptions.visualizationMode) {
+            this.renderOptions.visualizationMode = visualization;
             this.render();
         }
     }
@@ -276,7 +287,7 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
                 ${programmingLanguageSelect}
                 ${exampleSelect}
                 ${renderLabel(t("Papyros.visualization"), renderOptions.debugOptions!.parentElementId)}
-                <i id=${DARK_MODE_TOGGLE_ID} class="mdi mdi-toggle-switch-off _tw-text-[#dddddd] hover:_tw-cursor-pointer _tw-text-4xl"></i>
+                <i id=${VISUALIZE_SWITCH_ID} class="mdi mdi-toggle-switch-off _tw-text-[#dddddd] hover:_tw-cursor-pointer _tw-text-4xl"></i>
             </div>`;
             renderWithOptions(renderOptions.standAloneOptions!, `
     <div id="${MAIN_APP_ID}" class="_tw-min-h-screen _tw-max-h-screen _tw-h-full
@@ -334,6 +345,10 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
 
             addListener(DARK_MODE_TOGGLE_ID, () => {
                 this.setDarkMode(!renderOptions.darkMode);
+            }, "click");
+
+            addListener(VISUALIZE_SWITCH_ID, () => {
+                this.setVisualizationMode(!renderOptions.visualizationMode);
             }, "click");
         }
         this.codeRunner.render({
