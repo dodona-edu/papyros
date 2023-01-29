@@ -141,7 +141,7 @@ export function renderSelectOptions<T extends string>(
 export function renderLabel(labelText: string | undefined, forElement: string): string {
     return labelText ? `
 <label for="${forElement}"
-class="dark:_tw-text-white dark:_tw-bg-dark-mode-bg _tw-px-1">${labelText}: </label>` : "";
+class="dark:_tw-text-white _tw-px-1">${labelText}: </label>` : "";
 }
 
 /**
@@ -158,12 +158,20 @@ export function renderSelect<T extends string>(selectId: string,
     labelText?: string): string {
     const select = `
     <select id="${selectId}" class="_tw-m-2 _tw-border-2 _tw-px-1 _tw-rounded-lg
-    dark:_tw-text-white dark:_tw-bg-dark-mode-bg dark:_tw-border-dark-mode-content">
+    dark:_tw-text-white dark:_tw-bg-dark-mode-bg dark:_tw-border-dark-mode-content _tw-mr-5">
         ${renderSelectOptions(options, optionText, selected)}
     </select>`;
     return `
     ${renderLabel(labelText, selectId)}
     ${select}
+    `;
+}
+
+export function renderToggle(state: boolean, forElement: string, labelText?: string): string {
+    const toggleIconClasses = state ? "mdi-toggle-switch _tw-text-[#FF8F00]" : "mdi-toggle-switch-off _tw-text-[#dddddd]";
+    return `
+    ${renderLabel(labelText, forElement)}
+    <i id=${forElement} class="_tw-ml-2 mdi ${toggleIconClasses} hover:_tw-cursor-pointer _tw-text-4xl"></i>
     `;
 }
 

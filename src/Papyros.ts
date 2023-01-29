@@ -20,7 +20,7 @@ import { AtomicsChannelOptions, makeChannel, ServiceWorkerChannelOptions } from 
 import { BackendManager } from "./BackendManager";
 import {
     RenderOptions, renderWithOptions, renderSelect, renderSelectOptions,
-    ButtonOptions, Renderable, renderLabel, appendClasses
+    ButtonOptions, Renderable, renderLabel, appendClasses, renderToggle
 } from "./util/Rendering";
 
 const LANGUAGE_MAP = new Map([
@@ -260,12 +260,11 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
                 renderSelect(EXAMPLE_SELECT_ID, getExampleNames(programmingLanguage),
                     name => name, this.config.example, t("Papyros.examples"));
             const locales = [locale, ...getLocales().filter(l => l != locale)];
-            const toggleIconClasses = renderOptions.darkMode ? "mdi-toggle-switch _tw-text-[#FF8F00]" : "mdi-toggle-switch-off _tw-text-[#dddddd]";
             const navOptions = `
             <div class="_tw-flex _tw-flex-row-reverse dark:_tw-text-white _tw-items-center">
                 <!-- row-reverse to start at the right, so put elements in order of display -->
-                <i id=${DARK_MODE_TOGGLE_ID} class="mdi ${toggleIconClasses} hover:_tw-cursor-pointer _tw-text-4xl"></i>
-                <p class="_tw-text-white">${t("Papyros.dark_mode")}</p>
+                ${renderToggle(renderOptions.darkMode, DARK_MODE_TOGGLE_ID)}
+                <p class="_tw-text-white">${t("Papyros.dark_mode")}:</p>
                 ${renderSelect(LOCALE_SELECT_ID, locales, l => t(`Papyros.locales.${l}`), locale)}
                 <i class="mdi mdi-web _tw-text-4xl _tw-text-white"></i>
             </div>
@@ -286,8 +285,7 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
             <div class="_tw-flex _tw-flex-row _tw-items-center">
                 ${programmingLanguageSelect}
                 ${exampleSelect}
-                ${renderLabel(t("Papyros.visualization"), renderOptions.debugOptions!.parentElementId)}
-                <i id=${VISUALIZE_SWITCH_ID} class="mdi mdi-toggle-switch-off _tw-text-[#dddddd] hover:_tw-cursor-pointer _tw-text-4xl"></i>
+                ${renderToggle(renderOptions.visualizationMode, VISUALIZE_SWITCH_ID, t("Papyros.visualization"))}
             </div>`;
             renderWithOptions(renderOptions.standAloneOptions!, `
     <div id="${MAIN_APP_ID}" class="_tw-min-h-screen _tw-max-h-screen _tw-h-full
