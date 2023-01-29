@@ -184,6 +184,9 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
         }
     }
 
+    /**
+     * @param {boolean} visualization Whether to use code visualization
+     */
     public setVisualizationMode(visualization: boolean): void {
         if (visualization !== this.renderOptions.visualizationMode) {
             this.renderOptions.visualizationMode = visualization;
