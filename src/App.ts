@@ -41,6 +41,7 @@ async function startPapyros(): Promise<void> {
         programmingLanguage: language,
         locale: locale,
         inputMode: InputMode.Batch,
+        codeTrace: true,
         channelOptions: {
             serviceWorkerName: DEFAULT_SERVICE_WORKER
         }
