@@ -22,7 +22,6 @@ import {
     RenderOptions, renderWithOptions, renderSelect, renderSelectOptions,
     ButtonOptions, Renderable, renderLabel, appendClasses, renderToggle
 } from "./util/Rendering";
-
 const LANGUAGE_MAP = new Map([
     ["python", ProgrammingLanguage.Python],
     ["javascript", ProgrammingLanguage.JavaScript]
@@ -90,13 +89,9 @@ export interface PapyrosRenderOptions {
      */
     outputOptions?: RenderOptions;
     /**
-     * RenderOptions for the visualization field. TODO: Is this required?
+     * DebugOptions for the debugging field
      */
     debugOptions?: RenderOptions;
-    /**
-     * Whether to render the code trace visualization
-     */
-    visualizationMode?: boolean;
     /**
      * Whether to render in dark mode
      */
@@ -125,7 +120,7 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
         // Load translations as other components depend on them
         loadTranslations();
         I18n.locale = config.locale;
-        this.codeRunner = new CodeRunner(config.programmingLanguage, config.inputMode);
+        this.codeRunner = new CodeRunner(config.programmingLanguage, config.inputMode, config.codeTrace);
     }
 
     /**
@@ -188,8 +183,8 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
      * @param {boolean} visualization Whether to use code visualization
      */
     public setVisualizationMode(visualization: boolean): void {
-        if (visualization !== this.renderOptions.visualizationMode) {
-            this.renderOptions.visualizationMode = visualization;
+        if (visualization !== this.codeRunner.getVisualize()) {
+            this.codeRunner.setVisualize(visualization);
             this.render();
         }
     }
@@ -288,7 +283,7 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
             <div class="_tw-flex _tw-flex-row _tw-items-center">
                 ${programmingLanguageSelect}
                 ${exampleSelect}
-                ${renderToggle(renderOptions.visualizationMode, VISUALIZE_SWITCH_ID, t("Papyros.visualization"))}
+                ${this.config.codeTrace ? renderToggle(this.codeRunner.getVisualize(), VISUALIZE_SWITCH_ID, t("Papyros.visualization")): ""}
             </div>`;
             renderWithOptions(renderOptions.standAloneOptions!, `
     <div id="${MAIN_APP_ID}" class="_tw-min-h-screen _tw-max-h-screen _tw-h-full
@@ -313,8 +308,7 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
                 </div>
                 <!-- Python Tutor visualization section-->
                 <div class="_tw-w-3/6 _tw-px-10">
-                    ${renderLabel(t("Papyros.visualization"), renderOptions.debugOptions!.parentElementId)}
-                    <div id="${renderOptions.debugOptions!.parentElementId}"></div>
+                    <div id="${DEBUG_AREA_ID}"></div>
                 </div>
             </div>       
         </div>
@@ -347,10 +341,11 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
             addListener(DARK_MODE_TOGGLE_ID, () => {
                 this.setDarkMode(!renderOptions.darkMode);
             }, "click");
-
-            addListener(VISUALIZE_SWITCH_ID, () => {
-                this.setVisualizationMode(!renderOptions.visualizationMode);
-            }, "click");
+            if (this.config.codeTrace) {
+                addListener(VISUALIZE_SWITCH_ID, () => {
+                    this.setVisualizationMode(!this.codeRunner.getVisualize());
+                }, "click");
+            }
         }
         this.codeRunner.render({
             statusPanelOptions: renderOptions.statusPanelOptions!,

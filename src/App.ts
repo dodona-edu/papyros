@@ -61,7 +61,6 @@ async function startPapyros(): Promise<void> {
             parentElementId: "root"
         },
         darkMode: darkMode,
-        visualizationMode: true,
     });
     setUpEditor(papyros.codeRunner.editor, LOCAL_STORAGE_KEYS.code);
     papyros.codeRunner.editor.focus();

@@ -22,7 +22,6 @@ import {
 } from "./util/Rendering";
 import { OutputManager } from "./OutputManager";
 import { DebugManager } from "./DebugManager";
-import { TraceGenerator } from "pyodide-trace-library";
 
 interface DynamicButton {
     id: string;
@@ -127,19 +126,19 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      * Time at which the setState call occurred
      */
     private runStartTime: number;
+    private visualize: boolean;
 
-    /**
-     * Handles the trace generation that will be visualized
-     */
-    private traceGenerator: TraceGenerator;
     /**
      * Construct a new RunStateManager with the given listeners
      * @param {ProgrammingLanguage} programmingLanguage The language to use
      * @param {InputMode} inputMode The input mode to use
+     * @param {visualize} visualize Whether or not to visualize the code
      */
-    constructor(programmingLanguage: ProgrammingLanguage, inputMode: InputMode) {
+    constructor(programmingLanguage: ProgrammingLanguage,
+        inputMode: InputMode, visualize: boolean) {
         super();
         this.programmingLanguage = programmingLanguage;
+        this.visualize = visualize;
         this.editor = new CodeEditor(() => {
             if (this.state === RunState.Ready) {
                 this.runCode(this.editor.getText());
@@ -175,7 +174,6 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             },
             delay: DEFAULT_EDITOR_DELAY
         });
-        this.traceGenerator = new TraceGenerator();
 
         BackendManager.subscribe(BackendEventType.Input,
             () => this.setState(RunState.AwaitingInput));
@@ -261,6 +259,20 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      */
     public getProgrammingLanguage(): ProgrammingLanguage {
         return this.programmingLanguage;
+    }
+
+    /**
+     * @return {boolean} the current visualize state
+     */
+    public getVisualize(): boolean {
+        return this.visualize;
+    }
+
+    /**
+     * @param {state} state whether or not to visualize the code
+     */
+    public setVisualize(state: boolean): void {
+        this.visualize = state;
     }
 
     /**
@@ -408,7 +420,8 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         this.setState(this.state);
         this.inputManager.render(options.inputOptions);
         this.outputManager.render(options.outputOptions);
-        this.debugManager.render(options.debugOptions);
+        // Only render the debugManager if we visualize the code
+        if (this.visualize) this.debugManager.render(options.debugOptions);
         this.editor.render(options.codeEditorOptions);
         this.editor.setPanel(rendered);
         // Set language again to update the placeholder
