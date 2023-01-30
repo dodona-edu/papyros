@@ -15,10 +15,6 @@ import {
  * Component for displaying code output or errors to the user
  */
 export class DebugManager extends Renderable {
-    /**
-     * Whether to visualize the visualization or not
-     */
-
     constructor() {
         super();
         BackendManager.subscribe(BackendEventType.EndVisualization, e => this.onVisualization(e));

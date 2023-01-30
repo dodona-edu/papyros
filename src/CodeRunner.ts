@@ -345,37 +345,13 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
                 buttonText: t("Papyros.run"),
                 classNames: "_tw-text-white _tw-bg-blue-500"
             };
-            buttonHandler = () => this.runCode(this.editor.getText());
+            buttonHandler = () => {
+                const code = this.editor.getText();
+                this.runCode(code).then(() => this.generateTrace(code));
+            };
         } else {
             buttonOptions = {
                 id: STOP_BTN_ID,
-                buttonText: t("Papyros.stop"),
-                classNames: "_tw-text-white _tw-bg-red-500"
-            };
-            buttonHandler = () => this.stop();
-        }
-        appendClasses(buttonOptions, "_tw-min-w-[60px]");
-        return {
-            id: buttonOptions.id,
-            buttonHTML: renderButton(buttonOptions),
-            onClick: buttonHandler
-        };
-    }
-
-    private getVisualizeCodeButton(): DynamicButton {
-        let buttonOptions: ButtonOptions;
-        let buttonHandler: () => void;
-
-        if ([RunState.Ready, RunState.Loading].includes(this.state)) {
-            buttonOptions = {
-                id: VISUALIZE_BTN_ID,
-                buttonText: t("Papyros.visualize"),
-                classNames: "_tw-text-white _tw-bg-blue-500"
-            };
-            buttonHandler = () =>this.generateTrace(this.editor.getText());
-        } else {
-            buttonOptions = {
-                id: STOP_VISUALIZE_BTN_ID,
                 buttonText: t("Papyros.stop"),
                 classNames: "_tw-text-white _tw-bg-red-500"
             };
@@ -395,7 +371,6 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     private renderButtons(): void {
         const buttons = [
             this.getCodeActionButton(),
-            this.getVisualizeCodeButton(),
             ...this.buttons
         ];
         getElement(CODE_BUTTONS_WRAPPER_ID).innerHTML =
@@ -535,7 +510,6 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
                 // Was interrupted, End message already published
                 interrupted = true;
             }
-            console.log("Done");
             this.setState(RunState.Ready, t(
                 interrupted ? "Papyros.interrupted" : "Papyros.finished",
                 { time: (new Date().getTime() - this.runStartTime) / 1000 }));
