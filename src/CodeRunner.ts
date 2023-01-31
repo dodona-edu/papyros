@@ -273,6 +273,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      */
     public setVisualize(state: boolean): void {
         this.visualize = state;
+        if (!this.visualize) this.debugManager.clearTrace();
     }
 
     /**
@@ -347,7 +348,9 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             };
             buttonHandler = () => {
                 const code = this.editor.getText();
-                this.runCode(code).then(() => this.generateTrace(code));
+                this.runCode(code).then(() => {
+                    if (this.visualize) this.generateTrace(code);
+                });
             };
         } else {
             buttonOptions = {
@@ -396,7 +399,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         this.inputManager.render(options.inputOptions);
         this.outputManager.render(options.outputOptions);
         // Only render the debugManager if we visualize the code
-        if (this.visualize) this.debugManager.render(options.debugOptions);
+        this.debugManager.render(options.debugOptions);
         this.editor.render(options.codeEditorOptions);
         this.editor.setPanel(rendered);
         // Set language again to update the placeholder
