@@ -70,6 +70,7 @@ export class OutputManager extends Renderable {
         BackendManager.subscribe(BackendEventType.Output, e => this.showOutput(e));
         BackendManager.subscribe(BackendEventType.Error, e => this.showError(e));
         BackendManager.subscribe(BackendEventType.End, () => this.onRunEnd());
+        BackendManager.subscribe(BackendEventType.ClearOutput, () => this.reset());
     }
 
     /**

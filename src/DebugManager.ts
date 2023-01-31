@@ -55,7 +55,13 @@ export class DebugManager extends Renderable {
      */
     private onOutputCallback(visualization: ExecutionVisualizer): void {
         const curInstr = visualization.curInstr;
-        console.log(curInstr);
+        // Delete the current output
+        BackendManager.publish({
+            type: BackendEventType.ClearOutput,
+            contentType: "text/plain",
+            data: "Clearing the output"
+        });
+        // Add the output from the current tracestep
         BackendManager.publish({
             type: BackendEventType.Output,
             data: visualization.curTrace[curInstr].stdout, contentType: "text/plain"
