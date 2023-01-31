@@ -24,12 +24,10 @@ export class DebugManager extends Renderable {
     constructor() {
         super();
         BackendManager.subscribe(BackendEventType.EndVisualization, e => this.onVisualization(e));
-        console.log("Running const");
-        this.curInstr = 10;
+        this.curInstr = 0;
     }
 
     protected override _render(options: RenderOptions): void {
-        console.log("Render " + this.curInstr);
         if (this.trace !== undefined) {
             renderWithOptions(options, `
             ${renderLabel(t("Papyros.visualization"), DEBUG_AREA_ID)}
@@ -37,12 +35,12 @@ export class DebugManager extends Renderable {
             _tw-px-10 _tw-pt-6 _tw-h-full" style="overflow: auto;">
             </div>
             `);
+            new ExecutionVisualizer(VISUALIZE_AREA_ID, this.trace, {
+                startingInstruction: this.curInstr,
+                updateOutputCallback: this.onOutputCallback,
+            });
         }
         // Restore previously rendered items
-    }
-
-    private getCurInstr(): number {
-        return this.curInstr;
     }
 
     /**
@@ -50,13 +48,12 @@ export class DebugManager extends Renderable {
      */
     private onVisualization(event: BackendEvent): void {
         this.trace = event.data;
-        console.log("Vis: " + this.getCurInstr());
-        this.render();
-        new ExecutionVisualizer(VISUALIZE_AREA_ID, this.trace, {
-            startingInstruction: this.getCurInstr(),
-            updateOutputCallback: this.onOutputCallback,
+        BackendManager.publish({
+            type: BackendEventType.ClearInput,
+            contentType: "text/plain",
+            data: "Clearing the input"
         });
-        // this.render();
+        this.render();
     }
 
     /**
@@ -65,7 +62,6 @@ export class DebugManager extends Renderable {
      */
     private onOutputCallback(visualization: ExecutionVisualizer): void {
         this.curInstr = visualization.curInstr;
-        console.log("Updating " + this.curInstr);
         // Delete the current output
         BackendManager.publish({
             type: BackendEventType.ClearOutput,
@@ -82,7 +78,7 @@ export class DebugManager extends Renderable {
         //const isLastInstr = this.curInstr === (totalInstrs-1);
 
         if (visualization.promptForUserInput) {
-            console.log("Awaiting input");
+            // console.log("Awaiting input");
             // BackendManager.publish({
             //    type: BackendEventType.Input,
             //    data: "test",

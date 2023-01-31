@@ -45,6 +45,7 @@ export class InputManager extends Renderable<InputManagerRenderOptions> {
         this.waiting = false;
         this.prompt = "";
         BackendManager.subscribe(BackendEventType.Start, () => this.onRunStart());
+        BackendManager.subscribe(BackendEventType.ClearInput, () => this.onRunStart());
         BackendManager.subscribe(BackendEventType.End, () => this.onRunEnd());
         BackendManager.subscribe(BackendEventType.Input, e => this.onInputRequest(e));
     }
