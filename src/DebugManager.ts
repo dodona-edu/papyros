@@ -19,13 +19,17 @@ export class DebugManager extends Renderable {
      * The last generated codetrace
     */
     private trace: string;
+    private curInstr: number;
 
     constructor() {
         super();
         BackendManager.subscribe(BackendEventType.EndVisualization, e => this.onVisualization(e));
+        console.log("Running const");
+        this.curInstr = 10;
     }
 
     protected override _render(options: RenderOptions): void {
+        console.log("Render " + this.curInstr);
         if (this.trace !== undefined) {
             renderWithOptions(options, `
             ${renderLabel(t("Papyros.visualization"), DEBUG_AREA_ID)}
@@ -33,12 +37,12 @@ export class DebugManager extends Renderable {
             _tw-px-10 _tw-pt-6 _tw-h-full" style="overflow: auto;">
             </div>
             `);
-            new ExecutionVisualizer(VISUALIZE_AREA_ID, this.trace, {
-                updateOutputCallback: this.onOutputCallback,
-                executeCodeWithRawInputFunc: undefined
-            });
         }
         // Restore previously rendered items
+    }
+
+    private getCurInstr(): number {
+        return this.curInstr;
     }
 
     /**
@@ -46,7 +50,13 @@ export class DebugManager extends Renderable {
      */
     private onVisualization(event: BackendEvent): void {
         this.trace = event.data;
+        console.log("Vis: " + this.getCurInstr());
         this.render();
+        new ExecutionVisualizer(VISUALIZE_AREA_ID, this.trace, {
+            startingInstruction: this.getCurInstr(),
+            updateOutputCallback: this.onOutputCallback,
+        });
+        // this.render();
     }
 
     /**
@@ -54,7 +64,8 @@ export class DebugManager extends Renderable {
      * @param {visualization} visualization the ExecutionVisualizer curruntly in use
      */
     private onOutputCallback(visualization: ExecutionVisualizer): void {
-        const curInstr = visualization.curInstr;
+        this.curInstr = visualization.curInstr;
+        console.log("Updating " + this.curInstr);
         // Delete the current output
         BackendManager.publish({
             type: BackendEventType.ClearOutput,
@@ -64,8 +75,20 @@ export class DebugManager extends Renderable {
         // Add the output from the current tracestep
         BackendManager.publish({
             type: BackendEventType.Output,
-            data: visualization.curTrace[curInstr].stdout, contentType: "text/plain"
+            data: visualization.curTrace[this.curInstr].stdout, contentType: "text/plain"
         });
+
+        //const totalInstrs = visualization.curTrace.length;
+        //const isLastInstr = this.curInstr === (totalInstrs-1);
+
+        if (visualization.promptForUserInput) {
+            console.log("Awaiting input");
+            // BackendManager.publish({
+            //    type: BackendEventType.Input,
+            //    data: "test",
+            //    contentType: "text/plain"
+            // });
+        }
     }
 
     /**

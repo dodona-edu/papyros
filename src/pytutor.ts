@@ -232,6 +232,7 @@ export class ExecutionVisualizer {
       // if the final entry is raw_input or mouse_input, then trim it from the trace and
       // set a flag to prompt for user input when execution advances to the
       // end of the trace
+
       if (lastEntry.event === 'raw_input') {
         this.promptForUserInput = true;
         this.userInputPromptStr = htmlspecialchars(lastEntry.prompt);
@@ -247,6 +248,30 @@ export class ExecutionVisualizer {
         this.instrLimitReachedWarningMsg = lastEntry.exception_msg;
         this.curTrace.pop() // postprocess to kill last entry
       }
+    }
+
+    console.log(this.params);
+    if (this.params.startingInstruction) {
+      this.params.jumpToEnd = false; // override! make sure to handle FIRST
+
+      // weird special case for something like:
+      // e=raw_input(raw_input("Enter something:"))
+      if (this.params.startingInstruction == this.curTrace.length) {
+        this.params.startingInstruction--;
+      }
+
+      // fail-soft with out-of-bounds startingInstruction values:
+      if (this.params.startingInstruction < 0) {
+        this.params.startingInstruction = 0;
+      }
+      if (this.params.startingInstruction >= this.curTrace.length) {
+        this.params.startingInstruction = this.curTrace.length - 1;
+      }
+
+      assert(0 <= this.params.startingInstruction &&
+             this.params.startingInstruction < this.curTrace.length);
+      this.curInstr = this.params.startingInstruction;
+      console.log("Changed");
     }
 
     // if you have multiple ExecutionVisualizer on a page, their IDs
@@ -484,27 +509,6 @@ export class ExecutionVisualizer {
     myViz.navControls.showError(this.instrLimitReachedWarningMsg);
     myViz.navControls.setupSlider(this.curTrace.length - 1);
 
-    if (this.params.startingInstruction) {
-      this.params.jumpToEnd = false; // override! make sure to handle FIRST
-
-      // weird special case for something like:
-      // e=raw_input(raw_input("Enter something:"))
-      if (this.params.startingInstruction == this.curTrace.length) {
-        this.params.startingInstruction--;
-      }
-
-      // fail-soft with out-of-bounds startingInstruction values:
-      if (this.params.startingInstruction < 0) {
-        this.params.startingInstruction = 0;
-      }
-      if (this.params.startingInstruction >= this.curTrace.length) {
-        this.params.startingInstruction = this.curTrace.length - 1;
-      }
-
-      assert(0 <= this.params.startingInstruction &&
-             this.params.startingInstruction < this.curTrace.length);
-      this.curInstr = this.params.startingInstruction;
-    }
 
     if (this.params.jumpToEnd) {
       var firstErrorStep = -1;
