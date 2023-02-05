@@ -7,7 +7,7 @@ import { CodeEditor } from "./editor/CodeEditor";
 import {
     addPapyrosPrefix,
     APPLICATION_STATE_TEXT_ID, CODE_BUTTONS_WRAPPER_ID, DEFAULT_EDITOR_DELAY, RUN_BTN_ID,
-    STATE_SPINNER_ID, STOP_BTN_ID, STOP_VISUALIZE_BTN_ID, VISUALIZE_BTN_ID
+    STATE_SPINNER_ID, STOP_BTN_ID
 } from "./Constants";
 import { InputManager, InputManagerRenderOptions, InputMode } from "./InputManager";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
@@ -146,15 +146,10 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             }
         });
         this.inputManager = new InputManager(async (input: string) => {
-            console.log(this.state === RunState.Visualizing);
             const backend = await this.backend;
-            if (this.state === RunState.Visualizing) {
-                console.log("State");
-            } else {
-                console.log("Writing message");
-                backend.writeMessage(input);
-                this.setState(RunState.Running);
-            }
+            backend.writeMessage(input);
+            backend.workerProxy.pushInput(input);
+            this.setState(RunState.Running);
             console.log(input);
         }, inputMode);
         this.outputManager = new OutputManager();
@@ -424,6 +419,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         this.setState(RunState.Loading);
         // Ensure we go back to Loading after finishing any remaining installs
         this.previousState = RunState.Loading;
+        // Delete the previous seen input
         BackendManager.publish({
             type: BackendEventType.Start,
             data: "StartClicked", contentType: "text/plain"
@@ -431,6 +427,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         let interrupted = false;
         let terminated = false;
         const backend = await this.backend;
+        backend.workerProxy.clearInput();
         this.runStartTime = new Date().getTime();
         try {
             await backend.call(
@@ -487,7 +484,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         // Ensure we go back to Loading after finishing any remaining installs
         this.previousState = RunState.Loading;
         BackendManager.publish({
-            type: BackendEventType.StartVisualization, // Temporarily keep this
+            type: BackendEventType.StartTraceGeneration, // Temporarily keep this
             data: "VisualizeClicked", contentType: "text/plain"
         });
         let interrupted = false;
@@ -511,7 +508,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
                     contentType: "text/json"
                 });
                 BackendManager.publish({
-                    type: BackendEventType.EndVisualization,
+                    type: BackendEventType.CompletedTraceGeneration,
                     data: "VisualizeError", contentType: "text/plain"
                 });
             }

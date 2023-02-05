@@ -23,7 +23,8 @@ export class DebugManager extends Renderable {
 
     constructor() {
         super();
-        BackendManager.subscribe(BackendEventType.EndVisualization, e => this.onVisualization(e));
+        BackendManager.subscribe(BackendEventType.CompletedTraceGeneration,
+            e => this.onVisualization(e));
         this.curInstr = 0;
     }
 
@@ -37,7 +38,7 @@ export class DebugManager extends Renderable {
             `);
             new ExecutionVisualizer(VISUALIZE_AREA_ID, this.trace, {
                 startingInstruction: this.curInstr,
-                updateOutputCallback: this.onOutputCallback,
+                updateOutputCallback: this.onOutputCallback.bind(this),
             });
         }
         // Restore previously rendered items
@@ -48,12 +49,17 @@ export class DebugManager extends Renderable {
      */
     private onVisualization(event: BackendEvent): void {
         this.trace = event.data;
+        console.log(this.trace);
         BackendManager.publish({
             type: BackendEventType.ClearInput,
             contentType: "text/plain",
             data: "Clearing the input"
         });
         this.render();
+    }
+
+    public getTrace(): string {
+        return this.trace;
     }
 
     /**
@@ -78,12 +84,7 @@ export class DebugManager extends Renderable {
         const isLastInstr = this.curInstr === (totalInstrs-1);
 
         if (visualization.promptForUserInput && isLastInstr) {
-             console.log("Awaiting input");
-             BackendManager.publish({
-                type: BackendEventType.Input,
-                data: "test",
-                contentType: "text/plain"
-            });
+            console.log("Awaiting input");
         }
     }
 

@@ -170,6 +170,14 @@ class JavaScriptWorker extends Backend<SyncExtras> {
         return result;
     }
 
+    public override pushInput(input: string): void {
+        console.log("Not supported");
+    }
+
+    public override clearInput(): void {
+        console.log("Not supported");
+    }
+
     public override async generateTraceCode(extras: SyncExtras, code: string, mode?: string):
     Promise<any> {
         return "Not supported";

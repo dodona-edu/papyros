@@ -60,6 +60,7 @@ class PythonWorker extends Backend<PyodideExtras> {
             {
                 callback: (e: any) => {
                     const converted = PythonWorker.convert(e);
+                    console.log(converted);
                     return this.onEvent(converted);
                 },
                 buffer_constructor: (cb: (e: BackendEvent) => void) => {
@@ -127,10 +128,18 @@ class PythonWorker extends Backend<PyodideExtras> {
 
         await this.traceWorker.generateTraceCode(extras, code).then((trace => {
             this.onEvent({
-                type: BackendEventType.EndVisualization,
+                type: BackendEventType.CompletedTraceGeneration,
                 data: JSON.parse(trace),
             });
         }));
+    }
+
+    public override pushInput(input: string): void {
+        this.traceWorker.pushInput(input);
+    }
+
+    public override clearInput(): void {
+        this.traceWorker.clearInput();
     }
 
     public override async autocomplete(context: WorkerAutocompleteContext):

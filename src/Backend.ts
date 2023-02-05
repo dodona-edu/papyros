@@ -155,6 +155,17 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
     public abstract generateTraceCode(extras: Extras, code: string, mode?: string): Promise<void>;
 
     /**
+     * Method to push seen input to the traceWorker
+     * @param {input} input the seen input
+     */
+    public abstract pushInput(input: string): void;
+
+    /**
+     * Method to clear the input stack
+     */
+    public abstract clearInput(): void;
+
+    /**
      * Converts the context to a cloneable object containing useful properties
      * to generate autocompletion suggestions with
      * Class instances are not passable to workers, so we extract the useful information
