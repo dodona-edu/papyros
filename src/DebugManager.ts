@@ -74,16 +74,16 @@ export class DebugManager extends Renderable {
             data: visualization.curTrace[this.curInstr].stdout, contentType: "text/plain"
         });
 
-        //const totalInstrs = visualization.curTrace.length;
-        //const isLastInstr = this.curInstr === (totalInstrs-1);
+        const totalInstrs = visualization.curTrace.length;
+        const isLastInstr = this.curInstr === (totalInstrs-1);
 
-        if (visualization.promptForUserInput) {
-            // console.log("Awaiting input");
-            // BackendManager.publish({
-            //    type: BackendEventType.Input,
-            //    data: "test",
-            //    contentType: "text/plain"
-            // });
+        if (visualization.promptForUserInput && isLastInstr) {
+             console.log("Awaiting input");
+             BackendManager.publish({
+                type: BackendEventType.Input,
+                data: "test",
+                contentType: "text/plain"
+            });
         }
     }
 

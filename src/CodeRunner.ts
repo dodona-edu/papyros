@@ -60,7 +60,8 @@ export enum RunState {
     Running = "running",
     AwaitingInput = "awaiting_input",
     Stopping = "stopping",
-    Ready = "ready"
+    Ready = "ready",
+    Visualizing = "visualizing"
 }
 
 /**
@@ -140,15 +141,21 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         this.programmingLanguage = programmingLanguage;
         this.visualize = visualize;
         this.editor = new CodeEditor(() => {
-            if (this.state === RunState.Ready) {
+            if (this.state === RunState.Ready || this.state === RunState.Visualizing) {
                 this.runCode(this.editor.getText());
             }
         });
         this.inputManager = new InputManager(async (input: string) => {
+            console.log(this.state === RunState.Visualizing);
             const backend = await this.backend;
-            backend.writeMessage(input);
+            if (this.state === RunState.Visualizing) {
+                console.log("State");
+            } else {
+                console.log("Writing message");
+                backend.writeMessage(input);
+                this.setState(RunState.Running);
+            }
             console.log(input);
-            this.setState(RunState.Running);
         }, inputMode);
         this.outputManager = new OutputManager();
         this.debugManager = new DebugManager();
@@ -340,7 +347,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     private getCodeActionButton(): DynamicButton {
         let buttonOptions: ButtonOptions;
         let buttonHandler: () => void;
-        if ([RunState.Ready, RunState.Loading].includes(this.state)) {
+        if ([RunState.Ready, RunState.Loading, RunState.Visualizing].includes(this.state)) {
             buttonOptions = {
                 id: RUN_BTN_ID,
                 buttonText: t("Papyros.run"),
@@ -513,7 +520,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
                 // Was interrupted, End message already published
                 interrupted = true;
             }
-            this.setState(RunState.Ready, t(
+            this.setState(RunState.Visualizing, t(
                 interrupted ? "Papyros.interrupted" : "Papyros.finished",
                 { time: (new Date().getTime() - this.runStartTime) / 1000 }));
             if (terminated) {
