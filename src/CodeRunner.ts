@@ -60,8 +60,7 @@ export enum RunState {
     Running = "running",
     AwaitingInput = "awaiting_input",
     Stopping = "stopping",
-    Ready = "ready",
-    Visualizing = "visualizing"
+    Ready = "ready"
 }
 
 /**
@@ -141,7 +140,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         this.programmingLanguage = programmingLanguage;
         this.visualize = visualize;
         this.editor = new CodeEditor(() => {
-            if (this.state === RunState.Ready || this.state === RunState.Visualizing) {
+            if (this.state === RunState.Ready) {
                 this.runCode(this.editor.getText());
             }
         });
@@ -187,6 +186,9 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         this.previousState = RunState.Ready;
         this.runStartTime = new Date().getTime();
         this.state = RunState.Ready;
+        this.editor.setArrowStep({visualizing: true, getInfo: (lineInfo: number) => {
+            return { cur: true, lineNr: lineInfo, on: true };
+        } });
     }
 
     /**
@@ -342,7 +344,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     private getCodeActionButton(): DynamicButton {
         let buttonOptions: ButtonOptions;
         let buttonHandler: () => void;
-        if ([RunState.Ready, RunState.Loading, RunState.Visualizing].includes(this.state)) {
+        if ([RunState.Ready, RunState.Loading].includes(this.state)) {
             buttonOptions = {
                 id: RUN_BTN_ID,
                 buttonText: t("Papyros.run"),
@@ -517,7 +519,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
                 // Was interrupted, End message already published
                 interrupted = true;
             }
-            this.setState(RunState.Visualizing, t(
+            this.setState(RunState.Ready, t(
                 interrupted ? "Papyros.interrupted" : "Papyros.finished",
                 { time: (new Date().getTime() - this.runStartTime) / 1000 }));
             if (terminated) {

@@ -188,6 +188,7 @@ export class BreakpointsGutter extends Gutters {
             onClick: (view: EditorView, info: GutterInfo) => {
                 info.on = !info.on;
                 this.setMarker(view, info);
+                console.log("Hit");
             },
             extraExtensions: [
                 EditorView.baseTheme({
@@ -203,6 +204,33 @@ export class BreakpointsGutter extends Gutters {
 
     protected override marker(): GutterMarker {
         return new SimpleMarker(() => document.createTextNode("🔴"));
+    }
+}
+
+export interface ArrowGutterInfo extends GutterInfo {
+    cur: boolean
+}
+
+export class ArrowGutter extends Gutters<ArrowGutterInfo> {
+    constructor() {
+        super({
+            name: "arrow",
+            onClick: (view, info) => console.log("Clicked"),
+        });
+    }
+
+    protected override marker(info: ArrowGutterInfo): GutterMarker {
+        return new SimpleMarker(() => {
+            const node = document.createElement("div");
+            if (info.on && info.cur) {
+                node.replaceChildren(document.createTextNode("-->"));
+            } else if (info.on) {
+                node.replaceChildren(document.createTextNode("->"));
+            }
+            node.setAttribute("arrow", "AttributeSet");
+            // Text interface tells us that more complex node will be processed into Text nodes
+            return node as any as Text;
+        });
     }
 }
 

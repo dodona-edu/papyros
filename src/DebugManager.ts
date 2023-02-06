@@ -50,11 +50,6 @@ export class DebugManager extends Renderable {
     private onVisualization(event: BackendEvent): void {
         this.trace = event.data;
         console.log(this.trace);
-        BackendManager.publish({
-            type: BackendEventType.ClearInput,
-            contentType: "text/plain",
-            data: "Clearing the input"
-        });
         this.render();
     }
 

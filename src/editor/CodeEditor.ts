@@ -21,11 +21,17 @@ import { oneDarkHighlightStyle } from "@codemirror/theme-one-dark";
 import {
     EditorView, showPanel, lineNumbers, highlightActiveLineGutter,
     highlightSpecialChars, drawSelection,
-    rectangularSelection, highlightActiveLine, keymap
+    rectangularSelection, highlightActiveLine, keymap, ViewUpdate
 } from "@codemirror/view";
 import { Diagnostic, linter, lintGutter, lintKeymap } from "@codemirror/lint";
 import { CodeMirrorEditor } from "./CodeMirrorEditor";
 import { darkTheme } from "./DarkTheme";
+import { ArrowGutter, ArrowGutterInfo } from "./Gutters";
+
+interface VisualizeArrowArgs {
+    visualizing: boolean,
+    getInfo: (lineInfo: number) => ArrowGutterInfo
+}
 
 /**
  * Component that provides useful features to users writing code
@@ -36,6 +42,9 @@ export class CodeEditor extends CodeMirrorEditor {
     public static PANEL = "panel";
     public static AUTOCOMPLETION = "autocompletion";
     public static LINTING = "linting";
+
+    private arrowGutter: ArrowGutter;
+    private visualizeArrowArgs?: VisualizeArrowArgs;
 
     /**
      * Construct a new CodeEditor
@@ -55,6 +64,7 @@ export class CodeEditor extends CodeMirrorEditor {
             maxHeight: "72vh",
             theme: {}
         });
+        this.arrowGutter = new ArrowGutter();
         this.addExtension([
             keymap.of([
                 {
@@ -68,10 +78,46 @@ export class CodeEditor extends CodeMirrorEditor {
                     key: "Shift-Enter", run: insertBlankLine
                 }
             ]),
+            this.arrowGutter.toExtension(),
             ...CodeEditor.getExtensions()
         ]);
         this.setText(initialCode);
         this.setIndentLength(indentLength);
+    }
+
+    private getLastVisualizeArrows(): VisualizeArrowArgs {
+        return this.visualizeArrowArgs || {
+            visualizing: false,
+            getInfo: lineNr => {
+                return {
+                    lineNr,
+                    on: false,
+                    cur: false
+                };
+            }
+        };
+    }
+
+    protected override onViewUpdate(v: ViewUpdate): void {
+        super.onViewUpdate(v);
+        // Ensure that highlighting occurs after CodeMirrors internal update
+        // so that the style classes are not overwritten
+        setTimeout(() => {
+            this.setArrowStep(this.getLastVisualizeArrows());
+        }, 10);
+    }
+
+
+    public setArrowStep(args: VisualizeArrowArgs): void {
+        const {
+            visualizing, getInfo
+        } = args;
+        this.visualizeArrowArgs = args;
+        this.editorView.dom.querySelectorAll(".cm-line").forEach((line, i) => {
+            const info = getInfo(i + 1);
+            info.cur = !info.cur;
+            this.arrowGutter.setMarker(this.editorView, info);
+        });
     }
 
     public override setDarkMode(darkMode: boolean): void {
