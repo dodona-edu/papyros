@@ -49,7 +49,6 @@ export class DebugManager extends Renderable {
      */
     private onVisualization(event: BackendEvent): void {
         this.trace = event.data;
-        console.log(this.trace);
         this.render();
     }
 
@@ -72,7 +71,10 @@ export class DebugManager extends Renderable {
         BackendManager.publish({
             type: BackendEventType.VisualizeStep,
             contentType: "text/plain",
-            data: this.curInstr
+            data: {
+                cur: visualization.curTrace[this.curInstr],
+                executed: visualization.curTrace[this.curInstr - 1]
+            }
         });
         // Add the output from the current tracestep
         BackendManager.publish({

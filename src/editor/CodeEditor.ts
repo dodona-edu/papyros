@@ -27,6 +27,8 @@ import { Diagnostic, linter, lintGutter, lintKeymap } from "@codemirror/lint";
 import { CodeMirrorEditor } from "./CodeMirrorEditor";
 import { darkTheme } from "./DarkTheme";
 import { ArrowGutter, ArrowGutterInfo } from "./Gutters";
+import { BackendManager } from "../BackendManager";
+import { BackendEventType } from "../BackendEvent";
 
 interface VisualizeArrowArgs {
     visualizing: boolean,
@@ -83,7 +85,20 @@ export class CodeEditor extends CodeMirrorEditor {
         ]);
         this.setText(initialCode);
         this.setIndentLength(indentLength);
+        BackendManager.subscribe(BackendEventType.VisualizeStep, e => {
+            const curLine = e.data.cur.line;
+            const prevLine = e.data.executed === undefined ? -1 : e.data.executed.line;
+            this.setArrowStep({ visualizing: true, getInfo: (lineInfo: number) => {
+                const on = (curLine === lineInfo || prevLine === lineInfo);
+                const cur = curLine === lineInfo;
+                return {
+                    cur: e.data.cur.event === "return" ? false : cur,
+                    on: on,
+                    lineNr: lineInfo };
+            } });
+        });
     }
+
 
     private getLastVisualizeArrows(): VisualizeArrowArgs {
         return this.visualizeArrowArgs || {
@@ -115,7 +130,6 @@ export class CodeEditor extends CodeMirrorEditor {
         this.visualizeArrowArgs = args;
         this.editorView.dom.querySelectorAll(".cm-line").forEach((line, i) => {
             const info = getInfo(i + 1);
-            info.cur = !info.cur;
             this.arrowGutter.setMarker(this.editorView, info);
         });
     }

@@ -188,7 +188,6 @@ export class BreakpointsGutter extends Gutters {
             onClick: (view: EditorView, info: GutterInfo) => {
                 info.on = !info.on;
                 this.setMarker(view, info);
-                console.log("Hit");
             },
             extraExtensions: [
                 EditorView.baseTheme({
@@ -215,22 +214,41 @@ export class ArrowGutter extends Gutters<ArrowGutterInfo> {
     constructor() {
         super({
             name: "arrow",
-            onClick: (view, info) => console.log("Clicked"),
         });
     }
 
     protected override marker(info: ArrowGutterInfo): GutterMarker {
         return new SimpleMarker(() => {
-            const node = document.createElement("div");
             if (info.on && info.cur) {
-                node.replaceChildren(document.createTextNode("-->"));
+                return document.createTextNode("↪");
             } else if (info.on) {
-                node.replaceChildren(document.createTextNode("->"));
+                return document.createTextNode("⇢");
             }
-            node.setAttribute("arrow", "AttributeSet");
-            // Text interface tells us that more complex node will be processed into Text nodes
-            return node as any as Text;
         });
+    }
+
+    public override hasMarker(view: EditorView, lineNr: number): boolean {
+        const guttersInfo: Map<number, GutterInfo> = view.state.field(this.state);
+        return guttersInfo.has(lineNr) && guttersInfo.get(lineNr)!.on;
+    }
+
+    public hasOtherMarker(view: EditorView, lineNr: number): boolean {
+        const guttersInfo: Map<number, ArrowGutterInfo> = view.state.field(this.state);
+        return guttersInfo.has(lineNr) && guttersInfo.get(lineNr)!.cur;
+    }
+
+    /**
+     * Set a marker with the given info
+     * @param {EditorView} view View in which the Gutters live
+     * @param {Info} info Info used to render the marker
+     */
+    public override setMarker(view: EditorView, info: ArrowGutterInfo): void {
+        if (this.hasMarker(view, info.lineNr) !== info.on ||
+        this.hasOtherMarker(view, info.lineNr) !== info.cur) {
+            view.dispatch({
+                effects: this.effect.of(info)
+            });
+        }
     }
 }
 

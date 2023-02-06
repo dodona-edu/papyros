@@ -186,9 +186,6 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         this.previousState = RunState.Ready;
         this.runStartTime = new Date().getTime();
         this.state = RunState.Ready;
-        this.editor.setArrowStep({visualizing: true, getInfo: (lineInfo: number) => {
-            return { cur: true, lineNr: lineInfo, on: true };
-        } });
     }
 
     /**
