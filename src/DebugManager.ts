@@ -69,6 +69,11 @@ export class DebugManager extends Renderable {
             contentType: "text/plain",
             data: "Clearing the output"
         });
+        BackendManager.publish({
+            type: BackendEventType.VisualizeStep,
+            contentType: "text/plain",
+            data: this.curInstr
+        });
         // Add the output from the current tracestep
         BackendManager.publish({
             type: BackendEventType.Output,
