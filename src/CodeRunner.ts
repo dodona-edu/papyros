@@ -6,7 +6,8 @@ import { BackendManager } from "./BackendManager";
 import { CodeEditor } from "./editor/CodeEditor";
 import {
     addPapyrosPrefix,
-    APPLICATION_STATE_TEXT_ID, CODE_BUTTONS_WRAPPER_ID, DEFAULT_EDITOR_DELAY, RUN_BTN_ID,
+    APPLICATION_STATE_TEXT_ID, CODE_BUTTONS_WRAPPER_ID, DEFAULT_EDITOR_DELAY, NEXT_BTN_ID, PREV_BTN_ID, RUN_BTN_ID,
+    SLIDER_AREA_ID,
     STATE_SPINNER_ID, STOP_BTN_ID
 } from "./Constants";
 import { InputManager, InputManagerRenderOptions, InputMode } from "./InputManager";
@@ -184,6 +185,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             e => this.onLoad(e));
         BackendManager.subscribe(BackendEventType.Start,
             e => this.onStart(e));
+        BackendManager.subscribe(BackendEventType.VisualizeStep, () => this.renderSlider());
         this.previousState = RunState.Ready;
         this.runStartTime = new Date().getTime();
         this.state = RunState.Ready;
@@ -391,6 +393,40 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         };
     }
 
+    private getPreviousButton(): DynamicButton {
+        const buttonOptions = {
+            id: PREV_BTN_ID,
+            buttonText: t("Papyros.previous"),
+            classNames: "_tw-text-white _tw-bg-blue-500"
+        };
+        const buttonHandler = (): void => {
+            this.debugManager.takeStep(this.debugManager.getStep() - 1);
+        };
+        appendClasses(buttonOptions, "_tw-min-w-[60px]");
+        return {
+            id: buttonOptions.id,
+            buttonHTML: renderButton(buttonOptions),
+            onClick: buttonHandler
+        };
+    }
+
+    private getNextButton(): DynamicButton {
+        const buttonOptions = {
+            id: NEXT_BTN_ID,
+            buttonText: t("Papyros.next"),
+            classNames: "_tw-text-white _tw-bg-blue-500"
+        };
+        const buttonHandler = (): void => {
+            this.debugManager.takeStep(this.debugManager.getStep() + 1);
+        };
+        appendClasses(buttonOptions, "_tw-min-w-[60px]");
+        return {
+            id: buttonOptions.id,
+            buttonHTML: renderButton(buttonOptions),
+            onClick: buttonHandler
+        };
+    }
+
     /**
      * Specific helper method to render only the buttons required by the user
      */
@@ -405,6 +441,25 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         buttons.forEach(b => addListener(b.id, b.onClick, "click"));
     }
 
+    private renderSlider(): void {
+        const prevButton = this.getPreviousButton();
+        const nextButton = this.getNextButton();
+        const step = this.debugManager.getStep() + 1;
+        const html = `
+<input id="minmax-range" type="range" min="1" max="10" value=${step}
+class="_tw-w-full _tw-cursor-pointer _tw-dark:bg-gray-700">
+<div class="_tw-grid _tw-grid-cols-3 _tw-items-center _tw-px-1">
+    ${prevButton.buttonHTML}
+    <div id="133" class="_tw-col-span-1 _tw-flex _tw-flex-row _tw-justify-center">
+        ${"Step " + step}
+    </div>
+    ${nextButton.buttonHTML}
+</div>`;
+        getElement(SLIDER_AREA_ID).innerHTML = html;
+        addListener(prevButton.id, prevButton.onClick, "click");
+        addListener(nextButton.id, nextButton.onClick, "click");
+    }
+
     protected override _render(options: CodeRunnerRenderOptions): HTMLElement {
         appendClasses(options.statusPanelOptions,
             // eslint-disable-next-line max-len
@@ -417,7 +472,9 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         <div id="${APPLICATION_STATE_TEXT_ID}"></div>
         ${renderSpinningCircle(STATE_SPINNER_ID, "_tw-border-gray-200 _tw-border-b-red-500")}
     </div>
-</div>`);
+</div>
+<div id="${SLIDER_AREA_ID}" class="_tw-px-20 _tw-pb-2"></div>
+`);
         this.setState(this.state);
         this.inputManager.render(options.inputOptions);
         this.outputManager.render(options.outputOptions);

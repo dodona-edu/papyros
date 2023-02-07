@@ -127,6 +127,7 @@ export class DebugManager extends Renderable {
      */
     public takeStep(step: number): void {
         let curStep = step;
+        console.log(curStep);
         if (this.visualizer !== undefined) {
             if (step < 0) {
                 curStep = 0;
@@ -136,5 +137,9 @@ export class DebugManager extends Renderable {
             this.visualizer.renderStep(curStep);
             this.render();
         }
+    }
+
+    public getStep(): number {
+        return this.curInstr;
     }
 }

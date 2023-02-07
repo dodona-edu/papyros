@@ -18,6 +18,8 @@ const ENGLISH_TRANSLATION = {
     "visualization": "Visualization",
     "run": "Run",
     "stop": "Stop",
+    "next": "Next",
+    "previous": "Previous",
     "visualize": "Visualize",
     "finished": "Code executed in %{time} s",
     "interrupted": "Code interrupted after %{time} s",
@@ -74,6 +76,8 @@ const DUTCH_TRANSLATION = {
     "visualization": "Visualisatie",
     "run": "Run",
     "stop": "Stop",
+    "next": "Volgende",
+    "previous": "Vorige",
     "visualize": "Visualiseer",
     "states": {
         "running": "Aan het uitvoeren",
