@@ -29,9 +29,7 @@
 */
 
 require('./lib/d3.v2.min.js');
-require('./lib/jquery-3.0.0.min.js');    if (this.params.updateOutputCallback) {
-  this.params.updateOutputCallback(this);
-}
+require('./lib/jquery-3.0.0.min.js');
 
 // for TypeScript
 declare var jQuery: JQueryStatic;
