@@ -419,7 +419,6 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         this.setState(this.state);
         this.inputManager.render(options.inputOptions);
         this.outputManager.render(options.outputOptions);
-        // Only render the debugManager if we visualize the code
         this.debugManager.render(options.debugOptions);
         this.editor.render(options.codeEditorOptions);
         this.editor.setPanel(rendered);

@@ -97,6 +97,10 @@ export class CodeEditor extends CodeMirrorEditor {
                     lineNr: lineInfo };
             } });
         });
+        BackendManager.subscribe(BackendEventType.End, () => {
+            this.visualizeArrowArgs = undefined;
+            this.render();
+        });
     }
 
 

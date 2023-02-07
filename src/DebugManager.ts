@@ -18,13 +18,14 @@ export class DebugManager extends Renderable {
     /**
      * The last generated codetrace
     */
-    private trace: string;
+    private trace: object;
     private curInstr: number;
 
     constructor() {
         super();
         BackendManager.subscribe(BackendEventType.CompletedTraceGeneration,
             e => this.onVisualization(e));
+        BackendManager.subscribe(BackendEventType.End, () => this.onStop());
         this.curInstr = 0;
     }
 
@@ -40,8 +41,11 @@ export class DebugManager extends Renderable {
                 startingInstruction: this.curInstr,
                 updateOutputCallback: this.onOutputCallback.bind(this),
             });
+        } else {
+            renderWithOptions(options, `
+            ${renderLabel(t("Papyros.visualization"), DEBUG_AREA_ID)}
+            `);
         }
-        // Restore previously rendered items
     }
 
     /**
@@ -52,8 +56,18 @@ export class DebugManager extends Renderable {
         this.render();
     }
 
-    public getTrace(): string {
+    public getTrace(): object {
         return this.trace;
+    }
+
+    private onStop(): void {
+        BackendManager.publish({
+            type: BackendEventType.Output,
+            data: this.trace["trace"]!.at(-1).stdout, contentType: "text/plain"
+        });
+        this.trace = undefined;
+        this.curInstr = 0;
+        this.render();
     }
 
     /**
@@ -95,5 +109,6 @@ export class DebugManager extends Renderable {
      */
     public clearTrace(): void {
         this.trace = undefined;
+        this.curInstr = 0;
     }
 }
