@@ -256,6 +256,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             data: "VizFinished", contentType: "text/plain"
         });
         this.setState(RunState.Ready);
+        this.render();
     }
 
     /**
@@ -442,11 +443,12 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     }
 
     private renderSlider(): void {
-        const prevButton = this.getPreviousButton();
-        const nextButton = this.getNextButton();
-        const step = this.debugManager.getStep() + 1;
-        const trace = this.debugManager.getTrace()["trace"];
-        const html = `
+        if (this.state === RunState.Visualizing) {
+            const prevButton = this.getPreviousButton();
+            const nextButton = this.getNextButton();
+            const step = this.debugManager.getStep() + 1;
+            const trace = this.debugManager.getTrace()["trace"];
+            const html = `
 <input id="minmax-range" type="range" min="1"
 max="${trace.length}" value=${step}
 class="_tw-w-full _tw-dark:bg-gray-700" disabled>
@@ -457,9 +459,10 @@ class="_tw-w-full _tw-dark:bg-gray-700" disabled>
     </div>
     ${nextButton.buttonHTML}
 </div>`;
-        getElement(SLIDER_AREA_ID).innerHTML = html;
-        addListener(prevButton.id, prevButton.onClick, "click");
-        addListener(nextButton.id, nextButton.onClick, "click");
+            getElement(SLIDER_AREA_ID).innerHTML = html;
+            addListener(prevButton.id, prevButton.onClick, "click");
+            addListener(nextButton.id, nextButton.onClick, "click");
+        }
     }
 
     protected override _render(options: CodeRunnerRenderOptions): HTMLElement {
