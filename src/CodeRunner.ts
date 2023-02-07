@@ -60,7 +60,8 @@ export enum RunState {
     Running = "running",
     AwaitingInput = "awaiting_input",
     Stopping = "stopping",
-    Ready = "ready"
+    Ready = "ready",
+    Visualizing = "visualizing"
 }
 
 /**
@@ -244,6 +245,18 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     }
 
     /**
+     * Method that publishes an end event so the managers can clean themselves up
+     */
+    private stopVisualization(): void {
+        this.setState(RunState.Stopping);
+        BackendManager.publish({
+            type: BackendEventType.End,
+            data: "Stopping visualization", contentType: "text/plain"
+        });
+        this.setState(RunState.Ready);
+    }
+
+    /**
      * Set the used programming language to the given one to allow editing and running code
      * @param {ProgrammingLanguage} programmingLanguage The language to use
      */
@@ -353,6 +366,13 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
                     if (this.visualize) this.generateTrace(code);
                 });
             };
+        } else if (this.state === RunState.Visualizing) {
+            buttonOptions = {
+                id: STOP_BTN_ID,
+                buttonText: t("Papyros.stop"),
+                classNames: "_tw-text-white _tw-bg-red-500"
+            };
+            buttonHandler = () => this.stopVisualization();
         } else {
             buttonOptions = {
                 id: STOP_BTN_ID,
@@ -516,9 +536,13 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
                 // Was interrupted, End message already published
                 interrupted = true;
             }
-            this.setState(RunState.Ready, t(
-                interrupted ? "Papyros.interrupted" : "Papyros.finished",
-                { time: (new Date().getTime() - this.runStartTime) / 1000 }));
+            if (this.visualize) {
+                this.setState(RunState.Visualizing);
+            } else {
+                this.setState(RunState.Ready, t(
+                    interrupted ? "Papyros.interrupted" : "Papyros.finished",
+                    { time: (new Date().getTime() - this.runStartTime) / 1000 }));
+            }
             if (terminated) {
                 await this.start();
             } else if (await backend.workerProxy.hasOverflow()) {

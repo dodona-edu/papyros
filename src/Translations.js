@@ -27,6 +27,7 @@ const ENGLISH_TRANSLATION = {
         "loading": "Loading",
         "awaiting_input": "Awaiting input",
         "ready": " ",
+        "visualizing": "Visualizing"
     },
     "programming_language": "Programming language",
     "programming_languages": {
@@ -80,6 +81,7 @@ const DUTCH_TRANSLATION = {
         "loading": "Aan het laden",
         "awaiting_input": "Aan het wachten op invoer",
         "ready": " ",
+        "visualizing": "Aan het visualiseren"
     },
     "finished": "Code uitgevoerd in %{time} s",
     "interrupted": "Code onderbroken na %{time} s",
