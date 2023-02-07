@@ -29,12 +29,9 @@
 */
 
 require('./lib/d3.v2.min.js');
-require('./lib/jquery-3.0.0.min.js');
-require('./lib/jquery.jsPlumb-1.3.10-all-min.js'); // DO NOT UPGRADE ABOVE 1.3.10 OR ELSE BREAKAGE WILL OCCUR 
-require('./lib/jquery-ui-1.11.4/jquery-ui.js');
-require('./lib/jquery-ui-1.11.4/jquery-ui.css');
-require('./lib/jquery.ba-bbq.js'); // contains slight pgbovine modifications
-require('./css/pytutor.css');
+require('./lib/jquery-3.0.0.min.js');    if (this.params.updateOutputCallback) {
+  this.params.updateOutputCallback(this);
+}
 
 // for TypeScript
 declare var jQuery: JQueryStatic;
@@ -755,6 +752,11 @@ export class ExecutionVisualizer {
   updateOutputMini() {
     assert(this.params.hideCode);
     this.dataViz.renderDataStructures(this.curInstr);
+
+    // Added this because otherwise updateOutputCallback will never be called with hideCode: true
+    if (this.params.updateOutputCallback) {
+      this.params.updateOutputCallback(this);
+    }
   }
 
   renderStep(step) {

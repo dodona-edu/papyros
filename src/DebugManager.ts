@@ -43,6 +43,7 @@ export class DebugManager extends Renderable {
             this.visualizer = new ExecutionVisualizer(VISUALIZE_AREA_ID, this.trace, {
                 startingInstruction: this.curInstr,
                 updateOutputCallback: this.onOutputCallback.bind(this),
+                hideCode: true
             });
         } else {
             renderWithOptions(options, `
@@ -82,6 +83,7 @@ export class DebugManager extends Renderable {
      * @param {visualization} visualization the ExecutionVisualizer curruntly in use
      */
     private onOutputCallback(visualization: ExecutionVisualizer): void {
+        console.log("Hit");
         this.curInstr = visualization.curInstr;
         this.visualizer = visualization;
         // Delete the current output
