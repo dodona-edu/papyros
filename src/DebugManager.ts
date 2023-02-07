@@ -61,13 +61,15 @@ export class DebugManager extends Renderable {
     }
 
     private onStop(): void {
-        BackendManager.publish({
-            type: BackendEventType.Output,
-            data: this.trace["trace"]!.at(-1).stdout, contentType: "text/plain"
-        });
-        this.trace = undefined;
-        this.curInstr = 0;
-        this.render();
+        if (this.trace !== undefined) {
+            BackendManager.publish({
+                type: BackendEventType.Output,
+                data: this.trace!["trace"]!.at(-1).stdout, contentType: "text/plain"
+            });
+            this.trace = undefined;
+            this.curInstr = 0;
+            this.render();
+        }
     }
 
     /**

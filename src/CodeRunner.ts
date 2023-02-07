@@ -247,7 +247,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     /**
      * Method that publishes an end event so the managers can clean themselves up
      */
-    private stopVisualization(): void {
+    public stopVisualization(): void {
         this.setState(RunState.Stopping);
         BackendManager.publish({
             type: BackendEventType.End,
@@ -287,7 +287,9 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      */
     public setVisualize(state: boolean): void {
         this.visualize = state;
-        if (!this.visualize) this.debugManager.clearTrace();
+        if (!this.visualize) {
+            this.stopVisualization();
+        }
     }
 
     /**
