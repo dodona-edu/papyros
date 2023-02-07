@@ -249,7 +249,6 @@ export class ExecutionVisualizer {
       }
     }
 
-    console.log(this.params);
     if (this.params.startingInstruction) {
       this.params.jumpToEnd = false; // override! make sure to handle FIRST
 
@@ -270,7 +269,6 @@ export class ExecutionVisualizer {
       assert(0 <= this.params.startingInstruction &&
              this.params.startingInstruction < this.curTrace.length);
       this.curInstr = this.params.startingInstruction;
-      console.log("Changed");
     }
 
     // if you have multiple ExecutionVisualizer on a page, their IDs

@@ -136,9 +136,8 @@ export abstract class BackendManager {
 
         // The backendmanager should not halt on code finished.
         BackendManager.subscribe(BackendEventType.End, e => {
-            if (e.data !== "CodeFinished") BackendManager.halt();
+            if (e.data !== "CodeFinished" && e.data !== "VizFinished") BackendManager.halt();
         });
         BackendManager.subscribe(BackendEventType.Interrupt, () => BackendManager.halt());
-        BackendManager.subscribe(BackendEventType.Input, () => console.log("Input!"));
     }
 }

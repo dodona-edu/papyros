@@ -148,9 +148,9 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         this.inputManager = new InputManager(async (input: string) => {
             const backend = await this.backend;
             backend.writeMessage(input);
+            // Push the input to the visualizer
             backend.workerProxy.pushInput(input);
             this.setState(RunState.Running);
-            console.log(input);
         }, inputMode);
         this.outputManager = new OutputManager();
         this.debugManager = new DebugManager();
@@ -251,7 +251,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         this.setState(RunState.Stopping);
         BackendManager.publish({
             type: BackendEventType.End,
-            data: "Stopping visualization", contentType: "text/plain"
+            data: "VizFinished", contentType: "text/plain"
         });
         this.setState(RunState.Ready);
     }

@@ -60,7 +60,6 @@ class PythonWorker extends Backend<PyodideExtras> {
             {
                 callback: (e: any) => {
                     const converted = PythonWorker.convert(e);
-                    console.log(converted);
                     return this.onEvent(converted);
                 },
                 buffer_constructor: (cb: (e: BackendEvent) => void) => {

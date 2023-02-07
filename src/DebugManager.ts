@@ -20,12 +20,15 @@ export class DebugManager extends Renderable {
     */
     private trace: object;
     private curInstr: number;
+    private visualizer: ExecutionVisualizer;
 
     constructor() {
         super();
         BackendManager.subscribe(BackendEventType.CompletedTraceGeneration,
             e => this.onVisualization(e));
         BackendManager.subscribe(BackendEventType.End, () => this.onStop());
+        BackendManager.subscribe(BackendEventType.TakeVisualizeStep, e => this.takeStep(e.data));
+        this.visualizer = undefined;
         this.curInstr = 0;
     }
 
@@ -37,7 +40,7 @@ export class DebugManager extends Renderable {
             _tw-px-10 _tw-pt-6 _tw-h-full" style="overflow: auto;">
             </div>
             `);
-            new ExecutionVisualizer(VISUALIZE_AREA_ID, this.trace, {
+            this.visualizer = new ExecutionVisualizer(VISUALIZE_AREA_ID, this.trace, {
                 startingInstruction: this.curInstr,
                 updateOutputCallback: this.onOutputCallback.bind(this),
             });
@@ -56,17 +59,19 @@ export class DebugManager extends Renderable {
         this.render();
     }
 
-    public getTrace(): object {
-        return this.trace;
-    }
-
     private onStop(): void {
-        if (this.trace !== undefined) {
+        if (this.visualizer !== undefined) {
+            BackendManager.publish({
+                type: BackendEventType.ClearOutput,
+                contentType: "text/plain",
+                data: "Clearing the output"
+            });
             BackendManager.publish({
                 type: BackendEventType.Output,
                 data: this.trace!["trace"]!.at(-1).stdout, contentType: "text/plain"
             });
             this.trace = undefined;
+            this.visualizer = undefined;
             this.curInstr = 0;
             this.render();
         }
@@ -78,6 +83,7 @@ export class DebugManager extends Renderable {
      */
     private onOutputCallback(visualization: ExecutionVisualizer): void {
         this.curInstr = visualization.curInstr;
+        this.visualizer = visualization;
         // Delete the current output
         BackendManager.publish({
             type: BackendEventType.ClearOutput,
@@ -111,6 +117,24 @@ export class DebugManager extends Renderable {
      */
     public clearTrace(): void {
         this.trace = undefined;
+        this.visualizer = undefined;
         this.curInstr = 0;
+    }
+
+    /**
+     * Method to jump to the given step
+     * @param {step} step the step to go to, 0-index based
+     */
+    public takeStep(step: number): void {
+        let curStep = step;
+        if (this.visualizer !== undefined) {
+            if (step < 0) {
+                curStep = 0;
+            } else if (step >= this.visualizer.curTrace.length) {
+                curStep = this.visualizer.curTrace.length - 1;
+            }
+            this.visualizer.renderStep(curStep);
+            this.render();
+        }
     }
 }

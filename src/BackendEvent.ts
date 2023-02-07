@@ -14,7 +14,8 @@ export enum BackendEventType {
     Loading = "loading",
     ClearOutput = "clearOutput",
     ClearInput = "clearInput",
-    VisualizeStep = "visualizeStep"
+    VisualizeStep = "visualizeStep",
+    TakeVisualizeStep = "takeVisualizeStep",
 }
 /**
  * All possible types for ease of iteration
@@ -26,7 +27,7 @@ export const BACKEND_EVENT_TYPES = [
     BackendEventType.Sleep, BackendEventType.Error,
     BackendEventType.Interrupt, BackendEventType.Loading,
     BackendEventType.ClearOutput, BackendEventType.ClearInput,
-    BackendEventType.VisualizeStep
+    BackendEventType.VisualizeStep, BackendEventType.TakeVisualizeStep
 ];
 /**
  * Interface for events used for communication between threads
