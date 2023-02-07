@@ -142,4 +142,8 @@ export class DebugManager extends Renderable {
     public getStep(): number {
         return this.curInstr;
     }
+
+    public getTrace(): object {
+        return this.trace;
+    }
 }

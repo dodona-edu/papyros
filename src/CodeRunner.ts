@@ -396,8 +396,8 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     private getPreviousButton(): DynamicButton {
         const buttonOptions = {
             id: PREV_BTN_ID,
-            buttonText: t("Papyros.previous"),
-            classNames: "_tw-text-white _tw-bg-blue-500"
+            buttonText: "←",
+            classNames: "_tw-text-white _tw-bg-gray-400"
         };
         const buttonHandler = (): void => {
             this.debugManager.takeStep(this.debugManager.getStep() - 1);
@@ -413,8 +413,8 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     private getNextButton(): DynamicButton {
         const buttonOptions = {
             id: NEXT_BTN_ID,
-            buttonText: t("Papyros.next"),
-            classNames: "_tw-text-white _tw-bg-blue-500"
+            buttonText: "→",
+            classNames: "_tw-text-white _tw-bg-gray-400"
         };
         const buttonHandler = (): void => {
             this.debugManager.takeStep(this.debugManager.getStep() + 1);
@@ -445,13 +445,15 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         const prevButton = this.getPreviousButton();
         const nextButton = this.getNextButton();
         const step = this.debugManager.getStep() + 1;
+        const trace = this.debugManager.getTrace()["trace"];
         const html = `
-<input id="minmax-range" type="range" min="1" max="10" value=${step}
-class="_tw-w-full _tw-cursor-pointer _tw-dark:bg-gray-700">
-<div class="_tw-grid _tw-grid-cols-3 _tw-items-center _tw-px-1">
+<input id="minmax-range" type="range" min="1"
+max="${trace.length}" value=${step}
+class="_tw-w-full _tw-dark:bg-gray-700" disabled>
+<div class="_tw-grid _tw-grid-cols-3 _tw-items-center _tw-px-20">
     ${prevButton.buttonHTML}
     <div id="133" class="_tw-col-span-1 _tw-flex _tw-flex-row _tw-justify-center">
-        ${"Step " + step}
+        ${step === trace.length ? "Terminated" : "step " + step}
     </div>
     ${nextButton.buttonHTML}
 </div>`;
@@ -465,7 +467,7 @@ class="_tw-w-full _tw-cursor-pointer _tw-dark:bg-gray-700">
             // eslint-disable-next-line max-len
             "_tw-border-solid _tw-border-gray-200 _tw-border-b-2 dark:_tw-border-dark-mode-content");
         const rendered = renderWithOptions(options.statusPanelOptions, `
-<div class="_tw-grid _tw-grid-cols-2 _tw-items-center _tw-px-1">
+<div class="_tw-grid _tw-grid-cols-2 _tw-items-center _tw-px-2 _tw-pt-2">
     <div id="${CODE_BUTTONS_WRAPPER_ID}" class="_tw-col-span-1 _tw-flex _tw-flex-row">
     </div>
     <div class="_tw-col-span-1 _tw-flex _tw-flex-row-reverse _tw-items-center">
@@ -473,7 +475,7 @@ class="_tw-w-full _tw-cursor-pointer _tw-dark:bg-gray-700">
         ${renderSpinningCircle(STATE_SPINNER_ID, "_tw-border-gray-200 _tw-border-b-red-500")}
     </div>
 </div>
-<div id="${SLIDER_AREA_ID}" class="_tw-px-20 _tw-pb-2"></div>
+<div id="${SLIDER_AREA_ID}" class="_tw-px-20 _tw-pb-1"></div>
 `);
         this.setState(this.state);
         this.inputManager.render(options.inputOptions);
