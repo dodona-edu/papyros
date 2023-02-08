@@ -50,7 +50,6 @@ export class DebugManager extends Renderable {
             window.addEventListener("resize", () => this.visualizer.redrawConnectors());
         } else {
             renderWithOptions(options, `
-            ${renderLabel(t("Papyros.visualization"), DEBUG_AREA_ID)}
             `);
         }
     }
