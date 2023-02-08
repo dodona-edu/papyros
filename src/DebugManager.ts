@@ -85,7 +85,6 @@ export class DebugManager extends Renderable {
      * @param {visualization} visualization the ExecutionVisualizer curruntly in use
      */
     private onOutputCallback(visualization: ExecutionVisualizer): void {
-        console.log("Hit");
         this.curInstr = visualization.curInstr;
         this.visualizer = visualization;
         // Delete the current output
@@ -131,7 +130,6 @@ export class DebugManager extends Renderable {
      */
     public takeStep(step: number): void {
         let curStep = step;
-        console.log(curStep);
         if (this.visualizer !== undefined) {
             if (step < 0) {
                 curStep = 0;

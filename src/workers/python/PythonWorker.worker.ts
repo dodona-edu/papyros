@@ -3,12 +3,13 @@ import { Backend, RunMode, WorkerAutocompleteContext, WorkerDiagnostic } from ".
 import { CompletionResult } from "@codemirror/autocomplete";
 import { BackendEvent, BackendEventType } from "../../BackendEvent";
 import { PyodideInterface } from "pyodide";
+import { PythonTraceGeneratorWorker } from "pyodide-trace-library";
 import {
     pyodideExpose,
     loadPyodideAndPackage,
     PyodideExtras
 } from "pyodide-worker-runner";
-import { PythonTraceGeneratorWorker } from "pyodide-trace-library";
+
 /* eslint-disable-next-line */
 const pythonPackageUrl = require("!!url-loader!./python_package.tar.gz.load_by_url").default;
 

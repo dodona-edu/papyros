@@ -4323,10 +4323,10 @@ punycode@^2.1.0, punycode@^2.1.1:
   resolved "https://registry.yarnpkg.com/punycode/-/punycode-2.1.1.tgz#b58b010ac40c22c5657616c8d2c2c02c7bf479ec"
   integrity sha512-XRsRjdf+j5ml+y/6GKHPZbrF/8p2Yga0JPtdqTIY2Xe5ohJPD9saDJJLPvp9+NSBprVvevdXZybnj2cv8OEd0A==
 
-pyodide-trace-library@^1.5.0:
-  version "1.5.0"
-  resolved "https://registry.yarnpkg.com/pyodide-trace-library/-/pyodide-trace-library-1.5.0.tgz#e5b853359ed5136dfb1217ca78f67b13c45e0647"
-  integrity sha512-E6W2H7NTuMLD+0T5qBzpKgKSf8B2nURtJiWmLVFxFiuxDoNIYSygwyKiVa/w+tSYhjQk99+pabh8FZvyuJ+S6g==
+pyodide-trace-library@^1.5.1:
+  version "1.5.1"
+  resolved "https://registry.yarnpkg.com/pyodide-trace-library/-/pyodide-trace-library-1.5.1.tgz#1b663da142d903ac3078802a378591dc3539efae"
+  integrity sha512-JcRKlgNdj7DaCH4cKXDXN68JFYHzZS+QeRPWe1XQhLSRysGA3vk+TneOTNfyScb3yu/janfoOSCBQYOUOJ0fIQ==
   dependencies:
     "@types/node" "^18.11.15"
     comlink "^4.3.1"
