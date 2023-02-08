@@ -8,6 +8,7 @@ import { BackendManager } from "./BackendManager";
 import { BackendEvent, BackendEventType } from "./BackendEvent";
 import { ExecutionVisualizer } from "./pytutor";
 import {
+    addListener,
     t
 } from "./util/Util";
 
@@ -45,6 +46,8 @@ export class DebugManager extends Renderable {
                 updateOutputCallback: this.onOutputCallback.bind(this),
                 hideCode: true
             });
+            addListener(VISUALIZE_AREA_ID, () => this.visualizer.redrawConnectors(), "scroll");
+            window.addEventListener("resize", () => this.visualizer.redrawConnectors());
         } else {
             renderWithOptions(options, `
             ${renderLabel(t("Papyros.visualization"), DEBUG_AREA_ID)}
