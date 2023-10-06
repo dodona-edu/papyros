@@ -49,7 +49,8 @@ const ENGLISH_TRANSLATION = {
     "launch_error": "Papyros failed to load. Do you want to reload?",
     "loading": "Loading %{packages}.",
     "run_modes": {
-        "doctest": "Run doctests"
+        "doctest": "Run doctests",
+        "debug": "Debug",
     },
     "used_input": "This line has already been used as input.",
     "used_input_with_prompt": "This line was used as input for the following prompt: %{prompt}"
@@ -102,7 +103,8 @@ const DUTCH_TRANSLATION = {
     "launch_error": "Er liep iets fout bij het laden van Papyros. Wil je herladen?",
     "loading": "Bezig met het installeren van %{packages}.",
     "run_modes": {
-        "doctest": "Run doctests"
+        "doctest": "Run doctests",
+        "debug": "Debug",
     },
     "used_input": "Deze regel werd al gebruikt als invoer.",
     "used_input_with_prompt": "Deze regel werd gebruikt als invoer voor de volgende vraag: %{prompt}"

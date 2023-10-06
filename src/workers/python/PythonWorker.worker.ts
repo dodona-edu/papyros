@@ -87,6 +87,9 @@ class PythonWorker extends Backend<PyodideExtras> {
         modes.push({
             mode: "doctest",
             active: this.papyros.has_doctests(code)
+        }, {
+            mode: "debug",
+            active: true
         });
         return modes;
     }
