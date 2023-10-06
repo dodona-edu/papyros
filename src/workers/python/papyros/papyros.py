@@ -127,8 +127,6 @@ class Papyros(python_runner.PyodideRunner):
 
     def pre_run(self, source_code, mode="exec", top_level_await=False):
         self.override_globals()
-        if mode == "debug":
-            return source_code
         if mode == "doctest":
             # remove if __name__ == "__main__" and replace it
             lines = source_code.split("\n")
@@ -150,7 +148,11 @@ class Papyros(python_runner.PyodideRunner):
                 code_obj = self.pre_run(source_code, mode=mode, top_level_await=top_level_await)
                 if code_obj:
                     self.callback("start", data="RunCode", contentType="text/plain")
-                    result = self.execute(code_obj, mode)
+                    if mode == "debug":
+                        from tracer import pg_logger
+                        result = pg_logger.exec_script_str_local(source_code, False, False, json_finalizer)
+                    else:
+                        result = self.execute(code_obj, mode)
                     while isinstance(result, Awaitable):
                         result = await result
                     self.callback("end", data="CodeFinished", contentType="text/plain")
@@ -237,15 +239,6 @@ class Papyros(python_runner.PyodideRunner):
         parser = doctest.DocTestParser()
         tests = parser.get_examples(code)
         return bool(tests)
-
-    def execute(self, code_obj: CodeType, mode: str = None, snoop_config: dict = None):
-        if mode == "debug":
-            from tracer import pg_logger
-            trace = pg_logger.exec_script_str_local(code_obj, False, False, json_finalizer)
-            print(trace)
-            return trace
-        else:
-            return super().execute(code_obj, mode=mode, snoop_config=snoop_config)
 
 def json_finalizer(input_code, output_trace):
     ret = dict(code=input_code, trace=output_trace)
