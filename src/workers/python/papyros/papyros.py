@@ -149,8 +149,8 @@ class Papyros(python_runner.PyodideRunner):
                 if code_obj:
                     self.callback("start", data="RunCode", contentType="text/plain")
                     if mode == "debug":
-                        from tracer import pg_logger
-                        result = pg_logger.exec_script_str_local(source_code, False, False, json_finalizer)
+                        from tracer import JSONTracer
+                        result = JSONTracer(False, False, False).runscript(source_code)
                     else:
                         result = self.execute(code_obj, mode)
                     while isinstance(result, Awaitable):
@@ -239,8 +239,3 @@ class Papyros(python_runner.PyodideRunner):
         parser = doctest.DocTestParser()
         tests = parser.get_examples(code)
         return bool(tests)
-
-def json_finalizer(input_code, output_trace):
-    ret = dict(code=input_code, trace=output_trace)
-    json_output = json.dumps(ret)
-    return json_output
