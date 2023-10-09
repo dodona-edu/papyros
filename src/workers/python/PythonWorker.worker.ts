@@ -121,6 +121,10 @@ class PythonWorker extends Backend<PyodideExtras> {
         await this.installImports(code);
         return PythonWorker.convert(this.papyros.lint(code));
     }
+
+    public getTraceback(): string {
+        return this.papyros.getTraceback();
+    }
 }
 
 // Default export to be recognized as a TS module
