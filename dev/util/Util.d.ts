@@ -8,7 +8,7 @@ export declare function getLocales(): Array<string>;
 /**
  * Helper type to access a HTML element, either via its id or the element itself
  */
-declare type ElementIdentifier = string | HTMLElement;
+type ElementIdentifier = string | HTMLElement;
 /**
  * Resolve an ElementIdentifier to the corresponding HTLMElement
  * @param {ElementIdentifier} elementId The identifier for the element

@@ -7,7 +7,7 @@ import { SyncClient } from "comsync";
  * Callback type definition for subscribers
  * @param {BackendEvent} e The published event
  */
-declare type BackendEventListener = (e: BackendEvent) => void;
+type BackendEventListener = (e: BackendEvent) => void;
 /**
  * Abstract class to implement the singleton pattern
  * Static methods group functionality
