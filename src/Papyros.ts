@@ -1,6 +1,5 @@
 /* eslint-disable max-len */
 import "./Papyros.css";
-import I18n from "i18n-js";
 import {
     EDITOR_WRAPPER_ID, PROGRAMMING_LANGUAGE_SELECT_ID,
     LOCALE_SELECT_ID, INPUT_AREA_WRAPPER_ID, EXAMPLE_SELECT_ID,
@@ -10,9 +9,9 @@ import {
 import { InputManagerRenderOptions, InputMode } from "./InputManager";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import {
-    t, loadTranslations, getLocales,
+    t, getLocales,
     removeSelection,
-    addListener, getElement, cleanCurrentUrl
+    addListener, getElement, cleanCurrentUrl, i18n
 } from "./util/Util";
 import { RunState, CodeRunner } from "./CodeRunner";
 import { getCodeForExample, getExampleNames } from "./examples/Examples";
@@ -111,9 +110,7 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
     constructor(config: PapyrosConfig) {
         super();
         this.config = config;
-        // Load translations as other components depend on them
-        loadTranslations();
-        I18n.locale = config.locale;
+        i18n.locale = config.locale;
         this.codeRunner = new CodeRunner(config.programmingLanguage, config.inputMode);
     }
 
@@ -158,7 +155,7 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
     public setLocale(locale: string): void {
         if (locale !== this.config.locale) {
             this.config.locale = locale;
-            I18n.locale = locale;
+            i18n.locale = locale;
             this.render();
         }
     }
@@ -302,7 +299,7 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
                     removeSelection(EXAMPLE_SELECT_ID);
                     this.config.example = undefined;
                     // Modify search query params without reloading page
-                    history.pushState(null, "", `?locale=${I18n.locale}&language=${pl}`);
+                    history.pushState(null, "", `?locale=${i18n.locale}&language=${pl}`);
                 }, "change", "value"
             );
             addListener(LOCALE_SELECT_ID, locale => {

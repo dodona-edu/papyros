@@ -5,7 +5,7 @@
   "homepage": ".",
   "devDependencies": {
     "@types/escape-html": "^1.0.3",
-    "@types/i18n-js": "^3.8.7",
+    "@types/i18n-js": "^3.8.9",
     "@types/jest": "^27.4.1",
     "@types/serviceworker": "^0.0.76",
     "@typescript-eslint/eslint-plugin": "^6.9.0",
@@ -47,7 +47,7 @@
     "comlink": "^4.4.1",
     "comsync": "^0.0.9",
     "escape-html": "^1.0.3",
-    "i18n-js": "^3.8.0",
+    "i18n-js": "^4.3.2",
     "pyodide-worker-runner": "^0.0.10",
     "sync-message": "^0.0.12"
   },
