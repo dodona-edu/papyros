@@ -6,7 +6,7 @@
   "devDependencies": {
     "@types/escape-html": "^1.0.3",
     "@types/i18n-js": "^3.8.7",
-    "@types/jest": "^27.4.1",
+    "@types/jest": "^29.5.10",
     "@types/serviceworker": "^0.0.76",
     "@typescript-eslint/eslint-plugin": "^6.9.0",
     "@typescript-eslint/parser": "^6.9.0",
