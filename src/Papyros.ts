@@ -1,5 +1,4 @@
 /* eslint-disable max-len */
-import "./Papyros.css";
 import I18n from "i18n-js";
 import {
     EDITOR_WRAPPER_ID, PROGRAMMING_LANGUAGE_SELECT_ID,

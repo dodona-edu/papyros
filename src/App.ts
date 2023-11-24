@@ -1,3 +1,4 @@
+import "./Papyros.css";
 import {
     addPapyrosPrefix,
     DEFAULT_LOCALE, DEFAULT_PROGRAMMING_LANGUAGE,
