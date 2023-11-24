@@ -1,6 +1,7 @@
 const path = require("path");
 const TerserPlugin = require('terser-webpack-plugin');
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+const nodeExternals = require('webpack-node-externals');
 
 
 const PUBLIC_DIR = "public";
@@ -15,6 +16,7 @@ module.exports = function (webpackEnv, argv) {
 	// In production, node_modules typically use the dist folder
 	let outFolder = "";
 	let entries = {};
+	let externals = [];
 	if (mode === "development") {
 		outFolder = PUBLIC_DIR;
 		entries = Object.fromEntries([
@@ -27,6 +29,7 @@ module.exports = function (webpackEnv, argv) {
 			["Library", "./src/Library.ts"],
 			["/workers/input/InputWorker", "./src/workers/input/InputWorker.ts"]
 		]);
+		externals = [nodeExternals()];
 	}
 	return {
 		entry: entries,
@@ -83,6 +86,7 @@ module.exports = function (webpackEnv, argv) {
 		},
 		plugins: [
 			new BundleAnalyzerPlugin()
-		]
+		],
+		externals: externals
 	}
 };
