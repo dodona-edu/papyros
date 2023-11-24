@@ -1,5 +1,7 @@
 const path = require("path");
 const TerserPlugin = require('terser-webpack-plugin');
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+
 
 const PUBLIC_DIR = "public";
 const LIBRARY_DIR = "dist";
@@ -30,14 +32,6 @@ module.exports = function (webpackEnv, argv) {
 		entry: entries,
 		module: {
 			rules: [
-				// Inline bundle worker-scripts to prevent bundle resolution errors
-				{
-					test: /\.worker\.ts?$/,
-					loader: 'worker-loader',
-					options: {
-						inline: 'no-fallback'
-					}
-				},
 				{
 					test: /\.ts?$/,
 					loader: "ts-loader",
@@ -87,5 +81,8 @@ module.exports = function (webpackEnv, argv) {
 			static: path.join(__dirname, PUBLIC_DIR),
 			port: DEVELOPMENT_PORT,
 		},
+		plugins: [
+			new BundleAnalyzerPlugin()
+		]
 	}
 };

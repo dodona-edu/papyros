@@ -1,7 +1,5 @@
 import { Backend } from "./Backend";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
-import PythonWorker from "./workers/python/PythonWorker.worker";
-import JavaScriptWorker from "./workers/javascript/JavaScriptWorker.worker";
 import { BackendEvent, BackendEventType } from "./BackendEvent";
 import { LogType, papyrosLog } from "./util/Logging";
 import { Channel, makeChannel } from "sync-message";
@@ -122,13 +120,13 @@ export abstract class BackendManager {
         BackendManager.subscriberMap = new Map();
         BackendManager.registerBackend(ProgrammingLanguage.Python,
             () => new PyodideClient<Backend>(
-                () => new PythonWorker(),
+                () => new Worker(new URL("./workers/python/worker.ts", import.meta.url)),
                 BackendManager.channel
             )
         );
         BackendManager.registerBackend(ProgrammingLanguage.JavaScript,
             () => new SyncClient<Backend>(
-                () => new JavaScriptWorker(),
+                () => new Worker(new URL("./workers/javascript/worker.ts", import.meta.url)),
                 BackendManager.channel
             )
         );
