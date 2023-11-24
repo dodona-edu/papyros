@@ -1,0 +1,1 @@
+(self.webpackChunkPapyros=self.webpackChunkPapyros||[]).push([["_296d"],{"?296d":()=>{eval("/* (ignored) */\n\n//# sourceURL=webpack://Papyros/ws_(ignored)?")}}]);
