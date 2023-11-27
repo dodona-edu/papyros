@@ -1,4 +1,3 @@
-import * as Comlink from "comlink";
 import { Backend, RunMode, WorkerAutocompleteContext, WorkerDiagnostic } from "../../Backend";
 import { CompletionResult } from "@codemirror/autocomplete";
 import { BackendEvent } from "../../BackendEvent";
@@ -12,7 +11,7 @@ const pythonPackageUrl = require("!!file-loader!./python_package.tar.gz").defaul
  * Implementation of a Python backend for Papyros
  * Powered by Pyodide (https://pyodide.org/)
  */
-class PythonWorker extends Backend<PyodideExtras> {
+export class PythonWorker extends Backend<PyodideExtras> {
     private pyodide: PyodideInterface;
     private papyros: PyProxy;
     /**
@@ -119,8 +118,3 @@ class PythonWorker extends Backend<PyodideExtras> {
     }
 }
 
-// Default export to be recognized as a TS module
-export default {} as any;
-
-// Comlink and Comsync handle the actual export
-Comlink.expose(new PythonWorker());

@@ -1,4 +1,3 @@
-import * as Comlink from "comlink";
 import { Backend, WorkerAutocompleteContext, WorkerDiagnostic } from "../../Backend";
 import { CompletionResult } from "@codemirror/autocomplete";
 import { javascriptLanguage } from "@codemirror/lang-javascript";
@@ -9,7 +8,7 @@ import { SyncExtras } from "comsync";
  * Implementation of a JavaScript backend for Papyros
  * by using eval and overriding some builtins
  */
-class JavaScriptWorker extends Backend<SyncExtras> {
+export class JavaScriptWorker extends Backend<SyncExtras> {
     /**
      * Convert varargs to a string, similar to how the console does it
      * @param {any[]} args The values to join into a string
@@ -174,9 +173,3 @@ class JavaScriptWorker extends Backend<SyncExtras> {
         return Promise.resolve([]);
     }
 }
-
-// Default export to be recognized as a TS module
-export default {} as any;
-
-// Comlink and Comsync handle the actual export
-Comlink.expose(new JavaScriptWorker());

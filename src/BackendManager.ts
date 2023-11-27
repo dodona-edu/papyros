@@ -120,13 +120,13 @@ export abstract class BackendManager {
         BackendManager.subscriberMap = new Map();
         BackendManager.registerBackend(ProgrammingLanguage.Python,
             () => new PyodideClient<Backend>(
-                () => new Worker(new URL("./workers/python/worker.ts", import.meta.url)),
+                () => new Worker(new URL("./workers/python/worker", import.meta.url)),
                 BackendManager.channel
             )
         );
         BackendManager.registerBackend(ProgrammingLanguage.JavaScript,
             () => new SyncClient<Backend>(
-                () => new Worker(new URL("./workers/javascript/worker.ts", import.meta.url)),
+                () => new Worker(new URL("./workers/javascript/worker", import.meta.url)),
                 BackendManager.channel
             )
         );
