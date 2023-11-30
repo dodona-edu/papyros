@@ -191,10 +191,6 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
                         this.outputManager.onOverflow(null);
                     })
                 );
-            this.editor.setCompletionSource(async context => {
-                const completionContext = Backend.convertCompletionContext(context);
-                return await workerProxy.autocomplete(completionContext);
-            });
             this.editor.setLintingSource(
                 async view => {
                     const workerDiagnostics = await workerProxy.lintCode(this.editor.getText());

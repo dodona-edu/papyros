@@ -1,7 +1,6 @@
 import { CodeEditor } from "../../src/editor/CodeEditor";
 import { ProgrammingLanguage } from "../../src/ProgrammingLanguage";
 import { Diagnostic } from "@codemirror/lint";
-import { startCompletion } from "@codemirror/autocomplete";
 import { EDITOR_WRAPPER_ID } from "../../src/Constants";
 
 describe("CodeEditor", () => {
@@ -54,20 +53,6 @@ describe("CodeEditor", () => {
         return new Promise<void>(resolve => {
             setTimeout(() => {
                 expect(lintMock).toBeCalled();
-                resolve();
-            }, 750);
-        });
-    });
-
-    it("supports autocompletion", () => {
-        const autocompleteMock: () => null = jest.fn(() => null);
-        editor.setCompletionSource(autocompleteMock);
-        startCompletion(editor.editorView);
-
-        return new Promise<void>(resolve => {
-            // CodeMirror waits until editor is idle to call autocompletion
-            setTimeout(() => {
-                expect(autocompleteMock).toBeCalled();
                 resolve();
             }, 750);
         });
