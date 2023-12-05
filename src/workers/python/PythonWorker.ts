@@ -1,5 +1,4 @@
-import { Backend, RunMode, WorkerAutocompleteContext, WorkerDiagnostic } from "../../Backend";
-import { CompletionResult } from "@codemirror/autocomplete";
+import { Backend, RunMode, WorkerDiagnostic } from "../../Backend";
 import { BackendEvent } from "../../BackendEvent";
 import { PyodideInterface, PyProxy } from "pyodide";
 import { pyodideExpose, PyodideExtras, loadPyodideAndPackage } from "pyodide-worker-runner";
@@ -100,16 +99,6 @@ export class PythonWorker extends Backend<PyodideExtras> {
             source_code: code,
             mode: mode
         });
-    }
-
-    public override async autocomplete(context: WorkerAutocompleteContext):
-        Promise<CompletionResult | null> {
-        await this.installImports(context.text);
-        const result: CompletionResult = PythonWorker.convert(
-            this.papyros.autocomplete(context)
-        );
-        result.validFor = /^[\w$]*$/;
-        return result;
     }
 
     public override async lintCode(code: string): Promise<Array<WorkerDiagnostic>> {
