@@ -1,40 +1,6 @@
-import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
 import { BackendEvent } from "./BackendEvent";
 import { SyncExtras } from "comsync";
 import { BackendEventQueue } from "./BackendEventQueue";
-/**
- * Interface to represent the CodeMirror CompletionContext in a worker
- */
-export interface WorkerAutocompleteContext {
-    /**
-     * Whether the autocompletion was explicitly requested (using keybindings)
-     */
-    explicit: boolean;
-    /**
-     * The absolute position in the CodeMirror document
-     */
-    pos: number;
-    /**
-     * The line number of the cursor while completing (1-based)
-     */
-    line: number;
-    /**
-     * The column number of the cursor while completing (1-based)
-     */
-    column: number;
-    /**
-     * The full text to autocomplete for
-     */
-    text: string;
-    /**
-     * The match before the cursor (determined by a regex)
-     */
-    before: {
-        from: number;
-        to: number;
-        text: string;
-    } | null;
-}
 export interface WorkerDiagnostic {
     /**
      * 1-based index of the starting line containing the issue
@@ -111,20 +77,6 @@ export declare abstract class Backend<Extras extends SyncExtras = SyncExtras> {
      * @return {Promise<void>} Promise of execution
      */
     abstract runCode(extras: Extras, code: string, mode?: string): Promise<void>;
-    /**
-     * Converts the context to a cloneable object containing useful properties
-     * to generate autocompletion suggestions with
-     * Class instances are not passable to workers, so we extract the useful information
-     * @param {CompletionContext} context Current context to autocomplete for
-     * @param {RegExp} expr Expression to match the previous token with
-     * @return {WorkerAutocompleteContext} Completion context that can be passed as a message
-     */
-    static convertCompletionContext(context: CompletionContext, expr?: RegExp): WorkerAutocompleteContext;
-    /**
-     * Generate autocompletion suggestions for the given context
-     * @param {WorkerAutocompleteContext} context Context to autcomplete in
-     */
-    abstract autocomplete(context: WorkerAutocompleteContext): Promise<CompletionResult | null>;
     /**
      * Generate linting suggestions for the given code
      * @param {string} code The code to lint

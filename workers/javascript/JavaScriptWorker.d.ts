@@ -1,5 +1,4 @@
-import { Backend, WorkerAutocompleteContext, WorkerDiagnostic } from "../../Backend";
-import { CompletionResult } from "@codemirror/autocomplete";
+import { Backend, WorkerDiagnostic } from "../../Backend";
 import { SyncExtras } from "comsync";
 /**
  * Implementation of a JavaScript backend for Papyros
@@ -28,7 +27,6 @@ export declare class JavaScriptWorker extends Backend<SyncExtras> {
      * @param {any[]} args The error values to log
      */
     private consoleError;
-    autocomplete(context: WorkerAutocompleteContext): Promise<CompletionResult | null>;
     /**
      * Helper method to generate suggestions based on properties in an object
      * @param {number} from Where in the document the autocompletion starts

@@ -1,5 +1,4 @@
 import { ProgrammingLanguage } from "../ProgrammingLanguage";
-import { CompletionSource } from "@codemirror/autocomplete";
 import { EditorView } from "@codemirror/view";
 import { Diagnostic } from "@codemirror/lint";
 import { CodeMirrorEditor } from "./CodeMirrorEditor";
@@ -24,10 +23,6 @@ export declare class CodeEditor extends CodeMirrorEditor {
      * @param {ProgrammingLanguage} language The language to use
      */
     setProgrammingLanguage(language: ProgrammingLanguage): void;
-    /**
-     * @param {CompletionSource} completionSource Function to obtain autocomplete results
-     */
-    setCompletionSource(completionSource: CompletionSource): void;
     /**
      * @param {LintSource} lintSource Function to obtain linting results
      */

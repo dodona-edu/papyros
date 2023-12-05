@@ -1,5 +1,4 @@
-import { Backend, RunMode, WorkerAutocompleteContext, WorkerDiagnostic } from "../../Backend";
-import { CompletionResult } from "@codemirror/autocomplete";
+import { Backend, RunMode, WorkerDiagnostic } from "../../Backend";
 import { BackendEvent } from "../../BackendEvent";
 import { PyodideExtras } from "pyodide-worker-runner";
 /**
@@ -28,6 +27,5 @@ export declare class PythonWorker extends Backend<PyodideExtras> {
     private installImports;
     runModes(code: string): Array<RunMode>;
     runCode(extras: PyodideExtras, code: string, mode?: string): Promise<any>;
-    autocomplete(context: WorkerAutocompleteContext): Promise<CompletionResult | null>;
     lintCode(code: string): Promise<Array<WorkerDiagnostic>>;
 }
