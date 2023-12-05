@@ -27,7 +27,7 @@ def create_package(package_name, dependencies, extra_deps):
     except Exception as e:
         # Always seems to result in a harmless permission denied error
         pass
-    tar_name = f"{package_name}.tar.gz"
+    tar_name = f"{package_name}.tar.gz.load_by_url"
     if os.path.exists(tar_name):
         os.remove(tar_name)
     with tarfile.open(tar_name, "w:gz") as tar:
