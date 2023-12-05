@@ -1,4 +1,3 @@
-import "./Papyros.css";
 import { InputManagerRenderOptions, InputMode } from "./InputManager";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import { RunState, CodeRunner } from "./CodeRunner";
