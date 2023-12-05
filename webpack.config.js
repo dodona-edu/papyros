@@ -1,43 +1,21 @@
 const path = require("path");
 const TerserPlugin = require('terser-webpack-plugin');
 
+
 const PUBLIC_DIR = "public";
-const LIBRARY_DIR = "dist";
 const DEVELOPMENT_PORT = 8080;
 module.exports = function (webpackEnv, argv) {
 	let mode = argv.mode;
 	if (!mode) {
 		mode = webpackEnv.WEBPACK_SERVE ? 'development' : 'production'
 	}
-	// In development, the bundle is loaded from the public folder
-	// In production, node_modules typically use the dist folder
-	let outFolder = "";
-	let entries = {};
-	if (mode === "development") {
-		outFolder = PUBLIC_DIR;
-		entries = Object.fromEntries([
+	return {
+		entry: Object.fromEntries([
 			["App", "./src/App.ts"],
 			["InputServiceWorker", "./src/InputServiceWorker.ts"]
-		]);
-	} else {
-		outFolder = LIBRARY_DIR;
-		entries = Object.fromEntries([
-			["Library", "./src/Library.ts"],
-			["/workers/input/InputWorker", "./src/workers/input/InputWorker.ts"]
-		]);
-	}
-	return {
-		entry: entries,
+		]),
 		module: {
 			rules: [
-				// Inline bundle worker-scripts to prevent bundle resolution errors
-				{
-					test: /\.worker\.ts?$/,
-					loader: 'worker-loader',
-					options: {
-						inline: 'no-fallback'
-					}
-				},
 				{
 					test: /\.ts?$/,
 					loader: "ts-loader",
@@ -59,7 +37,7 @@ module.exports = function (webpackEnv, argv) {
 		output: {
 			// Allow generating both service worker and Papyros
 			filename: "[name].js",
-			path: path.resolve(__dirname, outFolder),
+			path: path.resolve(__dirname, PUBLIC_DIR),
 			// Required to make output useable as an npm package
 			library: {
 				name: "Papyros",

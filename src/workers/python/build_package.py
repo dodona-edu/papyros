@@ -27,7 +27,7 @@ def create_package(package_name, dependencies, extra_deps):
     except Exception as e:
         # Always seems to result in a harmless permission denied error
         pass
-    tar_name = f"{package_name}.tar.gz.load_by_url"
+    tar_name = f"{package_name}.tar.gz"
     if os.path.exists(tar_name):
         os.remove(tar_name)
     with tarfile.open(tar_name, "w:gz") as tar:
@@ -45,5 +45,4 @@ def check_tar(tarname, out_dir="."):
 
 
 if __name__ == "__main__":
-    create_package("python_package", "python-runner friendly_traceback jedi pylint", extra_deps="papyros")
-    #check_tar("python_package.tar.gz.load_by_url", out_dir="test")
+    create_package("python_package", "python-runner friendly_traceback jedi pylint<3.0.0 tomli typing-extensions", extra_deps="papyros")
