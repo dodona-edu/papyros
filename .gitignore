@@ -30,4 +30,4 @@ yarn-error.log*
 translationIssues.txt
 # Ignore output of local pip install when building the tar
 src/workers/python/python_package/
-src/workers/python/python_package.tar.gz
+src/workers/python/python_package.tar.gz.load_by_url
