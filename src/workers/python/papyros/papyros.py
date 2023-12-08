@@ -12,7 +12,6 @@ from contextlib import contextmanager, redirect_stdout, redirect_stderr
 from pyodide_worker_runner import install_imports
 from pyodide import JsException, create_proxy
 from .util import to_py
-from .autocomplete import autocomplete
 
 SYS_RECURSION_LIMIT = 500
 
@@ -216,11 +215,6 @@ class Papyros(python_runner.PyodideRunner):
                 )),
             contentType="text/json"
         )
-
-    def autocomplete(self, context):
-        context = to_py(context)
-        self.set_source_code(context["text"])
-        return autocomplete(context)
 
     def lint(self, code):
         # PyLint runs into an issue when trying to import its dependencies

@@ -9,6 +9,17 @@ updates:
   open-pull-requests-limit: 99
   labels:
     - "dependencies"
+  groups:
+    eslint:
+      patterns:
+        - "eslint*"
+    codemirror:
+      patterns:
+        - "*codemirror*"
+        - "@lezer*"
+    types:
+      patterns:
+        - "@types*"
 - package-ecosystem: github-actions
   directory: "/"
   schedule:

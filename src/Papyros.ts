@@ -1,5 +1,4 @@
 /* eslint-disable max-len */
-import "./Papyros.css";
 import I18n from "i18n-js";
 import {
     EDITOR_WRAPPER_ID, PROGRAMMING_LANGUAGE_SELECT_ID,
@@ -204,7 +203,7 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
             this.config.channelOptions.scope = serviceWorkerRoot;
             const serviceWorkerUrl = serviceWorkerRoot + serviceWorkerName;
             try {
-                await window.navigator.serviceWorker.register(serviceWorkerUrl);
+                await navigator.serviceWorker.register(serviceWorkerUrl, { scope: "/" });
                 BackendManager.channel = makeChannel({ serviceWorker: this.config.channelOptions })!;
             } catch (error: any) {
                 return false;

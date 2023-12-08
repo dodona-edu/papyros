@@ -6,12 +6,12 @@ import { Papyros, PapyrosConfig, PapyrosRenderOptions } from "./Papyros";
 import { CodeRunner, RunState } from "./CodeRunner";
 import { BackendManager } from "./BackendManager";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
-import { WorkerAutocompleteContext, WorkerDiagnostic } from "./Backend";
+import { WorkerDiagnostic } from "./Backend";
 import { ButtonOptions, RenderOptions } from "./util/Rendering";
 
 export type {
     BackendEvent, FriendlyError,
-    WorkerAutocompleteContext, WorkerDiagnostic,
+    WorkerDiagnostic,
     PapyrosConfig, PapyrosRenderOptions,
     RenderOptions, ButtonOptions
 };

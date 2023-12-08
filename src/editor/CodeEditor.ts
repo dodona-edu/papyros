@@ -2,8 +2,8 @@
 import { ProgrammingLanguage } from "../ProgrammingLanguage";
 import { t } from "../util/Util";
 import {
-    CompletionSource, autocompletion,
-    closeBrackets, closeBracketsKeymap, completionKeymap, startCompletion
+    autocompletion,
+    closeBrackets, closeBracketsKeymap, completionKeymap
 } from "@codemirror/autocomplete";
 import {
     defaultKeymap, historyKeymap, indentWithTab,
@@ -94,16 +94,6 @@ export class CodeEditor extends CodeMirrorEditor {
         );
         this.setPlaceholder(t("Papyros.code_placeholder",
             { programmingLanguage: language }));
-    }
-
-    /**
-     * @param {CompletionSource} completionSource Function to obtain autocomplete results
-     */
-    public setCompletionSource(completionSource: CompletionSource): void {
-        this.reconfigure(
-            [CodeEditor.AUTOCOMPLETION, autocompletion({ override: [completionSource] })]
-        );
-        startCompletion(this.editorView);
     }
 
     /**

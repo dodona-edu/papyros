@@ -1,6 +1,5 @@
-import { CompletionResult } from "@codemirror/autocomplete";
 import { SyncExtras } from "comsync";
-import { Backend, WorkerAutocompleteContext, WorkerDiagnostic } from "../../src/Backend";
+import { Backend, WorkerDiagnostic } from "../../src/Backend";
 import { BackendEventType } from "../../src/BackendEvent";
 
 /**
@@ -10,22 +9,12 @@ import { BackendEventType } from "../../src/BackendEvent";
 export class MockBackend extends Backend<SyncExtras> {
     constructor() {
         super();
-        this.autocomplete = jest.fn(this.autocomplete);
         this.runCode = jest.fn(this.runCode);
         this.lintCode = jest.fn(this.lintCode);
     }
 
     protected syncExpose() {
         return (f: any) => f;
-    }
-
-    override async autocomplete(context: WorkerAutocompleteContext):
-        Promise<CompletionResult | null> {
-        this.onEvent({
-            type: BackendEventType.Output,
-            data: "Autocompleting code", contentType: "text/plain"
-        });
-        return { validFor: /^[\w$]*$/, options: [], from: context.pos };
     }
 
     override runCode(extras: SyncExtras, code: string): Promise<any> {

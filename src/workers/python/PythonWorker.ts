@@ -1,29 +1,26 @@
-import * as Comlink from "comlink";
-import { Backend, RunMode, WorkerAutocompleteContext, WorkerDiagnostic } from "../../Backend";
-import { CompletionResult } from "@codemirror/autocomplete";
+import { Backend, RunMode, WorkerDiagnostic } from "../../Backend";
 import { BackendEvent } from "../../BackendEvent";
-import {
-    pyodideExpose, Pyodide,
-    loadPyodideAndPackage,
-    PyodideExtras
-} from "pyodide-worker-runner";
+import { PyodideInterface, PyProxy } from "pyodide";
+import { pyodideExpose, PyodideExtras, loadPyodideAndPackage } from "pyodide-worker-runner";
+
 /* eslint-disable-next-line */
-const pythonPackageUrl = require("!!url-loader!./python_package.tar.gz.load_by_url").default;
+const pythonPackageUrl = require("!!file-loader!./python_package.tar.gz.load_by_url").default;
 
 /**
  * Implementation of a Python backend for Papyros
  * Powered by Pyodide (https://pyodide.org/)
  */
-class PythonWorker extends Backend<PyodideExtras> {
-    private pyodide: Pyodide;
-    private papyros: any;
+export class PythonWorker extends Backend<PyodideExtras> {
+    private pyodide: PyodideInterface;
+    private papyros: PyProxy;
     /**
      * Promise to asynchronously install imports needed by the code
      */
     private installPromise: Promise<void> | null;
     constructor() {
         super();
-        this.pyodide = {} as Pyodide;
+        this.pyodide = {} as PyodideInterface;
+        this.papyros = {} as PyProxy;
         this.installPromise = null;
     }
 
@@ -38,7 +35,7 @@ class PythonWorker extends Backend<PyodideExtras> {
         return pyodideExpose;
     }
 
-    private static async getPyodide(): Promise<Pyodide> {
+    private static async getPyodide(): Promise<PyodideInterface> {
         return await loadPyodideAndPackage({ url: pythonPackageUrl, format: ".tgz" });
     }
 
@@ -107,16 +104,6 @@ class PythonWorker extends Backend<PyodideExtras> {
         });
     }
 
-    public override async autocomplete(context: WorkerAutocompleteContext):
-        Promise<CompletionResult | null> {
-        await this.installImports(context.text);
-        const result: CompletionResult = PythonWorker.convert(
-            this.papyros.autocomplete(context)
-        );
-        result.validFor = /^[\w$]*$/;
-        return result;
-    }
-
     public override async lintCode(code: string): Promise<Array<WorkerDiagnostic>> {
         await this.installImports(code);
         return PythonWorker.convert(this.papyros.lint(code));
@@ -127,8 +114,3 @@ class PythonWorker extends Backend<PyodideExtras> {
     }
 }
 
-// Default export to be recognized as a TS module
-export default {} as any;
-
-// Comlink and Comsync handle the actual export
-Comlink.expose(new PythonWorker());

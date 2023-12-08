@@ -1,7 +1,5 @@
-import * as Comlink from "comlink";
-import { Backend, WorkerAutocompleteContext, WorkerDiagnostic } from "../../Backend";
+import { Backend, WorkerDiagnostic } from "../../Backend";
 import { CompletionResult } from "@codemirror/autocomplete";
-import { javascriptLanguage } from "@codemirror/lang-javascript";
 import { BackendEventType } from "../../BackendEvent";
 import { SyncExtras } from "comsync";
 
@@ -9,7 +7,7 @@ import { SyncExtras } from "comsync";
  * Implementation of a JavaScript backend for Papyros
  * by using eval and overriding some builtins
  */
-class JavaScriptWorker extends Backend<SyncExtras> {
+export class JavaScriptWorker extends Backend<SyncExtras> {
     /**
      * Convert varargs to a string, similar to how the console does it
      * @param {any[]} args The values to join into a string
@@ -69,32 +67,6 @@ class JavaScriptWorker extends Backend<SyncExtras> {
             JavaScriptWorker.stringify(...args) + "\n",
             "text/plain"
         );
-    }
-
-    public override async autocomplete(context: WorkerAutocompleteContext):
-        Promise<CompletionResult | null> {
-        const completePropertyAfter = ["PropertyName", ".", "?."];
-        const dontCompleteIn = ["TemplateString", "LineComment", "BlockComment",
-            "VariableDefinition", "PropertyDefinition"];
-        const nodeBefore = javascriptLanguage.parser.parse(context.text)
-            .resolveInner(context.pos, -1);
-        const globalWindow = self as any;
-        if (completePropertyAfter.includes(nodeBefore.name) &&
-            nodeBefore.parent?.name == "MemberExpression") {
-            const object = nodeBefore.parent.getChild("Expression");
-            if (object?.name == "VariableName") {
-                const from = /\./.test(nodeBefore.name) ? nodeBefore.to : nodeBefore.from;
-                const variableName = context.text.slice(object.from, object.to);
-                if (typeof globalWindow[variableName] == "object") {
-                    return JavaScriptWorker.completeProperties(from, globalWindow);
-                }
-            }
-        } else if (nodeBefore.name == "VariableName") {
-            return JavaScriptWorker.completeProperties(nodeBefore.from, globalWindow);
-        } else if (context.explicit && !dontCompleteIn.includes(nodeBefore.name)) {
-            return JavaScriptWorker.completeProperties(context.pos, globalWindow);
-        }
-        return null;
     }
 
     /**
@@ -174,9 +146,3 @@ class JavaScriptWorker extends Backend<SyncExtras> {
         return Promise.resolve([]);
     }
 }
-
-// Default export to be recognized as a TS module
-export default {} as any;
-
-// Comlink and Comsync handle the actual export
-Comlink.expose(new JavaScriptWorker());

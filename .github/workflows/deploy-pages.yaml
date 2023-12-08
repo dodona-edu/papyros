@@ -15,9 +15,9 @@ jobs:
         with:
           python-version: '3.9'
       - name: Checkout branch
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Clone main
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: dodona-edu/papyros
           path: papyros
@@ -40,7 +40,7 @@ jobs:
           mv papyros/dist dist
           mv devdist dist/dev
       - name: Deploy 🚀
-        uses: JamesIves/github-pages-deploy-action@v4.4.1
+        uses: JamesIves/github-pages-deploy-action@v4.5.0
         with:
           branch: gh-pages # The branch the action should deploy to.
           folder: dist # The folder the action should deploy.
