@@ -28,9 +28,9 @@ import {
     renderSelectOptions,
     renderWithOptions
 } from "./util/Rendering";
-import "@dodona/trace-component/dist/components/TraceComponent";
+import "@dodona/trace-component";
 import { BackendEventType } from "./BackendEvent";
-import { TraceComponent } from "@dodona/trace-component/dist/components/TraceComponent";
+import { TraceComponent } from "@dodona/trace-component";
 
 const LANGUAGE_MAP = new Map([
     ["python", ProgrammingLanguage.Python],
