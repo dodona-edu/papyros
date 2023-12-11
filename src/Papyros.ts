@@ -1,31 +1,43 @@
 /* eslint-disable max-len */
 import I18n from "i18n-js";
 import {
-    EDITOR_WRAPPER_ID, PROGRAMMING_LANGUAGE_SELECT_ID,
-    LOCALE_SELECT_ID, INPUT_AREA_WRAPPER_ID, EXAMPLE_SELECT_ID,
-    PANEL_WRAPPER_ID, DARK_MODE_TOGGLE_ID,
-    MAIN_APP_ID, OUTPUT_AREA_WRAPPER_ID
+    DARK_MODE_TOGGLE_ID,
+    EDITOR_WRAPPER_ID,
+    EXAMPLE_SELECT_ID,
+    INPUT_AREA_WRAPPER_ID,
+    LOCALE_SELECT_ID,
+    MAIN_APP_ID,
+    OUTPUT_AREA_WRAPPER_ID,
+    PANEL_WRAPPER_ID,
+    PROGRAMMING_LANGUAGE_SELECT_ID
 } from "./Constants";
-import { InputManagerRenderOptions, InputMode } from "./InputManager";
-import { ProgrammingLanguage } from "./ProgrammingLanguage";
+import {InputManagerRenderOptions, InputMode} from "./InputManager";
+import {ProgrammingLanguage} from "./ProgrammingLanguage";
+import {addListener, cleanCurrentUrl, getElement, getLocales, loadTranslations, removeSelection, t} from "./util/Util";
+import {CodeRunner, RunState} from "./CodeRunner";
+import {getCodeForExample, getExampleNames} from "./examples/Examples";
+import {AtomicsChannelOptions, makeChannel, ServiceWorkerChannelOptions} from "sync-message";
+import {BackendManager} from "./BackendManager";
 import {
-    t, loadTranslations, getLocales,
-    removeSelection,
-    addListener, getElement, cleanCurrentUrl
-} from "./util/Util";
-import { RunState, CodeRunner } from "./CodeRunner";
-import { getCodeForExample, getExampleNames } from "./examples/Examples";
-import { AtomicsChannelOptions, makeChannel, ServiceWorkerChannelOptions } from "sync-message";
-import { BackendManager } from "./BackendManager";
-import {
-    RenderOptions, renderWithOptions, renderSelect, renderSelectOptions,
-    ButtonOptions, Renderable, renderLabel, appendClasses
+    appendClasses,
+    ButtonOptions,
+    Renderable,
+    renderLabel,
+    RenderOptions,
+    renderSelect,
+    renderSelectOptions,
+    renderWithOptions
 } from "./util/Rendering";
+import "@dodona/trace-component/dist/components/TraceComponent";
+import { BackendEventType } from "./BackendEvent";
+import { TraceComponent } from "@dodona/trace-component/dist/components/TraceComponent";
 
 const LANGUAGE_MAP = new Map([
     ["python", ProgrammingLanguage.Python],
     ["javascript", ProgrammingLanguage.JavaScript]
 ]);
+
+const TRACE_COMPONENT_ID = "trace-component";
 
 /**
  * Configuration options for this instance of Papyros
@@ -289,6 +301,10 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
                     ${renderLabel(t("Papyros.input"), renderOptions.inputOptions!.parentElementId)}
                     <div id="${renderOptions.inputOptions!.parentElementId}"></div>
                 </div>
+                <!-- Debugging section-->
+                <div>
+                    <tc-trace id="${TRACE_COMPONENT_ID}"></tc-trace>
+                </div>
             </div>
         </div>
     </div>
@@ -320,6 +336,10 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
             addListener(DARK_MODE_TOGGLE_ID, () => {
                 this.setDarkMode(!renderOptions.darkMode);
             }, "click");
+            const traceComponent = getElement(TRACE_COMPONENT_ID) as TraceComponent;
+            BackendManager.subscribe(BackendEventType.Trace, e => {
+                traceComponent.trace = JSON.parse(e.data).trace;
+            });
         }
         this.codeRunner.render({
             statusPanelOptions: renderOptions.statusPanelOptions!,

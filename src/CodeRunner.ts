@@ -1,26 +1,31 @@
-import { proxy } from "comlink";
-import { SyncClient } from "comsync";
-import { Backend } from "./Backend";
-import { BackendEvent, BackendEventType } from "./BackendEvent";
-import { BackendManager } from "./BackendManager";
-import { CodeEditor } from "./editor/CodeEditor";
+import {proxy} from "comlink";
+import {SyncClient} from "comsync";
+import {Backend} from "./Backend";
+import {BackendEvent, BackendEventType} from "./BackendEvent";
+import {BackendManager} from "./BackendManager";
+import {CodeEditor} from "./editor/CodeEditor";
 import {
     addPapyrosPrefix,
-    APPLICATION_STATE_TEXT_ID, CODE_BUTTONS_WRAPPER_ID, DEFAULT_EDITOR_DELAY, RUN_BTN_ID,
-    STATE_SPINNER_ID, STOP_BTN_ID
+    APPLICATION_STATE_TEXT_ID,
+    CODE_BUTTONS_WRAPPER_ID,
+    DEFAULT_EDITOR_DELAY,
+    RUN_BTN_ID,
+    STATE_SPINNER_ID,
+    STOP_BTN_ID
 } from "./Constants";
-import { InputManager, InputManagerRenderOptions, InputMode } from "./InputManager";
-import { ProgrammingLanguage } from "./ProgrammingLanguage";
-import { renderSpinningCircle } from "./util/HTMLShapes";
+import {InputManager, InputManagerRenderOptions, InputMode} from "./InputManager";
+import {ProgrammingLanguage} from "./ProgrammingLanguage";
+import {renderSpinningCircle} from "./util/HTMLShapes";
+import {addListener, downloadResults, getElement, parseData, t} from "./util/Util";
 import {
-    addListener, getElement,
-    t, downloadResults, parseData
-} from "./util/Util";
-import {
-    RenderOptions, renderWithOptions,
-    renderButton, ButtonOptions, Renderable, appendClasses
+    appendClasses,
+    ButtonOptions,
+    Renderable,
+    renderButton,
+    RenderOptions,
+    renderWithOptions
 } from "./util/Rendering";
-import { OutputManager } from "./OutputManager";
+import {OutputManager} from "./OutputManager";
 
 interface DynamicButton {
     id: string;
@@ -384,7 +389,11 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             await backend.call(
                 backend.workerProxy.runCode, code, mode
             );
-            console.log("Run finished", await backend.workerProxy.getTraceback());
+            BackendManager.publish({
+                type: BackendEventType.Trace,
+                data: await backend.workerProxy.getTraceback(),
+                contentType: "text/json"
+            });
         } catch (error: any) {
             if (error.type === "InterruptError") {
                 // Error signaling forceful interrupt

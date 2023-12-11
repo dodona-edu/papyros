@@ -9,7 +9,8 @@ export enum BackendEventType {
     Sleep = "sleep",
     Error = "error",
     Interrupt = "interrupt",
-    Loading = "loading"
+    Loading = "loading",
+    Trace = "trace"
 }
 /**
  * All possible types for ease of iteration
