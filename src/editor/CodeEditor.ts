@@ -1,31 +1,40 @@
 /* eslint-disable valid-jsdoc */
-import { ProgrammingLanguage } from "../ProgrammingLanguage";
-import { t } from "../util/Util";
+import {ProgrammingLanguage} from "../ProgrammingLanguage";
+import {t} from "../util/Util";
+import {autocompletion, closeBrackets, closeBracketsKeymap, completionKeymap} from "@codemirror/autocomplete";
+import {defaultKeymap, history, historyKeymap, indentWithTab, insertBlankLine} from "@codemirror/commands";
+import {javascript} from "@codemirror/lang-javascript";
+import {python} from "@codemirror/lang-python";
 import {
-    autocompletion,
-    closeBrackets, closeBracketsKeymap, completionKeymap
-} from "@codemirror/autocomplete";
-import {
-    defaultKeymap, historyKeymap, indentWithTab,
-    history, insertBlankLine
-} from "@codemirror/commands";
-import { javascript } from "@codemirror/lang-javascript";
-import { python } from "@codemirror/lang-python";
-import {
-    defaultHighlightStyle, indentUnit, LanguageSupport,
-    foldGutter, indentOnInput, bracketMatching, foldKeymap, syntaxHighlighting
+    bracketMatching,
+    defaultHighlightStyle,
+    foldGutter,
+    foldKeymap,
+    indentOnInput,
+    indentUnit,
+    LanguageSupport,
+    syntaxHighlighting
 } from "@codemirror/language";
-import { highlightSelectionMatches, searchKeymap } from "@codemirror/search";
-import { EditorState, Extension } from "@codemirror/state";
-import { oneDarkHighlightStyle } from "@codemirror/theme-one-dark";
+import {highlightSelectionMatches, searchKeymap} from "@codemirror/search";
+import {EditorState, Extension} from "@codemirror/state";
+import {oneDarkHighlightStyle} from "@codemirror/theme-one-dark";
 import {
-    EditorView, showPanel, lineNumbers, highlightActiveLineGutter,
-    highlightSpecialChars, drawSelection,
-    rectangularSelection, highlightActiveLine, keymap
+    drawSelection,
+    EditorView,
+    highlightActiveLine,
+    highlightActiveLineGutter,
+    highlightSpecialChars,
+    keymap,
+    lineNumbers,
+    rectangularSelection,
+    showPanel
 } from "@codemirror/view";
-import { Diagnostic, linter, lintGutter, lintKeymap } from "@codemirror/lint";
-import { CodeMirrorEditor } from "./CodeMirrorEditor";
-import { darkTheme } from "./DarkTheme";
+import {Diagnostic, linter, lintGutter, lintKeymap} from "@codemirror/lint";
+import {CodeMirrorEditor} from "./CodeMirrorEditor";
+import {darkTheme} from "./DarkTheme";
+import {DebugLineGutter} from "./Gutters";
+import {BackendManager} from "../BackendManager";
+import {BackendEventType} from "../BackendEvent";
 
 /**
  * Component that provides useful features to users writing code
@@ -36,6 +45,8 @@ export class CodeEditor extends CodeMirrorEditor {
     public static PANEL = "panel";
     public static AUTOCOMPLETION = "autocompletion";
     public static LINTING = "linting";
+
+    private debugLineGutter: DebugLineGutter;
 
     /**
      * Construct a new CodeEditor
@@ -55,6 +66,7 @@ export class CodeEditor extends CodeMirrorEditor {
             maxHeight: "72vh",
             theme: {}
         });
+        this.debugLineGutter = new DebugLineGutter();
         this.addExtension([
             keymap.of([
                 {
@@ -68,10 +80,20 @@ export class CodeEditor extends CodeMirrorEditor {
                     key: "Shift-Enter", run: insertBlankLine
                 }
             ]),
+            this.debugLineGutter.toExtension(),
             ...CodeEditor.getExtensions()
         ]);
         this.setText(initialCode);
         this.setIndentLength(indentLength);
+
+        BackendManager.subscribe(BackendEventType.Line, e => {
+            const line = e.data;
+            console.log("Received line: ", line);
+            this.debugLineGutter.getMarkedLines(this.editorView).forEach((lineNr: number) => {
+                this.debugLineGutter.setMarker(this.editorView, { lineNr, on: false });
+            });
+            this.debugLineGutter.setMarker(this.editorView, { lineNr: line, on: true });
+        });
     }
 
     public override setDarkMode(darkMode: boolean): void {

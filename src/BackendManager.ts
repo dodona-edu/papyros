@@ -101,7 +101,7 @@ export abstract class BackendManager {
         if (e.type === BackendEventType.Start) {
             BackendManager.halted = false;
         }
-        if ((!BackendManager.halted || e.type === BackendEventType.Trace) && this.subscriberMap.has(e.type)) {
+        if ((!BackendManager.halted || e.type === BackendEventType.Trace || e.type === BackendEventType.Line) && this.subscriberMap.has(e.type)) {
             this.subscriberMap.get(e.type)!.forEach(cb => cb(e));
         }
     }
