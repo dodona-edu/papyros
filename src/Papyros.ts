@@ -28,16 +28,12 @@ import {
     renderSelectOptions,
     renderWithOptions
 } from "./util/Rendering";
-import "@dodona/trace-component";
-import { BackendEventType } from "./BackendEvent";
-import { TraceComponent } from "@dodona/trace-component";
 
 const LANGUAGE_MAP = new Map([
     ["python", ProgrammingLanguage.Python],
     ["javascript", ProgrammingLanguage.JavaScript]
 ]);
 
-const TRACE_COMPONENT_ID = "trace-component";
 
 /**
  * Configuration options for this instance of Papyros
@@ -100,6 +96,7 @@ export interface PapyrosRenderOptions {
      * Whether to render in dark mode
      */
     darkMode?: boolean;
+    traceOptions?: RenderOptions;
 }
 
 /**
@@ -302,9 +299,7 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
                     <div id="${renderOptions.inputOptions!.parentElementId}"></div>
                 </div>
                 <!-- Debugging section-->
-                <div>
-                    <tc-trace id="${TRACE_COMPONENT_ID}"></tc-trace>
-                </div>
+                <div id="${renderOptions.traceOptions!.parentElementId}" ></div>
             </div>
         </div>
     </div>
@@ -336,16 +331,13 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
             addListener(DARK_MODE_TOGGLE_ID, () => {
                 this.setDarkMode(!renderOptions.darkMode);
             }, "click");
-            const traceComponent = getElement(TRACE_COMPONENT_ID) as TraceComponent;
-            BackendManager.subscribe(BackendEventType.Trace, e => {
-                traceComponent.trace = JSON.parse(e.data).trace;
-            });
         }
         this.codeRunner.render({
             statusPanelOptions: renderOptions.statusPanelOptions!,
             inputOptions: renderOptions.inputOptions!,
             codeEditorOptions: renderOptions.codeEditorOptions!,
-            outputOptions: renderOptions.outputOptions!
+            outputOptions: renderOptions.outputOptions!,
+            traceOptions: renderOptions.traceOptions!,
         });
     }
 
