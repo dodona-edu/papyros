@@ -9,7 +9,11 @@ import {Trace} from "@dodona/trace-component/dist/trace_types";
 const TRACE_COMPONENT_ID = "trace-component";
 
 export class TraceViewer extends Renderable<RenderOptions> {
-    private trace: Trace = [];
+    private frameLine: number[] = [];
+    private frameOutputs: number[] = [];
+    private frameInputs: number[] = [];
+    private currentOutputs: number = 0;
+    private currentInputs: number = 0;
 
     constructor() {
         super();
@@ -23,20 +27,35 @@ export class TraceViewer extends Renderable<RenderOptions> {
         const traceComponent = getElement(TRACE_COMPONENT_ID) as TraceComponent;
         BackendManager.subscribe(BackendEventType.Frame, e => {
             const frame = JSON.parse(e.data);
-            this.trace.push(frame);
+            this.frameLine.push(frame.line);
+            this.frameOutputs.push(this.currentOutputs);
+            this.frameInputs.push(this.currentInputs);
             traceComponent.addFrame(frame);
         });
         BackendManager.subscribe(BackendEventType.Start, () => {
-            this.trace = [];
+            this.frameLine = [];
+            this.frameOutputs = [];
+            this.frameInputs = [];
+            this.currentOutputs = 0;
+            this.currentInputs = 0;
             traceComponent.trace = [];
+        });
+        BackendManager.subscribe(BackendEventType.Output, () => {
+            this.currentOutputs++;
+        });
+        BackendManager.subscribe(BackendEventType.Input, () => {
+            this.currentInputs++;
         });
 
         traceComponent.addEventListener("frame-change", e => {
             const frame = (e as CustomEvent).detail.frame;
-            const line = this.trace[frame].line;
             BackendManager.publish({
-                type: BackendEventType.Line,
-                data: line
+                type: BackendEventType.FrameChange,
+                data: {
+                    line: this.frameLine[frame],
+                    outputs: this.frameOutputs[frame],
+                    inputs: this.frameInputs[frame]
+                }
             });
         });
     }

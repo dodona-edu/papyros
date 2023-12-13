@@ -86,8 +86,8 @@ export class CodeEditor extends CodeMirrorEditor {
         this.setText(initialCode);
         this.setIndentLength(indentLength);
 
-        BackendManager.subscribe(BackendEventType.Line, e => {
-            const line = e.data;
+        BackendManager.subscribe(BackendEventType.FrameChange, e => {
+            const line = e.data.line;
             this.debugLineGutter.getMarkedLines(this.editorView).forEach((lineNr: number) => {
                 this.debugLineGutter.setMarker(this.editorView, { lineNr, on: false });
             });
