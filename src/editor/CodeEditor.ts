@@ -88,7 +88,6 @@ export class CodeEditor extends CodeMirrorEditor {
 
         BackendManager.subscribe(BackendEventType.Line, e => {
             const line = e.data;
-            console.log("Received line: ", line);
             this.debugLineGutter.getMarkedLines(this.editorView).forEach((lineNr: number) => {
                 this.debugLineGutter.setMarker(this.editorView, { lineNr, on: false });
             });
