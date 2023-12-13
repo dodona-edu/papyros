@@ -33,7 +33,6 @@ class Papyros(python_runner.PyodideRunner):
         self.limit = limit
         self.override_globals()
         self.set_event_callback(callback)
-        self.traceback = None
 
     def set_event_callback(self, event_callback):
         def runner_callback(event_type, data):
@@ -148,10 +147,11 @@ class Papyros(python_runner.PyodideRunner):
                     self.callback("start", data="RunCode", contentType="text/plain")
                     if mode == "debug":
                         from tracer import JSONTracer
-                        self.traceback = JSONTracer(False, False, False).runscript(source_code)
-                        result = self.traceback
+                        def frame_callback(frame):
+                            self.callback("frame", data=frame, contentType="application/json")
+
+                        result = JSONTracer(False, False, False, frame_callback=frame_callback).runscript(source_code)
                     else:
-                        self.traceback = None
                         result = self.execute(code_obj, mode)
                     while isinstance(result, Awaitable):
                         result = await result
@@ -234,6 +234,3 @@ class Papyros(python_runner.PyodideRunner):
         parser = doctest.DocTestParser()
         tests = parser.get_examples(code)
         return bool(tests)
-
-    def getTraceback(self):
-        return self.traceback

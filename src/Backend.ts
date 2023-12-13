@@ -130,8 +130,4 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
     public getOverflow(): Array<BackendEvent> {
         return this.queue.getOverflow();
     }
-
-    public getTraceback(): string | undefined {
-        return undefined;
-    }
 }

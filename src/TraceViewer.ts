@@ -21,9 +21,14 @@ export class TraceViewer extends Renderable<RenderOptions> {
         `);
 
         const traceComponent = getElement(TRACE_COMPONENT_ID) as TraceComponent;
-        BackendManager.subscribe(BackendEventType.Trace, e => {
-            this.trace = JSON.parse(e.data).trace;
-            traceComponent.trace = this.trace;
+        BackendManager.subscribe(BackendEventType.Frame, e => {
+            const frame = JSON.parse(e.data);
+            this.trace.push(frame);
+            traceComponent.addFrame(frame);
+        });
+        BackendManager.subscribe(BackendEventType.Start, () => {
+            this.trace = [];
+            traceComponent.trace = [];
         });
 
         traceComponent.addEventListener("frame-change", e => {

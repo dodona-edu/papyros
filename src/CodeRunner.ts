@@ -394,11 +394,6 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             await backend.call(
                 backend.workerProxy.runCode, code, mode
             );
-            BackendManager.publish({
-                type: BackendEventType.Trace,
-                data: await backend.workerProxy.getTraceback(),
-                contentType: "text/json"
-            });
         } catch (error: any) {
             if (error.type === "InterruptError") {
                 // Error signaling forceful interrupt

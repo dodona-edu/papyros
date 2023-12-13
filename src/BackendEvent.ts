@@ -10,7 +10,7 @@ export enum BackendEventType {
     Error = "error",
     Interrupt = "interrupt",
     Loading = "loading",
-    Trace = "trace",
+    Frame = "frame",
     Line = "line",
 }
 
