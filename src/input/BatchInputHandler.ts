@@ -2,6 +2,8 @@ import { InputManagerRenderOptions, InputMode } from "../InputManager";
 import { UserInputHandler } from "./UserInputHandler";
 import { t } from "../util/Util";
 import { BatchInputEditor } from "../editor/BatchInputEditor";
+import {BackendManager} from "../BackendManager";
+import {BackendEventType} from "../BackendEvent";
 
 export class BatchInputHandler extends UserInputHandler {
     /**
@@ -40,6 +42,10 @@ export class BatchInputHandler extends UserInputHandler {
         this.batchEditor.onChange({
             onChange: this.handleInputChanged.bind(this),
             delay: 0
+        });
+        BackendManager.subscribe(BackendEventType.FrameChange, e => {
+            const inputsToHighlight = e.data.inputs;
+            this.highlight(this.running, (i: number) => i < inputsToHighlight);
         });
     }
 
