@@ -20,7 +20,7 @@ class Papyros(python_runner.PyodideRunner):
         self,
         *,
         source_code="",
-        filename="/my_program.py",
+        filename="/__main__.py",
         callback=None,
         buffer_constructor=None,
         limit=SYS_RECURSION_LIMIT

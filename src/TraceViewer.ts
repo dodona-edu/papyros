@@ -32,12 +32,17 @@ export class TraceViewer extends Renderable<RenderOptions> {
         });
         BackendManager.subscribe(BackendEventType.Frame, e => {
             const frame = JSON.parse(e.data);
-            this.frameStates.push({
+            const frameState = {
                 line: frame.line,
                 outputs: this.currentOutputs,
                 inputs: this.currentInputs
-            });
+            };
+            this.frameStates.push(frameState);
             this.traceComponent?.addFrame(frame);
+            BackendManager.publish({
+                type: BackendEventType.FrameChange,
+                data: frameState
+            });
         });
     }
 
