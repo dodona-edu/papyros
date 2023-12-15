@@ -23,7 +23,18 @@ export class TraceViewer extends Renderable<RenderOptions> {
         super();
         this.reset();
 
-        BackendManager.subscribe(BackendEventType.Start, () => this.reset());
+        BackendManager.subscribe(BackendEventType.Start, () => {
+            this.reset();
+
+            BackendManager.publish({
+                type: BackendEventType.FrameChange,
+                data: {
+                    line: 0,
+                    outputs: 0,
+                    inputs: 0
+                }
+            });
+        });
         BackendManager.subscribe(BackendEventType.Output, () => {
             this.currentOutputs++;
         });
