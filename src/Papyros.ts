@@ -278,13 +278,12 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
                 ${exampleSelect}
             </div>`;
             renderWithOptions(renderOptions.standAloneOptions!, `
-    <div id="${MAIN_APP_ID}" class="_tw-min-h-screen _tw-max-h-screen _tw-h-full
-    _tw-overflow-y-hidden dark:_tw-text-white dark:_tw-bg-dark-mode-bg">
+    <div id="${MAIN_APP_ID}" class="_tw-min-h-screen _tw-h-full dark:_tw-text-white dark:_tw-bg-dark-mode-bg" style="margin-bottom: -40px; padding-bottom: 20px">
         ${navBar}
         <div class="_tw-m-10">
             ${header}
             <!--Body of the application-->
-            <div class="_tw-grid _tw-grid-cols-2 _tw-gap-4 _tw-box-border _tw-max-h-full">
+            <div class="_tw-grid _tw-grid-cols-2 _tw-gap-4 _tw-box-border">
                 <!-- Code section-->
                 <div>
                     ${renderLabel(t("Papyros.code"), renderOptions.codeEditorOptions!.parentElementId)}
@@ -298,9 +297,9 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
                     ${renderLabel(t("Papyros.input"), renderOptions.inputOptions!.parentElementId)}
                     <div id="${renderOptions.inputOptions!.parentElementId}"></div>
                 </div>
-                <!-- Debugging section-->
-                <div id="${renderOptions.traceOptions!.parentElementId}" ></div>
             </div>
+            <!-- Debugging section-->
+            <div id="${renderOptions.traceOptions!.parentElementId}" ></div>
         </div>
     </div>
     `);
