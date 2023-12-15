@@ -1,9 +1,9 @@
-import {proxy} from "comlink";
-import {SyncClient} from "comsync";
-import {Backend} from "./Backend";
-import {BackendEvent, BackendEventType} from "./BackendEvent";
-import {BackendManager} from "./BackendManager";
-import {CodeEditor} from "./editor/CodeEditor";
+import { proxy } from "comlink";
+import { SyncClient } from "comsync";
+import { Backend } from "./Backend";
+import { BackendEvent, BackendEventType } from "./BackendEvent";
+import { BackendManager } from "./BackendManager";
+import { CodeEditor } from "./editor/CodeEditor";
 import {
     addPapyrosPrefix,
     APPLICATION_STATE_TEXT_ID,
@@ -13,10 +13,10 @@ import {
     STATE_SPINNER_ID,
     STOP_BTN_ID
 } from "./Constants";
-import {InputManager, InputManagerRenderOptions, InputMode} from "./InputManager";
-import {ProgrammingLanguage} from "./ProgrammingLanguage";
-import {renderSpinningCircle} from "./util/HTMLShapes";
-import {addListener, downloadResults, getElement, parseData, t} from "./util/Util";
+import { InputManager, InputManagerRenderOptions, InputMode } from "./InputManager";
+import { ProgrammingLanguage } from "./ProgrammingLanguage";
+import { renderSpinningCircle } from "./util/HTMLShapes";
+import { addListener, downloadResults, getElement, parseData, t } from "./util/Util";
 import {
     appendClasses,
     ButtonOptions,
@@ -25,8 +25,8 @@ import {
     RenderOptions,
     renderWithOptions
 } from "./util/Rendering";
-import {OutputManager} from "./OutputManager";
-import {TraceViewer} from "./TraceViewer";
+import { OutputManager } from "./OutputManager";
+import { TraceViewer } from "./TraceViewer";
 
 interface DynamicButton {
     id: string;

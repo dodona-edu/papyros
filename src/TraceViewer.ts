@@ -1,8 +1,8 @@
-import {Renderable, RenderOptions, renderWithOptions} from "./util/Rendering";
-import {getElement} from "./util/Util";
-import {TraceComponent} from "@dodona/trace-component";
-import {BackendManager} from "./BackendManager";
-import {BackendEventType} from "./BackendEvent";
+import { Renderable, RenderOptions, renderWithOptions } from "./util/Rendering";
+import { getElement } from "./util/Util";
+import { TraceComponent } from "@dodona/trace-component";
+import { BackendManager } from "./BackendManager";
+import { BackendEventType } from "./BackendEvent";
 import "@dodona/trace-component";
 
 const TRACE_COMPONENT_ID = "trace-component";

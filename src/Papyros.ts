@@ -11,13 +11,13 @@ import {
     PANEL_WRAPPER_ID,
     PROGRAMMING_LANGUAGE_SELECT_ID
 } from "./Constants";
-import {InputManagerRenderOptions, InputMode} from "./InputManager";
-import {ProgrammingLanguage} from "./ProgrammingLanguage";
-import {addListener, cleanCurrentUrl, getElement, getLocales, loadTranslations, removeSelection, t} from "./util/Util";
-import {CodeRunner, RunState} from "./CodeRunner";
-import {getCodeForExample, getExampleNames} from "./examples/Examples";
-import {AtomicsChannelOptions, makeChannel, ServiceWorkerChannelOptions} from "sync-message";
-import {BackendManager} from "./BackendManager";
+import { InputManagerRenderOptions, InputMode } from "./InputManager";
+import { ProgrammingLanguage } from "./ProgrammingLanguage";
+import { addListener, cleanCurrentUrl, getElement, getLocales, loadTranslations, removeSelection, t } from "./util/Util";
+import { CodeRunner, RunState } from "./CodeRunner";
+import { getCodeForExample, getExampleNames } from "./examples/Examples";
+import { AtomicsChannelOptions, makeChannel, ServiceWorkerChannelOptions } from "sync-message";
+import { BackendManager } from "./BackendManager";
 import {
     appendClasses,
     ButtonOptions,
