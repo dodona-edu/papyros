@@ -1,6 +1,6 @@
 {
   "name": "@dodona/papyros",
-  "version": "2.1.0-beta.6",
+  "version": "2.1.0-beta.7",
   "private": false,
   "homepage": ".",
   "devDependencies": {
@@ -45,7 +45,7 @@
     "@codemirror/state": "^6.3.2",
     "@codemirror/theme-one-dark": "^6.1.2",
     "@codemirror/view": "^6.22.1",
-    "@dodona/trace-component": "1.1.5-beta.3",
+    "@dodona/trace-component": "1.1.5-beta.4",
     "@lezer/common": "^1.1.0",
     "comlink": "^4.4.1",
     "comsync": "^0.0.9",
