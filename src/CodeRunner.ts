@@ -157,7 +157,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
                         this.addButton({
                             id: id,
                             buttonText: t(`Papyros.run_modes.${mode.mode}`),
-                            classNames: "_tw-text-white _tw-bg-neutral-bg"
+                            classNames: "btn-secondary"
                         }, () => this.runCode(this.editor.getText(), mode.mode));
                     } else {
                         this.removeButton(id);
@@ -309,39 +309,41 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     /**
      * Generate a button that the user can click to process code
      * Can either run the code or interrupt it if already running
-     * @return {DynamicButton} A button to interact with the code according to the current state
+     * @return {DynamicButton} A list of buttons to interact with the code according to the current state
      */
-    private getCodeActionButton(): DynamicButton {
+    private getCodeActionButtons(): DynamicButton[] {
         let buttonOptions: ButtonOptions;
-        let buttonHandler: () => void;
         if ([RunState.Ready, RunState.Loading].includes(this.state)) {
             buttonOptions = {
                 id: RUN_BTN_ID,
                 buttonText: t("Papyros.run"),
-                classNames: "_tw-text-white _tw-bg-blue-500"
+                classNames: "btn-primary"
             };
-            buttonHandler = () => this.runCode(this.editor.getText());
+            return [{
+                id: buttonOptions.id,
+                buttonHTML: renderButton(buttonOptions),
+                onClick: () => this.runCode(this.editor.getText())
+            }, ...this.buttons];
         } else {
             buttonOptions = {
                 id: STOP_BTN_ID,
                 buttonText: t("Papyros.stop"),
-                classNames: "_tw-text-white _tw-bg-red-500"
+                classNames: "btn-danger"
             };
-            buttonHandler = () => this.stop();
+
+            return [{
+                id: buttonOptions.id,
+                buttonHTML: renderButton(buttonOptions),
+                onClick: () => this.stop()
+            }];
         }
-        appendClasses(buttonOptions, "_tw-min-w-[60px]");
-        return {
-            id: buttonOptions.id,
-            buttonHTML: renderButton(buttonOptions),
-            onClick: buttonHandler
-        };
     }
 
     /**
      * Specific helper method to render only the buttons required by the user
      */
     private renderButtons(): void {
-        const buttons = [this.getCodeActionButton(), ...this.buttons];
+        const buttons = this.getCodeActionButtons();
         getElement(CODE_BUTTONS_WRAPPER_ID).innerHTML =
             buttons.map(b => b.buttonHTML).join("\n");
         // Buttons are freshly added to the DOM, so attach listeners now
