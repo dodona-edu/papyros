@@ -53,7 +53,17 @@ const ENGLISH_TRANSLATION = {
         "debug": "Debug",
     },
     "used_input": "This line has already been used as input.",
-    "used_input_with_prompt": "This line was used as input for the following prompt: %{prompt}"
+    "used_input_with_prompt": "This line was used as input for the following prompt: %{prompt}",
+    "debugger": {
+        "title": "Drag the slider to walk through your code.",
+        "text": "This window shows how your program works step by step. Explore to see how your program builds and stores information.",
+        "buttons": {
+            "next": "Will move you to the next step.",
+            "previous": "Will move you to the previous step.",
+            "last": "Will move you to the last step.",
+            "first": "Will move you to the first step."
+        }
+    }
 };
 
 const DUTCH_TRANSLATION = {
@@ -107,7 +117,17 @@ const DUTCH_TRANSLATION = {
         "debug": "Debug",
     },
     "used_input": "Deze regel werd al gebruikt als invoer.",
-    "used_input_with_prompt": "Deze regel werd gebruikt als invoer voor de volgende vraag: %{prompt}"
+    "used_input_with_prompt": "Deze regel werd gebruikt als invoer voor de volgende vraag: %{prompt}",
+    "debugger": {
+        "title": "Verken je code stap voor stap",
+        "text": "Dit venster toont de werking van je programma in detail. Ontdek hoe je programma informatie opbouwt en bewaart.",
+        "buttons": {
+            "next": "Ga naar de volgende stap.",
+            "previous": "Ga naar de vorige stap.",
+            "last": "Ga naar de laatste stap.",
+            "first": "Ga naar de eerste stap."
+        }
+    }
 };
 
 // Override some default English phrases to also use capitalized text

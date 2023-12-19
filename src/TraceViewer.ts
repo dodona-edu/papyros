@@ -1,5 +1,5 @@
 import { Renderable, RenderOptions, renderWithOptions } from "./util/Rendering";
-import { getElement } from "./util/Util";
+import {getElement, t} from "./util/Util";
 import { TraceComponent } from "@dodona/trace-component";
 import { BackendManager } from "./BackendManager";
 import { BackendEventType } from "./BackendEvent";
@@ -66,10 +66,6 @@ export class TraceViewer extends Renderable<RenderOptions> {
             } else {
                 delay(() => this.clearBuffer(), 100);
             }
-            BackendManager.publish({
-                type: BackendEventType.FrameChange,
-                data: frameState
-            });
         });
     }
 
@@ -79,6 +75,7 @@ export class TraceViewer extends Renderable<RenderOptions> {
         `);
 
         this.traceComponent = getElement(TRACE_COMPONENT_ID) as TraceComponent;
+        this.traceComponent.translations = t("Papyros.debugger") as any;
         this.traceComponent.addEventListener("frame-change", e => {
             const frame = (e as CustomEvent).detail.frame;
             BackendManager.publish({
