@@ -45,4 +45,4 @@ def check_tar(tarname, out_dir="."):
 
 
 if __name__ == "__main__":
-    create_package("python_package", "python-runner friendly_traceback pylint<3.0.0 tomli typing-extensions json-tracer>=0.4.1", extra_deps="papyros")
+    create_package("python_package", "python-runner friendly_traceback pylint<3.0.0 tomli typing-extensions json-tracer>=0.4.2", extra_deps="papyros")
