@@ -1,5 +1,5 @@
 import { Renderable, RenderOptions, renderWithOptions } from "./util/Rendering";
-import {getElement, t} from "./util/Util";
+import { getElement, t } from "./util/Util";
 import { TraceComponent } from "@dodona/trace-component";
 import { BackendManager } from "./BackendManager";
 import { BackendEventType } from "./BackendEvent";
@@ -23,7 +23,7 @@ function createDelayer(): (callback: () => void, ms: number) => void {
 }
 const delay = createDelayer();
 
-export class TraceViewer extends Renderable<RenderOptions> {
+export class Debugger extends Renderable<RenderOptions> {
     private frameStates: FrameState[] = [];
     private currentOutputs: number = 0;
     private currentInputs: number = 0;
