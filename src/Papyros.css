@@ -159,8 +159,11 @@ Removes the default spacing and border for appropriate elements.
 }
 
 /* Also override CodeMirror buttons to use this style */
-.papyros-button, .cm-button {
-  @apply _tw-m-1 _tw-px-3 _tw-py-1 _tw-rounded-lg _tw-cursor-pointer disabled:_tw-opacity-50 disabled:_tw-cursor-not-allowed !important;
+.papyros-button,
+.cm-button,
+.tailwind .papyros-button,
+.tailwind .cm-button{
+  @apply _tw-m-1 _tw-px-3 _tw-py-1 _tw-rounded-lg _tw-cursor-pointer disabled:_tw-opacity-50 disabled:_tw-cursor-not-allowed;
   min-width: 60px;
 }
 /* Round the corners of textfields created by CodeMirror */
