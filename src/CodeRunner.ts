@@ -323,7 +323,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
                 id: buttonOptions.id,
                 buttonHTML: renderButton(buttonOptions),
                 onClick: () => this.runCode(this.editor.getText())
-            }, ...this.buttons.reverse()];
+            }, ...[...this.buttons].reverse()];
         } else {
             buttonOptions = {
                 id: STOP_BTN_ID,
