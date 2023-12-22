@@ -504,10 +504,10 @@
   resolved "https://registry.yarnpkg.com/@discoveryjs/json-ext/-/json-ext-0.5.7.tgz#1d572bfbbe14b7704e0ba0f39b74815b84870d70"
   integrity sha512-dBVuXR082gk3jsFp7Rd/JI4kytwGHecnCoTtXFb7DB6CNHp4rg5k1bhg0nWdLGLnOV71lmDzGQaLMy8iPLY0pw==
 
-"@dodona/trace-component@1.1.5-beta.7":
-  version "1.1.5-beta.7"
-  resolved "https://registry.yarnpkg.com/@dodona/trace-component/-/trace-component-1.1.5-beta.7.tgz#7fae81fd676d87217d7ea3108b6241b519beeffd"
-  integrity sha512-qzcr9ZbxY72BxiEadhaWPAKhWXn9FS8iXwhTic43xdPkmIarvog/V0V5J8ds6E6xp9+0DKGjb/bdbmIrJ5pvpw==
+"@dodona/trace-component@1.1.5":
+  version "1.1.5"
+  resolved "https://registry.yarnpkg.com/@dodona/trace-component/-/trace-component-1.1.5.tgz#30259cf1a4f64db086dd3b952a3bf3947488ec6e"
+  integrity sha512-nU0S3YhWXnGqkeNKuld1kUH1H3lwz0oYszCHZaihJEJJROPdlaPZn4+RidsiHsHzujin/YAblqbhqcctRYURdA==
   dependencies:
     "@jsplumb/browser-ui" "^6.2.10"
     lit "^3.0.0"
