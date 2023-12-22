@@ -12,6 +12,7 @@ export enum BackendEventType {
     Loading = "loading",
     Frame = "frame",
     FrameChange = "frame-change",
+    Stop = "stop",
 }
 
 /**

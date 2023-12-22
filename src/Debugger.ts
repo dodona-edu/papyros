@@ -7,6 +7,7 @@ import "@dodona/trace-component";
 import { Frame } from "@dodona/trace-component/dist/trace_types";
 
 const TRACE_COMPONENT_ID = "trace-component";
+const EXECUTION_LIMIT = 10000;
 
 export type FrameState = {
     line: number;
@@ -65,6 +66,12 @@ export class Debugger extends Renderable<RenderOptions> {
                 this.clearBuffer();
             } else {
                 delay(() => this.clearBuffer(), 100);
+            }
+            if (this.frameStates.length >= EXECUTION_LIMIT) {
+                BackendManager.publish({
+                    type: BackendEventType.Stop,
+                    data: "Execution limit reached"
+                });
             }
         });
     }

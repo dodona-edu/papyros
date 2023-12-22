@@ -175,6 +175,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             e => this.onLoad(e));
         BackendManager.subscribe(BackendEventType.Start,
             e => this.onStart(e));
+        BackendManager.subscribe(BackendEventType.Stop, () => this.stop());
         this.previousState = RunState.Ready;
         this.runStartTime = new Date().getTime();
         this.state = RunState.Ready;
@@ -417,9 +418,6 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
                 // Was interrupted, End message already published
                 interrupted = true;
             }
-            this.setState(RunState.Ready, t(
-                interrupted ? "Papyros.interrupted" : "Papyros.finished",
-                { time: (new Date().getTime() - this.runStartTime) / 1000 }));
             if (terminated) {
                 await this.start();
             } else if (await backend.workerProxy.hasOverflow()) {
@@ -433,6 +431,9 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
                     );
                 });
             }
+            this.setState(RunState.Ready, t(
+                interrupted ? "Papyros.interrupted" : "Papyros.finished",
+                { time: (new Date().getTime() - this.runStartTime) / 1000 }));
         }
     }
 
