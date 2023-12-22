@@ -76,7 +76,7 @@ export class InteractiveInputHandler extends UserInputHandler {
         const buttonHTML = renderButton({
             id: SEND_INPUT_BTN_ID,
             // eslint-disable-next-line max-len
-            classNames: "_tw-text-black _tw-bg-white _tw-border-2 dark:_tw-text-white dark:_tw-bg-dark-mode-bg",
+            classNames: "btn-secondary",
             buttonText: t("Papyros.enter")
         });
         renderWithOptions(options, `
