@@ -56,13 +56,8 @@ const ENGLISH_TRANSLATION = {
     "used_input_with_prompt": "This line was used as input for the following prompt: %{prompt}",
     "debugger": {
         "title": "Drag the slider to walk through your code.",
-        "text": "This window shows how your program works step by step. Explore to see how your program builds and stores information.",
-        "buttons": {
-            "next": "Will move you to the next step.",
-            "previous": "Will move you to the previous step.",
-            "last": "Will move you to the last step.",
-            "first": "Will move you to the first step."
-        }
+        "text_1": "This window shows how your program works step by step. Explore to see how your program builds and stores information.",
+        "text_2": "You can also use the %{previous} and %{next} buttons to go to the previous or next step. The %{first} and %{last} buttons can be used to directly jump to the first or last step respectively."
     }
 };
 
@@ -120,13 +115,8 @@ const DUTCH_TRANSLATION = {
     "used_input_with_prompt": "Deze regel werd gebruikt als invoer voor de volgende vraag: %{prompt}",
     "debugger": {
         "title": "Verken je code stap voor stap",
-        "text": "Dit venster toont de werking van je programma in detail. Ontdek hoe je programma informatie opbouwt en bewaart.",
-        "buttons": {
-            "next": "Ga naar de volgende stap.",
-            "previous": "Ga naar de vorige stap.",
-            "last": "Ga naar de laatste stap.",
-            "first": "Ga naar de eerste stap."
-        }
+        "text_1": "Dit venster toont de werking van je programma in detail. Ontdek hoe je programma informatie opbouwt en bewaart.",
+        "text_2": "Gebruik de schuifbalk om door je code te wandelen. Je kan ook de %{previous} en %{next} knoppen gebruiken om naar de vorige of volgende stap te gaan. De %{first} en %{last} knoppen kunnen gebruikt worden om direct naar de eerste of laatste stap te gaan."
     }
 };
 
