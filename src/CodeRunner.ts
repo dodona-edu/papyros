@@ -9,7 +9,7 @@ import {
     APPLICATION_STATE_TEXT_ID,
     CODE_BUTTONS_WRAPPER_ID,
     DEFAULT_EDITOR_DELAY,
-    RUN_BTN_ID,
+    RUN_BTN_ID, RUN_BUTTONS_WRAPPER_ID,
     STATE_SPINNER_ID,
     STOP_BTN_ID
 } from "./Constants";
@@ -79,6 +79,29 @@ export interface LoadingData {
     status: "loading" | "loaded" | "failed";
 
 }
+
+/**
+ * Helper class to avoid code duplication when handling buttons
+ * It is an ordered array that does not allow duplicate ids
+ */
+class ButtonArray extends Array<DynamicButton> {
+    public add(button: ButtonOptions, onClick: () => void): void {
+        this.remove(button.id);
+        this.push({
+            id: button.id,
+            buttonHTML: renderButton(button),
+            onClick
+        });
+    }
+
+    public remove(id: string): void {
+        const existingIndex = this.findIndex(b => b.id === id);
+        if (existingIndex !== -1) {
+            this.splice(existingIndex, 1);
+        }
+    }
+}
+
 /**
  * Helper component to manage and visualize the current RunState
  */
@@ -109,9 +132,13 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      */
     private state: RunState;
     /**
-     * Buttons managed by this component
+     * Foreign buttons inserted into this component
      */
-    private buttons: Array<DynamicButton>;
+    private userButtons: ButtonArray;
+    /**
+     * Internal buttons for different run modes
+     */
+    private runButtons: ButtonArray;
 
     /**
      * Array of packages that are being installed
@@ -146,7 +173,13 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         }, inputMode);
         this.outputManager = new OutputManager();
         this.backend = Promise.resolve({} as SyncClient<Backend>);
-        this.buttons = [];
+        this.userButtons = new ButtonArray();
+        this.runButtons = new ButtonArray();
+        this.runButtons.add({
+            id: RUN_BTN_ID,
+            buttonText: t("Papyros.run"),
+            classNames: "btn-primary"
+        }, () => this.runCode(this.editor.getText()));
         this.editor.onChange({
             onChange: async code => {
                 const backend = await this.backend;
@@ -154,7 +187,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
                 modes.forEach(mode => {
                     const id = addPapyrosPrefix(mode.mode);
                     if (mode.active) {
-                        this.addButton({
+                        this.runButtons.add({
                             id: id,
                             buttonText: t(`Papyros.run_modes.${mode.mode}`),
                             classNames: "btn-secondary"
@@ -287,10 +320,8 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      * @param {string} id Identifier of the button to remove
      */
     private removeButton(id: string): void {
-        const existingIndex = this.buttons.findIndex(b => b.id === id);
-        if (existingIndex !== -1) {
-            this.buttons.splice(existingIndex, 1);
-        }
+        this.userButtons.remove(id);
+        this.renderButtons(this.userButtons, CODE_BUTTONS_WRAPPER_ID);
     }
 
     /**
@@ -299,12 +330,8 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      * @param {function} onClick Listener for click events on the button
      */
     public addButton(options: ButtonOptions, onClick: () => void): void {
-        this.removeButton(options.id);
-        this.buttons.push({
-            id: options.id,
-            buttonHTML: renderButton(options),
-            onClick: onClick
-        });
+        this.userButtons.add(options, onClick);
+        this.renderButtons(this.userButtons, CODE_BUTTONS_WRAPPER_ID);
     }
 
     /**
@@ -315,16 +342,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     private getCodeActionButtons(): DynamicButton[] {
         let buttonOptions: ButtonOptions;
         if ([RunState.Ready, RunState.Loading].includes(this.state)) {
-            buttonOptions = {
-                id: RUN_BTN_ID,
-                buttonText: t("Papyros.run"),
-                classNames: "btn-primary"
-            };
-            return [{
-                id: buttonOptions.id,
-                buttonHTML: renderButton(buttonOptions),
-                onClick: () => this.runCode(this.editor.getText())
-            }, ...[...this.buttons].reverse()];
+            return this.runButtons;
         } else {
             buttonOptions = {
                 id: STOP_BTN_ID,
@@ -342,13 +360,15 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
 
     /**
      * Specific helper method to render only the buttons required by the user
+     * @param {DynamicButton[]} buttons The buttons to render
+     * @param {string} id The id of the element to render the buttons in
      */
-    private renderButtons(): void {
-        const buttons = this.getCodeActionButtons();
-        getElement(CODE_BUTTONS_WRAPPER_ID).innerHTML =
-            buttons.map(b => b.buttonHTML).join("\n");
+    private renderButtons(buttons: DynamicButton[] | undefined = undefined, id = RUN_BUTTONS_WRAPPER_ID): void {
+        const btns = buttons || this.getCodeActionButtons();
+        getElement(id).innerHTML =
+            btns.map(b => b.buttonHTML).join("\n");
         // Buttons are freshly added to the DOM, so attach listeners now
-        buttons.forEach(b => addListener(b.id, b.onClick, "click"));
+        btns.forEach(b => addListener(b.id, b.onClick, "click"));
     }
 
     protected override _render(options: CodeRunnerRenderOptions): HTMLElement {
@@ -356,15 +376,20 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             // eslint-disable-next-line max-len
             "_tw-border-solid _tw-border-gray-200 _tw-border-b-2 dark:_tw-border-dark-mode-content");
         const rendered = renderWithOptions(options.statusPanelOptions, `
-<div class="_tw-grid _tw-grid-cols-2 _tw-items-center _tw-px-1">
-    <div id="${CODE_BUTTONS_WRAPPER_ID}" class="_tw-col-span-1 _tw-flex _tw-flex-row">
-    </div>
-    <div class="_tw-col-span-1 _tw-flex _tw-flex-row-reverse _tw-items-center">
-        <div id="${APPLICATION_STATE_TEXT_ID}"></div>
+<div style="position: relative">
+    <div style="position: absolute; right: 8px; top: -25px; display: flex">
         ${renderSpinningCircle(STATE_SPINNER_ID, "_tw-border-gray-200 _tw-border-b-red-500")}
+        <div id="${APPLICATION_STATE_TEXT_ID}"></div>
+    </div>
+</div>
+<div class="_tw-grid _tw-grid-cols-2 _tw-items-center _tw-px-1">
+    <div id="${RUN_BUTTONS_WRAPPER_ID}" class="_tw-col-span-1 _tw-flex _tw-flex-row">
+    </div>
+    <div id="${CODE_BUTTONS_WRAPPER_ID}" class="_tw-col-span-1 _tw-flex _tw-flex-row-reverse _tw-items-center">
     </div>
 </div>`);
         this.setState(this.state);
+        this.renderButtons(this.userButtons, CODE_BUTTONS_WRAPPER_ID);
         this.inputManager.render(options.inputOptions);
         this.outputManager.render(options.outputOptions);
         this.editor.render(options.codeEditorOptions);
