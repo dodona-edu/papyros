@@ -95,6 +95,10 @@ export interface ButtonOptions {
      * Optional classes to apply to the button
      */
     classNames?: string;
+    /**
+     * Optional icon to display in the button
+     */
+    icon?: string;
 }
 
 /**
@@ -105,9 +109,15 @@ export interface ButtonOptions {
 export function renderButton(options: ButtonOptions): string {
     appendClasses(options,
         "papyros-button");
+    if (options.icon) {
+        appendClasses(options,
+            "with-icon");
+    }
+
     return `
 <button id="${options.id}" type="button"
     class="${options.classNames}">
+    ${options.icon || ""}
     ${options.buttonText}
 </button>`;
 }

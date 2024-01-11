@@ -182,3 +182,11 @@ Removes the default spacing and border for appropriate elements.
 .papyros-button.btn-danger {
     @apply _tw-bg-red-500 _tw-text-white;
 }
+
+.papyros-button.with-icon {
+  padding-left: 8px;
+}
+
+.papyros-button.with-icon svg{
+  vertical-align: middle;
+}
