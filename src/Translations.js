@@ -64,7 +64,7 @@ const ENGLISH_TRANSLATION = {
 const DUTCH_TRANSLATION = {
     "Papyros": "Papyros",
     "code": "Code",
-    "code_placeholder": "Schrijf hier je %{programmingLanguage} code en klik op 'Run' om uit te voeren...",
+    "code_placeholder": "Schrijf hier je %{programmingLanguage} code en klik op 'Uitvoeren' om uit te voeren...",
     "input": "Invoer",
     "input_placeholder": {
         "interactive": "Geef invoer in en druk op enter",
@@ -74,7 +74,7 @@ const DUTCH_TRANSLATION = {
     "input_disabled": "Je kan enkel invoer invullen als je code erom vraagt in interactieve modus",
     "output": "Uitvoer",
     "output_placeholder": "Hier komt de uitvoer van je code.",
-    "run": "Run",
+    "run": "Uitvoeren",
     "stop": "Stop",
     "states": {
         "running": "Aan het uitvoeren",
@@ -108,8 +108,8 @@ const DUTCH_TRANSLATION = {
     "launch_error": "Er liep iets fout bij het laden van Papyros. Wil je herladen?",
     "loading": "Bezig met het installeren van %{packages}.",
     "run_modes": {
-        "doctest": "Run doctests",
-        "debug": "Debug",
+        "doctest": "Doctests uitvoeren",
+        "debug": "Debuggen",
     },
     "used_input": "Deze regel werd al gebruikt als invoer.",
     "used_input_with_prompt": "Deze regel werd gebruikt als invoer voor de volgende vraag: %{prompt}",

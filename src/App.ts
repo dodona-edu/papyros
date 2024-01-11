@@ -70,13 +70,6 @@ async function startPapyros(): Promise<void> {
     if (handler instanceof BatchInputHandler) {
         setUpEditor((handler as BatchInputHandler).batchEditor, LOCAL_STORAGE_KEYS.input);
     }
-    papyros.addButton({
-        id: "clear-code",
-        buttonText: "Clear code",
-        classNames: "btn-secondary",
-    }, () => {
-        papyros.codeRunner.editor.setText("");
-    });
 
     await papyros.launch();
 }
