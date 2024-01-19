@@ -190,3 +190,11 @@ Removes the default spacing and border for appropriate elements.
 .papyros-button.with-icon svg{
   vertical-align: middle;
 }
+
+.cm-gutter.cm-debugline-gutter {
+  display: none !important;
+}
+
+.cm-gutter.cm-debugline-gutter.show {
+  display: flex !important;
+}

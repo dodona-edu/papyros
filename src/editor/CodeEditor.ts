@@ -88,10 +88,7 @@ export class CodeEditor extends CodeMirrorEditor {
 
         BackendManager.subscribe(BackendEventType.FrameChange, e => {
             const line = e.data.line;
-            this.debugLineGutter.getMarkedLines(this.editorView).forEach((lineNr: number) => {
-                this.debugLineGutter.setMarker(this.editorView, { lineNr, on: false });
-            });
-            this.debugLineGutter.setMarker(this.editorView, { lineNr: line, on: true });
+            this.debugLineGutter.markLine(this.editorView, line);
         });
     }
 
