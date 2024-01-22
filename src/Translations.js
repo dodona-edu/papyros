@@ -15,7 +15,6 @@ const ENGLISH_TRANSLATION = {
     "input_disabled": "You can only provide input when your code requires it in interactive mode",
     "output": "Output",
     "output_placeholder": "The output of your code will appear here.",
-    "run": "Run",
     "stop": "Stop",
     "finished": "Code executed in %{time} s",
     "interrupted": "Code interrupted after %{time} s",
@@ -75,7 +74,6 @@ const DUTCH_TRANSLATION = {
     "input_disabled": "Je kan enkel invoer invullen als je code erom vraagt in interactieve modus",
     "output": "Uitvoer",
     "output_placeholder": "Hier komt de uitvoer van je code.",
-    "run": "Uitvoeren",
     "stop": "Stop",
     "states": {
         "running": "Aan het uitvoeren",
