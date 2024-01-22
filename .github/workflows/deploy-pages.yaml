@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.12'
       - name: Checkout branch
         uses: actions/checkout@v4
       - name: Clone main
@@ -26,12 +26,14 @@ jobs:
         run: |
           cd papyros
           yarn install
+          yarn setup
           yarn build:app
           cp -r public/* dist
           cd ..
       - name: Install and build branch
         run: |
           yarn install
+          yarn setup
           yarn build:app
           cp -r public/* dist
       - name: Prepare builds to be deployed
