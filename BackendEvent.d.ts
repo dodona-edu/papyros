@@ -9,12 +9,11 @@ export declare enum BackendEventType {
     Sleep = "sleep",
     Error = "error",
     Interrupt = "interrupt",
-    Loading = "loading"
+    Loading = "loading",
+    Frame = "frame",
+    FrameChange = "frame-change",
+    Stop = "stop"
 }
-/**
- * All possible types for ease of iteration
- */
-export declare const BACKEND_EVENT_TYPES: BackendEventType[];
 /**
  * Interface for events used for communication between threads
  */

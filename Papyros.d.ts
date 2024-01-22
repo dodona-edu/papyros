@@ -1,8 +1,8 @@
 import { InputManagerRenderOptions, InputMode } from "./InputManager";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
-import { RunState, CodeRunner } from "./CodeRunner";
+import { CodeRunner, RunState } from "./CodeRunner";
 import { AtomicsChannelOptions, ServiceWorkerChannelOptions } from "sync-message";
-import { RenderOptions, ButtonOptions, Renderable } from "./util/Rendering";
+import { ButtonOptions, Renderable, RenderOptions } from "./util/Rendering";
 /**
  * Configuration options for this instance of Papyros
  */
@@ -62,6 +62,7 @@ export interface PapyrosRenderOptions {
      * Whether to render in dark mode
      */
     darkMode?: boolean;
+    traceOptions?: RenderOptions;
 }
 /**
  * Class that manages multiple components to form a coding scratchpad

@@ -61,10 +61,19 @@ declare namespace ENGLISH_TRANSLATION {
     let loading_1: string;
     export { loading_1 as loading };
     export namespace run_modes {
-        let doctest: string;
+        export let doctest: string;
+        export let debug: string;
+        let run_1: string;
+        export { run_1 as run };
     }
     export let used_input: string;
     export let used_input_with_prompt: string;
+    export namespace _debugger {
+        let title: string;
+        let text_1: string;
+        let text_2: string;
+    }
+    export { _debugger as debugger };
 }
 declare namespace DUTCH_TRANSLATION {
     let Papyros_1: string;
@@ -88,8 +97,8 @@ declare namespace DUTCH_TRANSLATION {
     export { output_1 as output };
     let output_placeholder_1: string;
     export { output_placeholder_1 as output_placeholder };
-    let run_1: string;
-    export { run_1 as run };
+    let run_2: string;
+    export { run_2 as run };
     let stop_1: string;
     export { stop_1 as stop };
     export namespace states_1 {
@@ -153,12 +162,25 @@ declare namespace DUTCH_TRANSLATION {
     export namespace run_modes_1 {
         let doctest_1: string;
         export { doctest_1 as doctest };
+        let debug_1: string;
+        export { debug_1 as debug };
+        let run_3: string;
+        export { run_3 as run };
     }
     export { run_modes_1 as run_modes };
     let used_input_1: string;
     export { used_input_1 as used_input };
     let used_input_with_prompt_1: string;
     export { used_input_with_prompt_1 as used_input_with_prompt };
+    export namespace _debugger_1 {
+        let title_1: string;
+        export { title_1 as title };
+        let text_1_1: string;
+        export { text_1_1 as text_1 };
+        let text_2_1: string;
+        export { text_2_1 as text_2 };
+    }
+    export { _debugger_1 as debugger };
 }
 declare const ENGLISH_PHRASES: {
     "Go to line": string;

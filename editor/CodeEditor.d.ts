@@ -11,6 +11,7 @@ export declare class CodeEditor extends CodeMirrorEditor {
     static PANEL: string;
     static AUTOCOMPLETION: string;
     static LINTING: string;
+    private debugLineGutter;
     /**
      * Construct a new CodeEditor
      * @param {Function} onRunRequest Callback for when the user wants to run the code

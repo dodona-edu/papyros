@@ -98,3 +98,14 @@ export declare class UsedInputGutters extends Gutters<UsedInputGutterInfo> {
     constructor();
     protected marker(info: UsedInputGutterInfo): GutterMarker;
 }
+/**
+ * shows the debugged line
+ */
+export declare class DebugLineGutter extends Gutters<GutterInfo> {
+    private activeLine;
+    constructor();
+    protected marker(): GutterMarker;
+    private hide;
+    private show;
+    markLine(view: EditorView, lineNr: number): void;
+}
