@@ -235,3 +235,51 @@ export class UsedInputGutters extends Gutters<UsedInputGutterInfo> {
         });
     }
 }
+
+/**
+ * shows the debugged line
+ */
+export class DebugLineGutter extends Gutters<GutterInfo> {
+    private activeLine: number = 0;
+
+    constructor() {
+        super({
+            name: "debugline",
+            extraExtensions: [
+                EditorView.baseTheme({
+                    ".cm-debugline-gutter .cm-gutterElement": {
+                        lineHeight: "12px",
+                        marginRight: "-5px",
+                        fontSize: "40px"
+                    }
+                })
+            ]
+        });
+    }
+
+    protected override marker(): GutterMarker {
+        return new SimpleMarker(() => document.createTextNode("⇨"));
+    }
+
+    private hide(): void {
+        document.querySelector(".cm-debugline-gutter")?.classList.remove("show");
+    }
+
+    private show(): void {
+        document.querySelector(".cm-debugline-gutter")?.classList.add("show");
+    }
+
+    public markLine(view: EditorView, lineNr: number): void {
+        if (this.activeLine > 0) {
+            this.setMarker(view, { lineNr: this.activeLine, on: false });
+        }
+
+        if (lineNr > 0) {
+            this.setMarker(view, { lineNr, on: true });
+            this.show();
+        } else {
+            this.hide();
+        }
+        this.activeLine = lineNr;
+    }
+}

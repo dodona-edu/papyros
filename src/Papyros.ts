@@ -1,31 +1,39 @@
 /* eslint-disable max-len */
 import I18n from "i18n-js";
 import {
-    EDITOR_WRAPPER_ID, PROGRAMMING_LANGUAGE_SELECT_ID,
-    LOCALE_SELECT_ID, INPUT_AREA_WRAPPER_ID, EXAMPLE_SELECT_ID,
-    PANEL_WRAPPER_ID, DARK_MODE_TOGGLE_ID,
-    MAIN_APP_ID, OUTPUT_AREA_WRAPPER_ID
+    DARK_MODE_TOGGLE_ID,
+    EDITOR_WRAPPER_ID,
+    EXAMPLE_SELECT_ID,
+    INPUT_AREA_WRAPPER_ID,
+    LOCALE_SELECT_ID,
+    MAIN_APP_ID,
+    OUTPUT_AREA_WRAPPER_ID,
+    PANEL_WRAPPER_ID,
+    PROGRAMMING_LANGUAGE_SELECT_ID
 } from "./Constants";
 import { InputManagerRenderOptions, InputMode } from "./InputManager";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
-import {
-    t, loadTranslations, getLocales,
-    removeSelection,
-    addListener, getElement, cleanCurrentUrl
-} from "./util/Util";
-import { RunState, CodeRunner } from "./CodeRunner";
+import { addListener, cleanCurrentUrl, getElement, getLocales, loadTranslations, removeSelection, t } from "./util/Util";
+import { CodeRunner, RunState } from "./CodeRunner";
 import { getCodeForExample, getExampleNames } from "./examples/Examples";
 import { AtomicsChannelOptions, makeChannel, ServiceWorkerChannelOptions } from "sync-message";
 import { BackendManager } from "./BackendManager";
 import {
-    RenderOptions, renderWithOptions, renderSelect, renderSelectOptions,
-    ButtonOptions, Renderable, renderLabel, appendClasses
+    appendClasses,
+    ButtonOptions,
+    Renderable,
+    renderLabel,
+    RenderOptions,
+    renderSelect,
+    renderSelectOptions,
+    renderWithOptions
 } from "./util/Rendering";
 
 const LANGUAGE_MAP = new Map([
     ["python", ProgrammingLanguage.Python],
     ["javascript", ProgrammingLanguage.JavaScript]
 ]);
+
 
 /**
  * Configuration options for this instance of Papyros
@@ -88,6 +96,7 @@ export interface PapyrosRenderOptions {
      * Whether to render in dark mode
      */
     darkMode?: boolean;
+    traceOptions?: RenderOptions;
 }
 
 /**
@@ -269,13 +278,12 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
                 ${exampleSelect}
             </div>`;
             renderWithOptions(renderOptions.standAloneOptions!, `
-    <div id="${MAIN_APP_ID}" class="_tw-min-h-screen _tw-max-h-screen _tw-h-full
-    _tw-overflow-y-hidden dark:_tw-text-white dark:_tw-bg-dark-mode-bg">
+    <div id="${MAIN_APP_ID}" class="_tw-min-h-screen _tw-h-full dark:_tw-text-white dark:_tw-bg-dark-mode-bg" style="margin-bottom: -40px; padding-bottom: 20px">
         ${navBar}
         <div class="_tw-m-10">
             ${header}
             <!--Body of the application-->
-            <div class="_tw-grid _tw-grid-cols-2 _tw-gap-4 _tw-box-border _tw-max-h-full">
+            <div class="_tw-grid _tw-grid-cols-2 _tw-gap-4 _tw-box-border">
                 <!-- Code section-->
                 <div>
                     ${renderLabel(t("Papyros.code"), renderOptions.codeEditorOptions!.parentElementId)}
@@ -290,6 +298,8 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
                     <div id="${renderOptions.inputOptions!.parentElementId}"></div>
                 </div>
             </div>
+            <!-- Debugging section-->
+            <div id="${renderOptions.traceOptions!.parentElementId}" ></div>
         </div>
     </div>
     `);
@@ -325,7 +335,8 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
             statusPanelOptions: renderOptions.statusPanelOptions!,
             inputOptions: renderOptions.inputOptions!,
             codeEditorOptions: renderOptions.codeEditorOptions!,
-            outputOptions: renderOptions.outputOptions!
+            outputOptions: renderOptions.outputOptions!,
+            traceOptions: renderOptions.traceOptions!,
         });
     }
 

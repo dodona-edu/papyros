@@ -80,11 +80,11 @@ export class PythonWorker extends Backend<PyodideExtras> {
     }
 
     public override runModes(code: string): Array<RunMode> {
-        const modes = super.runModes(code);
-        modes.push({
-            mode: "doctest",
-            active: this.papyros.has_doctests(code)
-        });
+        let modes = super.runModes(code);
+        if (this.papyros.has_doctests(code)) {
+            modes = [RunMode.Doctest, ...modes];
+        }
+        modes = [RunMode.Debug, ...modes];
         return modes;
     }
 

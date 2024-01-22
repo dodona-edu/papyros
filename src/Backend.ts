@@ -30,9 +30,10 @@ export interface WorkerDiagnostic {
     message: string;
 }
 
-export interface RunMode {
-    mode: string;
-    active: boolean;
+export enum RunMode {
+    Run = "run",
+    Debug = "debug",
+    Doctest = "doctest"
 }
 
 export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
