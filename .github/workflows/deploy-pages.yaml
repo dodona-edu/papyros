@@ -26,12 +26,14 @@ jobs:
         run: |
           cd papyros
           yarn install
+          yarn setup
           yarn build:app
           cp -r public/* dist
           cd ..
       - name: Install and build branch
         run: |
           yarn install
+          yarn setup
           yarn build:app
           cp -r public/* dist
       - name: Prepare builds to be deployed
