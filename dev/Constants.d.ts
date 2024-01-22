@@ -17,7 +17,7 @@ export declare const PANEL_WRAPPER_ID: string;
 export declare const STATE_SPINNER_ID: string;
 export declare const APPLICATION_STATE_TEXT_ID: string;
 export declare const CODE_BUTTONS_WRAPPER_ID: string;
-export declare const RUN_BTN_ID: string;
+export declare const RUN_BUTTONS_WRAPPER_ID: string;
 export declare const STOP_BTN_ID: string;
 export declare const SEND_INPUT_BTN_ID: string;
 export declare const SWITCH_INPUT_MODE_A_ID: string;

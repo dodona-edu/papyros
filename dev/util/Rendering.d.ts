@@ -60,6 +60,10 @@ export interface ButtonOptions {
      * Optional classes to apply to the button
      */
     classNames?: string;
+    /**
+     * Optional icon to display in the button
+     */
+    icon?: string;
 }
 /**
  * Construct a HTML button string from the given options
