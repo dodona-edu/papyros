@@ -198,3 +198,7 @@ Removes the default spacing and border for appropriate elements.
 .cm-gutter.cm-debugline-gutter.show {
   display: flex !important;
 }
+
+.papyros-test-code {
+  background-color: blue;
+}

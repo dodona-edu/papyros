@@ -47,6 +47,7 @@
     "@codemirror/view": "^6.22.1",
     "@dodona/trace-component": "1.1.6",
     "@lezer/common": "^1.1.0",
+    "codemirror-readonly-ranges": "^0.1.0-alpha.2",
     "comlink": "^4.4.1",
     "comsync": "^0.0.9",
     "escape-html": "^1.0.3",
