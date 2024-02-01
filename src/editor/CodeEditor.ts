@@ -1,10 +1,10 @@
 /* eslint-disable valid-jsdoc */
-import { ProgrammingLanguage } from "../ProgrammingLanguage";
-import { t } from "../util/Util";
-import { autocompletion, closeBrackets, closeBracketsKeymap, completionKeymap } from "@codemirror/autocomplete";
-import { defaultKeymap, history, historyKeymap, indentWithTab, insertBlankLine } from "@codemirror/commands";
-import { javascript } from "@codemirror/lang-javascript";
-import { python } from "@codemirror/lang-python";
+import {ProgrammingLanguage} from "../ProgrammingLanguage";
+import {t} from "../util/Util";
+import {autocompletion, closeBrackets, closeBracketsKeymap, completionKeymap} from "@codemirror/autocomplete";
+import {defaultKeymap, history, historyKeymap, indentWithTab, insertBlankLine} from "@codemirror/commands";
+import {javascript} from "@codemirror/lang-javascript";
+import {python} from "@codemirror/lang-python";
 import {
     bracketMatching,
     defaultHighlightStyle,
@@ -15,9 +15,9 @@ import {
     LanguageSupport,
     syntaxHighlighting
 } from "@codemirror/language";
-import { highlightSelectionMatches, searchKeymap } from "@codemirror/search";
-import { EditorState, Extension } from "@codemirror/state";
-import { oneDarkHighlightStyle } from "@codemirror/theme-one-dark";
+import {highlightSelectionMatches, searchKeymap} from "@codemirror/search";
+import {EditorState, Extension} from "@codemirror/state";
+import {oneDarkHighlightStyle} from "@codemirror/theme-one-dark";
 import {
     drawSelection,
     EditorView,
@@ -29,13 +29,13 @@ import {
     rectangularSelection,
     showPanel
 } from "@codemirror/view";
-import { Diagnostic, linter, lintGutter, lintKeymap } from "@codemirror/lint";
-import { CodeMirrorEditor } from "./CodeMirrorEditor";
-import { darkTheme } from "./DarkTheme";
-import { DebugLineGutter } from "./Gutters";
-import { BackendManager } from "../BackendManager";
-import { BackendEventType } from "../BackendEvent";
-import { TestCodeExtension } from "./TestCodeExtension";
+import {Diagnostic, linter, lintGutter, lintKeymap} from "@codemirror/lint";
+import {CodeMirrorEditor} from "./CodeMirrorEditor";
+import {darkTheme} from "./DarkTheme";
+import {DebugLineGutter} from "./Gutters";
+import {BackendManager} from "../BackendManager";
+import {BackendEventType} from "../BackendEvent";
+import {TestCodeExtension} from "./TestCodeExtension";
 
 
 /**
@@ -100,6 +100,14 @@ export class CodeEditor extends CodeMirrorEditor {
 
     public set testCode(code: string) {
         this.testCodeExtension.testCode = code;
+    }
+
+    public getText(): string {
+        if (this.testCodeExtension) {
+            return this.testCodeExtension.getNonTestCode();
+        } else {
+            return super.getText();
+        }
     }
 
     public override setDarkMode(darkMode: boolean): void {

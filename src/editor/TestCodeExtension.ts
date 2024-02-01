@@ -164,6 +164,14 @@ export class TestCodeExtension {
         this.addWidget();
     }
 
+    public getNonTestCode(): string {
+        if (this.allowEdit) {
+            return this.view.state.doc.toString();
+        }
+
+        return this.view.state.doc.sliceString(0, this.lineFromEnd(this.numberOfTestLines).to);
+    }
+
     public toExtension(): Extension {
         return [lineEffectExtension, readOnlyRangesExtension(this.getReadOnlyRanges.bind(this))];
     }
