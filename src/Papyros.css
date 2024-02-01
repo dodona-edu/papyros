@@ -192,8 +192,11 @@ Removes the default spacing and border for appropriate elements.
 }
 
 .papyros-button.btn-icon {
-  padding: 2px 8px;
-  min-width: 20px;
+  padding: 0 4px;
+  min-width: 0;
+  background: transparent;
+  @apply _tw-text-blue-500;
+  font-size: 20px;
 }
 
 .cm-gutter.cm-debugline-gutter {
@@ -215,8 +218,12 @@ Removes the default spacing and border for appropriate elements.
 .papyros-test-code-widget {
   background-color: rgba(143, 182, 130, 0.1);
   color: #7d8799;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   padding: 0 2px 0 6px;
+  position: relative;
+}
+
+.papyros-test-code-buttons {
+  position: absolute;
+  right: 0;
+  top: 0;
 }

@@ -48,9 +48,10 @@ class TestCodeWidget extends WidgetType {
         element.appendChild(span);
 
         const buttons = document.createElement("div");
+        buttons.classList.add("papyros-test-code-buttons");
 
         const editButton = document.createElement("button");
-        editButton.classList.add("btn-secondary", "papyros-button", "btn-icon");
+        editButton.classList.add("papyros-button", "btn-icon");
         editButton.innerHTML = "<i class=\"mdi mdi-pencil\"></i>";
         editButton.addEventListener("click", () => {
             console.log("edit test code");
@@ -60,7 +61,7 @@ class TestCodeWidget extends WidgetType {
         buttons.appendChild(editButton);
 
         const deleteButton = document.createElement("button");
-        deleteButton.classList.add("btn-secondary", "papyros-button", "btn-icon");
+        deleteButton.classList.add("papyros-button", "btn-icon");
         deleteButton.innerHTML = "<i class=\"mdi mdi-close\"></i>";
         deleteButton.addEventListener("click", () => {
             console.log("remove test code");
