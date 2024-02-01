@@ -157,9 +157,12 @@ export class TestCodeExtension {
 
     public set testCode(code: string) {
         this.reset();
+        if (code === "") {
+            return;
+        }
+
         this.insertTestCode(code);
         this.allowEdit = false;
-
         this.highlightLines();
         this.addWidget();
     }
