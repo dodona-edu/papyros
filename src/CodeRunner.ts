@@ -169,7 +169,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         this.programmingLanguage = programmingLanguage;
         this.editor = new CodeEditor(() => {
             if (this.state === RunState.Ready) {
-                this.runCode(this.editor.getText());
+                this.runCode(this.editor.getCode());
             }
         });
         this.inputManager = new InputManager(async (input: string) => {
@@ -219,7 +219,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             buttonText: t(`Papyros.run_modes.${mode}`),
             classNames,
             icon: MODE_ICONS[mode]
-        }, () => this.runCode(this.editor.getText(), mode));
+        }, () => this.runCode(this.editor.getCode(), mode));
     }
 
     /**
@@ -243,7 +243,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
                 );
             this.editor.setLintingSource(
                 async view => {
-                    const workerDiagnostics = await workerProxy.lintCode(this.editor.getText());
+                    const workerDiagnostics = await workerProxy.lintCode(this.editor.getCode());
                     return workerDiagnostics.map(d => {
                         const fromline = view.state.doc.line(d.lineNr);
                         const toLine = view.state.doc.line(d.endLineNr);

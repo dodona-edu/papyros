@@ -110,6 +110,10 @@ export class CodeEditor extends CodeMirrorEditor {
         }
     }
 
+    public getCode(): string {
+        return super.getText();
+    }
+
     public override setDarkMode(darkMode: boolean): void {
         let styleExtensions: Extension = [];
         if (darkMode) {
