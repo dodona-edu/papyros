@@ -5,7 +5,7 @@ import { t } from "../util/Util";
 
 const addLineEffect = StateEffect.define<Range<Decoration>[]>();
 const clearAllLineEffects = StateEffect.define();
-const highlightExtension = StateField.define({
+const lineEffectExtension = StateField.define({
     create() {
         return Decoration.none;
     },
@@ -165,6 +165,6 @@ export class TestCodeExtension {
     }
 
     public toExtension(): Extension {
-        return [highlightExtension, readOnlyRangesExtension(this.getReadOnlyRanges.bind(this))];
+        return [lineEffectExtension, readOnlyRangesExtension(this.getReadOnlyRanges.bind(this))];
     }
 }
