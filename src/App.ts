@@ -74,7 +74,7 @@ async function startPapyros(): Promise<void> {
     await papyros.launch();
 
     // add test code
-    const testCode = "\nprint(\"Hello World!\")\n";
+    const testCode = "print('a')\nprint(\"Hello World!\")\nprint('b')";
     papyros.codeRunner.editor.testCode = testCode;
 }
 

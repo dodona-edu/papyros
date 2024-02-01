@@ -35,8 +35,7 @@ import { darkTheme } from "./DarkTheme";
 import { DebugLineGutter } from "./Gutters";
 import { BackendManager } from "../BackendManager";
 import { BackendEventType } from "../BackendEvent";
-import { highlightExtension, TestLineHighlighter } from "./Highlight";
-import readOnlyRangesExtension from "codemirror-readonly-ranges";
+import { TestCodeExtension } from "./TestCodeExtension";
 
 
 /**
@@ -50,7 +49,7 @@ export class CodeEditor extends CodeMirrorEditor {
     public static LINTING = "linting";
 
     private debugLineGutter: DebugLineGutter;
-    private testLineHighlighter: TestLineHighlighter;
+    private testCodeExtension: TestCodeExtension;
 
     /**
      * Construct a new CodeEditor
@@ -95,37 +94,12 @@ export class CodeEditor extends CodeMirrorEditor {
             this.debugLineGutter.markLine(this.editorView, line);
         });
 
-        this.testLineHighlighter = new TestLineHighlighter(this.editorView);
-        this.addExtension([readOnlyRangesExtension(this.getReadOnlyRanges.bind(this))]);
-    }
-
-    private _testCode: string = "";
-    private getReadOnlyRanges(targetState:EditorState): Array<{from:number|undefined, to:number|undefined}> {
-        if (this._testCode === "") {
-            return [];
-        }
-
-        const testCodeLines = this._testCode.split("\n");
-        return [
-            {
-                from: targetState.doc.line(targetState.doc.lines - testCodeLines.length).to,
-                to: undefined // until last line
-            }
-        ];
+        this.testCodeExtension = new TestCodeExtension(this.editorView);
+        this.addExtension(this.testCodeExtension.toExtension());
     }
 
     public set testCode(code: string) {
-        this._testCode = "";
-        this.editorView.dispatch(
-            { changes: { from: this.getText().length, insert: "\n\n" } }
-        );
-
-        this.editorView.dispatch(
-            { changes: { from: this.getText().length, insert: code } }
-        );
-
-        this.testLineHighlighter.testLines = code;
-        this._testCode = code;
+        this.testCodeExtension.testCode = code;
     }
 
     public override setDarkMode(darkMode: boolean): void {
@@ -252,7 +226,6 @@ export class CodeEditor extends CodeMirrorEditor {
             highlightActiveLine(),
             highlightActiveLineGutter(),
             highlightSelectionMatches(),
-            highlightExtension,
             keymap.of([
                 ...closeBracketsKeymap,
                 ...defaultKeymap,
