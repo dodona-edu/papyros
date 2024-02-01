@@ -1,11 +1,11 @@
-import {StateField, StateEffect, Range, Extension, Line, EditorState} from "@codemirror/state";
-import { Decoration, EditorView } from "@codemirror/view";
+import { StateField, StateEffect, Range, Extension, Line, EditorState } from "@codemirror/state";
+import { Decoration, EditorView, WidgetType } from "@codemirror/view";
 import readOnlyRangesExtension from "codemirror-readonly-ranges";
+import { t } from "../util/Util";
 
-
-const highlightEffect = StateEffect.define<Range<Decoration>[]>();
-
-export const highlightExtension = StateField.define({
+const addLineEffect = StateEffect.define<Range<Decoration>[]>();
+const clearAllLineEffects = StateEffect.define();
+const highlightExtension = StateField.define({
     create() {
         return Decoration.none;
     },
@@ -13,8 +13,11 @@ export const highlightExtension = StateField.define({
         let v = value.map(transaction.changes);
 
         for (const effect of transaction.effects) {
-            if (effect.is(highlightEffect)) {
+            if (effect.is(addLineEffect)) {
                 v = value.update({ add: effect.value });
+            }
+            if (effect.is(clearAllLineEffects)) {
+                v = Decoration.none;
             }
         }
 
@@ -25,12 +28,65 @@ export const highlightExtension = StateField.define({
 
 const highlightDecoration = Decoration.line({ class: "papyros-test-code" });
 
+// Widget to manage the test code
+class TestCodeWidget extends WidgetType {
+    private testCodeExtension: TestCodeExtension;
+
+    public constructor(testCodeExtension: TestCodeExtension) {
+        super();
+        this.testCodeExtension = testCodeExtension;
+    }
+
+    public toDOM(): HTMLElement {
+        console.log("create test code widget");
+
+        const element = document.createElement("div");
+        element.classList.add("papyros-test-code-widget");
+
+        const span = document.createElement("span");
+        span.innerText = t("Papyros.editor.test_code.description");
+        element.appendChild(span);
+
+        const buttons = document.createElement("div");
+
+        const editButton = document.createElement("button");
+        editButton.classList.add("btn-secondary", "papyros-button", "btn-icon");
+        editButton.innerHTML = "<i class=\"mdi mdi-pencil\"></i>";
+        editButton.addEventListener("click", () => {
+            console.log("edit test code");
+            this.testCodeExtension.reset(true);
+        });
+        editButton.title = t("Papyros.editor.test_code.edit");
+        buttons.appendChild(editButton);
+
+        const deleteButton = document.createElement("button");
+        deleteButton.classList.add("btn-secondary", "papyros-button", "btn-icon");
+        deleteButton.innerHTML = "<i class=\"mdi mdi-close\"></i>";
+        deleteButton.addEventListener("click", () => {
+            console.log("remove test code");
+            this.testCodeExtension.reset();
+        });
+        deleteButton.title = t("Papyros.editor.test_code.remove");
+        buttons.appendChild(deleteButton);
+
+        element.appendChild(buttons);
+        return element;
+    }
+
+    ignoreEvent(): boolean {
+        return false;
+    }
+}
+
 export class TestCodeExtension {
     private view: EditorView;
     private lines: string = "";
+    private widget: Decoration;
+    private allowEdit: boolean = true;
 
     constructor(view: EditorView) {
         this.view = view;
+        this.widget = Decoration.widget({ widget: new TestCodeWidget(this), block: true, side: 1 });
     }
 
     private get numberOfTestLines(): number {
@@ -46,13 +102,25 @@ export class TestCodeExtension {
     private highlightLines(): void {
         for (let i = 0; i < this.numberOfTestLines; i++) {
             this.view.dispatch({
-                effects: highlightEffect.of([highlightDecoration.range(this.lineFromEnd(i).from)])
+                effects: addLineEffect.of([highlightDecoration.range(this.lineFromEnd(i).from)])
             });
         }
     }
 
+    private addWidget(): void {
+        this.view.dispatch({
+            effects: addLineEffect.of([this.widget.range(this.lineFromEnd(this.numberOfTestLines).to)])
+        });
+    }
+
+    private clearAllLineEffects(): void {
+        this.view.dispatch({
+            effects: clearAllLineEffects.of(null)
+        });
+    }
+
     private getReadOnlyRanges(state: EditorState): Array<{from:number|undefined, to:number|undefined}> {
-        if (this.lines === "") {
+        if (this.allowEdit) {
             return [];
         }
         return [{
@@ -69,15 +137,31 @@ export class TestCodeExtension {
         this.view.dispatch(
             { changes: { from: this.lineFromEnd(0).to, insert: code } }
         );
+        this.lines = code;
     }
 
-    public set testCode(lines: string) {
+    public reset(keepCode= false): void {
+        this.allowEdit = true;
+        this.clearAllLineEffects();
+        if (this.lines === "") {
+            return;
+        }
+
+        if (!keepCode) {
+            this.view.dispatch(
+                { changes: { from: this.lineFromEnd(this.numberOfTestLines).to, to: this.lineFromEnd(0).to, insert: "" } }
+            );
+        }
         this.lines = "";
-        const insertedLines = "\n" + lines;
-        this.insertTestCode(insertedLines);
-        this.lines = insertedLines;
+    }
+
+    public set testCode(code: string) {
+        this.reset();
+        this.insertTestCode(code);
+        this.allowEdit = false;
 
         this.highlightLines();
+        this.addWidget();
     }
 
     public toExtension(): Extension {

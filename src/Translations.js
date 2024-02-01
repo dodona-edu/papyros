@@ -58,6 +58,13 @@ const ENGLISH_TRANSLATION = {
         "title": "Drag the slider to walk through your code.",
         "text_1": "This window shows how your program works step by step. Explore to see how your program builds and stores information.",
         "text_2": "You can also use the %{previous} and %{next} buttons to go to the previous or next step. The %{first} and %{last} buttons can be used to directly jump to the first or last step respectively."
+    },
+    "editor": {
+        "test_code": {
+            "description": "This code is inserted by the testcase",
+            "edit": "Edit",
+            "remove": "Remove"
+        }
     }
 };
 
@@ -117,6 +124,13 @@ const DUTCH_TRANSLATION = {
         "title": "Verken je code stap voor stap",
         "text_1": "Dit venster toont de werking van je programma in detail. Ontdek hoe je programma informatie opbouwt en bewaart.",
         "text_2": "Gebruik de schuifbalk om door je code te wandelen. Je kan ook de %{previous} en %{next} knoppen gebruiken om naar de vorige of volgende stap te gaan. De %{first} en %{last} knoppen kunnen gebruikt worden om direct naar de eerste of laatste stap te gaan."
+    },
+    "editor": {
+        "test_code": {
+            "description": "Deze code werd ingevoegd door de testcase",
+            "edit": "Bewerk",
+            "remove": "Verwijder"
+        }
     }
 };
 
