@@ -225,6 +225,11 @@ Removes the default spacing and border for appropriate elements.
   @apply _tw-text-blue-500;
   font-size: 16px;
   padding: 2px;
+  cursor: pointer;
+}
+
+.papyros-icon-link:hover {
+  @apply _tw-text-blue-400;
 }
 
 .papyros-state-card.cm-panels {
@@ -243,6 +248,7 @@ Removes the default spacing and border for appropriate elements.
 .papyros-state-card.cm-panels.show {
   display: flex;
 }
+
 .papyros-bottom-padding-widget {
   position: relative;
   height: 0;
