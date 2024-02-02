@@ -61,7 +61,7 @@ const ENGLISH_TRANSLATION = {
     },
     "editor": {
         "test_code": {
-            "description": "This code is inserted by the testcase",
+            "description": "# Appended testcase code for debugging purposes",
             "edit": "Edit",
             "remove": "Remove"
         }
@@ -127,7 +127,7 @@ const DUTCH_TRANSLATION = {
     },
     "editor": {
         "test_code": {
-            "description": "Deze code werd ingevoegd door de testcase",
+            "description": "# Toegevoegde testcase code voor debugdoeleinden",
             "edit": "Bewerk",
             "remove": "Verwijder"
         }
