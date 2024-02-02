@@ -87,7 +87,7 @@ class BottomPaddingWidget extends WidgetType {
         return element;
     }
 }
-const bottomPaddingDecoration = Decoration.widget({ widget: new BottomPaddingWidget(), side: 1, block: true});
+const bottomPaddingDecoration = Decoration.widget({ widget: new BottomPaddingWidget(), side: 1, block: true });
 
 export class TestCodeExtension {
     private view: EditorView;
