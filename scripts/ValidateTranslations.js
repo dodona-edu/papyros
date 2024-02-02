@@ -20,7 +20,11 @@ const checks = [
     {
         "type": "unused",
         "check": extract.findUnused,
-        "allowed": ["Papyros.debugger.*"]
+        "allowed": [
+            "Papyros.debugger.title",
+            "Papyros.debugger.text_1",
+            "Papyros.debugger.text_2"
+        ]
     },
     {
         "type": "duplicate",
