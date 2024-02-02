@@ -50,8 +50,8 @@ class TestCodeWidget extends WidgetType {
         const buttons = document.createElement("div");
         buttons.classList.add("papyros-test-code-buttons");
 
-        const editButton = document.createElement("button");
-        editButton.classList.add("papyros-button", "btn-icon");
+        const editButton = document.createElement("a");
+        editButton.classList.add("papyros-icon-link");
         editButton.innerHTML = "<i class=\"mdi mdi-pencil\"></i>";
         editButton.addEventListener("click", () => {
             console.log("edit test code");
@@ -60,8 +60,8 @@ class TestCodeWidget extends WidgetType {
         editButton.title = t("Papyros.editor.test_code.edit");
         buttons.appendChild(editButton);
 
-        const deleteButton = document.createElement("button");
-        deleteButton.classList.add("papyros-button", "btn-icon");
+        const deleteButton = document.createElement("a");
+        deleteButton.classList.add("papyros-icon-link");
         deleteButton.innerHTML = "<i class=\"mdi mdi-close\"></i>";
         deleteButton.addEventListener("click", () => {
             console.log("remove test code");
@@ -78,6 +78,16 @@ class TestCodeWidget extends WidgetType {
         return false;
     }
 }
+
+class BottomPaddingWidget extends WidgetType {
+    public toDOM(): HTMLElement {
+        const element = document.createElement("div");
+        element.classList.add("papyros-bottom-padding-widget");
+        element.appendChild(document.createElement("div"));
+        return element;
+    }
+}
+const bottomPaddingDecoration = Decoration.widget({ widget: new BottomPaddingWidget(), side: 1, block: true});
 
 export class TestCodeExtension {
     private view: EditorView;
@@ -110,7 +120,9 @@ export class TestCodeExtension {
 
     private addWidget(): void {
         this.view.dispatch({
-            effects: addLineEffect.of([this.widget.range(this.lineFromEnd(this.numberOfTestLines).to)])
+            effects: addLineEffect.of([
+                this.widget.range(this.lineFromEnd(this.numberOfTestLines).to),
+                bottomPaddingDecoration.range(this.lineFromEnd(0).to)])
         });
     }
 
