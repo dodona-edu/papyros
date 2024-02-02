@@ -231,9 +231,9 @@ Removes the default spacing and border for appropriate elements.
   display: none;
   position: absolute;
   right: 8px;
-  top: -39px;
+  top: -31px;
   left: initial;
-  padding: 8px;
+  padding: 4px 8px;
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
   border: 1px solid;
