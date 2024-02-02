@@ -227,3 +227,20 @@ Removes the default spacing and border for appropriate elements.
   right: 0;
   top: 0;
 }
+
+.papyros-state-card.cm-panels {
+  display: none;
+  position: absolute;
+  right: 8px;
+  top: -39px;
+  left: initial;
+  padding: 8px;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  border: 1px solid;
+  @apply _tw-border-gray-200 dark:_tw-border-none;
+}
+
+.papyros-state-card.cm-panels.show {
+  display: flex;
+}

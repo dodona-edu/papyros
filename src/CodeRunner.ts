@@ -305,8 +305,9 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      * @param {string} message Optional message to indicate the state
      */
     public setState(state: RunState, message?: string): void {
-        getElement(APPLICATION_STATE_TEXT_ID).innerText =
-            message || t(`Papyros.states.${state}`);
+        const stateElement = getElement(APPLICATION_STATE_TEXT_ID);
+        stateElement.innerText = message || t(`Papyros.states.${state}`);
+        stateElement.parentElement?.classList.toggle("show", stateElement.innerText.length > 0);
         if (state !== this.state) {
             this.previousState = this.state;
             this.state = state;
@@ -385,7 +386,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             "_tw-border-solid _tw-border-gray-200 _tw-border-b-2 dark:_tw-border-dark-mode-content");
         const rendered = renderWithOptions(options.statusPanelOptions, `
 <div style="position: relative">
-    <div style="position: absolute; right: 8px; top: -25px; display: flex">
+    <div class="papyros-state-card cm-panels">
         ${renderSpinningCircle(STATE_SPINNER_ID, "_tw-border-gray-200 _tw-border-b-red-500")}
         <div id="${APPLICATION_STATE_TEXT_ID}"></div>
     </div>
