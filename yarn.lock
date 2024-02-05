@@ -5212,9 +5212,9 @@ ts-interface-checker@^0.1.9:
   integrity sha512-Y/arvbn+rrz3JCKl9C4kVNfTfSm2/mEp5FSz5EsZSANGPSlQrpRI5M4PKF+mJnE52jOO90PnPSc3Ur3bTQw0gA==
 
 ts-jest-mock-import-meta@^1.1.0:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/ts-jest-mock-import-meta/-/ts-jest-mock-import-meta-1.1.0.tgz#496861ad70cba7743f3a135bfc195ea1e280849d"
-  integrity sha512-PTmdWGbDZOPh8vyZUmCTK5PjeD2X3YO25MQPTbm0lMlNFigUDwz3opwXOlsrgD0i5u/MpDX0gdZKoVONxVjVEw==
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/ts-jest-mock-import-meta/-/ts-jest-mock-import-meta-1.2.0.tgz#6fb12a1fa47f70f9335a288e888cbacf592c4dc1"
+  integrity sha512-r2+TH6d8LHBXqLTXjJh1KfTZoMvGV0hdn9gwickNVcwS2Co2/mewGjj0XDVEPLg5MVfZVHUFQ9O09anURA3KCw==
 
 ts-jest@^29.1.1:
   version "29.1.2"
