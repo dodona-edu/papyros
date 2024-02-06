@@ -12,6 +12,7 @@ from contextlib import contextmanager, redirect_stdout, redirect_stderr
 from pyodide_worker_runner import install_imports
 from pyodide import JsException, create_proxy
 from .util import to_py
+from pyodide.http import pyfetch
 
 SYS_RECURSION_LIMIT = 500
 
@@ -235,14 +236,19 @@ class Papyros(python_runner.PyodideRunner):
         tests = parser.get_examples(code)
         return bool(tests)
 
-    def provide_files(self, inline_files, href_files):
+    async def provide_files(self, inline_files, href_files):
+        file_names = list(json.loads(inline_files).keys()) + list(json.loads(href_files).keys())
+        self.callback("loading", data=dict(status="loading", modules=file_names), contentType="application/json")
         inline_files = json.loads(inline_files)
         for f in inline_files:
             open(f, "w").write(inline_files[f])
+            self.callback("loading", data=dict(status="loaded", modules=[f]), contentType="application/json")
 
         href_files = json.loads(href_files)
         for f in href_files:
             url = href_files[f]
-            r = self.fetch(url, stream=True)
+            r = await pyfetch(url, stream=True)
             with open(f, "wb") as fd:
-                fd.write(r.bytes())
+                fd.write(await r.bytes())
+            self.callback("loading", data=dict(status="loaded", modules=[f]), contentType="application/json")
+
