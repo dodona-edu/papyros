@@ -285,6 +285,15 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     }
 
     public async provideFiles(inlinedFiles: Record<string, string>, hrefFiles: Record<string, string>): Promise<void> {
+        const fileNames = [...Object.keys(inlinedFiles), ...Object.keys(hrefFiles)];
+        if (fileNames.length === 0) {
+            return;
+        }
+        BackendManager.publish({ type: BackendEventType.Loading, data: JSON.stringify({
+            modules: fileNames,
+            status: "loading"
+        }) });
+
         const backend = await this.backend;
         await backend.workerProxy.provideFiles(inlinedFiles, hrefFiles);
     }

@@ -237,8 +237,6 @@ class Papyros(python_runner.PyodideRunner):
         return bool(tests)
 
     async def provide_files(self, inline_files, href_files):
-        file_names = list(json.loads(inline_files).keys()) + list(json.loads(href_files).keys())
-        self.callback("loading", data=dict(status="loading", modules=file_names), contentType="application/json")
         inline_files = json.loads(inline_files)
         for f in inline_files:
             open(f, "w").write(inline_files[f])
