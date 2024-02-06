@@ -108,8 +108,8 @@ export class PythonWorker extends Backend<PyodideExtras> {
 
     public override async provideFiles(inlineFiles: Record<string, string>, hrefFiles: Record<string, string>): Promise<void> {
         await this.papyros.provide_files.callKwargs({
-            inline_files: inlineFiles,
-            href_files: hrefFiles
+            inline_files: JSON.stringify(inlineFiles),
+            href_files: JSON.stringify(hrefFiles)
         });
     }
 }
