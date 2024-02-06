@@ -284,6 +284,11 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         }
     }
 
+    public async provideFiles(inlinedFiles: Record<string, string>, hrefFiles: Record<string, string>): Promise<void> {
+        const backend = await this.backend;
+        await backend.workerProxy.provideFiles(inlinedFiles, hrefFiles);
+    }
+
     /**
      * @return {ProgrammingLanguage} The current programming language
      */
