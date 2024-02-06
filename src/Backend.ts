@@ -131,4 +131,14 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
     public getOverflow(): Array<BackendEvent> {
         return this.queue.getOverflow();
     }
+
+    /**
+     * Provide files to be used by the backend
+     * @param {Record<string, string>} inlineFiles Map of file names to their contents
+     * @param {Record<string, string>} hrefFiles Map of file names to URLS with their contents
+     * @return {Promise<void>} Resolves when the files are present in the backend
+     */
+    public provideFiles(inlineFiles: Record<string, string>, hrefFiles: Record<string, string>): Promise<void> {
+        return Promise.resolve();
+    }
 }

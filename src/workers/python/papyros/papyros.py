@@ -234,3 +234,15 @@ class Papyros(python_runner.PyodideRunner):
         parser = doctest.DocTestParser()
         tests = parser.get_examples(code)
         return bool(tests)
+
+    def provide_files(self, inline_files, href_files):
+        inline_files = json.loads(inline_files)
+        for f in inline_files:
+            open(f, "w").write(inline_files[f])
+
+        href_files = json.loads(href_files)
+        for f in href_files:
+            url = href_files[f]
+            r = self.fetch(url, stream=True)
+            with open(f, "wb") as fd:
+                fd.write(r.bytes())
