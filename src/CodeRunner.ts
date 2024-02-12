@@ -169,7 +169,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         this.programmingLanguage = programmingLanguage;
         this.editor = new CodeEditor(() => {
             if (this.state === RunState.Ready) {
-                this.runCode(this.editor.getCode());
+                this.runCode();
             }
         });
         this.inputManager = new InputManager(async (input: string) => {
@@ -219,7 +219,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             buttonText: t(`Papyros.run_modes.${mode}`),
             classNames,
             icon: MODE_ICONS[mode]
-        }, () => this.runCode(this.editor.getCode(), mode));
+        }, () => this.runCode(mode));
     }
 
     /**
@@ -424,11 +424,12 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     }
 
     /**
-     * @param {string} code The code to run
-     * @param {string} mode The mode to run with
+     * Execute the code in the editor
+     * @param {RunMode} mode The mode to run with
      * @return {Promise<void>} Promise of running the code
      */
-    public async runCode(code: string, mode?: string): Promise<void> {
+    public async runCode(mode?: RunMode): Promise<void> {
+        const code = this.editor.getCode();
         // Setup pre-run
         this.setState(RunState.Loading);
         // Ensure we go back to Loading after finishing any remaining installs
