@@ -11,9 +11,7 @@ from collections.abc import Awaitable
 from contextlib import contextmanager, redirect_stdout, redirect_stderr
 from pyodide_worker_runner import install_imports
 from pyodide import JsException, create_proxy
-
 from .util import to_py
-from .autocomplete import autocomplete
 
 SYS_RECURSION_LIMIT = 500
 
@@ -22,7 +20,7 @@ class Papyros(python_runner.PyodideRunner):
         self,
         *,
         source_code="",
-        filename="/my_program.py",
+        filename="/__main__.py",
         callback=None,
         buffer_constructor=None,
         limit=SYS_RECURSION_LIMIT
@@ -147,7 +145,14 @@ class Papyros(python_runner.PyodideRunner):
                 code_obj = self.pre_run(source_code, mode=mode, top_level_await=top_level_await)
                 if code_obj:
                     self.callback("start", data="RunCode", contentType="text/plain")
-                    result = self.execute(code_obj, mode)
+                    if mode == "debug":
+                        from tracer import JSONTracer
+                        def frame_callback(frame):
+                            self.callback("frame", data=frame, contentType="application/json")
+
+                        result = JSONTracer(False, False, False, frame_callback=frame_callback).runscript(source_code)
+                    else:
+                        result = self.execute(code_obj, mode)
                     while isinstance(result, Awaitable):
                         result = await result
                     self.callback("end", data="CodeFinished", contentType="text/plain")
@@ -210,11 +215,6 @@ class Papyros(python_runner.PyodideRunner):
                 )),
             contentType="text/json"
         )
-
-    def autocomplete(self, context):
-        context = to_py(context)
-        self.set_source_code(context["text"])
-        return autocomplete(context)
 
     def lint(self, code):
         # PyLint runs into an issue when trying to import its dependencies

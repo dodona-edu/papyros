@@ -11,9 +11,9 @@ jobs:
       name: production
       url: https://docs.dodona.be/papyros/
     steps:
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.12'
       - name: Checkout branch
         uses: actions/checkout@v4
       - name: Clone main
@@ -26,12 +26,14 @@ jobs:
         run: |
           cd papyros
           yarn install
+          yarn setup
           yarn build:app
           cp -r public/* dist
           cd ..
       - name: Install and build branch
         run: |
           yarn install
+          yarn setup
           yarn build:app
           cp -r public/* dist
       - name: Prepare builds to be deployed
@@ -40,7 +42,7 @@ jobs:
           mv papyros/dist dist
           mv devdist dist/dev
       - name: Deploy 🚀
-        uses: JamesIves/github-pages-deploy-action@v4.4.3
+        uses: JamesIves/github-pages-deploy-action@v4.5.0
         with:
           branch: gh-pages # The branch the action should deploy to.
           folder: dist # The folder the action should deploy.

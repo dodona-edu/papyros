@@ -6,7 +6,7 @@ import { LogType, papyrosLog } from "./Logging";
 export const i18n = new I18n(TRANSLATIONS);
 
 // Shorthand for ease of use
-export const t = i18n.t;
+export const t = i18n.t.bind(i18n);
 
 export function getLocales(): Array<string> {
     return Object.keys(TRANSLATIONS);

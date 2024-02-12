@@ -1,7 +1,5 @@
 import { Backend } from "./Backend";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
-import PythonWorker from "./workers/python/PythonWorker.worker";
-import JavaScriptWorker from "./workers/javascript/JavaScriptWorker.worker";
 import { BackendEvent, BackendEventType } from "./BackendEvent";
 import { LogType, papyrosLog } from "./util/Logging";
 import { Channel, makeChannel } from "sync-message";
@@ -103,7 +101,7 @@ export abstract class BackendManager {
         if (e.type === BackendEventType.Start) {
             BackendManager.halted = false;
         }
-        if (!BackendManager.halted && this.subscriberMap.has(e.type)) {
+        if ((!BackendManager.halted || e.type === BackendEventType.FrameChange) && this.subscriberMap.has(e.type)) {
             this.subscriberMap.get(e.type)!.forEach(cb => cb(e));
         }
     }
@@ -122,13 +120,13 @@ export abstract class BackendManager {
         BackendManager.subscriberMap = new Map();
         BackendManager.registerBackend(ProgrammingLanguage.Python,
             () => new PyodideClient<Backend>(
-                () => new PythonWorker(),
+                () => new Worker(new URL("./workers/python/worker", import.meta.url)),
                 BackendManager.channel
             )
         );
         BackendManager.registerBackend(ProgrammingLanguage.JavaScript,
             () => new SyncClient<Backend>(
-                () => new JavaScriptWorker(),
+                () => new Worker(new URL("./workers/javascript/worker", import.meta.url)),
                 BackendManager.channel
             )
         );

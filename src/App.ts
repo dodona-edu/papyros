@@ -1,3 +1,4 @@
+import "./Papyros.css";
 import {
     addPapyrosPrefix,
     DEFAULT_LOCALE, DEFAULT_PROGRAMMING_LANGUAGE,
@@ -58,7 +59,10 @@ async function startPapyros(): Promise<void> {
         standAloneOptions: {
             parentElementId: "root"
         },
-        darkMode: darkMode
+        darkMode: darkMode,
+        traceOptions: {
+            parentElementId: "trace-root"
+        }
     });
     setUpEditor(papyros.codeRunner.editor, LOCAL_STORAGE_KEYS.code);
     papyros.codeRunner.editor.focus();

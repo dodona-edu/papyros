@@ -70,6 +70,18 @@ export class OutputManager extends Renderable {
         BackendManager.subscribe(BackendEventType.Output, e => this.showOutput(e));
         BackendManager.subscribe(BackendEventType.Error, e => this.showError(e));
         BackendManager.subscribe(BackendEventType.End, () => this.onRunEnd());
+        BackendManager.subscribe(BackendEventType.FrameChange, e => {
+            const outputsToHighlight = e.data.outputs;
+            const outputElements = this.outputArea.children;
+            for (let i = 0; i < outputElements.length; i++) {
+                const outputElement = outputElements[i];
+                if (i < outputsToHighlight) {
+                    outputElement.setAttribute("style", "opacity: inherit;");
+                } else {
+                    outputElement.setAttribute("style", "opacity: 0.1;");
+                }
+            }
+        });
     }
 
     /**

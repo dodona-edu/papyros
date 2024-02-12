@@ -15,12 +15,12 @@ const checks = [
     {
         "type": "missing",
         "check": extract.findMissing,
-        "allowed": []
+        "allowed": ["Papyros.debugger"]
     },
     {
         "type": "unused",
         "check": extract.findUnused,
-        "allowed": []
+        "allowed": ["Papyros.debugger.*"]
     },
     {
         "type": "duplicate",

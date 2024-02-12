@@ -15,7 +15,6 @@ const ENGLISH_TRANSLATION = {
     "input_disabled": "You can only provide input when your code requires it in interactive mode",
     "output": "Output",
     "output_placeholder": "The output of your code will appear here.",
-    "run": "Run",
     "stop": "Stop",
     "finished": "Code executed in %{time} s",
     "interrupted": "Code interrupted after %{time} s",
@@ -49,16 +48,23 @@ const ENGLISH_TRANSLATION = {
     "launch_error": "Papyros failed to load. Do you want to reload?",
     "loading": "Loading %{packages}.",
     "run_modes": {
-        "doctest": "Run doctests"
+        "doctest": "Run doctests",
+        "debug": "Debug",
+        "run": "Run"
     },
     "used_input": "This line has already been used as input.",
-    "used_input_with_prompt": "This line was used as input for the following prompt: %{prompt}"
+    "used_input_with_prompt": "This line was used as input for the following prompt: %{prompt}",
+    "debugger": {
+        "title": "Drag the slider to walk through your code.",
+        "text_1": "This window shows how your program works step by step. Explore to see how your program builds and stores information.",
+        "text_2": "You can also use the %{previous} and %{next} buttons to go to the previous or next step. The %{first} and %{last} buttons can be used to directly jump to the first or last step respectively."
+    }
 };
 
 const DUTCH_TRANSLATION = {
     "Papyros": "Papyros",
     "code": "Code",
-    "code_placeholder": "Schrijf hier je %{programmingLanguage} code en klik op 'Run' om uit te voeren...",
+    "code_placeholder": "Schrijf hier je %{programmingLanguage} code en klik op 'Uitvoeren' om uit te voeren...",
     "input": "Invoer",
     "input_placeholder": {
         "interactive": "Geef invoer in en druk op enter",
@@ -68,7 +74,6 @@ const DUTCH_TRANSLATION = {
     "input_disabled": "Je kan enkel invoer invullen als je code erom vraagt in interactieve modus",
     "output": "Uitvoer",
     "output_placeholder": "Hier komt de uitvoer van je code.",
-    "run": "Run",
     "stop": "Stop",
     "states": {
         "running": "Aan het uitvoeren",
@@ -102,10 +107,17 @@ const DUTCH_TRANSLATION = {
     "launch_error": "Er liep iets fout bij het laden van Papyros. Wil je herladen?",
     "loading": "Bezig met het installeren van %{packages}.",
     "run_modes": {
-        "doctest": "Run doctests"
+        "doctest": "Doctests uitvoeren",
+        "debug": "Debuggen",
+        "run": "Uitvoeren"
     },
     "used_input": "Deze regel werd al gebruikt als invoer.",
-    "used_input_with_prompt": "Deze regel werd gebruikt als invoer voor de volgende vraag: %{prompt}"
+    "used_input_with_prompt": "Deze regel werd gebruikt als invoer voor de volgende vraag: %{prompt}",
+    "debugger": {
+        "title": "Verken je code stap voor stap",
+        "text_1": "Dit venster toont de werking van je programma in detail. Ontdek hoe je programma informatie opbouwt en bewaart.",
+        "text_2": "Gebruik de schuifbalk om door je code te wandelen. Je kan ook de %{previous} en %{next} knoppen gebruiken om naar de vorige of volgende stap te gaan. De %{first} en %{last} knoppen kunnen gebruikt worden om direct naar de eerste of laatste stap te gaan."
+    }
 };
 
 // Override some default English phrases to also use capitalized text
