@@ -143,8 +143,12 @@ export class TestCodeExtension {
     }
 
     private insertTestCode(code: string): void {
+        // insert up to two new lines to separate the test code from the user code
+        // but only if they are not already there
+        const finalNewLineCount = this.view.state.doc.toString().match(/\n*$/)?.[0].length || 0;
+        const newLinesToInsert = Math.max(0, 2 - finalNewLineCount);
         this.view.dispatch(
-            { changes: { from: this.lineFromEnd(0).to, insert: "\n" } }
+            { changes: { from: this.lineFromEnd(0).to, insert: "\n".repeat(newLinesToInsert) } }
         );
 
         this.view.dispatch(
