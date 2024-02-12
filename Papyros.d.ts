@@ -1,6 +1,6 @@
 import { InputManagerRenderOptions, InputMode } from "./InputManager";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
-import { CodeRunner, RunState } from "./CodeRunner";
+import { RunState, CodeRunner } from "./CodeRunner";
 import { AtomicsChannelOptions, ServiceWorkerChannelOptions } from "sync-message";
 import { ButtonOptions, Renderable, RenderOptions } from "./util/Rendering";
 /**
