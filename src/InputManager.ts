@@ -1,11 +1,10 @@
-import { t } from "i18n-js";
 import {
     SWITCH_INPUT_MODE_A_ID,
     USER_INPUT_WRAPPER_ID
 } from "./Constants";
 import { BackendEvent, BackendEventType } from "./BackendEvent";
 import {
-    addListener, getElement,
+    addListener, getElement, t
 } from "./util/Util";
 import { InteractiveInputHandler } from "./input/InteractiveInputHandler";
 import { UserInputHandler } from "./input/UserInputHandler";

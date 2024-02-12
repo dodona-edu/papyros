@@ -1,5 +1,4 @@
 /* eslint-disable max-len */
-import I18n from "i18n-js";
 import {
     DARK_MODE_TOGGLE_ID,
     EDITOR_WRAPPER_ID,
@@ -13,8 +12,12 @@ import {
 } from "./Constants";
 import { InputManagerRenderOptions, InputMode } from "./InputManager";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
-import { addListener, cleanCurrentUrl, getElement, getLocales, loadTranslations, removeSelection, t } from "./util/Util";
-import { CodeRunner, RunState } from "./CodeRunner";
+import {
+    t, getLocales,
+    removeSelection,
+    addListener, getElement, cleanCurrentUrl, i18n
+} from "./util/Util";
+import { RunState, CodeRunner } from "./CodeRunner";
 import { getCodeForExample, getExampleNames } from "./examples/Examples";
 import { AtomicsChannelOptions, makeChannel, ServiceWorkerChannelOptions } from "sync-message";
 import { BackendManager } from "./BackendManager";
@@ -119,9 +122,7 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
     constructor(config: PapyrosConfig) {
         super();
         this.config = config;
-        // Load translations as other components depend on them
-        loadTranslations();
-        I18n.locale = config.locale;
+        i18n.locale = config.locale;
         this.codeRunner = new CodeRunner(config.programmingLanguage, config.inputMode);
     }
 
@@ -166,7 +167,7 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
     public setLocale(locale: string): void {
         if (locale !== this.config.locale) {
             this.config.locale = locale;
-            I18n.locale = locale;
+            i18n.locale = locale;
             this.render();
         }
     }
@@ -311,7 +312,7 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
                     removeSelection(EXAMPLE_SELECT_ID);
                     this.config.example = undefined;
                     // Modify search query params without reloading page
-                    history.pushState(null, "", `?locale=${I18n.locale}&language=${pl}`);
+                    history.pushState(null, "", `?locale=${i18n.locale}&language=${pl}`);
                 }, "change", "value"
             );
             addListener(LOCALE_SELECT_ID, locale => {
