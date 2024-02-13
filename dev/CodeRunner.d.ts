@@ -1,3 +1,4 @@
+import { RunMode } from "./Backend";
 import { CodeEditor } from "./editor/CodeEditor";
 import { InputManager, InputManagerRenderOptions, InputMode } from "./InputManager";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
@@ -117,6 +118,7 @@ export declare class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      * @param {ProgrammingLanguage} programmingLanguage The language to use
      */
     setProgrammingLanguage(programmingLanguage: ProgrammingLanguage): Promise<void>;
+    provideFiles(inlinedFiles: Record<string, string>, hrefFiles: Record<string, string>): Promise<void>;
     /**
      * @return {ProgrammingLanguage} The current programming language
      */
@@ -161,11 +163,11 @@ export declare class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     private renderButtons;
     protected _render(options: CodeRunnerRenderOptions): HTMLElement;
     /**
-     * @param {string} code The code to run
-     * @param {string} mode The mode to run with
+     * Execute the code in the editor
+     * @param {RunMode} mode The mode to run with
      * @return {Promise<void>} Promise of running the code
      */
-    runCode(code: string, mode?: string): Promise<void>;
+    runCode(mode?: RunMode): Promise<void>;
     /**
      * Callback to handle loading events
      * @param {BackendEvent} e The loading event

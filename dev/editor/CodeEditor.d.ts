@@ -12,6 +12,7 @@ export declare class CodeEditor extends CodeMirrorEditor {
     static AUTOCOMPLETION: string;
     static LINTING: string;
     private debugLineGutter;
+    private testCodeExtension;
     /**
      * Construct a new CodeEditor
      * @param {Function} onRunRequest Callback for when the user wants to run the code
@@ -19,6 +20,9 @@ export declare class CodeEditor extends CodeMirrorEditor {
      * @param {number} indentLength The length in spaces for the indent unit
      */
     constructor(onRunRequest: () => void, initialCode?: string, indentLength?: number);
+    set testCode(code: string);
+    getText(): string;
+    getCode(): string;
     setDarkMode(darkMode: boolean): void;
     /**
      * @param {ProgrammingLanguage} language The language to use

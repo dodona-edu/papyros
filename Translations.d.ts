@@ -72,6 +72,13 @@ declare namespace ENGLISH_TRANSLATION {
         let text_2: string;
     }
     export { _debugger as debugger };
+    export namespace editor {
+        namespace test_code {
+            let description: string;
+            let edit: string;
+            let remove: string;
+        }
+    }
 }
 declare namespace DUTCH_TRANSLATION {
     let Papyros_1: string;
@@ -177,6 +184,18 @@ declare namespace DUTCH_TRANSLATION {
         export { text_2_1 as text_2 };
     }
     export { _debugger_1 as debugger };
+    export namespace editor_1 {
+        export namespace test_code_1 {
+            let description_1: string;
+            export { description_1 as description };
+            let edit_1: string;
+            export { edit_1 as edit };
+            let remove_1: string;
+            export { remove_1 as remove };
+        }
+        export { test_code_1 as test_code };
+    }
+    export { editor_1 as editor };
 }
 declare const ENGLISH_PHRASES: {
     "Go to line": string;

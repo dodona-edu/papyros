@@ -28,4 +28,5 @@ export declare class PythonWorker extends Backend<PyodideExtras> {
     runModes(code: string): Array<RunMode>;
     runCode(extras: PyodideExtras, code: string, mode?: string): Promise<any>;
     lintCode(code: string): Promise<Array<WorkerDiagnostic>>;
+    provideFiles(inlineFiles: Record<string, string>, hrefFiles: Record<string, string>): Promise<void>;
 }

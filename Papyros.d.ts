@@ -32,6 +32,7 @@ export interface PapyrosConfig {
      */
     channelOptions?: {
         serviceWorkerName?: string;
+        root?: string;
     } & AtomicsChannelOptions & ServiceWorkerChannelOptions;
 }
 /**
