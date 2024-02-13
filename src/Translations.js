@@ -65,7 +65,8 @@ const ENGLISH_TRANSLATION = {
             "edit": "Edit",
             "remove": "Remove"
         }
-    }
+    },
+    "debug_mode_active": "Debug mode active",
 };
 
 const DUTCH_TRANSLATION = {
@@ -131,7 +132,8 @@ const DUTCH_TRANSLATION = {
             "edit": "Bewerk",
             "remove": "Verwijder"
         }
-    }
+    },
+    "debug_mode_active": "Debugmodus actief",
 };
 
 // Override some default English phrases to also use capitalized text

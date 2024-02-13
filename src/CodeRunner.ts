@@ -158,6 +158,8 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      * Time at which the setState call occurred
      */
     private runStartTime: number;
+    // True while running or viewing with debugger
+    private debugMode = false;
 
     /**
      * Construct a new RunStateManager with the given listeners
@@ -321,6 +323,12 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     public setState(state: RunState, message?: string): void {
         const stateElement = getElement(APPLICATION_STATE_TEXT_ID);
         stateElement.innerText = message || t(`Papyros.states.${state}`);
+        if ( this.debugMode ) {
+            if ( stateElement.innerText.length > 0 ) {
+                stateElement.innerText += "  -";
+            }
+            stateElement.innerText += "  " + t("Papyros.debug_mode_active");
+        }
         stateElement.parentElement?.classList.toggle("show", stateElement.innerText.length > 0);
         if (state !== this.state) {
             this.previousState = this.state;
@@ -429,6 +437,8 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      * @return {Promise<void>} Promise of running the code
      */
     public async runCode(mode?: RunMode): Promise<void> {
+        this.debugMode = mode === RunMode.Debug;
+
         const code = this.editor.getCode();
         // Setup pre-run
         this.setState(RunState.Loading);
