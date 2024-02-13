@@ -276,6 +276,15 @@ export class DebugLineGutter extends Gutters<GutterInfo> {
 
         if (lineNr > 0) {
             this.setMarker(view, { lineNr, on: true });
+            // set the cursor to the line
+            // This marks the line as active and scrolls to it
+            view.dispatch({
+                selection: {
+                    anchor: view.state.doc.line(lineNr).from,
+                    head: view.state.doc.line(lineNr).from
+                },
+                scrollIntoView: true,
+            });
             this.show();
         } else {
             this.hide();
