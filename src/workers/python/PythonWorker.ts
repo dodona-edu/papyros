@@ -105,5 +105,12 @@ export class PythonWorker extends Backend<PyodideExtras> {
         await this.installImports(code);
         return PythonWorker.convert(this.papyros.lint(code));
     }
+
+    public override async provideFiles(inlineFiles: Record<string, string>, hrefFiles: Record<string, string>): Promise<void> {
+        await this.papyros.provide_files.callKwargs({
+            inline_files: JSON.stringify(inlineFiles),
+            href_files: JSON.stringify(hrefFiles)
+        });
+    }
 }
 

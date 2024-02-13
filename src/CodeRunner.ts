@@ -169,7 +169,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         this.programmingLanguage = programmingLanguage;
         this.editor = new CodeEditor(() => {
             if (this.state === RunState.Ready) {
-                this.runCode(this.editor.getText());
+                this.runCode();
             }
         });
         this.inputManager = new InputManager(async (input: string) => {
@@ -219,7 +219,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             buttonText: t(`Papyros.run_modes.${mode}`),
             classNames,
             icon: MODE_ICONS[mode]
-        }, () => this.runCode(this.editor.getText(), mode));
+        }, () => this.runCode(mode));
     }
 
     /**
@@ -243,7 +243,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
                 );
             this.editor.setLintingSource(
                 async view => {
-                    const workerDiagnostics = await workerProxy.lintCode(this.editor.getText());
+                    const workerDiagnostics = await workerProxy.lintCode(this.editor.getCode());
                     return workerDiagnostics.map(d => {
                         const fromline = view.state.doc.line(d.lineNr);
                         const toLine = view.state.doc.line(d.endLineNr);
@@ -284,6 +284,20 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         }
     }
 
+    public async provideFiles(inlinedFiles: Record<string, string>, hrefFiles: Record<string, string>): Promise<void> {
+        const fileNames = [...Object.keys(inlinedFiles), ...Object.keys(hrefFiles)];
+        if (fileNames.length === 0) {
+            return;
+        }
+        BackendManager.publish({ type: BackendEventType.Loading, data: JSON.stringify({
+            modules: fileNames,
+            status: "loading"
+        }) });
+
+        const backend = await this.backend;
+        await backend.workerProxy.provideFiles(inlinedFiles, hrefFiles);
+    }
+
     /**
      * @return {ProgrammingLanguage} The current programming language
      */
@@ -305,8 +319,9 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      * @param {string} message Optional message to indicate the state
      */
     public setState(state: RunState, message?: string): void {
-        getElement(APPLICATION_STATE_TEXT_ID).innerText =
-            message || t(`Papyros.states.${state}`);
+        const stateElement = getElement(APPLICATION_STATE_TEXT_ID);
+        stateElement.innerText = message || t(`Papyros.states.${state}`);
+        stateElement.parentElement?.classList.toggle("show", stateElement.innerText.length > 0);
         if (state !== this.state) {
             this.previousState = this.state;
             this.state = state;
@@ -385,7 +400,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             "_tw-border-solid _tw-border-gray-200 _tw-border-b-2 dark:_tw-border-dark-mode-content");
         const rendered = renderWithOptions(options.statusPanelOptions, `
 <div style="position: relative">
-    <div style="position: absolute; right: 8px; top: -25px; display: flex">
+    <div class="papyros-state-card cm-panels">
         ${renderSpinningCircle(STATE_SPINNER_ID, "_tw-border-gray-200 _tw-border-b-red-500")}
         <div id="${APPLICATION_STATE_TEXT_ID}"></div>
     </div>
@@ -409,11 +424,12 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     }
 
     /**
-     * @param {string} code The code to run
-     * @param {string} mode The mode to run with
+     * Execute the code in the editor
+     * @param {RunMode} mode The mode to run with
      * @return {Promise<void>} Promise of running the code
      */
-    public async runCode(code: string, mode?: string): Promise<void> {
+    public async runCode(mode?: RunMode): Promise<void> {
+        const code = this.editor.getCode();
         // Setup pre-run
         this.setState(RunState.Loading);
         // Ensure we go back to Loading after finishing any remaining installs

@@ -68,6 +68,8 @@ export interface PapyrosConfig {
     channelOptions?: {
         // The name of the service worker relative to the current root
         serviceWorkerName?: string;
+        // The location of the service worker
+        root?: string;
     } & AtomicsChannelOptions & ServiceWorkerChannelOptions;
 }
 
@@ -208,7 +210,7 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
             if (!this.config.channelOptions?.serviceWorkerName || !("serviceWorker" in navigator)) {
                 return false;
             }
-            const serviceWorkerRoot = cleanCurrentUrl(true);
+            const serviceWorkerRoot = this.config.channelOptions.root || cleanCurrentUrl(true);
             const { serviceWorkerName } = this.config.channelOptions;
             this.config.channelOptions.scope = serviceWorkerRoot;
             const serviceWorkerUrl = serviceWorkerRoot + serviceWorkerName;

@@ -23,7 +23,7 @@ const ENGLISH_TRANSLATION = {
         "stopping": "Stopping",
         "loading": "Loading",
         "awaiting_input": "Awaiting input",
-        "ready": " ",
+        "ready": "",
     },
     "programming_language": "Programming language",
     "programming_languages": {
@@ -58,6 +58,13 @@ const ENGLISH_TRANSLATION = {
         "title": "Drag the slider to walk through your code.",
         "text_1": "This window shows how your program works step by step. Explore to see how your program builds and stores information.",
         "text_2": "You can also use the %{previous} and %{next} buttons to go to the previous or next step. The %{first} and %{last} buttons can be used to directly jump to the first or last step respectively."
+    },
+    "editor": {
+        "test_code": {
+            "description": "# Appended testcase code for debugging purposes",
+            "edit": "Edit",
+            "remove": "Remove"
+        }
     }
 };
 
@@ -80,7 +87,7 @@ const DUTCH_TRANSLATION = {
         "stopping": "Aan het stoppen",
         "loading": "Aan het laden",
         "awaiting_input": "Aan het wachten op invoer",
-        "ready": " ",
+        "ready": "",
     },
     "finished": "Code uitgevoerd in %{time} s",
     "interrupted": "Code onderbroken na %{time} s",
@@ -117,6 +124,13 @@ const DUTCH_TRANSLATION = {
         "title": "Verken je code stap voor stap",
         "text_1": "Dit venster toont de werking van je programma in detail. Ontdek hoe je programma informatie opbouwt en bewaart.",
         "text_2": "Gebruik de schuifbalk om door je code te wandelen. Je kan ook de %{previous} en %{next} knoppen gebruiken om naar de vorige of volgende stap te gaan. De %{first} en %{last} knoppen kunnen gebruikt worden om direct naar de eerste of laatste stap te gaan."
+    },
+    "editor": {
+        "test_code": {
+            "description": "# Toegevoegde testcase code voor debugdoeleinden",
+            "edit": "Bewerk",
+            "remove": "Verwijder"
+        }
     }
 };
 

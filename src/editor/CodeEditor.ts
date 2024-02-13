@@ -35,6 +35,8 @@ import { darkTheme } from "./DarkTheme";
 import { DebugLineGutter } from "./Gutters";
 import { BackendManager } from "../BackendManager";
 import { BackendEventType } from "../BackendEvent";
+import { TestCodeExtension } from "./TestCodeExtension";
+
 
 /**
  * Component that provides useful features to users writing code
@@ -47,6 +49,7 @@ export class CodeEditor extends CodeMirrorEditor {
     public static LINTING = "linting";
 
     private debugLineGutter: DebugLineGutter;
+    private testCodeExtension: TestCodeExtension;
 
     /**
      * Construct a new CodeEditor
@@ -54,7 +57,7 @@ export class CodeEditor extends CodeMirrorEditor {
      * @param {string} initialCode The initial code to display
      * @param {number} indentLength The length in spaces for the indent unit
      */
-    constructor(onRunRequest: () => void, initialCode = "", indentLength = 4) {
+    constructor(onRunRequest: () => void, initialCode: string = "", indentLength: number = 4) {
         super(new Set([
             CodeEditor.PROGRAMMING_LANGUAGE, CodeEditor.INDENTATION,
             CodeEditor.PANEL, CodeEditor.AUTOCOMPLETION, CodeEditor.LINTING
@@ -90,6 +93,25 @@ export class CodeEditor extends CodeMirrorEditor {
             const line = e.data.line;
             this.debugLineGutter.markLine(this.editorView, line);
         });
+
+        this.testCodeExtension = new TestCodeExtension(this.editorView);
+        this.addExtension(this.testCodeExtension.toExtension());
+    }
+
+    public set testCode(code: string) {
+        this.testCodeExtension.testCode = code;
+    }
+
+    public getText(): string {
+        if (this.testCodeExtension) {
+            return this.testCodeExtension.getNonTestCode();
+        } else {
+            return super.getText();
+        }
+    }
+
+    public getCode(): string {
+        return super.getText();
     }
 
     public override setDarkMode(darkMode: boolean): void {

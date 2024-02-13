@@ -1971,6 +1971,13 @@ co@^4.6.0:
   resolved "https://registry.yarnpkg.com/co/-/co-4.6.0.tgz#6ea6bdf3d853ae54ccb8e47bfa0bf3f9031fb184"
   integrity sha512-QVb0dM5HvG+uaxitm8wONl7jltx8dqhfU33DcqtOZcLSVIKSDDLDi7+0LbAKiyI8hD9u42m2YxXSkMGWThaecQ==
 
+codemirror-readonly-ranges@^0.1.0-alpha.2:
+  version "0.1.0-alpha.2"
+  resolved "https://registry.yarnpkg.com/codemirror-readonly-ranges/-/codemirror-readonly-ranges-0.1.0-alpha.2.tgz#90cf1245d81efb60e8b87b5511211b7be8141d0f"
+  integrity sha512-PjT/gDAn9cm7wN/YigxgBMsxYbO52bvPQLbN8dXG9seHNANNE9KELteFaS00/+1UR4fAnCq7Ueh+KmRTlPgFTw==
+  dependencies:
+    range-analyzer ">= 0.1.1-alpha.1"
+
 collect-v8-coverage@^1.0.0:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/collect-v8-coverage/-/collect-v8-coverage-1.0.2.tgz#c0b29bcd33bcd0779a1344c2136051e6afd3d9e9"
@@ -4572,6 +4579,11 @@ randombytes@^2.1.0:
   integrity sha512-vYl3iOX+4CKUWuxGi9Ukhie6fsqXqS9FE2Zaic4tNFD2N2QQaXOMFbuKK4QmDHC0JO6B1Zp41J0LpT0oR68amQ==
   dependencies:
     safe-buffer "^5.1.0"
+
+"range-analyzer@>= 0.1.1-alpha.1":
+  version "0.1.1-alpha.2"
+  resolved "https://registry.yarnpkg.com/range-analyzer/-/range-analyzer-0.1.1-alpha.2.tgz#2e8bf334fe3f53391a5e69cd157a3af7af85ef58"
+  integrity sha512-Ad9J4t3zljH/DHNSDthAFyQdd5DniHTaqES/oTwAFB7prV7E4u01et6WYCpqbJSmUDC05XlMMR2ycO84Hi1IvA==
 
 range-parser@^1.2.1, range-parser@~1.2.1:
   version "1.2.1"
