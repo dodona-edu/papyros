@@ -1,30 +1,8 @@
-import { StateField, StateEffect, Range, Extension, Line, EditorState } from "@codemirror/state";
+import { Extension, Line, EditorState } from "@codemirror/state";
 import { Decoration, EditorView, WidgetType } from "@codemirror/view";
 import readOnlyRangesExtension from "codemirror-readonly-ranges";
 import { t } from "../util/Util";
-
-const addLineEffect = StateEffect.define<Range<Decoration>[]>();
-const clearAllLineEffects = StateEffect.define();
-const lineEffectExtension = StateField.define({
-    create() {
-        return Decoration.none;
-    },
-    update(value, transaction) {
-        let v = value.map(transaction.changes);
-
-        for (const effect of transaction.effects) {
-            if (effect.is(addLineEffect)) {
-                v = value.update({ add: effect.value });
-            }
-            if (effect.is(clearAllLineEffects)) {
-                v = Decoration.none;
-            }
-        }
-
-        return v;
-    },
-    provide: f => EditorView.decorations.from(f)
-});
+import { LineEffectExtension } from "./LineEffectExtension";
 
 const highlightDecoration = Decoration.line({ class: "papyros-test-code" });
 
@@ -38,8 +16,6 @@ class TestCodeWidget extends WidgetType {
     }
 
     public toDOM(): HTMLElement {
-        console.log("create test code widget");
-
         const element = document.createElement("div");
         element.classList.add("papyros-test-code-widget");
 
@@ -90,14 +66,16 @@ class BottomPaddingWidget extends WidgetType {
 const bottomPaddingDecoration = Decoration.widget({ widget: new BottomPaddingWidget(), side: 1, block: true });
 
 export class TestCodeExtension {
-    private view: EditorView;
+    private readonly view: EditorView;
+    private readonly widget: Decoration;
+    private readonly lineEffect: LineEffectExtension;
     private lines: string = "";
-    private widget: Decoration;
     private allowEdit: boolean = true;
 
     constructor(view: EditorView) {
         this.view = view;
         this.widget = Decoration.widget({ widget: new TestCodeWidget(this), block: true, side: 1 });
+        this.lineEffect = new LineEffectExtension(view);
     }
 
     private get numberOfTestLines(): number {
@@ -112,24 +90,19 @@ export class TestCodeExtension {
 
     private highlightLines(): void {
         for (let i = 0; i < this.numberOfTestLines; i++) {
-            this.view.dispatch({
-                effects: addLineEffect.of([highlightDecoration.range(this.lineFromEnd(i).from)])
-            });
+            this.lineEffect.add([highlightDecoration.range(this.lineFromEnd(i).from)]);
         }
     }
 
     private addWidget(): void {
-        this.view.dispatch({
-            effects: addLineEffect.of([
-                this.widget.range(this.lineFromEnd(this.numberOfTestLines).to),
-                bottomPaddingDecoration.range(this.lineFromEnd(0).to)])
-        });
+        this.lineEffect.add([
+            this.widget.range(this.lineFromEnd(this.numberOfTestLines).to),
+            bottomPaddingDecoration.range(this.lineFromEnd(0).to)
+        ]);
     }
 
     private clearAllLineEffects(): void {
-        this.view.dispatch({
-            effects: clearAllLineEffects.of(null)
-        });
+        this.lineEffect.clear();
     }
 
     private getReadOnlyRanges(state: EditorState): Array<{from:number|undefined, to:number|undefined}> {
@@ -193,6 +166,6 @@ export class TestCodeExtension {
     }
 
     public toExtension(): Extension {
-        return [lineEffectExtension, readOnlyRangesExtension(this.getReadOnlyRanges.bind(this))];
+        return [this.lineEffect.toExtension(), readOnlyRangesExtension(this.getReadOnlyRanges.bind(this))];
     }
 }

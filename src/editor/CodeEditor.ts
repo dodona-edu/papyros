@@ -36,6 +36,7 @@ import { DebugLineGutter } from "./Gutters";
 import { BackendManager } from "../BackendManager";
 import { BackendEventType } from "../BackendEvent";
 import { TestCodeExtension } from "./TestCodeExtension";
+import {DebugExtension} from "./DebugExtension";
 
 
 /**
@@ -49,7 +50,7 @@ export class CodeEditor extends CodeMirrorEditor {
     public static LINTING = "linting";
     public static READONLY = "readonly";
 
-    private debugLineGutter: DebugLineGutter;
+    private debugExtension: DebugExtension;
     private testCodeExtension: TestCodeExtension;
 
     /**
@@ -70,7 +71,7 @@ export class CodeEditor extends CodeMirrorEditor {
             maxHeight: "72vh",
             theme: {}
         });
-        this.debugLineGutter = new DebugLineGutter();
+        this.debugExtension = new DebugExtension(this.editorView);
         this.addExtension([
             keymap.of([
                 {
@@ -84,26 +85,18 @@ export class CodeEditor extends CodeMirrorEditor {
                     key: "Shift-Enter", run: insertBlankLine
                 }
             ]),
-            this.debugLineGutter.toExtension(),
+            this.debugExtension.toExtension(),
             ...CodeEditor.getExtensions()
         ]);
         this.setText(initialCode);
         this.setIndentLength(indentLength);
-
-        BackendManager.subscribe(BackendEventType.FrameChange, e => {
-            const line = e.data.line;
-            this.debugLineGutter.markLine(this.editorView, line);
-        });
 
         this.testCodeExtension = new TestCodeExtension(this.editorView);
         this.addExtension(this.testCodeExtension.toExtension());
     }
 
     public set debugMode(value: boolean) {
-        this.debugLineGutter.toggle(value);
-        if (value) {
-            this.debugLineGutter.markLine(this.editorView, 1);
-        }
+        this.debugExtension.toggle(value);
         this.reconfigure([CodeEditor.READONLY, EditorState.readOnly.of(value)]);
     }
 
