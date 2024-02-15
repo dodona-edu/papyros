@@ -1,11 +1,30 @@
-import { Decoration, EditorView } from "@codemirror/view";
+import { Decoration, EditorView, gutterLineClass, GutterMarker } from "@codemirror/view";
 import { LineEffectExtension } from "./LineEffectExtension";
 import { DebugLineGutter } from "./Gutters";
-import { Extension } from "@codemirror/state";
+import { Extension, RangeSet, StateEffect, StateField } from "@codemirror/state";
 import { BackendManager } from "../BackendManager";
 import { BackendEventType } from "../BackendEvent";
 
 const activeLineDecoration = Decoration.line({ class: "cm-activeLine" });
+const activeLineGutterMarker = new class extends GutterMarker {
+    elementClass = "cm-activeLineGutter";
+};
+const markLine = StateEffect.define<number>()
+const markedLine = StateField.define<number>({
+    create: () => 1,
+    update(value, tr) {
+        for (const effect of tr.effects) {
+            if (effect.is(markLine)) {
+                return effect.value;
+            }
+        }
+        return value;
+    }
+});
+const markedLineGutterHighlighter = gutterLineClass.compute([markedLine], state => {
+    const linePos = state.doc.line(state.field(markedLine)).from;
+    return RangeSet.of([activeLineGutterMarker.range(linePos)]);
+});
 
 export class DebugExtension {
     private readonly view: EditorView;
@@ -36,12 +55,13 @@ export class DebugExtension {
     public markLine(lineNr: number): void {
         this.gutter.markLine(this.view, lineNr);
         this.lineEffect.set([activeLineDecoration.range(this.view.state.doc.line(lineNr).from)]);
-        this.view.dispatch({
-            effects: EditorView.scrollIntoView(this.view.state.doc.line(lineNr).from)
-        });
+        this.view.dispatch({ effects: [
+            markLine.of(lineNr),
+            EditorView.scrollIntoView(this.view.state.doc.line(lineNr).from)
+        ] });
     }
 
     public toExtension(): Extension {
-        return [this.lineEffect.toExtension(), this.gutter.toExtension()];
+        return [this.lineEffect.toExtension(), this.gutter.toExtension(), markedLine, markedLineGutterHighlighter];
     }
 }
