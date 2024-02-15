@@ -32,11 +32,8 @@ import {
 import { Diagnostic, linter, lintGutter, lintKeymap } from "@codemirror/lint";
 import { CodeMirrorEditor } from "./CodeMirrorEditor";
 import { darkTheme } from "./DarkTheme";
-import { DebugLineGutter } from "./Gutters";
-import { BackendManager } from "../BackendManager";
-import { BackendEventType } from "../BackendEvent";
 import { TestCodeExtension } from "./TestCodeExtension";
-import {DebugExtension} from "./DebugExtension";
+import { DebugExtension } from "./DebugExtension";
 
 
 /**

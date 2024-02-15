@@ -1,5 +1,5 @@
-import {Extension, Range, StateEffect, StateField} from "@codemirror/state";
-import {Decoration, EditorView} from "@codemirror/view";
+import { Extension, Range, StateEffect, StateField } from "@codemirror/state";
+import { Decoration, EditorView } from "@codemirror/view";
 
 
 export class LineEffectExtension {
