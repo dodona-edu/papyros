@@ -216,7 +216,6 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         this.renderButtons();
 
         if (this.inputManager.getInputMode() === InputMode.Batch) {
-            console.log("Setting debug mode");
             const handler = this.inputManager.inputHandler as BatchInputHandler;
             handler.debugMode = debugMode;
         }
@@ -232,6 +231,22 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
 
     private get debugMode(): boolean {
         return this._debugMode;
+    }
+
+    /**
+     * Stops the current run and resets the state of the program
+     * Regular and debug output is cleared
+     * @return {Promise<void>} Returns when the program has been reset
+     */
+    public async reset(): Promise<void> {
+        if (![RunState.Ready, RunState.Loading].includes(this.state)) {
+            await this.stop();
+        }
+
+        this.debugMode = false;
+        this.inputManager.inputHandler.reset();
+        this.outputManager.reset();
+        this.traceViewer.reset();
     }
 
     private updateRunButtons(modes: Array<RunMode>): void {
@@ -288,7 +303,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
 
     /**
      * Interrupt the currently running code
-     * @return {Promise<void>} Promise of stopping
+     * @return {Promise<void>} Returns when the code has been interrupted
      */
     public async stop(): Promise<void> {
         this.setState(RunState.Stopping);
@@ -298,6 +313,10 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         });
         const backend = await this.backend;
         await backend.interrupt();
+
+        while (this.state === RunState.Stopping) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
     }
 
     /**
