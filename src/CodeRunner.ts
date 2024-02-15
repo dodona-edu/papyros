@@ -214,6 +214,9 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         this._debugMode = debugMode;
         this.setState(this.state);
         this.renderButtons();
+        if (!this._debugMode) {
+            this.traceViewer.reset();
+        }
     }
 
     private get debugMode(): boolean {
