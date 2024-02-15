@@ -213,7 +213,6 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
 
     private set debugMode(debugMode: boolean) {
         this._debugMode = debugMode;
-        this.setState(this.state);
         this.renderButtons();
 
         if (this.inputManager.getInputMode() === InputMode.Batch) {
@@ -350,12 +349,6 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     public setState(state: RunState, message?: string): void {
         const stateElement = getElement(APPLICATION_STATE_TEXT_ID);
         stateElement.innerText = message || t(`Papyros.states.${state}`);
-        if ( this.debugMode ) {
-            if ( stateElement.innerText.length > 0 ) {
-                stateElement.innerText += "  -";
-            }
-            stateElement.innerText += "  " + t("Papyros.debug.active");
-        }
         stateElement.parentElement?.classList.toggle("show", stateElement.innerText.length > 0);
         if (state !== this.state) {
             this.previousState = this.state;

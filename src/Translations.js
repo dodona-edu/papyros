@@ -67,7 +67,6 @@ const ENGLISH_TRANSLATION = {
         }
     },
     "debug": {
-        "active": "Debug mode active",
         "stop": "Stop debugging"
     },
 };
@@ -137,7 +136,6 @@ const DUTCH_TRANSLATION = {
         }
     },
     "debug": {
-        "active": "Debugmodus actief",
         "stop": "Stop met debuggen"
     },
 };
