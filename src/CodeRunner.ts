@@ -226,6 +226,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         if (!this._debugMode) {
             this.traceViewer.reset();
             this.outputManager.reset();
+            this.inputManager.inputHandler.reset();
         }
     }
 

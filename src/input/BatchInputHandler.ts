@@ -121,12 +121,17 @@ export class BatchInputHandler extends UserInputHandler {
         return nextLine;
     }
 
-    public override onRunStart(): void {
-        this.running = true;
+    public reset(): void {
+        super.reset();
         this.lineNr = 0;
         this.debugLine = 0;
         this.prompts = [];
-        this.highlight(true);
+        this.highlight(this.running);
+    }
+
+    public override onRunStart(): void {
+        this.running = true;
+        this.reset();
     }
 
     public override onRunEnd(): void {

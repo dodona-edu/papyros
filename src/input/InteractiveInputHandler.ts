@@ -97,7 +97,7 @@ export class InteractiveInputHandler extends UserInputHandler {
         });
     }
 
-    protected reset(): void {
+    public reset(): void {
         super.reset();
         this.inputArea.value = "";
     }
