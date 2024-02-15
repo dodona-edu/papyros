@@ -262,3 +262,11 @@ Removes the default spacing and border for appropriate elements.
   right: 0;
   height: 4px;
 }
+
+#__papyros-code-output-area.papyros-debug > * {
+  opacity: 0.1;
+}
+
+#__papyros-code-output-area.papyros-debug > .papyros-highlight-debugged {
+  opacity: 1;
+}

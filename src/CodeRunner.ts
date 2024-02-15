@@ -215,14 +215,17 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         this._debugMode = debugMode;
         this.setState(this.state);
         this.renderButtons();
-        if (!this._debugMode) {
-            this.traceViewer.reset();
-        }
 
         if (this.inputManager.getInputMode() === InputMode.Batch) {
             console.log("Setting debug mode");
             const handler = this.inputManager.inputHandler as BatchInputHandler;
             handler.debugMode = debugMode;
+        }
+        this.outputManager.debugMode = debugMode;
+
+        if (!this._debugMode) {
+            this.traceViewer.reset();
+            this.outputManager.reset();
         }
     }
 
