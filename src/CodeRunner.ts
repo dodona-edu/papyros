@@ -382,37 +382,33 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      * @return {DynamicButton} A list of buttons to interact with the code according to the current state
      */
     private getCodeActionButtons(): DynamicButton[] {
-        const result: DynamicButton[] = [];
         if ([RunState.Ready, RunState.Loading].includes(this.state)) {
-            result.push(...this.runButtons);
-        } else {
-            const buttonOptions = {
-                id: STOP_BTN_ID,
-                buttonText: t("Papyros.stop"),
-                classNames: "btn-danger",
-                icon: "<i class=\"mdi mdi-stop\"></i>"
-            };
-
-            result.push({
-                id: buttonOptions.id,
-                buttonHTML: renderButton(buttonOptions),
-                onClick: () => this.stop()
-            });
-        }
-        if (this.debugMode) {
-            result.push({
-                id: "stop-debug-btn",
-                buttonHTML: renderButton({
+            if (this.debugMode) {
+                return [{
                     id: "stop-debug-btn",
-                    buttonText: t("Papyros.debug.stop"),
+                    buttonHTML: renderButton({
+                        id: "stop-debug-btn",
+                        buttonText: t("Papyros.debug.stop"),
+                        classNames: "btn-secondary",
+                        icon: DEBUG_STOP_ICON
+                    }),
+                    onClick: () => this.debugMode = false
+                }];
+            } else {
+                return this.runButtons;
+            }
+        } else {
+            return [{
+                id: STOP_BTN_ID,
+                buttonHTML: renderButton({
+                    id: STOP_BTN_ID,
+                    buttonText: t("Papyros.stop"),
                     classNames: "btn-danger",
-                    icon: DEBUG_STOP_ICON
+                    icon: "<i class=\"mdi mdi-stop\"></i>"
                 }),
-                onClick: () => this.debugMode = false
-            });
+                onClick: () => this.stop()
+            }];
         }
-
-        return result;
     }
 
     /**
