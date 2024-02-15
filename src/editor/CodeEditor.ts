@@ -47,6 +47,7 @@ export class CodeEditor extends CodeMirrorEditor {
     public static PANEL = "panel";
     public static AUTOCOMPLETION = "autocompletion";
     public static LINTING = "linting";
+    public static READONLY = "readonly";
 
     private debugLineGutter: DebugLineGutter;
     private testCodeExtension: TestCodeExtension;
@@ -60,7 +61,7 @@ export class CodeEditor extends CodeMirrorEditor {
     constructor(onRunRequest: () => void, initialCode: string = "", indentLength: number = 4) {
         super(new Set([
             CodeEditor.PROGRAMMING_LANGUAGE, CodeEditor.INDENTATION,
-            CodeEditor.PANEL, CodeEditor.AUTOCOMPLETION, CodeEditor.LINTING
+            CodeEditor.PANEL, CodeEditor.AUTOCOMPLETION, CodeEditor.LINTING, CodeEditor.READONLY
         ]), {
             classes: ["papyros-code-editor", "_tw-overflow-auto",
                 "_tw-border-solid", "_tw-border-gray-200", "_tw-border-2",
@@ -103,6 +104,7 @@ export class CodeEditor extends CodeMirrorEditor {
         if (value) {
             this.debugLineGutter.markLine(this.editorView, 1);
         }
+        this.reconfigure([CodeEditor.READONLY, EditorState.readOnly.of(value)]);
     }
 
     public set testCode(code: string) {
