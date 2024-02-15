@@ -222,6 +222,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             handler.debugMode = debugMode;
         }
         this.outputManager.debugMode = debugMode;
+        this.editor.debugMode = debugMode;
 
         if (!this._debugMode) {
             this.traceViewer.reset();

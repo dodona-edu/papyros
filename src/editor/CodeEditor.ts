@@ -98,6 +98,13 @@ export class CodeEditor extends CodeMirrorEditor {
         this.addExtension(this.testCodeExtension.toExtension());
     }
 
+    public set debugMode(value: boolean) {
+        this.debugLineGutter.toggle(value);
+        if (value) {
+            this.debugLineGutter.markLine(this.editorView, 1);
+        }
+    }
+
     public set testCode(code: string) {
         this.testCodeExtension.testCode = code;
     }

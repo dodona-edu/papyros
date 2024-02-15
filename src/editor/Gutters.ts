@@ -240,7 +240,7 @@ export class UsedInputGutters extends Gutters<UsedInputGutterInfo> {
  * shows the debugged line
  */
 export class DebugLineGutter extends Gutters<GutterInfo> {
-    private activeLine: number = 0;
+    private activeLine: number = 1;
 
     constructor() {
         super({
@@ -261,34 +261,22 @@ export class DebugLineGutter extends Gutters<GutterInfo> {
         return new SimpleMarker(() => document.createTextNode("⇨"));
     }
 
-    private hide(): void {
-        document.querySelector(".cm-debugline-gutter")?.classList.remove("show");
-    }
-
-    private show(): void {
-        document.querySelector(".cm-debugline-gutter")?.classList.add("show");
+    public toggle(show: boolean): void {
+        document.querySelector(".cm-debugline-gutter")?.classList.toggle("show", show);
     }
 
     public markLine(view: EditorView, lineNr: number): void {
-        if (this.activeLine > 0) {
-            this.setMarker(view, { lineNr: this.activeLine, on: false });
-        }
-
-        if (lineNr > 0) {
-            this.setMarker(view, { lineNr, on: true });
-            // set the cursor to the line
-            // This marks the line as active and scrolls to it
-            view.dispatch({
-                selection: {
-                    anchor: view.state.doc.line(lineNr).from,
-                    head: view.state.doc.line(lineNr).from
-                },
-                scrollIntoView: true,
-            });
-            this.show();
-        } else {
-            this.hide();
-        }
+        this.setMarker(view, { lineNr: this.activeLine, on: false });
+        this.setMarker(view, { lineNr, on: true });
+        // set the cursor to the line
+        // This marks the line as active and scrolls to it
+        view.dispatch({
+            selection: {
+                anchor: view.state.doc.line(lineNr).from,
+                head: view.state.doc.line(lineNr).from
+            },
+            scrollIntoView: true,
+        });
         this.activeLine = lineNr;
     }
 }
