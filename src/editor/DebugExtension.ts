@@ -9,9 +9,9 @@ const activeLineDecoration = Decoration.line({ class: "cm-activeLine" });
 const activeLineGutterMarker = new class extends GutterMarker {
     elementClass = "cm-activeLineGutter";
 };
-const markLine = StateEffect.define<number>()
-const markedLine = StateField.define<number>({
-    create: () => 1,
+const markLine = StateEffect.define<number|undefined>();
+const markedLine = StateField.define<number|undefined>({
+    create: () => undefined,
     update(value, tr) {
         for (const effect of tr.effects) {
             if (effect.is(markLine)) {
@@ -22,7 +22,11 @@ const markedLine = StateField.define<number>({
     }
 });
 const markedLineGutterHighlighter = gutterLineClass.compute([markedLine], state => {
-    const linePos = state.doc.line(state.field(markedLine)).from;
+    if (state.field(markedLine) === undefined) {
+        return RangeSet.empty;
+    }
+
+    const linePos = state.doc.line(state.field(markedLine) as number).from;
     return RangeSet.of([activeLineGutterMarker.range(linePos)]);
 });
 
@@ -49,6 +53,8 @@ export class DebugExtension {
 
         if (show) {
             this.markLine(1);
+        } else {
+            this.view.dispatch({ effects: markLine.of(undefined) });
         }
     }
 
