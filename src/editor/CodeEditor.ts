@@ -1,7 +1,13 @@
 /* eslint-disable valid-jsdoc */
 import { ProgrammingLanguage } from "../ProgrammingLanguage";
 import { t } from "../util/Util";
-import { autocompletion, closeBrackets, closeBracketsKeymap, completionKeymap } from "@codemirror/autocomplete";
+import {
+    acceptCompletion,
+    autocompletion,
+    closeBrackets,
+    closeBracketsKeymap,
+    completionKeymap
+} from "@codemirror/autocomplete";
 import { defaultKeymap, history, historyKeymap, indentWithTab, insertBlankLine } from "@codemirror/commands";
 import { javascript } from "@codemirror/lang-javascript";
 import { python } from "@codemirror/lang-python";
@@ -36,6 +42,8 @@ import { DebugLineGutter } from "./Gutters";
 import { BackendManager } from "../BackendManager";
 import { BackendEventType } from "../BackendEvent";
 import { TestCodeExtension } from "./TestCodeExtension";
+
+const tabCompletionKeyMap = [{ key: "Tab", run: acceptCompletion }];
 
 
 /**
@@ -245,6 +253,7 @@ export class CodeEditor extends CodeMirrorEditor {
                 ...historyKeymap,
                 ...foldKeymap,
                 ...completionKeymap,
+                ...tabCompletionKeyMap,
                 ...lintKeymap,
                 indentWithTab
             ]),
