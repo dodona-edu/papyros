@@ -46,6 +46,7 @@ export class CodeEditor extends CodeMirrorEditor {
     public static AUTOCOMPLETION = "autocompletion";
     public static LINTING = "linting";
     public static READONLY = "readonly";
+    public static ACTIVE_LINE = "active_line";
 
     private debugExtension: DebugExtension;
     private testCodeExtension: TestCodeExtension;
@@ -58,7 +59,7 @@ export class CodeEditor extends CodeMirrorEditor {
      */
     constructor(onRunRequest: () => void, initialCode: string = "", indentLength: number = 4) {
         super(new Set([
-            CodeEditor.PROGRAMMING_LANGUAGE, CodeEditor.INDENTATION,
+            CodeEditor.PROGRAMMING_LANGUAGE, CodeEditor.INDENTATION, CodeEditor.ACTIVE_LINE,
             CodeEditor.PANEL, CodeEditor.AUTOCOMPLETION, CodeEditor.LINTING, CodeEditor.READONLY
         ]), {
             classes: ["papyros-code-editor", "_tw-overflow-auto",
@@ -90,11 +91,19 @@ export class CodeEditor extends CodeMirrorEditor {
 
         this.testCodeExtension = new TestCodeExtension(this.editorView);
         this.addExtension(this.testCodeExtension.toExtension());
+
+        this.debugMode = false;
     }
 
     public set debugMode(value: boolean) {
         this.debugExtension.toggle(value);
         this.reconfigure([CodeEditor.READONLY, EditorState.readOnly.of(value)]);
+        // Hide the active line if the editor is in debug mode
+        if (!value) {
+            this.reconfigure([CodeEditor.ACTIVE_LINE, [highlightActiveLineGutter(), highlightActiveLine()]]);
+        } else {
+            this.reconfigure([CodeEditor.ACTIVE_LINE, []]);
+        }
     }
 
     public set testCode(code: string) {
@@ -234,8 +243,6 @@ export class CodeEditor extends CodeMirrorEditor {
             closeBrackets(),
             autocompletion(),
             rectangularSelection(),
-            highlightActiveLine(),
-            highlightActiveLineGutter(),
             highlightSelectionMatches(),
             keymap.of([
                 ...closeBracketsKeymap,
