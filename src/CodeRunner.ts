@@ -227,6 +227,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             this.outputManager.reset();
             this.inputManager.inputHandler.reset();
         }
+        this.dispatchEvent(new CustomEvent("debug-mode", { detail: debugMode }));
     }
 
     private get debugMode(): boolean {
