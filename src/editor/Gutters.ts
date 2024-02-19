@@ -236,6 +236,14 @@ export class UsedInputGutters extends Gutters<UsedInputGutterInfo> {
     }
 }
 
+class DebugMarker extends GutterMarker {
+    public override toDOM(): HTMLElement {
+        const icon = document.createElement("i");
+        icon.classList.add("mdi", "mdi-arrow-right-bold", "mdi-18");
+        return icon;
+    }
+}
+
 /**
  * shows the debugged line
  */
@@ -248,9 +256,9 @@ export class DebugLineGutter extends Gutters<GutterInfo> {
             extraExtensions: [
                 EditorView.baseTheme({
                     ".cm-debugline-gutter .cm-gutterElement": {
-                        lineHeight: "12px",
+                        lineHeight: "20px",
                         marginRight: "-5px",
-                        fontSize: "40px"
+                        fontSize: "18px"
                     }
                 })
             ]
@@ -258,7 +266,7 @@ export class DebugLineGutter extends Gutters<GutterInfo> {
     }
 
     protected override marker(): GutterMarker {
-        return new SimpleMarker(() => document.createTextNode("⇨"));
+        return new DebugMarker();
     }
 
     public toggle(show: boolean): void {
