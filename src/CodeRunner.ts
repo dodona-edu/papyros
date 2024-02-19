@@ -410,7 +410,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      * @return {DynamicButton} A list of buttons to interact with the code according to the current state
      */
     private getCodeActionButtons(): DynamicButton[] {
-        if ([RunState.Ready, RunState.Loading].includes(this.state)) {
+        if (this.state === RunState.Ready) {
             if (this.debugMode) {
                 return [{
                     id: "stop-debug-btn",
