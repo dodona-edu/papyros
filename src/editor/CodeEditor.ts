@@ -97,7 +97,7 @@ export class CodeEditor extends CodeMirrorEditor {
 
     public set debugMode(value: boolean) {
         this.debugExtension.toggle(value);
-        this.reconfigure([CodeEditor.READONLY, EditorState.readOnly.of(value)]);
+        this.reconfigure([CodeEditor.READONLY, EditorView.editable.of(!value)]);
         // Hide the active line if the editor is in debug mode
         if (!value) {
             this.reconfigure([CodeEditor.ACTIVE_LINE, [highlightActiveLineGutter(), highlightActiveLine()]]);
