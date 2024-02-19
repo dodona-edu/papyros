@@ -32,8 +32,8 @@ const markedLineGutterHighlighter = gutterLineClass.compute([markedLine], state 
 
 export class DebugExtension {
     private readonly view: EditorView;
-    private readonly gutter: DebugLineGutter;
-    private readonly lineEffect: LineEffectExtension;
+    private gutter: DebugLineGutter;
+    private lineEffect: LineEffectExtension;
 
 
     constructor(view: EditorView) {
@@ -47,15 +47,8 @@ export class DebugExtension {
         });
     }
 
-    public toggle(show: boolean): void {
-        this.gutter.toggle(show);
-        this.lineEffect.clear();
-
-        if (show) {
-            this.markLine(1);
-        } else {
-            this.view.dispatch({ effects: markLine.of(undefined) });
-        }
+    public reset(): void {
+        this.markLine(1);
     }
 
     public markLine(lineNr: number): void {
@@ -68,6 +61,12 @@ export class DebugExtension {
     }
 
     public toExtension(): Extension {
-        return [this.lineEffect.toExtension(), this.gutter.toExtension(), markedLine, markedLineGutterHighlighter];
+        return [
+            this.lineEffect.toExtension(),
+            this.gutter.toExtension(),
+            markedLine,
+            markedLineGutterHighlighter,
+            EditorView.editable.of(false)
+        ];
     }
 }

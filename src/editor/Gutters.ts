@@ -269,10 +269,6 @@ export class DebugLineGutter extends Gutters<GutterInfo> {
         return new DebugMarker();
     }
 
-    public toggle(show: boolean): void {
-        document.querySelector(".cm-debugline-gutter")?.classList.toggle("show", show);
-    }
-
     public markLine(view: EditorView, lineNr: number): void {
         this.setMarker(view, { lineNr: this.activeLine, on: false });
         this.setMarker(view, { lineNr, on: true });

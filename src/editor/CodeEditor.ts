@@ -45,8 +45,7 @@ export class CodeEditor extends CodeMirrorEditor {
     public static PANEL = "panel";
     public static AUTOCOMPLETION = "autocompletion";
     public static LINTING = "linting";
-    public static READONLY = "readonly";
-    public static ACTIVE_LINE = "active_line";
+    public static DEBUGGING = "debugging";
 
     private debugExtension: DebugExtension;
     private testCodeExtension: TestCodeExtension;
@@ -59,8 +58,8 @@ export class CodeEditor extends CodeMirrorEditor {
      */
     constructor(onRunRequest: () => void, initialCode: string = "", indentLength: number = 4) {
         super(new Set([
-            CodeEditor.PROGRAMMING_LANGUAGE, CodeEditor.INDENTATION, CodeEditor.ACTIVE_LINE,
-            CodeEditor.PANEL, CodeEditor.AUTOCOMPLETION, CodeEditor.LINTING, CodeEditor.READONLY
+            CodeEditor.PROGRAMMING_LANGUAGE, CodeEditor.INDENTATION, CodeEditor.DEBUGGING,
+            CodeEditor.PANEL, CodeEditor.AUTOCOMPLETION, CodeEditor.LINTING
         ]), {
             classes: ["papyros-code-editor", "_tw-overflow-auto",
                 "_tw-border-solid", "_tw-border-gray-200", "_tw-border-2",
@@ -83,7 +82,6 @@ export class CodeEditor extends CodeMirrorEditor {
                     key: "Shift-Enter", run: insertBlankLine
                 }
             ]),
-            this.debugExtension.toExtension(),
             ...CodeEditor.getExtensions()
         ]);
         this.setText(initialCode);
@@ -96,13 +94,17 @@ export class CodeEditor extends CodeMirrorEditor {
     }
 
     public set debugMode(value: boolean) {
-        this.debugExtension.toggle(value);
-        this.reconfigure([CodeEditor.READONLY, EditorView.editable.of(!value)]);
-        // Hide the active line if the editor is in debug mode
-        if (!value) {
-            this.reconfigure([CodeEditor.ACTIVE_LINE, [highlightActiveLineGutter(), highlightActiveLine()]]);
+        if (value) {
+            this.reconfigure([CodeEditor.DEBUGGING, [
+                this.debugExtension.toExtension(),
+            ]]);
+            this.debugExtension.reset();
         } else {
-            this.reconfigure([CodeEditor.ACTIVE_LINE, []]);
+            this.reconfigure([CodeEditor.DEBUGGING, [
+                highlightActiveLineGutter(),
+                lintGutter(),
+                highlightActiveLine()
+            ]]);
         }
     }
 
@@ -231,7 +233,6 @@ export class CodeEditor extends CodeMirrorEditor {
     */
     private static getExtensions(): Array<Extension> {
         return [
-            lintGutter(),
             lineNumbers(),
             highlightSpecialChars(),
             history(),
