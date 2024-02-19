@@ -136,7 +136,7 @@ const DUTCH_TRANSLATION = {
         }
     },
     "debug": {
-        "stop": "Stop met debuggen"
+        "stop": "Stop debugger"
     },
 };
 
