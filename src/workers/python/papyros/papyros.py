@@ -151,7 +151,7 @@ class Papyros(python_runner.PyodideRunner):
                         def frame_callback(frame):
                             self.callback("frame", data=frame, contentType="application/json")
 
-                        result = JSONTracer(False, False, False, frame_callback=frame_callback).runscript(source_code)
+                        result = JSONTracer(frame_callback=frame_callback).runscript(source_code)
                     else:
                         result = self.execute(code_obj, mode)
                     while isinstance(result, Awaitable):
