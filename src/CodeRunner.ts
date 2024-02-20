@@ -111,6 +111,23 @@ class ButtonArray extends Array<DynamicButton> {
     }
 }
 
+/*
+ * class function decorator that adds a delay,
+ * so that the function is only called after the delay has passed
+ *
+ * If it is called again before the delay has passed, the previous call is cancelled
+ */
+function delay(delay: number) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    return function (original: any, context: ClassMethodDecoratorContext) {
+        let timeout: NodeJS.Timeout | undefined;
+        return function (this: any, ...args: any[]) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => original.apply(this, args), delay);
+        };
+    };
+}
+
 /**
  * Helper component to manage and visualize the current RunState
  */
@@ -444,6 +461,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      * @param {DynamicButton[]} buttons The buttons to render
      * @param {string} id The id of the element to render the buttons in
      */
+    @delay(100) // Delay to prevent flickering
     private renderButtons(buttons: DynamicButton[] | undefined = undefined, id = RUN_BUTTONS_WRAPPER_ID): void {
         const btns = buttons || this.getCodeActionButtons();
         getElement(id).innerHTML =
