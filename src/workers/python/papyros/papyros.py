@@ -13,8 +13,10 @@ from pyodide_worker_runner import install_imports
 from pyodide import JsException, create_proxy
 from .util import to_py
 from pyodide.http import pyfetch
+from types import ModuleType
 
 SYS_RECURSION_LIMIT = 500
+MODULE_NAME = "sandbox"
 
 class Papyros(python_runner.PyodideRunner):
     def __init__(
@@ -126,18 +128,12 @@ class Papyros(python_runner.PyodideRunner):
     def pre_run(self, source_code, mode="exec", top_level_await=False):
         self.override_globals()
         if mode == "doctest":
-            # remove if __name__ == "__main__" and replace it
-            lines = source_code.split("\n")
-            main_start = 0
-            while main_start < len(lines) and not re.match("^if(\s)+__name__(\s)*==(\s)*\"__main__\"(\s)*:", lines[main_start]):
-                main_start += 1
-            if main_start < len(lines):
-                # Strip away indented lines making up the main block
-                main_end = main_start + 1
-                while main_end < len(lines) and re.match("^(( |\t)+)", lines[main_end]):
-                    main_end += 1
-                source_code = "\n".join(lines[0:main_start] + lines[main_end:])
-            source_code += "\nif __name__ == \"__main__\":\n    import doctest\n    doctest.testmod(verbose=True)"
+            source_code += f"""
+if __name__ == "{MODULE_NAME}":
+    import doctest
+    import sys
+    doctest.testmod(m=sys.modules["{MODULE_NAME}"], verbose=True)
+"""
         return super().pre_run(source_code, mode=mode, top_level_await=top_level_await)
 
     async def run_async(self, source_code, mode="exec", top_level_await=True):
@@ -151,7 +147,7 @@ class Papyros(python_runner.PyodideRunner):
                         def frame_callback(frame):
                             self.callback("frame", data=frame, contentType="application/json")
 
-                        result = JSONTracer(frame_callback=frame_callback).runscript(source_code)
+                        result = JSONTracer(frame_callback=frame_callback, module_name=MODULE_NAME).runscript(source_code)
                     else:
                         result = self.execute(code_obj, mode)
                     while isinstance(result, Awaitable):
@@ -249,4 +245,14 @@ class Papyros(python_runner.PyodideRunner):
             with open(f, "wb") as fd:
                 fd.write(await r.bytes())
             self.callback("loading", data=dict(status="loaded", modules=[f]), contentType="application/json")
+
+    def reset(self):
+        """
+        overwritten from PyodideRunner to change the module name
+        """
+        super().reset()
+        mod = ModuleType(MODULE_NAME)
+        mod.__file__ = self.filename
+        sys.modules[MODULE_NAME] = mod
+        self.console.locals = mod.__dict__
 
