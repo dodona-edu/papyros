@@ -96,12 +96,21 @@ export declare class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      * Time at which the setState call occurred
      */
     private runStartTime;
+    private _debugMode;
     /**
      * Construct a new RunStateManager with the given listeners
      * @param {ProgrammingLanguage} programmingLanguage The language to use
      * @param {InputMode} inputMode The input mode to use
      */
     constructor(programmingLanguage: ProgrammingLanguage, inputMode: InputMode);
+    private set debugMode(value);
+    private get debugMode();
+    /**
+     * Stops the current run and resets the state of the program
+     * Regular and debug output is cleared
+     * @return {Promise<void>} Returns when the program has been reset
+     */
+    reset(): Promise<void>;
     private updateRunButtons;
     private addRunButton;
     /**
@@ -110,7 +119,7 @@ export declare class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     start(): Promise<void>;
     /**
      * Interrupt the currently running code
-     * @return {Promise<void>} Promise of stopping
+     * @return {Promise<void>} Returns when the code has been interrupted
      */
     stop(): Promise<void>;
     /**

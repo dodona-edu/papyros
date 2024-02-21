@@ -23,6 +23,8 @@ export declare class BatchInputHandler extends UserInputHandler {
      * Is restored upon switching back to InputMode.Batch
      */
     private previousInput;
+    debugMode: boolean;
+    private debugLine;
     /**
      * Construct a new BatchInputHandler
      * @param {function()} inputCallback  Callback for when the user has entered a value
@@ -43,6 +45,7 @@ export declare class BatchInputHandler extends UserInputHandler {
     hasNext(): boolean;
     private highlight;
     next(): string;
+    reset(): void;
     onRunStart(): void;
     onRunEnd(): void;
     waitWithPrompt(waiting: boolean, prompt?: string): void;

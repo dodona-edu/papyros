@@ -45,6 +45,8 @@ export declare class OutputManager extends Renderable {
      * Function to call when the user wants to download overflow results
      */
     private downloadCallback;
+    private _debugMode;
+    set debugMode(value: boolean);
     constructor();
     /**
      * Retrieve the parent element containing all output parts

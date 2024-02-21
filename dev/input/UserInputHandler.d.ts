@@ -64,5 +64,5 @@ export declare abstract class UserInputHandler extends Renderable<InputManagerRe
     /**
      * Helper method to reset internal state
      */
-    protected reset(): void;
+    reset(): void;
 }

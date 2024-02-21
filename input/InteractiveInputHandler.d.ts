@@ -23,5 +23,5 @@ export declare class InteractiveInputHandler extends UserInputHandler {
     onRunStart(): void;
     onRunEnd(): void;
     protected _render(options: RenderOptions): void;
-    protected reset(): void;
+    reset(): void;
 }

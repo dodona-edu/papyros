@@ -11,7 +11,8 @@ export declare class CodeEditor extends CodeMirrorEditor {
     static PANEL: string;
     static AUTOCOMPLETION: string;
     static LINTING: string;
-    private debugLineGutter;
+    static DEBUGGING: string;
+    private debugExtension;
     private testCodeExtension;
     /**
      * Construct a new CodeEditor
@@ -20,6 +21,7 @@ export declare class CodeEditor extends CodeMirrorEditor {
      * @param {number} indentLength The length in spaces for the indent unit
      */
     constructor(onRunRequest: () => void, initialCode?: string, indentLength?: number);
+    set debugMode(value: boolean);
     set testCode(code: string);
     getText(): string;
     getCode(): string;

@@ -1,9 +1,10 @@
 import { Extension } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 export declare class TestCodeExtension {
-    private view;
+    private readonly view;
+    private readonly widget;
+    private readonly lineEffect;
     private lines;
-    private widget;
     private allowEdit;
     constructor(view: EditorView);
     private get numberOfTestLines();

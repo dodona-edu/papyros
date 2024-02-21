@@ -101,7 +101,7 @@ export declare function renderSelect<T extends string>(selectId: string, options
  * Helper superclass to handle storing options used during rendering
  * to allow re-rendering without needing to explicitly store used options each time
  */
-export declare abstract class Renderable<Options = RenderOptions> {
+export declare abstract class Renderable<Options = RenderOptions> extends EventTarget {
     /**
      * The options to render with
      */

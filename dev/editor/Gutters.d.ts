@@ -105,7 +105,5 @@ export declare class DebugLineGutter extends Gutters<GutterInfo> {
     private activeLine;
     constructor();
     protected marker(): GutterMarker;
-    private hide;
-    private show;
     markLine(view: EditorView, lineNr: number): void;
 }
