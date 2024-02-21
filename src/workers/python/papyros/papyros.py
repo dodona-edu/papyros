@@ -249,12 +249,10 @@ if __name__ == "{MODULE_NAME}":
     def reset(self):
         """
         overwritten from PyodideRunner to change the module name
-        Called before running code 'from scratch' (i.e. when `mode` is not 'single' or 'eval')
-        to reset state such as global variables.
         """
+        super().reset()
         mod = ModuleType(MODULE_NAME)
         mod.__file__ = self.filename
         sys.modules[MODULE_NAME] = mod
         self.console.locals = mod.__dict__
-        self.output_buffer.reset()
 
