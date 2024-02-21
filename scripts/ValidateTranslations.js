@@ -8,7 +8,16 @@ const usedKeys = extract.extractFromFiles([
     "src/**/*.ts"
 ], {
     marker: "t", // renamed I18n.t to t for convenience
-    parser: "typescript",
+    babelOptions: {
+        ast: true,
+        parserOpts: {
+            sourceType: 'module',
+            plugins: [
+                'decorators',
+                'typescript'
+            ],
+        }
+    }
 });
 
 const checks = [
