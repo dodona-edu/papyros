@@ -191,14 +191,6 @@ Removes the default spacing and border for appropriate elements.
   vertical-align: middle;
 }
 
-.cm-gutter.cm-debugline-gutter {
-  display: none !important;
-}
-
-.cm-gutter.cm-debugline-gutter.show {
-  display: flex !important;
-}
-
 .papyros-test-code {
   background-color: rgba(143, 182, 130, 0.1);
 }
@@ -261,4 +253,20 @@ Removes the default spacing and border for appropriate elements.
   left: 0;
   right: 0;
   height: 4px;
+}
+
+#__papyros-code-output-area.papyros-debug > * {
+  opacity: 0.1;
+}
+
+#__papyros-code-output-area.papyros-debug > .papyros-highlight-debugged {
+  opacity: 1;
+}
+
+.papyros-code-editor .cm-content[contenteditable="false"] {
+  cursor: default;
+}
+
+.papyros-code-editor .cm-gutters {
+  cursor: default;
 }

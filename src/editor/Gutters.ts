@@ -236,11 +236,19 @@ export class UsedInputGutters extends Gutters<UsedInputGutterInfo> {
     }
 }
 
+class DebugMarker extends GutterMarker {
+    public override toDOM(): HTMLElement {
+        const icon = document.createElement("i");
+        icon.classList.add("mdi", "mdi-arrow-right-bold", "mdi-18");
+        return icon;
+    }
+}
+
 /**
  * shows the debugged line
  */
 export class DebugLineGutter extends Gutters<GutterInfo> {
-    private activeLine: number = 0;
+    private activeLine: number = 1;
 
     constructor() {
         super({
@@ -248,9 +256,9 @@ export class DebugLineGutter extends Gutters<GutterInfo> {
             extraExtensions: [
                 EditorView.baseTheme({
                     ".cm-debugline-gutter .cm-gutterElement": {
-                        lineHeight: "12px",
+                        lineHeight: "20px",
                         marginRight: "-5px",
-                        fontSize: "40px"
+                        fontSize: "18px"
                     }
                 })
             ]
@@ -258,28 +266,12 @@ export class DebugLineGutter extends Gutters<GutterInfo> {
     }
 
     protected override marker(): GutterMarker {
-        return new SimpleMarker(() => document.createTextNode("⇨"));
-    }
-
-    private hide(): void {
-        document.querySelector(".cm-debugline-gutter")?.classList.remove("show");
-    }
-
-    private show(): void {
-        document.querySelector(".cm-debugline-gutter")?.classList.add("show");
+        return new DebugMarker();
     }
 
     public markLine(view: EditorView, lineNr: number): void {
-        if (this.activeLine > 0) {
-            this.setMarker(view, { lineNr: this.activeLine, on: false });
-        }
-
-        if (lineNr > 0) {
-            this.setMarker(view, { lineNr, on: true });
-            this.show();
-        } else {
-            this.hide();
-        }
+        this.setMarker(view, { lineNr: this.activeLine, on: false });
+        this.setMarker(view, { lineNr, on: true });
         this.activeLine = lineNr;
     }
 }

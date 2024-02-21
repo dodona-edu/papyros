@@ -27,12 +27,15 @@ import {
 } from "./util/Rendering";
 import { OutputManager } from "./OutputManager";
 import { Debugger } from "./Debugger";
+import { BatchInputHandler } from "./input/BatchInputHandler";
 
 const MODE_ICONS: Record<RunMode, string> = {
     "debug": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"18px\" viewBox=\"0 0 24 24\" width=\"18px\" fill=\"currentColor\"><path d=\"M19 7H16.19C15.74 6.2 15.12 5.5 14.37 5L16 3.41L14.59 2L12.42 4.17C11.96 4.06 11.5 4 11 4S10.05 4.06 9.59 4.17L7.41 2L6 3.41L7.62 5C6.87 5.5 6.26 6.21 5.81 7H3V9H5.09C5.03 9.33 5 9.66 5 10V11H3V13H5V14C5 14.34 5.03 14.67 5.09 15H3V17H5.81C7.26 19.5 10.28 20.61 13 19.65V19C13 18.43 13.09 17.86 13.25 17.31C12.59 17.76 11.8 18 11 18C8.79 18 7 16.21 7 14V10C7 7.79 8.79 6 11 6S15 7.79 15 10V14C15 14.19 15 14.39 14.95 14.58C15.54 14.04 16.24 13.62 17 13.35V13H19V11H17V10C17 9.66 16.97 9.33 16.91 9H19V7M13 9V11H9V9H13M13 13V15H9V13H13M17 16V22L22 19L17 16Z\"></path></svg>",
     "doctest": "<i class=\"mdi mdi-play\"></i>",
     "run": "<i class=\"mdi mdi-play\"></i>"
 };
+
+const DEBUG_STOP_ICON = "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"18px\" viewBox=\"0 0 24 24\" width=\"18px\" fill=\"currentColor\"><path d=\"M19 7H16.19C15.74 6.2 15.12 5.5 14.37 5L16 3.41L14.59 2L12.42 4.17C11.96 4.06 11.5 4 11 4S10.05 4.06 9.59 4.17L7.41 2L6 3.41L7.62 5C6.87 5.5 6.26 6.21 5.81 7H3V9H5.09C5.03 9.33 5 9.66 5 10V11H3V13H5V14C5 14.34 5.03 14.67 5.09 15H3V17H5.81C7.26 19.5 10.28 20.61 13 19.65V19C13 18.43 13.09 17.86 13.25 17.31C12.59 17.76 11.8 18 11 18C8.79 18 7 16.21 7 14V10C7 7.79 8.79 6 11 6S15 7.79 15 10V14C15 14.19 15 14.39 14.95 14.58C15.54 14.04 16.24 13.62 17 13.35V13H19V11H17V10C17 9.66 16.97 9.33 16.91 9H19V7M13 9V11H9V9H13M13 13V15H9V13H13M16 16H22V22H16V16Z\" /></svg>";
 
 interface DynamicButton {
     id: string;
@@ -108,6 +111,23 @@ class ButtonArray extends Array<DynamicButton> {
     }
 }
 
+/*
+ * class function decorator that adds a delay,
+ * so that the function is only called after the delay has passed
+ *
+ * If it is called again before the delay has passed, the previous call is cancelled
+ */
+function delay(delay: number) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    return function (original: any, context: ClassMethodDecoratorContext) {
+        let timeout: NodeJS.Timeout | undefined;
+        return function (this: any, ...args: any[]) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => original.apply(this, args), delay);
+        };
+    };
+}
+
 /**
  * Helper component to manage and visualize the current RunState
  */
@@ -158,6 +178,8 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      * Time at which the setState call occurred
      */
     private runStartTime: number;
+    // True while running or viewing with debugger
+    private _debugMode = false;
 
     /**
      * Construct a new RunStateManager with the given listeners
@@ -204,6 +226,45 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         this.runStartTime = new Date().getTime();
         this.state = RunState.Ready;
         this.traceViewer = new Debugger();
+    }
+
+    private set debugMode(debugMode: boolean) {
+        this._debugMode = debugMode;
+        this.renderButtons();
+
+        if (this.inputManager.getInputMode() === InputMode.Batch) {
+            const handler = this.inputManager.inputHandler as BatchInputHandler;
+            handler.debugMode = debugMode;
+        }
+        this.outputManager.debugMode = debugMode;
+        this.editor.debugMode = debugMode;
+
+        if (!this._debugMode) {
+            this.traceViewer.reset();
+            this.outputManager.reset();
+            this.inputManager.inputHandler.reset();
+        }
+        this.dispatchEvent(new CustomEvent("debug-mode", { detail: debugMode }));
+    }
+
+    private get debugMode(): boolean {
+        return this._debugMode;
+    }
+
+    /**
+     * Stops the current run and resets the state of the program
+     * Regular and debug output is cleared
+     * @return {Promise<void>} Returns when the program has been reset
+     */
+    public async reset(): Promise<void> {
+        if (![RunState.Ready, RunState.Loading].includes(this.state)) {
+            await this.stop();
+        }
+
+        this.debugMode = false;
+        this.inputManager.inputHandler.reset();
+        this.outputManager.reset();
+        this.traceViewer.reset();
     }
 
     private updateRunButtons(modes: Array<RunMode>): void {
@@ -260,7 +321,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
 
     /**
      * Interrupt the currently running code
-     * @return {Promise<void>} Promise of stopping
+     * @return {Promise<void>} Returns when the code has been interrupted
      */
     public async stop(): Promise<void> {
         this.setState(RunState.Stopping);
@@ -270,6 +331,10 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
         });
         const backend = await this.backend;
         await backend.interrupt();
+
+        while (this.state === RunState.Stopping) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
     }
 
     /**
@@ -362,20 +427,30 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      * @return {DynamicButton} A list of buttons to interact with the code according to the current state
      */
     private getCodeActionButtons(): DynamicButton[] {
-        let buttonOptions: ButtonOptions;
-        if ([RunState.Ready, RunState.Loading].includes(this.state)) {
-            return this.runButtons;
+        if (this.state === RunState.Ready) {
+            if (this.debugMode) {
+                return [{
+                    id: "stop-debug-btn",
+                    buttonHTML: renderButton({
+                        id: "stop-debug-btn",
+                        buttonText: t("Papyros.debug.stop"),
+                        classNames: "btn-secondary",
+                        icon: DEBUG_STOP_ICON
+                    }),
+                    onClick: () => this.debugMode = false
+                }];
+            } else {
+                return this.runButtons;
+            }
         } else {
-            buttonOptions = {
-                id: STOP_BTN_ID,
-                buttonText: t("Papyros.stop"),
-                classNames: "btn-danger",
-                icon: "<i class=\"mdi mdi-stop\"></i>"
-            };
-
             return [{
-                id: buttonOptions.id,
-                buttonHTML: renderButton(buttonOptions),
+                id: STOP_BTN_ID,
+                buttonHTML: renderButton({
+                    id: STOP_BTN_ID,
+                    buttonText: t("Papyros.stop"),
+                    classNames: "btn-danger",
+                    icon: "<i class=\"mdi mdi-stop\"></i>"
+                }),
                 onClick: () => this.stop()
             }];
         }
@@ -386,6 +461,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      * @param {DynamicButton[]} buttons The buttons to render
      * @param {string} id The id of the element to render the buttons in
      */
+    @delay(100) // Delay to prevent flickering
     private renderButtons(buttons: DynamicButton[] | undefined = undefined, id = RUN_BUTTONS_WRAPPER_ID): void {
         const btns = buttons || this.getCodeActionButtons();
         getElement(id).innerHTML =
@@ -429,6 +505,8 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      * @return {Promise<void>} Promise of running the code
      */
     public async runCode(mode?: RunMode): Promise<void> {
+        this.debugMode = mode === RunMode.Debug;
+
         const code = this.editor.getCode();
         // Setup pre-run
         this.setState(RunState.Loading);

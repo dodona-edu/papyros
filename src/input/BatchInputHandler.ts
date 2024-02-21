@@ -27,6 +27,8 @@ export class BatchInputHandler extends UserInputHandler {
      * Is restored upon switching back to InputMode.Batch
      */
     private previousInput: string;
+    public debugMode: boolean = false;
+    private debugLine: number = 0;
 
     /**
      * Construct a new BatchInputHandler
@@ -44,8 +46,8 @@ export class BatchInputHandler extends UserInputHandler {
             delay: 0
         });
         BackendManager.subscribe(BackendEventType.FrameChange, e => {
-            const inputsToHighlight = e.data.inputs;
-            this.highlight(this.running, (i: number) => i < inputsToHighlight);
+            this.debugLine = e.data.inputs;
+            this.highlight(this.running);
         });
     }
 
@@ -90,7 +92,13 @@ export class BatchInputHandler extends UserInputHandler {
         return this.lineNr < this.lines.length;
     }
 
-    private highlight(running: boolean, whichLines = (i: number) => i < this.lineNr): void {
+    private highlight(running: boolean): void {
+        const whichLines = (index: number): boolean => {
+            if (this.debugMode) {
+                return index < this.debugLine;
+            }
+            return index < this.lineNr;
+        };
         this.batchEditor.highlight({
             running,
             getInfo: (lineNr: number) => {
@@ -113,11 +121,17 @@ export class BatchInputHandler extends UserInputHandler {
         return nextLine;
     }
 
+    public reset(): void {
+        super.reset();
+        this.lineNr = 0;
+        this.debugLine = 0;
+        this.prompts = [];
+        this.highlight(this.running);
+    }
+
     public override onRunStart(): void {
         this.running = true;
-        this.lineNr = 0;
-        this.prompts = [];
-        this.highlight(true, () => false);
+        this.reset();
     }
 
     public override onRunEnd(): void {

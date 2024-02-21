@@ -89,7 +89,7 @@ export abstract class UserInputHandler extends Renderable<InputManagerRenderOpti
     /**
      * Helper method to reset internal state
      */
-    protected reset(): void {
+    public reset(): void {
         this.waiting = false;
     }
 }

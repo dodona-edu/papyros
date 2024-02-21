@@ -322,9 +322,10 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
                 history.pushState(null, "", `?locale=${locale}&language=${this.codeRunner.getProgrammingLanguage()}`);
                 this.setLocale(locale);
             }, "change", "value");
-            addListener(EXAMPLE_SELECT_ID, name => {
+            addListener(EXAMPLE_SELECT_ID, async name => {
                 this.config.example = name;
                 const code = getCodeForExample(this.codeRunner.getProgrammingLanguage(), name);
+                await this.codeRunner.reset();
                 this.setCode(code);
             }, "change", "value");
             // If example is null, it removes the selection

@@ -32,10 +32,8 @@ import {
 import { Diagnostic, linter, lintGutter, lintKeymap } from "@codemirror/lint";
 import { CodeMirrorEditor } from "./CodeMirrorEditor";
 import { darkTheme } from "./DarkTheme";
-import { DebugLineGutter } from "./Gutters";
-import { BackendManager } from "../BackendManager";
-import { BackendEventType } from "../BackendEvent";
 import { TestCodeExtension } from "./TestCodeExtension";
+import { DebugExtension } from "./DebugExtension";
 
 
 /**
@@ -47,8 +45,9 @@ export class CodeEditor extends CodeMirrorEditor {
     public static PANEL = "panel";
     public static AUTOCOMPLETION = "autocompletion";
     public static LINTING = "linting";
+    public static DEBUGGING = "debugging";
 
-    private debugLineGutter: DebugLineGutter;
+    private debugExtension: DebugExtension;
     private testCodeExtension: TestCodeExtension;
 
     /**
@@ -59,7 +58,7 @@ export class CodeEditor extends CodeMirrorEditor {
      */
     constructor(onRunRequest: () => void, initialCode: string = "", indentLength: number = 4) {
         super(new Set([
-            CodeEditor.PROGRAMMING_LANGUAGE, CodeEditor.INDENTATION,
+            CodeEditor.PROGRAMMING_LANGUAGE, CodeEditor.INDENTATION, CodeEditor.DEBUGGING,
             CodeEditor.PANEL, CodeEditor.AUTOCOMPLETION, CodeEditor.LINTING
         ]), {
             classes: ["papyros-code-editor", "_tw-overflow-auto",
@@ -69,7 +68,7 @@ export class CodeEditor extends CodeMirrorEditor {
             maxHeight: "72vh",
             theme: {}
         });
-        this.debugLineGutter = new DebugLineGutter();
+        this.debugExtension = new DebugExtension(this.editorView);
         this.addExtension([
             keymap.of([
                 {
@@ -83,19 +82,30 @@ export class CodeEditor extends CodeMirrorEditor {
                     key: "Shift-Enter", run: insertBlankLine
                 }
             ]),
-            this.debugLineGutter.toExtension(),
             ...CodeEditor.getExtensions()
         ]);
         this.setText(initialCode);
         this.setIndentLength(indentLength);
 
-        BackendManager.subscribe(BackendEventType.FrameChange, e => {
-            const line = e.data.line;
-            this.debugLineGutter.markLine(this.editorView, line);
-        });
-
         this.testCodeExtension = new TestCodeExtension(this.editorView);
         this.addExtension(this.testCodeExtension.toExtension());
+
+        this.debugMode = false;
+    }
+
+    public set debugMode(value: boolean) {
+        if (value) {
+            this.reconfigure([CodeEditor.DEBUGGING, [
+                this.debugExtension.toExtension(),
+            ]]);
+            this.debugExtension.reset();
+        } else {
+            this.reconfigure([CodeEditor.DEBUGGING, [
+                highlightActiveLineGutter(),
+                lintGutter(),
+                highlightActiveLine()
+            ]]);
+        }
     }
 
     public set testCode(code: string) {
@@ -223,7 +233,6 @@ export class CodeEditor extends CodeMirrorEditor {
     */
     private static getExtensions(): Array<Extension> {
         return [
-            lintGutter(),
             lineNumbers(),
             highlightSpecialChars(),
             history(),
@@ -235,8 +244,6 @@ export class CodeEditor extends CodeMirrorEditor {
             closeBrackets(),
             autocompletion(),
             rectangularSelection(),
-            highlightActiveLine(),
-            highlightActiveLineGutter(),
             highlightSelectionMatches(),
             keymap.of([
                 ...closeBracketsKeymap,

@@ -61,6 +61,12 @@ export class OutputManager extends Renderable {
      */
     private downloadCallback: (() => void) | null;
 
+    private _debugMode = false;
+    public set debugMode(value: boolean) {
+        this.outputArea.classList.toggle("papyros-debug", value);
+        this._debugMode = value;
+    }
+
     constructor() {
         super();
         this.content = [];
@@ -75,11 +81,7 @@ export class OutputManager extends Renderable {
             const outputElements = this.outputArea.children;
             for (let i = 0; i < outputElements.length; i++) {
                 const outputElement = outputElements[i];
-                if (i < outputsToHighlight) {
-                    outputElement.setAttribute("style", "opacity: inherit;");
-                } else {
-                    outputElement.setAttribute("style", "opacity: 0.1;");
-                }
+                outputElement.classList.toggle("papyros-highlight-debugged", i < outputsToHighlight);
             }
         });
     }
@@ -204,7 +206,7 @@ export class OutputManager extends Renderable {
     <div id=${OUTPUT_AREA_ID} class="_tw-border-2 _tw-w-full _tw-min-h-1/4
      _tw-max-h-3/5 _tw-overflow-auto papyros-font-family
     _tw-py-1 _tw-px-2 _tw-whitespace-pre _tw-rounded-lg dark:_tw-border-dark-mode-content
-    with-placeholder" data-placeholder="${t("Papyros.output_placeholder")}"></div>
+    with-placeholder ${this._debugMode ? "papyros-debug" : ""}" data-placeholder="${t("Papyros.output_placeholder")}"></div>
     `);
         // Restore previously rendered items
         this.content.forEach(html => this.renderNextElement(html, false));
