@@ -262,3 +262,11 @@ Removes the default spacing and border for appropriate elements.
 #__papyros-code-output-area.papyros-debug > .papyros-highlight-debugged {
   opacity: 1;
 }
+
+.papyros-code-editor .cm-content[contenteditable="false"] {
+  cursor: default;
+}
+
+.papyros-code-editor .cm-gutters {
+  cursor: default;
+}
