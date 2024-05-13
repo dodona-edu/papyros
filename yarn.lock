@@ -1184,10 +1184,10 @@
     "@types/mime" "*"
     "@types/node" "*"
 
-"@types/serviceworker@^0.0.85":
-  version "0.0.85"
-  resolved "https://registry.yarnpkg.com/@types/serviceworker/-/serviceworker-0.0.85.tgz#b26fac0043a80c2792cd396d47463c2156496aea"
-  integrity sha512-jBhFui72jyO0Tpsq/8AvL7GRJKiuUxdHPD9rrSRhf2SSElCn61yTyU2G133IlBVvBumCH4T5FDjmjbAG7MU9tg==
+"@types/serviceworker@^0.0.86":
+  version "0.0.86"
+  resolved "https://registry.yarnpkg.com/@types/serviceworker/-/serviceworker-0.0.86.tgz#3a9a2f0632a81a06f9c2304cb0911b2379e004f6"
+  integrity sha512-RAi6tWm5hfipcDKX3l2GNhGseUim97RkJCnhUseNaDMfWtxcgolrHEBR5b5tYL9aT8TIhxcrqQVfF6DlnZsCPg==
 
 "@types/sockjs@^0.3.36":
   version "0.3.36"
