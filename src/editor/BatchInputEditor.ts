@@ -1,6 +1,7 @@
 import { CodeMirrorEditor } from "./CodeMirrorEditor";
 import { UsedInputGutters, UsedInputGutterInfo } from "./Gutters";
-import { ViewUpdate } from "@codemirror/view";
+import { keymap, ViewUpdate } from "@codemirror/view";
+import { insertNewline } from "@codemirror/commands";
 
 /**
  * Arguments used to higlight lines in the Editor
@@ -37,6 +38,13 @@ export class BatchInputEditor extends CodeMirrorEditor {
         });
         this.usedInputGutters = new UsedInputGutters();
         this.addExtension(this.usedInputGutters.toExtension());
+        this.addExtension([
+            keymap.of([
+                {
+                    key: "Enter", run: insertNewline
+                }
+            ]),
+        ]);
     }
 
     private getLastHighlightArgs(): HighlightArgs {
