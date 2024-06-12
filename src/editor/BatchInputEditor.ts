@@ -1,7 +1,7 @@
 import { CodeMirrorEditor } from "./CodeMirrorEditor";
 import { UsedInputGutters, UsedInputGutterInfo } from "./Gutters";
-import {keymap, ViewUpdate} from "@codemirror/view";
-import {insertBlankLine, insertNewline} from "@codemirror/commands";
+import { keymap, ViewUpdate } from "@codemirror/view";
+import { insertNewline } from "@codemirror/commands";
 
 /**
  * Arguments used to higlight lines in the Editor
