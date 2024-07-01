@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import { Compartment, Extension } from "@codemirror/state";
 import { EditorView, ViewUpdate } from "@codemirror/view";
 import { Renderable, RenderOptions } from "../util/Rendering";

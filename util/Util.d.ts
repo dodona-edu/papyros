@@ -1,6 +1,6 @@
 import { I18n } from "i18n-js";
 export declare const i18n: I18n;
-export declare const t: <T = string>(scope: import("i18n-js").Scope, options?: import("i18n-js").TranslateOptions | undefined) => string | T;
+export declare const t: <T = string>(scope: import("i18n-js").Scope, options?: import("i18n-js").TranslateOptions) => string | T;
 export declare function getLocales(): Array<string>;
 /**
  * Helper type to access a HTML element, either via its id or the element itself
