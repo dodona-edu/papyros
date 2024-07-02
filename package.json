@@ -44,7 +44,7 @@
     "@codemirror/state": "^6.3.2",
     "@codemirror/theme-one-dark": "^6.1.2",
     "@codemirror/view": "^6.28.0",
-    "@dodona/trace-component": "1.1.8",
+    "@dodona/trace-component": "1.2.0",
     "@lezer/common": "^1.1.0",
     "codemirror-readonly-ranges": "^0.1.0-alpha.2",
     "comlink": "^4.4.1",
