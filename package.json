@@ -52,7 +52,7 @@
     "escape-html": "^1.0.3",
     "file-loader": "^6.2.0",
     "i18n-js": "4.4.3",
-    "pyodide": "^0.22.0",
+    "pyodide": "^0.26.3",
     "pyodide-worker-runner": "1.4.0",
     "sync-message": "^0.0.12"
   },
