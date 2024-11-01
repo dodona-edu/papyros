@@ -3124,10 +3124,10 @@ i18n-extract@^0.6.7:
     gettext-parser "^3.1.1"
     glob "^7.1.3"
 
-i18n-js@4.4.3:
-  version "4.4.3"
-  resolved "https://registry.yarnpkg.com/i18n-js/-/i18n-js-4.4.3.tgz#09744ddd377261f614502cc5622ce6981026ea4a"
-  integrity sha512-QIIyvJ+wOKdigL4BlgwiFFrpoXeGdlC8EYgori64YSWm1mnhNYYjIfRu5wETFrmiNP2fyD6xIjVG8dlzaiQr/A==
+i18n-js@4.5.0:
+  version "4.5.0"
+  resolved "https://registry.yarnpkg.com/i18n-js/-/i18n-js-4.5.0.tgz#c2cc98df71746fecf2c8831f90eb9b6a5a4566c5"
+  integrity sha512-eiT3ZzK+k1VUR/oDz0Nne3dWU6DE+4P3FxtHXgHMZyzW1lKAHsjEYaOPZClU4QA9rI+uoeE71zq1QzLnZ6LDJQ==
   dependencies:
     bignumber.js "*"
     lodash "*"
