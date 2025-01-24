@@ -1,8 +1,15 @@
-import { Extension, Line, EditorState } from "@codemirror/state";
+import { Extension, Line } from "@codemirror/state";
 import { Decoration, EditorView, WidgetType } from "@codemirror/view";
 import readOnlyRangesExtension from "codemirror-readonly-ranges";
 import { t } from "../util/Util";
 import { LineEffectExtension } from "./LineEffectExtension";
+
+// The types used in this file should match the ones in the codemirror-readonly-ranges package
+// Which might be a slightly different version then our @codemirror package
+// Thus we extract the types from the codemirror-readonly-ranges package
+type readOnlyRangesGetter = Parameters<typeof readOnlyRangesExtension>[0];
+type EditorState = Parameters<readOnlyRangesGetter>[0];
+type Range = ReturnType<readOnlyRangesGetter>;
 
 const highlightDecoration = Decoration.line({ class: "papyros-test-code" });
 
@@ -105,7 +112,7 @@ export class TestCodeExtension {
         this.lineEffect.clear();
     }
 
-    private getReadOnlyRanges(state: EditorState): Array<{from:number|undefined, to:number|undefined}> {
+    private getReadOnlyRanges(state: EditorState): Range {
         if (this.allowEdit) {
             return [];
         }
