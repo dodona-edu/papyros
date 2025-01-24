@@ -24,7 +24,7 @@ export const darkTheme = EditorView.theme({
     },
 
     ".cm-cursor, .cm-dropCursor": { borderLeftColor: cursor },
-    // eslint-disable-next-line max-len
+     
     "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection": { backgroundColor: selection },
 
     ".cm-panels": { backgroundColor: darkBackground, color: ivory },

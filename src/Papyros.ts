@@ -1,4 +1,4 @@
-/* eslint-disable max-len */
+ 
 import {
     DARK_MODE_TOGGLE_ID,
     EDITOR_WRAPPER_ID,
@@ -145,7 +145,7 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
         } else {
             try {
                 await this.codeRunner.start();
-            } catch (error: any) {
+            } catch {
                 if (confirm(t("Papyros.launch_error"))) {
                     return this.launch();
                 }
@@ -217,7 +217,7 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
             try {
                 await navigator.serviceWorker.register(serviceWorkerUrl, { scope: "/" });
                 BackendManager.channel = makeChannel({ serviceWorker: this.config.channelOptions })!;
-            } catch (error: any) {
+            } catch {
                 return false;
             }
         } else {

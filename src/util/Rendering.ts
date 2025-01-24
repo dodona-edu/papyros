@@ -1,4 +1,4 @@
-/* eslint-disable max-len */
+ 
 import { getElement } from "./Util";
 import escapeHTML from "escape-html";
 

@@ -184,7 +184,7 @@ export class OutputManager extends Renderable {
             }
             errorHTML += "<div class=\"_tw-text-red-500 _tw-text-bold\">";
             const infoQM = renderInCircle("?", escapeHTML(errorObject.info),
-                // eslint-disable-next-line max-len
+                 
                 "_tw-text-blue-500 _tw-border-blue-500 dark:_tw-text-dark-mode-blue dark:_tw-border-dark-mode-blue");
             const tracebackEM = renderInCircle("!",
                 escapeHTML(errorObject.traceback), "_tw-text-red-500 _tw-border-red-500");

@@ -472,7 +472,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
 
     protected override _render(options: CodeRunnerRenderOptions): HTMLElement {
         appendClasses(options.statusPanelOptions,
-            // eslint-disable-next-line max-len
+             
             "_tw-border-solid _tw-border-gray-200 _tw-border-b-2 dark:_tw-border-dark-mode-content");
         const rendered = renderWithOptions(options.statusPanelOptions, `
 <div style="position: relative">
