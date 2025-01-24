@@ -137,7 +137,7 @@ export function cleanCurrentUrl(endingSlash = false): string {
  * @param {HTMLElement} el The element to focus
  */
 export function placeCaretAtEnd(el: HTMLElement): void {
-    // eslint-disable-next-line max-len
+     
     // Source: https://stackoverflow.com/questions/4233265/contenteditable-set-caret-at-the-end-of-the-text-cross-browser
     el.focus();
     if (typeof window.getSelection !== "undefined" &&
