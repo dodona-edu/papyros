@@ -1,4 +1,4 @@
-/* eslint-disable max-len */
+ 
 // Empty strings are considered missing by i18n-extract
 // Therefore the ready-key is an explicit space now, which is still invisible
 
@@ -184,7 +184,7 @@ const DUTCH_PHRASES = {
     // @codemirror/lint
     "Diagnostics": "Problemen",
     "No diagnostics": "Geen problemen",
-  }
+}
 
 const TRANSLATIONS = {
     en: { "Papyros": ENGLISH_TRANSLATION },

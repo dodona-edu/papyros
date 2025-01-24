@@ -80,7 +80,7 @@ export abstract class UserInputHandler extends Renderable<InputManagerRenderOpti
             // Focusing is a rendering operation
             // Subclasses can execute code after this operation, skipping the rendering
             // Using setTimeout ensures rendering will be done when the main thread has time
-            // eslint-disable-next-line max-len
+             
             // More info here: https://stackoverflow.com/questions/1096436/document-getelementbyidid-focus-is-not-working-for-firefox-or-chrome
             setTimeout(() => this.focus(), 0);
         }

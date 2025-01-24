@@ -1,4 +1,3 @@
-/* eslint-disable valid-jsdoc */
 import { ProgrammingLanguage } from "../ProgrammingLanguage";
 import { t } from "../util/Util";
 import {
