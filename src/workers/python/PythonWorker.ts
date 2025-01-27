@@ -1,6 +1,7 @@
 import { Backend, RunMode, WorkerDiagnostic } from "../../Backend";
 import { BackendEvent } from "../../BackendEvent";
-import { PyodideInterface, PyProxy } from "pyodide";
+import { PyodideInterface } from "pyodide";
+import { PyProxy } from "pyodide/ffi";
 import { pyodideExpose, PyodideExtras, loadPyodideAndPackage } from "pyodide-worker-runner";
 
 /* eslint-disable-next-line */

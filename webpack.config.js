@@ -1,5 +1,6 @@
 const path = require("path");
 const TerserPlugin = require('terser-webpack-plugin');
+const { PyodidePlugin } = require("@pyodide/webpack-plugin");
 
 
 const PUBLIC_DIR = "public";
@@ -10,6 +11,9 @@ module.exports = function (webpackEnv, argv) {
 		mode = webpackEnv.WEBPACK_SERVE ? 'development' : 'production'
 	}
 	return {
+		plugins: [
+			new PyodidePlugin()
+		],
 		entry: Object.fromEntries([
 			["App", "./src/App.ts"],
 			["InputServiceWorker", "./src/InputServiceWorker.ts"]
