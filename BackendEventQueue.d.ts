@@ -55,13 +55,13 @@ export declare class BackendEventQueue {
     /**
      * Add an element to the queue
      * @param {BackendEventType} type The type of the event
-     * @param {string | BufferSource} text The data for the event
+     * @param {string | BufferSource | number} text The data for the event
      * @param {string | any} extra Extra data for the event
      * If string, interpreted as the contentType
      * If anything else, it should contain a contentType
      * If the contentType is not textual, an error is thrown
      */
-    put(type: BackendEventType, text: string | BufferSource, extra: string | any): void;
+    put(type: BackendEventType, text: string | BufferSource | number, extra: string | any): void;
     /**
      * @return {boolean} Whether the queue contents should be flushed
      */
