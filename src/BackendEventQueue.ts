@@ -73,15 +73,17 @@ export class BackendEventQueue {
     /**
      * Add an element to the queue
      * @param {BackendEventType} type The type of the event
-     * @param {string | BufferSource} text The data for the event
+     * @param {string | BufferSource | number} text The data for the event
      * @param {string | any} extra Extra data for the event
      * If string, interpreted as the contentType
      * If anything else, it should contain a contentType
      * If the contentType is not textual, an error is thrown
      */
-    public put(type: BackendEventType, text: string | BufferSource, extra: string | any): void {
+    public put(type: BackendEventType, text: string | BufferSource | number, extra: string | any): void {
         let stringData = "";
-        if (typeof text !== "string") {
+        if (typeof text === "number") {
+            stringData = text.toString();
+        } else if (typeof text !== "string") {
             stringData = this.decoder.decode(text);
         } else {
             stringData = text;
