@@ -32,7 +32,15 @@ module.exports = function (webpackEnv, argv) {
 						"css-loader",
 						"postcss-loader"
 					],
-				}
+				},
+				{
+					test: /\.tar\.gz\.load_by_url$/,
+					use: [
+						{
+							loader: "file-loader",
+						},
+					],
+				},
 			]
 		},
 		resolve: {
