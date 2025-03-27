@@ -165,11 +165,12 @@ export declare class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      */
     private getCodeActionButtons;
     /**
-     * Specific helper method to render only the buttons required by the user
      * @param {DynamicButton[]} buttons The buttons to render
      * @param {string} id The id of the element to render the buttons in
      */
     private renderButtons;
+    private renderCodeActionButtons;
+    private renderUserButtons;
     protected _render(options: CodeRunnerRenderOptions): HTMLElement;
     /**
      * Execute the code in the editor
