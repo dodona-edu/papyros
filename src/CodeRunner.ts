@@ -209,7 +209,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
                 const backend = await this.backend;
                 const modes = await backend.workerProxy.runModes(code);
                 this.updateRunButtons(modes);
-                this.renderButtons();
+                this.renderCodeActionButtons();
             },
             delay: DEFAULT_EDITOR_DELAY
         });
@@ -230,7 +230,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
 
     private set debugMode(debugMode: boolean) {
         this._debugMode = debugMode;
-        this.renderButtons();
+        this.renderCodeActionButtons();
 
         if (this.inputManager.getInputMode() === InputMode.Batch) {
             const handler = this.inputManager.inputHandler as BatchInputHandler;
@@ -392,7 +392,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             this.state = state;
         }
         this.showSpinner(this.state !== RunState.Ready);
-        this.renderButtons();
+        this.renderCodeActionButtons();
     }
 
     /**
@@ -408,7 +408,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      */
     private removeButton(id: string): void {
         this.userButtons.remove(id);
-        this.renderButtons(this.userButtons, CODE_BUTTONS_WRAPPER_ID);
+        this.renderUserButtons();
     }
 
     /**
@@ -418,7 +418,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
      */
     public addButton(options: ButtonOptions, onClick: () => void): void {
         this.userButtons.add(options, onClick);
-        this.renderButtons(this.userButtons, CODE_BUTTONS_WRAPPER_ID);
+        this.renderUserButtons();
     }
 
     /**
@@ -457,17 +457,23 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     }
 
     /**
-     * Specific helper method to render only the buttons required by the user
      * @param {DynamicButton[]} buttons The buttons to render
      * @param {string} id The id of the element to render the buttons in
      */
-    @delay(100) // Delay to prevent flickering
-    private renderButtons(buttons: DynamicButton[] | undefined = undefined, id = RUN_BUTTONS_WRAPPER_ID): void {
-        const btns = buttons || this.getCodeActionButtons();
-        getElement(id).innerHTML =
-            btns.map(b => b.buttonHTML).join("\n");
+    private renderButtons(buttons: DynamicButton[], id: string): void {
+        getElement(id).innerHTML = buttons.map(b => b.buttonHTML).join("\n");
         // Buttons are freshly added to the DOM, so attach listeners now
-        btns.forEach(b => addListener(b.id, b.onClick, "click"));
+        buttons.forEach(b => addListener(b.id, b.onClick, "click"));
+    }
+
+    @delay(100) // Delay to prevent flickering
+    private renderCodeActionButtons(): void {
+        this.renderButtons(this.getCodeActionButtons(), RUN_BUTTONS_WRAPPER_ID);
+    }
+
+    @delay(100) // Delay to prevent flickering
+    private renderUserButtons(): void {
+        this.renderButtons(this.userButtons, CODE_BUTTONS_WRAPPER_ID);
     }
 
     protected override _render(options: CodeRunnerRenderOptions): HTMLElement {
@@ -488,7 +494,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
     </div>
 </div>`);
         this.setState(this.state);
-        this.renderButtons(this.userButtons, CODE_BUTTONS_WRAPPER_ID);
+        this.renderUserButtons();
         this.inputManager.render(options.inputOptions);
         this.outputManager.render(options.outputOptions);
         this.editor.render(options.codeEditorOptions);
