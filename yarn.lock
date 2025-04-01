@@ -1235,10 +1235,12 @@
   dependencies:
     "@types/node" "*"
 
-"@types/i18n-js@^3.8.9":
-  version "3.8.9"
-  resolved "https://registry.yarnpkg.com/@types/i18n-js/-/i18n-js-3.8.9.tgz#074d1389539d2db992e6afd7eb379aa02929ef93"
-  integrity sha512-bSxgya4x5O+x+QhfCGckiDDE+17XGPp1TNBgBA/vfF5EwdiZC70F4cKG5QK2v44+v62oY7/t/InreRhxskulcA==
+"@types/i18n-js@^4.0.1":
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/@types/i18n-js/-/i18n-js-4.0.1.tgz#671f5d12f35950aedf04a4427bc2e20fdf14893c"
+  integrity sha512-+Y/Ji/gRl1gGAxRlbxk1Az4TewU2+NMChN/nLl0RY/eBAlRtAEhvoeTRJco3bqNZg8HTMK+i1faGKy3RzkJk3w==
+  dependencies:
+    i18n-js "*"
 
 "@types/istanbul-lib-coverage@*", "@types/istanbul-lib-coverage@^2.0.0", "@types/istanbul-lib-coverage@^2.0.1":
   version "2.0.6"
@@ -1349,10 +1351,10 @@
     "@types/mime" "*"
     "@types/node" "*"
 
-"@types/serviceworker@^0.0.117":
-  version "0.0.117"
-  resolved "https://registry.yarnpkg.com/@types/serviceworker/-/serviceworker-0.0.117.tgz#dd3bce74466661a00a58cf17a8d35dce4e9d0ba8"
-  integrity sha512-dsxlvbFqeyhoN453F7n68ncqrn/UiqZkvZIZdu9zd9c1K0Gm/N4olV7w6tJ3I7yOeip32J4uQ25Na3NwlSaJkQ==
+"@types/serviceworker@^0.0.127":
+  version "0.0.127"
+  resolved "https://registry.yarnpkg.com/@types/serviceworker/-/serviceworker-0.0.127.tgz#6b57f0fe4830b46586755603c7f03c62eff22791"
+  integrity sha512-jj6drAuP9/KzIeuLKQyIFnmWF4cZMr3phuej3zfsilo7bwaAmDOq2L7Ns/3IjoLVRWpW5q0UBdpiyZAP8CQPzw==
 
 "@types/sockjs@^0.3.36":
   version "0.3.36"
@@ -3341,7 +3343,7 @@ i18n-extract@^0.6.7:
     gettext-parser "^3.1.1"
     glob "^7.1.3"
 
-i18n-js@4.5.1:
+i18n-js@*, i18n-js@4.5.1:
   version "4.5.1"
   resolved "https://registry.yarnpkg.com/i18n-js/-/i18n-js-4.5.1.tgz#12ea3d6333552ff75be0904ea50705f5a263d172"
   integrity sha512-n7jojFj1WC0tztgr0I8jqTXuIlY1xNzXnC3mjKX/YjJhimdM+jXM8vOmn9d3xQFNC6qDHJ4ovhdrGXrRXLIGkA==
