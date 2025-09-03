@@ -4825,9 +4825,9 @@ pyodide-worker-runner@1.4.0:
     p-retry "^5.0.0"
 
 pyodide@^0.27.2:
-  version "0.27.2"
-  resolved "https://registry.yarnpkg.com/pyodide/-/pyodide-0.27.2.tgz#8cd43abe245bffbbf82031c95fd79e4bc719d83d"
-  integrity sha512-sfA2kiUuQVRpWI4BYnU3sX5PaTTt/xrcVEmRzRcId8DzZXGGtPgCBC0gCqjUTUYSa8ofPaSjXmzESc86yvvCHg==
+  version "0.27.5"
+  resolved "https://registry.yarnpkg.com/pyodide/-/pyodide-0.27.5.tgz#e952ccab9d03067cba8b88e6a56f958cc1a71cda"
+  integrity sha512-nXErpLzEdtQolt+sNQ/5mKuN9XTUwhxR2MRhRhZ6oDRGpYLXrOp5+kkTPGEwK+wn1ZA8+poNmoxKTj2sq/p9og==
   dependencies:
     ws "^8.5.0"
 
