@@ -6,7 +6,7 @@ updates:
     interval: monthly
     time: "13:00"
     timezone: Europe/Brussels
-  open-pull-requests-limit: 99
+  open-pull-requests-limit: 98
   labels:
     - "dependencies"
   groups:
@@ -26,6 +26,6 @@ updates:
     interval: monthly
     time: "13:00"
     timezone: Europe/Brussels
-  open-pull-requests-limit: 99
+  open-pull-requests-limit: 98
   labels:
     - "dependencies"
