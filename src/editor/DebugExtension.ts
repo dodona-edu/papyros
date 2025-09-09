@@ -51,7 +51,14 @@ export class DebugExtension {
         this.markLine(1);
     }
 
-    public markLine(lineNr: number): void {
+    public markLine(lineNr: number | undefined): void {
+        if (lineNr === undefined) {
+            this.gutter.markLine(this.view, lineNr);
+            this.lineEffect.set([]);
+            this.view.dispatch({ effects: [markLine.of(undefined)] });
+            return;
+        }
+
         this.gutter.markLine(this.view, lineNr);
         this.lineEffect.set([activeLineDecoration.range(this.view.state.doc.line(lineNr).from)]);
         this.view.dispatch({ effects: [
