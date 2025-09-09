@@ -248,7 +248,7 @@ class DebugMarker extends GutterMarker {
  * shows the debugged line
  */
 export class DebugLineGutter extends Gutters<GutterInfo> {
-    private activeLine: number = 1;
+    private activeLine: number | undefined = 1;
 
     constructor() {
         super({
@@ -269,9 +269,13 @@ export class DebugLineGutter extends Gutters<GutterInfo> {
         return new DebugMarker();
     }
 
-    public markLine(view: EditorView, lineNr: number): void {
-        this.setMarker(view, { lineNr: this.activeLine, on: false });
-        this.setMarker(view, { lineNr, on: true });
+    public markLine(view: EditorView, lineNr: number | undefined): void {
+        if (this.activeLine !== undefined) {
+            this.setMarker(view, { lineNr: this.activeLine, on: false });
+        }
+        if (lineNr !== undefined) {
+            this.setMarker(view, { lineNr, on: true });
+        }
         this.activeLine = lineNr;
     }
 }
