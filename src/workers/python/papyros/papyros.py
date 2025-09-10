@@ -229,8 +229,11 @@ if __name__ == "{MODULE_NAME}":
 
     def has_doctests(self, code):
         parser = doctest.DocTestParser()
-        tests = parser.get_examples(code)
-        return bool(tests)
+        try:
+            tests = parser.get_examples(code)
+            return bool(tests)
+        except ValueError:
+            return False
 
     async def provide_files(self, inline_files, href_files):
         inline_files = json.loads(inline_files)
