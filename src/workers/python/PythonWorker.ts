@@ -4,8 +4,7 @@ import { PyodideInterface } from "pyodide";
 import { PyProxy } from "pyodide/ffi";
 import { pyodideExpose, PyodideExtras, loadPyodideAndPackage } from "pyodide-worker-runner";
 
-/* eslint-disable-next-line */
-const pythonPackageUrl = require("./python_package.tar.gz.load_by_url").default;
+import pythonPackageUrl from "./python_package.tar.gz.load_by_url?url";
 
 /**
  * Implementation of a Python backend for Papyros
