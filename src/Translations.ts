@@ -186,15 +186,12 @@ const DUTCH_PHRASES = {
     "No diagnostics": "Geen problemen",
 }
 
-const TRANSLATIONS = {
+export const TRANSLATIONS = {
     en: { "Papyros": ENGLISH_TRANSLATION },
     nl: { "Papyros": DUTCH_TRANSLATION }
 };
 
-const CODE_MIRROR_TRANSLATIONS = {
+export const CODE_MIRROR_TRANSLATIONS = {
     en: ENGLISH_PHRASES,
     nl: DUTCH_PHRASES
 };
-// JS exports to allow use in TS and JS files
-module.exports.TRANSLATIONS = TRANSLATIONS;
-module.exports.CODE_MIRROR_TRANSLATIONS = CODE_MIRROR_TRANSLATIONS;

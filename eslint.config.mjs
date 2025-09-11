@@ -4,7 +4,6 @@ import eslint from "@eslint/js";
 export default tseslint.config(
     {
         ignores: [
-            "**/webpack.config.js",
             "**/tailwind.config.js",
             "**/postcss.config.js",
             "**/jest.config.js",

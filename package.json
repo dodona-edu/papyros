@@ -29,10 +29,7 @@
     "ts-loader": "^9.5.0",
     "typescript": "^5.2.2",
     "typescript-eslint": "^8.21.0",
-    "webpack": "^5.89.0",
-    "webpack-cli": "^6.0.1",
-    "webpack-dev-server": "^5.0.2",
-    "worker-loader": "^3.0.8"
+    "vite": "^7.1.5"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.11.1",
@@ -58,10 +55,11 @@
     "sync-message": "^0.0.12"
   },
   "scripts": {
-    "start": "webpack serve --mode development",
+    "start": "yarn build:sw && vite",
     "setup": "bash scripts/setup.sh",
-    "build:app": "bash scripts/build.sh development",
-    "build:library": "bash scripts/build_library.sh",
+    "build:app": "yarn build:sw && vite build",
+    "build:sw": "vite build --config vite.sw.config.ts",
+    "build:lib": "bash scripts/build_library.sh",
     "test": "jest",
     "lint": "eslint src",
     "validate:translations": "node scripts/ValidateTranslations.js"

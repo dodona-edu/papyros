@@ -22,27 +22,15 @@ jobs:
           repository: dodona-edu/papyros
           path: papyros
           ref: main
-      - name: Install and build main
+      - name: Install and build branch
         run: |
           cd papyros
           yarn install
           yarn setup
           yarn build:app
-          cp -r public/* dist
           cd ..
-      - name: Install and build branch
-        run: |
-          yarn install
-          yarn setup
-          yarn build:app
-          cp -r public/* dist
-      - name: Prepare builds to be deployed
-        run: |
-          mv dist devdist
-          mv papyros/dist dist
-          mv devdist dist/dev
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@v4.7.3
         with:
           branch: gh-pages # The branch the action should deploy to.
-          folder: dist # The folder the action should deploy.
+          folder: papyros/dist # The folder the action should deploy.

@@ -217,7 +217,8 @@ export class Papyros extends Renderable<PapyrosRenderOptions> {
             try {
                 await navigator.serviceWorker.register(serviceWorkerUrl, { scope: "/" });
                 BackendManager.channel = makeChannel({ serviceWorker: this.config.channelOptions })!;
-            } catch {
+            } catch(e) {
+                console.error("Error registering service worker:", e);
                 return false;
             }
         } else {
