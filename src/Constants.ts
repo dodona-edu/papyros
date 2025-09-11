@@ -32,5 +32,5 @@ export const DARK_MODE_TOGGLE_ID = addPapyrosPrefix("toggle-dark-mode");
 /* Default values for various properties */
 export const DEFAULT_PROGRAMMING_LANGUAGE = ProgrammingLanguage.Python;
 export const DEFAULT_LOCALE = "nl";
-export const DEFAULT_SERVICE_WORKER = "./InputServiceWorker.js";
+export const DEFAULT_SERVICE_WORKER = "InputServiceWorker.js";
 export const DEFAULT_EDITOR_DELAY = 750; // milliseconds
