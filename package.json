@@ -52,12 +52,14 @@
     "i18n-js": "4.5.1",
     "pyodide": "^0.28.2",
     "pyodide-worker-runner": "1.4.0",
-    "sync-message": "^0.0.12"
+    "sync-message": "^0.0.12",
+    "vite-plugin-pwa": "^1.0.3"
   },
   "scripts": {
-    "start": "vite",
+    "start": "yarn build:sw && vite",
     "setup": "bash scripts/setup.sh",
-    "build:app": "bash scripts/build.sh development",
+    "build:app": "yarn build:sw && vite build",
+    "build:sw": "vite build --config vite.sw.config.ts",
     "build:library": "bash scripts/build_library.sh",
     "test": "jest",
     "lint": "eslint src",
