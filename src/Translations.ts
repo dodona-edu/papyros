@@ -187,11 +187,11 @@ const DUTCH_PHRASES = {
 }
 
 export const TRANSLATIONS = {
-    en: { "Papyros": ENGLISH_TRANSLATION },
-    nl: { "Papyros": DUTCH_TRANSLATION }
+    "en": { "Papyros": ENGLISH_TRANSLATION },
+    "nl": { "Papyros": DUTCH_TRANSLATION }
 };
 
 export const CODE_MIRROR_TRANSLATIONS = {
-    en: ENGLISH_PHRASES,
-    nl: DUTCH_PHRASES
+    "en": ENGLISH_PHRASES,
+    "nl": DUTCH_PHRASES
 };
