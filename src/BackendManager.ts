@@ -121,7 +121,7 @@ export abstract class BackendManager {
         BackendManager.registerBackend(ProgrammingLanguage.Python,
             () => new PyodideClient<Backend>(
                 () => new Worker(new URL("./workers/python/worker", import.meta.url), {
-                    type: 'module',
+                    type: "module",
                 }),
                 BackendManager.channel
             )
@@ -129,7 +129,7 @@ export abstract class BackendManager {
         BackendManager.registerBackend(ProgrammingLanguage.JavaScript,
             () => new SyncClient<Backend>(
                 () => new Worker(new URL("./workers/javascript/worker", import.meta.url), {
-                    type: 'module',
+                    type: "module",
                 }),
                 BackendManager.channel
             )
