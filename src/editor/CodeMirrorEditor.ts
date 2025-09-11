@@ -217,9 +217,10 @@ export abstract class CodeMirrorEditor extends Renderable {
     protected override _render(options: RenderOptions): void {
         this.setStyling(this.styling);
         this.setDarkMode(options.darkMode || false);
+        const language: "en" | "nl" = (i18n.locale as "en" | "nl");
         this.reconfigure([
             CodeMirrorEditor.LANGUAGE,
-            EditorState.phrases.of(CODE_MIRROR_TRANSLATIONS[i18n.locale])
+            EditorState.phrases.of(CODE_MIRROR_TRANSLATIONS[language] as { [key: string]: string})
         ]);
         const wrappingDiv = document.createElement("div");
         wrappingDiv.classList.add(...this.styling.classes);
