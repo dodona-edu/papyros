@@ -52,8 +52,7 @@
     "i18n-js": "4.5.1",
     "pyodide": "^0.28.2",
     "pyodide-worker-runner": "1.4.0",
-    "sync-message": "^0.0.12",
-    "vite-plugin-pwa": "^1.0.3"
+    "sync-message": "^0.0.12"
   },
   "scripts": {
     "start": "yarn build:sw && vite",
