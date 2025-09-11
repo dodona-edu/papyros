@@ -195,6 +195,3 @@ export const CODE_MIRROR_TRANSLATIONS = {
     en: ENGLISH_PHRASES,
     nl: DUTCH_PHRASES
 };
-// // JS exports to allow use in TS and JS files
-// module.exports.TRANSLATIONS = TRANSLATIONS;
-// module.exports.CODE_MIRROR_TRANSLATIONS = CODE_MIRROR_TRANSLATIONS;
