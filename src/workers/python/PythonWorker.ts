@@ -4,7 +4,7 @@ import { PyodideInterface } from "pyodide";
 import { PyProxy } from "pyodide/ffi";
 import { pyodideExpose, PyodideExtras, loadPyodideAndPackage } from "pyodide-worker-runner";
 
-import pythonPackageUrl from "./python_package.tar.gz.load_by_url?url";
+const pythonPackageUrl = new URL("./python_package.tar.gz.load_by_url", import.meta.url).href;
 
 /**
  * Implementation of a Python backend for Papyros
