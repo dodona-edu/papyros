@@ -302,6 +302,10 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
                         this.outputManager.onOverflow(null);
                     })
                 );
+            if(this.state === RunState.Stopping) {
+                // If we were stopped while loading, return early
+                return resolve(backend);
+            }
             this.editor.setLintingSource(
                 async view => {
                     const workerDiagnostics = await workerProxy.lintCode(this.editor.getCode());
