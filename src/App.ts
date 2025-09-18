@@ -9,6 +9,7 @@ import { InputMode } from "./InputManager";
 import { BatchInputHandler } from "./input/BatchInputHandler";
 import { CodeMirrorEditor } from "./editor/CodeMirrorEditor";
 import "./components/CodeMirrorEditor";
+import "./components/CodeEditor";
 
 const LOCAL_STORAGE_KEYS = {
     code: addPapyrosPrefix("previous-code"),

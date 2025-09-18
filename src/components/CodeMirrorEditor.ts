@@ -30,7 +30,7 @@ export class CodeMirrorEditor extends LitElement {
             parent: (this.shadowRoot as ShadowRoot),
             state: EditorState.create({ doc: this.__value, extensions: [
                     EditorView.updateListener.of(this.onViewUpdate.bind(this)),
-                    [...this.compartments.keys().map(k => this.compartments[k].of(this.extensions[k]))],
+                    [...this.compartments.keys().map(k => this.compartments.get(k)!.of(this.extensions.get(k)!))],
                 ] })
         });
     }
@@ -58,18 +58,18 @@ export class CodeMirrorEditor extends LitElement {
             this.extensions.set(key, ext as Extension);
         });
 
-        if (this.view) {
-            this.view.dispatch({
-                effects: Object.keys(extensions).map(key => {
-                    if(this.compartments.has(key)) {
-                        return this.compartments.get(key)!.reconfigure(this.extensions.get(key)!)
-                    }
+        const effects =  Object.keys(extensions).map(key => {
+            if(this.compartments.has(key)) {
+                return this.compartments.get(key)!.reconfigure(this.extensions.get(key)!)
+            }
 
-                    const compartment = new Compartment();
-                    this.compartments.set(key, compartment);
-                    return StateEffect.appendConfig.of(compartment.of(this.extensions.get(key)!));
-                })
-            });
+            const compartment = new Compartment();
+            this.compartments.set(key, compartment);
+            return StateEffect.appendConfig.of(compartment.of(this.extensions.get(key)!));
+        })
+
+        if (this.view) {
+            this.view.dispatch({ effects});
         }
     }
 }
