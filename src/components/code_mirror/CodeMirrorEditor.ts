@@ -6,7 +6,7 @@ import {Compartment, EditorState, Extension, StateEffect} from "@codemirror/stat
 @customElement('p-code-mirror-editor')
 export class CodeMirrorEditor extends LitElement {
     private __value: string = '';
-    private view: EditorView | undefined;
+    protected view: EditorView | undefined;
     private readonly compartments: Map<string, Compartment> = new Map();
     private readonly extensions: Map<string, Extension> = new Map();
 

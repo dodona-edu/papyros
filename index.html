@@ -24,16 +24,21 @@
   <noscript>You need to enable JavaScript to run this app.</noscript>
   <div id="root"></div>
 
-  <p-code-mirror-editor id="foo" value="fooool"></p-code-mirror-editor>
-  <p-code-editor id="bar"></p-code-editor>
+  <p-code-mirror-editor id="foo" value="1"></p-code-mirror-editor>
+  <p-code-editor id="bar" value="" style="margin-left: 20px; display: block"></p-code-editor>
   <script>
     const foo = document.getElementById("foo");
     const bar = document.getElementById("bar");
     foo.addEventListener("change", (e) => {
-      console.log("foo changed", e.detail, foo.value);
+      if(e.detail && parseInt(e.detail)) {
+        bar.debug = true;
+        bar.debugLine = parseInt(e.detail);
+      } else {
+        bar.debug = false;
+      }
     });
     bar.addEventListener("change", (e) => {
-      console.log("bar changed", e.detail, bar.value);
+      console.log("bar changed", e.detail);
     });
   </script>
 </body>
