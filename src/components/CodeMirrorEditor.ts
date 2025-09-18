@@ -1,15 +1,17 @@
 import {LitElement} from "lit";
 import { customElement, property } from "lit/decorators.js";
 import {EditorView, ViewUpdate} from "@codemirror/view";
-import {EditorState, Extension} from "@codemirror/state";
+import {Compartment, EditorState, Extension, StateEffect} from "@codemirror/state";
 
 @customElement('p-code-mirror-editor')
 export class CodeMirrorEditor extends LitElement {
     private __value: string = '';
-    private view: EditorView;
+    private view: EditorView | undefined;
+    private readonly compartments: Map<string, Compartment> = new Map();
+    private readonly extensions: Map<string, Extension> = new Map();
 
     @property({type: String})
-    set value(value: string) {
+    public set value(value: string) {
         this.__value = value;
         if (!this.view) return;
 
@@ -19,37 +21,55 @@ export class CodeMirrorEditor extends LitElement {
         this.view.dispatch(this.view.state.update(data));
     }
 
-    get value(): string {
+    public get value(): string {
         return this.__value;
     }
 
-    initView() {
+    private initView() {
         this.view = new EditorView({
             parent: (this.shadowRoot as ShadowRoot),
-            state: EditorState.create({ doc: this.__value, extensions: [...this.extensions] })
+            state: EditorState.create({ doc: this.__value, extensions: [
+                    EditorView.updateListener.of(this.onViewUpdate.bind(this)),
+                    [...this.compartments.keys().map(k => this.compartments[k].of(this.extensions[k]))],
+                ] })
         });
     }
 
-    get extensions(): Extension[] {
-        return [
-            EditorView.updateListener.of(this.onViewUpdate.bind(this))
-        ];
-    }
-
-    onViewUpdate(v: ViewUpdate): void {
+    private onViewUpdate(v: ViewUpdate): void {
         if (v.docChanged) {
             this.__value = v.state.doc.toString();
             this.dispatchEvent(new CustomEvent('change', { detail: this.value }))
         }
     }
 
-    connectedCallback() {
+    protected override connectedCallback() {
         super.connectedCallback();
         this.initView();
     }
 
-    disconnectedCallback() {
+    protected override disconnectedCallback() {
         super.disconnectedCallback();
-        this.view.destroy();
+        this.view?.destroy();
+        this.view = undefined;
+    }
+
+    protected configure(extensions: Record<String, Extension>) {
+        Object.entries(extensions).forEach(([key, ext]) => {
+            this.extensions.set(key, ext as Extension);
+        });
+
+        if (this.view) {
+            this.view.dispatch({
+                effects: Object.keys(extensions).map(key => {
+                    if(this.compartments.has(key)) {
+                        return this.compartments.get(key)!.reconfigure(this.extensions.get(key)!)
+                    }
+
+                    const compartment = new Compartment();
+                    this.compartments.set(key, compartment);
+                    return StateEffect.appendConfig.of(compartment.of(this.extensions.get(key)!));
+                })
+            });
+        }
     }
 }
