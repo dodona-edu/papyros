@@ -23,6 +23,19 @@
 <body class="tailwind-body">
   <noscript>You need to enable JavaScript to run this app.</noscript>
   <div id="root"></div>
+
+  <p-code-mirror-editor id="foo" value="fooool"></p-code-mirror-editor>
+  <p-code-mirror-editor id="bar"></p-code-mirror-editor>
+  <script>
+    const foo = document.getElementById("foo");
+    const bar = document.getElementById("bar");
+    foo.addEventListener("change", (e) => {
+      console.log("foo changed", e.detail, foo.value);
+    });
+    bar.addEventListener("change", (e) => {
+      console.log("bar changed", e.detail, bar.value);
+    });
+  </script>
 </body>
 
 </html>

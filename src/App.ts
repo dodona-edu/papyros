@@ -8,6 +8,7 @@ import { Papyros, PapyrosConfig } from "./Papyros";
 import { InputMode } from "./InputManager";
 import { BatchInputHandler } from "./input/BatchInputHandler";
 import { CodeMirrorEditor } from "./editor/CodeMirrorEditor";
+import "./components/CodeMirrorEditor";
 
 const LOCAL_STORAGE_KEYS = {
     code: addPapyrosPrefix("previous-code"),
@@ -74,4 +75,4 @@ async function startPapyros(): Promise<void> {
     await papyros.launch();
 }
 
-startPapyros();
+// startPapyros();
