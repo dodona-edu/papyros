@@ -152,3 +152,11 @@ export function placeCaretAtEnd(el: HTMLElement): void {
         }
     }
 }
+
+export function createDelayer(): (callback: () => void, ms: number) => void {
+    let timer: any;
+    return (callback, ms) => {
+        clearTimeout(timer);
+        timer = setTimeout(callback, ms);
+    };
+}

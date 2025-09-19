@@ -36,7 +36,7 @@ import {
 import { Diagnostic, linter, lintGutter, lintKeymap } from "@codemirror/lint";
 import { CodeMirrorEditor } from "./CodeMirrorEditor";
 import { darkTheme } from "./DarkTheme";
-import { TestCodeExtension } from "./TestCodeExtension";
+import { TestCodeExtension } from "../components/code_mirror/TestCodeExtension";
 import { DebugExtension } from "./DebugExtension";
 
 const tabCompletionKeyMap = [{ key: "Tab", run: acceptCompletion }];

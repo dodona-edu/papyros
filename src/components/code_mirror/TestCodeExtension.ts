@@ -1,7 +1,7 @@
 import { Extension, Line } from "@codemirror/state";
 import { Decoration, EditorView, WidgetType } from "@codemirror/view";
 import readOnlyRangesExtension from "codemirror-readonly-ranges";
-import { t } from "../util/Util";
+import { t } from "../../util/Util";
 import { LineEffectExtension } from "./LineEffectExtension";
 
 // The types used in this file should match the ones in the codemirror-readonly-ranges package
@@ -35,9 +35,8 @@ class TestCodeWidget extends WidgetType {
 
         const editButton = document.createElement("a");
         editButton.classList.add("papyros-icon-link");
-        editButton.innerHTML = "<i class=\"mdi mdi-pencil\"></i>";
+        editButton.innerHTML = "🖉";
         editButton.addEventListener("click", () => {
-            console.log("edit test code");
             this.testCodeExtension.reset(true);
         });
         editButton.title = t("Papyros.editor.test_code.edit");
@@ -45,9 +44,8 @@ class TestCodeWidget extends WidgetType {
 
         const deleteButton = document.createElement("a");
         deleteButton.classList.add("papyros-icon-link");
-        deleteButton.innerHTML = "<i class=\"mdi mdi-close\"></i>";
+        deleteButton.innerHTML = "⨯";
         deleteButton.addEventListener("click", () => {
-            console.log("remove test code");
             this.testCodeExtension.reset();
         });
         deleteButton.title = t("Papyros.editor.test_code.remove");
