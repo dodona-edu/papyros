@@ -1,4 +1,6 @@
 import {State as LitState, stateProperty} from "@dodona/lit-state";
+import {Frame} from "@dodona/trace-component/dist/trace_types";
+import {Debugger} from "./Debugger";
 
 
 export enum SupportedLanguage {
@@ -21,16 +23,14 @@ export enum RunState {
 
 export class State extends LitState {
     @stateProperty
+    debugger: Debugger = new Debugger();
+
+    @stateProperty
     public programmingLanguage: SupportedLanguage = SupportedLanguage.python;
     @stateProperty
     locale: string = "en";
     @stateProperty
     darkMode: boolean = false;
-
-    @stateProperty
-    debugMode: boolean = false;
-    @stateProperty
-    debugLine: number | null = null;
 
     @stateProperty
     inputMode: InputMode = InputMode.batch;

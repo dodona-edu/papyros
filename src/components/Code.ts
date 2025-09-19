@@ -17,8 +17,8 @@ export class Code extends LitElement {
         return html`
             <p-code-editor
                 .language=${this.state.programmingLanguage}
-                .debugMode=${this.state.debugMode}
-                .debugLine=${this.state.debugLine}
+                .debugMode=${this.state.debugger.active}
+                .debugLine=${this.state.debugger.debugLine}
                 .testCode=${this.state.testCode}
                 .value=${this.state.code}
                 @change=${(e: CustomEvent) => this.state.code = e.detail}
