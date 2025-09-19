@@ -31,10 +31,10 @@ import {TestCodeExtension} from "./TestCodeExtension";
 import {css} from "lit";
 import {javascript} from "@codemirror/lang-javascript";
 import {python} from "@codemirror/lang-python";
+import {SupportedLanguage} from "../../state/State";
 
 const tabCompletionKeyMap = [{ key: "Tab", run: acceptCompletion }];
-type supportedLanguage = "javascript" | "python";
-const languageExtensions: Record<supportedLanguage, LanguageSupport> = {
+const languageExtensions: Record<SupportedLanguage, LanguageSupport> = {
     javascript: javascript(),
     python: python()
 }
