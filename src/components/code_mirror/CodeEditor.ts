@@ -9,7 +9,13 @@ import {
     rectangularSelection
 } from "@codemirror/view";
 import {defaultKeymap, history, historyKeymap, indentWithTab} from "@codemirror/commands";
-import {bracketMatching, foldGutter, indentOnInput} from "@codemirror/language";
+import {
+    bracketMatching, defaultHighlightStyle,
+    foldGutter,
+    indentOnInput,
+    LanguageSupport,
+    syntaxHighlighting
+} from "@codemirror/language";
 import {EditorState} from "@codemirror/state";
 import {
     acceptCompletion,
@@ -23,8 +29,15 @@ import {lintGutter, lintKeymap} from "@codemirror/lint";
 import {debugExtension, markDebugLine} from "./DebugExtension";
 import {TestCodeExtension} from "./TestCodeExtension";
 import {css} from "lit";
+import {javascript} from "@codemirror/lang-javascript";
+import {python} from "@codemirror/lang-python";
 
 const tabCompletionKeyMap = [{ key: "Tab", run: acceptCompletion }];
+type supportedLanguage = "javascript" | "python";
+const languageExtensions: Record<supportedLanguage, LanguageSupport> = {
+    javascript: javascript(),
+    python: python()
+}
 
 @customElement('p-code-editor')
 export class CodeEditor extends CodeMirrorEditor {
@@ -90,10 +103,24 @@ export class CodeEditor extends CodeMirrorEditor {
         this.testCodeExtension.testCode = value;
     }
 
+    @property({type: String, attribute: "language"})
+    set programmingLanguage(value: string) {
+        if (!(value in languageExtensions)) {
+            console.warn(`Language ${value} not supported, defaulting to javascript`);
+            return;
+        }
+
+        this.configure({
+            language: languageExtensions[value],
+        });
+    }
+
     constructor() {
         super();
         this.configure({
-           codingExtensions: [
+            language: [],
+            syntaxHighlighting: syntaxHighlighting(defaultHighlightStyle),
+            codingExtensions: [
                lineNumbers(),
                highlightSpecialChars(),
                history(),
@@ -116,9 +143,8 @@ export class CodeEditor extends CodeMirrorEditor {
                    ...lintKeymap,
                    indentWithTab
                ]),
-           ],
+            ],
             tests: (view) => {
-               console.log("initialize test code");
                 this.testCodeExtension = new TestCodeExtension(view);
                 return this.testCodeExtension.toExtension();
             },
@@ -126,7 +152,7 @@ export class CodeEditor extends CodeMirrorEditor {
                 highlightActiveLineGutter(),
                 lintGutter(),
                 highlightActiveLine()
-            ]
+            ],
         });
     }
 }
