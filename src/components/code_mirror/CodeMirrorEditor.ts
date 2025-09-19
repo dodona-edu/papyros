@@ -3,12 +3,15 @@ import { customElement, property } from "lit/decorators.js";
 import {EditorView, ViewUpdate} from "@codemirror/view";
 import {Compartment, EditorState, Extension, StateEffect} from "@codemirror/state";
 
+type extensionFactory = (view: EditorView) => Extension;
+type ExtensionOrFactory = Extension | extensionFactory;
+
 @customElement('p-code-mirror-editor')
 export class CodeMirrorEditor extends LitElement {
     private __value: string = '';
     protected view: EditorView | undefined;
     private readonly compartments: Map<string, Compartment> = new Map();
-    private readonly extensions: Map<string, Extension> = new Map();
+    private readonly extensions: Map<string, ExtensionOrFactory> = new Map();
 
     @property({type: String})
     public set value(value: string) {
@@ -30,9 +33,10 @@ export class CodeMirrorEditor extends LitElement {
             parent: (this.shadowRoot as ShadowRoot),
             state: EditorState.create({ doc: this.__value, extensions: [
                     EditorView.updateListener.of(this.onViewUpdate.bind(this)),
-                    [...this.compartments.keys().map(k => this.compartments.get(k)!.of(this.extensions.get(k)!))],
+                    [...this.compartments.keys().map(k => this.compartments.get(k)!.of([]))],
                 ] })
         });
+        this.configure(Object.fromEntries(this.extensions));
     }
 
     private onViewUpdate(v: ViewUpdate): void {
@@ -53,23 +57,33 @@ export class CodeMirrorEditor extends LitElement {
         this.view = undefined;
     }
 
-    protected configure(extensions: Record<String, Extension>) {
+    protected configure(extensions: Record<String, ExtensionOrFactory>) {
         Object.entries(extensions).forEach(([key, ext]) => {
-            this.extensions.set(key, ext as Extension);
+            this.extensions.set(key, ext as ExtensionOrFactory);
         });
 
-        const effects =  Object.keys(extensions).map(key => {
-            if(this.compartments.has(key)) {
-                return this.compartments.get(key)!.reconfigure(this.extensions.get(key)!)
-            }
-
-            const compartment = new Compartment();
-            this.compartments.set(key, compartment);
-            return StateEffect.appendConfig.of(compartment.of(this.extensions.get(key)!));
-        })
 
         if (this.view) {
+            const effects =  Object.keys(extensions).map(key => {
+                let extension = extensions[key];
+                if(typeof extension === "function") {
+                    extension = (extension as extensionFactory)(this.view);
+                }
+
+                if(this.compartments.has(key)) {
+                    return this.compartments.get(key)!.reconfigure(extension)
+                }
+
+                const compartment = new Compartment();
+                this.compartments.set(key, compartment);
+                return StateEffect.appendConfig.of(compartment.of(extension));
+            })
             this.view.dispatch({ effects});
+        } else {
+            Object.keys(extensions).filter(k => !this.compartments.has(k)).forEach(key => {
+                const compartment = new Compartment();
+                this.compartments.set(key, compartment);
+            });
         }
     }
 }

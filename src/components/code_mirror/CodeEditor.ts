@@ -21,11 +21,51 @@ import {
 import {highlightSelectionMatches, searchKeymap} from "@codemirror/search";
 import {lintGutter, lintKeymap} from "@codemirror/lint";
 import {debugExtension, markDebugLine} from "./DebugExtension";
+import {TestCodeExtension} from "./TestCodeExtension";
+import {css} from "lit";
 
 const tabCompletionKeyMap = [{ key: "Tab", run: acceptCompletion }];
 
 @customElement('p-code-editor')
 export class CodeEditor extends CodeMirrorEditor {
+    private testCodeExtension: TestCodeExtension;
+
+    static get styles() {
+        return css`
+            .papyros-test-code {
+                background-color: rgba(143, 182, 130, 0.1);
+            }
+
+            .papyros-test-code.cm-activeLine {
+                background-color: rgba(143, 182, 130, 0.1)
+            }
+            
+            .papyros-test-code-widget {
+                background-color: rgba(143, 182, 130, 0.1);
+                color: #7d8799;
+                padding: 0 2px 0 6px;
+                position: relative;
+            }
+
+            .papyros-test-code-buttons {
+                position: absolute;
+                top: -2px;
+                left: -42px;
+                z-index: 220;
+            }
+
+            .papyros-icon-link {
+                font-size: 16px;
+                padding: 2px;
+                cursor: pointer;
+            }
+
+            .papyros-icon-link:hover {
+                color: rgba(143, 182, 130);
+            }
+        `;
+    }
+
     @property({type: Boolean})
     set debug(value: boolean) {
         this.configure({
@@ -42,6 +82,12 @@ export class CodeEditor extends CodeMirrorEditor {
         this.view?.dispatch({
             effects: markDebugLine.of(value),
         });
+    }
+
+    @property({type: String, attribute: "test-code"})
+    set testCode(value: string) {
+        if (!this.testCodeExtension) return;
+        this.testCodeExtension.testCode = value;
     }
 
     constructor() {
@@ -71,6 +117,11 @@ export class CodeEditor extends CodeMirrorEditor {
                    indentWithTab
                ]),
            ],
+            tests: (view) => {
+               console.log("initialize test code");
+                this.testCodeExtension = new TestCodeExtension(view);
+                return this.testCodeExtension.toExtension();
+            },
             debugging: [
                 highlightActiveLineGutter(),
                 lintGutter(),

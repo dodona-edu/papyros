@@ -1,5 +1,5 @@
 import { Decoration, EditorView, gutterLineClass, GutterMarker } from "@codemirror/view";
-import { LineEffectExtension } from "./LineEffectExtension";
+import { LineEffectExtension } from "../components/code_mirror/LineEffectExtension";
 import { DebugLineGutter } from "./Gutters";
 import { Extension, RangeSet, StateEffect, StateField } from "@codemirror/state";
 import { BackendManager } from "../BackendManager";
