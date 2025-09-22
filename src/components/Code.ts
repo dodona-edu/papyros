@@ -17,7 +17,7 @@ export class Code extends LitElement {
                 .debug=${this.papyros.debugger.active}
                 .debugLine=${this.papyros.debugger.debugLine}
                 .value=${this.papyros.runner.code}
-                .lintSource=${this.papyros.runner.lintSource}
+                .lintingSource=${this.papyros.runner.lintSource.bind(this.papyros.runner)}
                 @change=${(e: CustomEvent) => this.papyros.runner.code = e.detail}
             ></p-code-editor>
         `
