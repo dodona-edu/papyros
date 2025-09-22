@@ -31,13 +31,13 @@ import {TestCodeExtension} from "./TestCodeExtension";
 import {css} from "lit";
 import {javascript} from "@codemirror/lang-javascript";
 import {python} from "@codemirror/lang-python";
-import {SupportedLanguage} from "../../state/Papyros";
 import {WorkerDiagnostic} from "../../Backend";
+import {ProgrammingLanguage} from "../../ProgrammingLanguage";
 
 const tabCompletionKeyMap = [{ key: "Tab", run: acceptCompletion }];
-const languageExtensions: Record<SupportedLanguage, LanguageSupport> = {
-    javascript: javascript(),
-    python: python()
+const languageExtensions: Record<ProgrammingLanguage, LanguageSupport> = {
+    JavaScript: javascript(),
+    Python: python()
 }
 
 @customElement('p-code-editor')
@@ -80,7 +80,6 @@ export class CodeEditor extends CodeMirrorEditor {
         `;
     }
 
-    @property({type: Boolean})
     set debug(value: boolean) {
         this.configure({
             debugging: value ? debugExtension() : [
@@ -91,23 +90,24 @@ export class CodeEditor extends CodeMirrorEditor {
         })
     }
 
-    @property({type: Number, attribute: "debug-line"})
     set debugLine(value: number | undefined) {
         this.view?.dispatch({
             effects: markDebugLine.of(value),
         });
     }
 
-    @property({type: String, attribute: "test-code"})
     set testCode(value: string) {
         if (!this.testCodeExtension) return;
         this.testCodeExtension.testCode = value;
     }
 
-    @property({type: String, attribute: "language"})
     set programmingLanguage(value: string) {
+        console.log("Setting programming language to", value);
         if (!(value in languageExtensions)) {
             console.warn(`Language ${value} not supported, defaulting to javascript`);
+            this.configure({
+                language: languageExtensions["javascript"],
+            })
             return;
         }
 
@@ -116,7 +116,6 @@ export class CodeEditor extends CodeMirrorEditor {
         });
     }
 
-    @property
     set lintingSource( lintSource: () => Promise<readonly WorkerDiagnostic[]>) {
         this.configure({
             linting: linter(async (view) => {

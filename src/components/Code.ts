@@ -13,7 +13,7 @@ export class Code extends LitElement {
     protected override render(): TemplateResult {
         return html`
             <p-code-editor
-                .language=${this.papyros.runner.programmingLanguage}
+                .programmingLanguage=${this.papyros.runner.programmingLanguage}
                 .debug=${this.papyros.debugger.active}
                 .debugLine=${this.papyros.debugger.debugLine}
                 .value=${this.papyros.runner.code}
