@@ -84,7 +84,22 @@ export class Runner extends State {
      * The code we are working with
      */
     @stateProperty
-    public code: string = "";
+    public _code: string = "";
+
+    public get code(): string {
+        return this._code;
+    }
+
+    public set code(value: string) {
+        if (this._code !== value) {
+            this._code = value;
+            // Update run modes when code changes
+            this.backend.then(async (backend) => {
+                this.runModes = await backend.workerProxy.runModes(this.code);
+            })
+        }
+    }
+
     /**
      * Async getter for the linting diagnostics of the current code
      */
@@ -92,6 +107,11 @@ export class Runner extends State {
         const backend = await this.backend;
         return await backend.workerProxy.lintCode(this.code);
     }
+
+    /**
+     * available run modes for the current code
+     */
+    public runModes: Array<RunMode> = [RunMode.Run];
 
     /**
      * The global state where we are part of
