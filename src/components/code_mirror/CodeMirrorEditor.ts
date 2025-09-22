@@ -15,6 +15,7 @@ export class CodeMirrorEditor extends LitElement {
 
     @property({type: String})
     public set value(value: string) {
+        if(this.__value === value) return;
         this.__value = value;
         if (!this.view) return;
 

@@ -5,9 +5,11 @@ import {RunState} from "../../state/Runner";
 import "./RunButton";
 import "./StopButton";
 import "./StopDebugButton";
+import {StateController} from "@dodona/lit-state";
 
 @customElement('p-button-lint')
 export class ButtonLint extends LitElement {
+    controller = new StateController(this);
     @property()
     papyros: Papyros = papyros;
 
@@ -27,7 +29,7 @@ export class ButtonLint extends LitElement {
 
     get buttons(): TemplateResult | TemplateResult[] {
         if(this.papyros.runner.state === RunState.Ready) {
-            if(this.papyros.debug.active) {
+            if(this.papyros.debugger.active) {
                 return html`<p-stop-debug-button></p-stop-debug-button>`;
             } else {
                 return this.papyros.runner.runModes.map(mode => html`<p-run-button .mode=${mode}></p-run-button>`);

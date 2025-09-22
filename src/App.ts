@@ -8,8 +8,9 @@ import { Papyros, PapyrosConfig } from "./Papyros";
 import { InputMode } from "./InputManager";
 import { BatchInputHandler } from "./input/BatchInputHandler";
 import { CodeMirrorEditor } from "./editor/CodeMirrorEditor";
-import "./components/code_mirror/CodeMirrorEditor";
-import "./components/code_mirror/CodeEditor";
+import "./components/Code";
+import "./components/Debugger";
+import "./components/buttons/ButtonLint";
 
 const LOCAL_STORAGE_KEYS = {
     code: addPapyrosPrefix("previous-code"),

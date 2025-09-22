@@ -24,22 +24,16 @@
   <noscript>You need to enable JavaScript to run this app.</noscript>
   <div id="root"></div>
 
-  <p-code-mirror-editor id="foo"></p-code-mirror-editor>
-  <p-code-editor id="bar" language="javascript"></p-code-editor>
-  <script>
-    const foo = document.getElementById("foo");
-    const bar = document.getElementById("bar");
-    bar.value = `
-function test() {
-    console.log("Hello World");
-}
+  <p-code></p-code>
+  <p-button-lint></p-button-lint>
+  <p-debugger></p-debugger>
+  <script type="module">
+    import { papyros } from "./src/state/Papyros";
+    papyros.runner.launch();
+    papyros.runner.code = `a = 1
+b = 1
+x = [a, b, a + b]
     `;
-    foo.addEventListener("change", (e) => {
-      bar.testCode = e.detail;
-    });
-    bar.addEventListener("change", (e) => {
-      console.log("bar changed", e.detail);
-    });
   </script>
 </body>
 

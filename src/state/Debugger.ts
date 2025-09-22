@@ -60,8 +60,8 @@ export class Debugger extends State {
                 outputs: this.currentOutputs,
                 inputs: this.currentInputs
             };
-            this.frameStates.push(frameState);
-            this.trace.push(frame);
+            this.frameStates = [...this.frameStates, frameState];
+            this.trace = [...this.trace, frame];
             if (this.frameStates.length >= EXECUTION_LIMIT) {
                 BackendManager.publish({
                     type: BackendEventType.Stop,
@@ -75,7 +75,7 @@ export class Debugger extends State {
         this.frameStates = [];
         this.currentOutputs = 0;
         this.currentInputs = 0;
-        this.traceComponent.trace = [];
+        this.trace = [];
     }
 
     get activeFrameState(): FrameState | undefined {

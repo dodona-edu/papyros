@@ -3,14 +3,7 @@ import {SyncClient} from "comsync";
 import {Backend, RunMode, WorkerDiagnostic} from "../Backend";
 import {BackendEvent, BackendEventType} from "../BackendEvent";
 import {BackendManager} from "../BackendManager";
-import {
-    APPLICATION_STATE_TEXT_ID,
-    CODE_BUTTONS_WRAPPER_ID,
-    RUN_BUTTONS_WRAPPER_ID,
-    STATE_SPINNER_ID,
-    STOP_BTN_ID
-} from "../Constants";
-import {addListener, downloadResults, getElement, parseData, t} from "../util/Util";
+import {downloadResults, parseData, t} from "../util/Util";
 import {State, stateProperty} from "@dodona/lit-state";
 import {Papyros} from "./Papyros";
 import {ProgrammingLanguage} from "../ProgrammingLanguage";
@@ -95,7 +88,7 @@ export class Runner extends State {
             this._code = value;
             // Update run modes when code changes
             this.backend.then(async (backend) => {
-                this.runModes = await backend.workerProxy.runModes(this.code);
+                this.runModes = await backend.workerProxy?.runModes(this.code);
             })
         }
     }

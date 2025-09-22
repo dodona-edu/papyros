@@ -1,18 +1,15 @@
 import {html, LitElement, TemplateResult} from "lit";
 import "@dodona/trace-component"
-import {property} from "lit/decorators.js";
+import {customElement, property} from "lit/decorators.js";
 import {Papyros, papyros} from "../state/Papyros";
 import {StateController} from "@dodona/lit-state";
 import {t} from "../util/Util";
 
+@customElement("p-debugger")
 export class Debugger extends LitElement {
+    controller = new StateController(this);
     @property()
     public papyros: Papyros = papyros;
-
-    constructor() {
-        super();
-        new StateController(this)
-    }
 
     protected override render(): TemplateResult {
         if(!this.papyros.debugger.active) {
