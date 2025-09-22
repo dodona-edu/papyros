@@ -2,6 +2,7 @@ import { BackendManager } from "../BackendManager";
 import { BackendEventType } from "../BackendEvent";
 import { Frame } from "@dodona/trace-component/dist/trace_types";
 import {State, stateProperty} from "@dodona/lit-state";
+import {Papyros} from "./Papyros";
 
 const EXECUTION_LIMIT = 10000;
 
@@ -12,12 +13,9 @@ export type FrameState = {
 };
 
 export class Debugger extends State {
+    private papyros: Papyros;
     @stateProperty
     private frameStates: FrameState[] = [];
-    @stateProperty
-    private currentOutputs: number = 0;
-    @stateProperty
-    private currentInputs: number = 0;
     @stateProperty
     public activeFrame: number | undefined = undefined;
     @stateProperty
@@ -40,33 +38,25 @@ export class Debugger extends State {
         return this._active;
     }
 
-    constructor() {
+    constructor(papyros: Papyros) {
         super();
+        this.papyros = papyros;
         this.reset();
 
         BackendManager.subscribe(BackendEventType.Start, () => {
             this.reset();
         });
-        BackendManager.subscribe(BackendEventType.Output, () => {
-            this.currentOutputs++;
-        });
-        BackendManager.subscribe(BackendEventType.Input, () => {
-            this.currentInputs++;
-        });
         BackendManager.subscribe(BackendEventType.Frame, e => {
             const frame = JSON.parse(e.data);
             const frameState = {
                 line: frame.line,
-                outputs: this.currentOutputs,
-                inputs: this.currentInputs
+                outputs: this.papyros.io.output.length,
+                inputs: this.papyros.io.inputs.length
             };
             this.frameStates = [...this.frameStates, frameState];
             this.trace = [...this.trace, frame];
-            if (this.frameStates.length >= EXECUTION_LIMIT) {
-                BackendManager.publish({
-                    type: BackendEventType.Stop,
-                    data: "Execution limit reached"
-                });
+            if (this.frameStates.length >= this.papyros.constants.maxDebugFrames) {
+                this.papyros.runner.stop();
             }
         });
     }

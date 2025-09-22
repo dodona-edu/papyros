@@ -3,6 +3,7 @@ import {Debugger} from "./Debugger";
 import {Runner} from "./Runner";
 import {InputOutput} from "./InputOutput";
 import {Theme} from "./Theme";
+import {Constants} from "./Constants";
 
 export enum InputMode {
     batch = "batch",
@@ -10,11 +11,11 @@ export enum InputMode {
 }
 
 export class Papyros extends State {
-    readonly debugger: Debugger = new Debugger();
+    readonly debugger: Debugger = new Debugger(this);
     readonly runner: Runner = new Runner(this);
     readonly io: InputOutput = new InputOutput();
     readonly theme: Theme = new Theme();
-
+    readonly constants: Constants = new Constants();
 
     @stateProperty
     locale: string = "en";

@@ -11,6 +11,7 @@ import { CodeMirrorEditor } from "./editor/CodeMirrorEditor";
 import "./components/Code";
 import "./components/Debugger";
 import "./components/buttons/ButtonLint";
+import "./components/Output";
 
 const LOCAL_STORAGE_KEYS = {
     code: addPapyrosPrefix("previous-code"),
