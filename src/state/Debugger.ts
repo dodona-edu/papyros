@@ -23,7 +23,22 @@ export class Debugger extends State {
     @stateProperty
     public trace: Frame[] = [];
     @stateProperty
-    public active: boolean = false;
+    private _active: boolean = false;
+
+    public set active(active: boolean) {
+        this._active = active;
+
+        this.reset();
+        if (!this._active) {
+            // TODO
+            // this.papyros.outputManager.reset();
+            // this.inputManager.inputHandler.reset();
+        }
+    }
+
+    public get active(): boolean {
+        return this._active;
+    }
 
     constructor() {
         super();

@@ -1,7 +1,7 @@
 import {customElement, property} from "lit/decorators.js";
 import {CodeMirrorEditor} from "./CodeMirrorEditor";
 import {
-    drawSelection, highlightActiveLine,
+    drawSelection, EditorView, highlightActiveLine,
     highlightActiveLineGutter,
     highlightSpecialChars,
     keymap,
@@ -25,13 +25,14 @@ import {
     completionKeymap
 } from "@codemirror/autocomplete";
 import {highlightSelectionMatches, searchKeymap} from "@codemirror/search";
-import {lintGutter, lintKeymap} from "@codemirror/lint";
+import {Diagnostic, linter, lintGutter, lintKeymap} from "@codemirror/lint";
 import {debugExtension, markDebugLine} from "./DebugExtension";
 import {TestCodeExtension} from "./TestCodeExtension";
 import {css} from "lit";
 import {javascript} from "@codemirror/lang-javascript";
 import {python} from "@codemirror/lang-python";
-import {SupportedLanguage} from "../../state/State";
+import {SupportedLanguage} from "../../state/Papyros";
+import {WorkerDiagnostic} from "../../Backend";
 
 const tabCompletionKeyMap = [{ key: "Tab", run: acceptCompletion }];
 const languageExtensions: Record<SupportedLanguage, LanguageSupport> = {
@@ -113,6 +114,22 @@ export class CodeEditor extends CodeMirrorEditor {
         this.configure({
             language: languageExtensions[value],
         });
+    }
+
+    @property
+    set lintingSource( lintSource: () => Promise<readonly WorkerDiagnostic[]>) {
+        this.configure({
+            linting: linter(async (view) => {
+                const workerDiagnostics = await lintSource();
+                return workerDiagnostics.map(d => {
+                    const fromline = view.state.doc.line(d.lineNr);
+                    const toLine = view.state.doc.line(d.endLineNr);
+                    const from = Math.min(fromline.from + d.columnNr, fromline.to);
+                    const to = Math.min(toLine.from + d.endColumnNr, toLine.to);
+                    return { ...d, from: from, to: to };
+                })
+            })
+        })
     }
 
     constructor() {
