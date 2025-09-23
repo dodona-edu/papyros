@@ -11,38 +11,17 @@ export class BackendEventQueue {
      */
     private callback: (e: BackendEvent) => void;
     /**
-     * The maximal amount of output events to send before overflowing
-     */
-    private limit: number;
-    /**
      * The time in milliseconds before sending events through
      */
     private flushTime: number;
-
     /**
      * Queue storing the BackendEvents before flushing
      */
     private queue: Array<BackendEvent>;
     /**
-     * Queue storing Output-events after overflowing
-     */
-    private overflow: Array<BackendEvent>;
-    /**
-     * Callback for when overflow occurs
-     */
-    private onOverflow: () => void;
-    /**
-     * Keep track whether the queue reached its limit this run
-     */
-    private overflown: boolean;
-    /**
      * Time in milliseconds when the last flush occurred
      */
     private lastFlushTime: number;
-    /**
-     * Amount of BackendEvents sent through this run
-     */
-    private sendCount: number;
     /**
      * Decoder to convert data to strings
      */
@@ -50,23 +29,14 @@ export class BackendEventQueue {
 
     /**
      * @param {function(BackendEvent):void} callback Function to process events in the queue
-     * @param {function():void} onOverflow Callback for when overflow occurs
-     * @param {number} limit The maximal amount of output lines to send before overflowing
      * @param {number} flushTime The time in milliseconds before sending events through
      */
-    constructor(callback: (e: BackendEvent) => void,
-        onOverflow: () => void,
-        limit = 1000, flushTime = 100) {
+    constructor(callback: (e: BackendEvent) => void, flushTime = 100) {
         this.callback = callback;
-        this.limit = limit;
         this.flushTime = flushTime;
 
         this.queue = [];
-        this.overflow = [];
-        this.onOverflow = onOverflow;
-        this.overflown = false;
         this.lastFlushTime = new Date().getTime();
-        this.sendCount = 0;
         this.decoder = new TextDecoder();
     }
 
@@ -131,18 +101,7 @@ export class BackendEventQueue {
      */
     public reset(): void {
         this.queue = [];
-        this.overflow = [];
-        this.overflown = false;
         this.lastFlushTime = new Date().getTime();
-        this.sendCount = 0;
-    }
-
-    /**
-     * @param {BackendEvent} e The event put in the queue
-     * @return {number} The amount of lines of data in the event
-     */
-    private static lines(e: BackendEvent): number {
-        return (e.data.match(/\n/g) || []).length + 1;
     }
 
     /**
@@ -150,35 +109,10 @@ export class BackendEventQueue {
      */
     public flush(): void {
         this.queue.forEach(e => {
-            if (e.type === BackendEventType.Output) {
-                this.overflow.push(e);
-                if (this.sendCount < this.limit) {
-                    this.sendCount += BackendEventQueue.lines(e);
-                    this.callback(e);
-                } else if (!this.overflown) {
-                    this.overflown = true;
-                    this.onOverflow();
-                }
-            } else {
-                this.callback(e);
-            }
+            this.callback(e);
         });
         this.queue = [];
         this.lastFlushTime = new Date().getTime();
-    }
-
-    /**
-     * @return {boolean} Whether too many output events were generated
-     */
-    public hasOverflow(): boolean {
-        return this.overflown;
-    }
-
-    /**
-     * @return {Array<BackendEvent>} The events that happened after overflow
-     */
-    public getOverflow(): Array<BackendEvent> {
-        return this.overflow;
     }
 
     /**

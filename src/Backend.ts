@@ -74,12 +74,10 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
     /**
      * Initialize the backend by doing all setup-related work
      * @param {function(BackendEvent):void} onEvent Callback for when events occur
-     * @param {function():void} onOverflow Callback for when overflow occurs
      * @return {Promise<void>} Promise of launching
      */
     public async launch(
         onEvent: (e: BackendEvent) => void,
-        onOverflow: () => void
     ): Promise<void> {
         this.onEvent = (e: BackendEvent) => {
             onEvent(e);
@@ -89,7 +87,7 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
                 return this.extras.readMessage();
             }
         };
-        this.queue = new BackendEventQueue(this.onEvent.bind(this), onOverflow);
+        this.queue = new BackendEventQueue(this.onEvent.bind(this));
         return Promise.resolve();
     }
 
@@ -117,20 +115,6 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
      * @param {string} code The code to lint
      */
     public abstract lintCode(code: string): Promise<Array<WorkerDiagnostic>>;
-
-    /**
-     * @return {boolean} Whether too many output events were generated
-     */
-    public hasOverflow(): boolean {
-        return this.queue.hasOverflow();
-    }
-
-    /**
-     * @return {Array<BackendEvent>} The events that happened after overflow
-     */
-    public getOverflow(): Array<BackendEvent> {
-        return this.queue.getOverflow();
-    }
 
     /**
      * Provide files to be used by the backend

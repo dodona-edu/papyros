@@ -203,13 +203,6 @@ export class Runner extends State {
             }
             if (terminated) {
                 await this.launch();
-            } else if (await backend.workerProxy.hasOverflow()) {
-                // TODO figure out what overflow means
-                this.outputManager.onOverflow(async () => {
-                    const backend = await this.backend;
-                    const overflowResults = (await backend.workerProxy.getOverflow()).map(e => e.data).join("");
-                    downloadResults(overflowResults, "overflow-results.txt");
-                });
             }
             this.setState(RunState.Ready, t(
                 interrupted ? "Papyros.interrupted" : "Papyros.finished",
@@ -241,19 +234,19 @@ export class Runner extends State {
         this.setState(RunState.Running);
     }
 
-    // public async provideFiles(inlinedFiles: Record<string, string>, hrefFiles: Record<string, string>): Promise<void> {
-    //     const fileNames = [...Object.keys(inlinedFiles), ...Object.keys(hrefFiles)];
-    //     if (fileNames.length === 0) {
-    //         return;
-    //     }
-    //     BackendManager.publish({ type: BackendEventType.Loading, data: JSON.stringify({
-    //             modules: fileNames,
-    //             status: "loading"
-    //         }) });
-    //
-    //     const backend = await this.backend;
-    //     await backend.workerProxy.provideFiles(inlinedFiles, hrefFiles);
-    // }
+    public async provideFiles(inlinedFiles: Record<string, string>, hrefFiles: Record<string, string>): Promise<void> {
+        const fileNames = [...Object.keys(inlinedFiles), ...Object.keys(hrefFiles)];
+        if (fileNames.length === 0) {
+            return;
+        }
+        BackendManager.publish({ type: BackendEventType.Loading, data: JSON.stringify({
+                modules: fileNames,
+                status: "loading"
+            }) });
+
+        const backend = await this.backend;
+        await backend.workerProxy.provideFiles(inlinedFiles, hrefFiles);
+    }
 
 
     /**

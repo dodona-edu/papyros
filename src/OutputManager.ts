@@ -51,11 +51,6 @@ export class OutputManager extends Renderable {
      * Store the HTML that is rendered to restore when changing language/theme
      */
     private content: Array<string>;
-
-    /**
-     * Whether overflow has occurred
-     */
-    private overflown: boolean;
     /**
      * Function to call when the user wants to download overflow results
      */
@@ -70,7 +65,6 @@ export class OutputManager extends Renderable {
     constructor() {
         super();
         this.content = [];
-        this.overflown = false;
         this.downloadCallback = null;
         BackendManager.subscribe(BackendEventType.Start, () => this.reset());
         BackendManager.subscribe(BackendEventType.Output, e => this.showOutput(e));

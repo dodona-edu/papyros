@@ -296,12 +296,7 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             const workerProxy = backend.workerProxy;
             await workerProxy
                 // Allow passing messages between worker and main thread
-                .launch(
-                    proxy((e: BackendEvent) => BackendManager.publish(e)),
-                    proxy(() => {
-                        this.outputManager.onOverflow(null);
-                    })
-                );
+                .launch(proxy((e: BackendEvent) => BackendManager.publish(e)));
             if(this.state === RunState.Stopping) {
                 // If we were stopped while loading, return early
                 return resolve(backend);
@@ -557,16 +552,6 @@ export class CodeRunner extends Renderable<CodeRunnerRenderOptions> {
             }
             if (terminated) {
                 await this.start();
-            } else if (await backend.workerProxy.hasOverflow()) {
-                this.outputManager.onOverflow(async () => {
-                    const backend = await this.backend;
-                    const overflowResults = (await backend.workerProxy.getOverflow())
-                        .map(e => e.data).join("");
-                    downloadResults(
-                        overflowResults,
-                        "overflow-results.txt"
-                    );
-                });
             }
             this.setState(RunState.Ready, t(
                 interrupted ? "Papyros.interrupted" : "Papyros.finished",

@@ -25,9 +25,8 @@ describe("BackendManager", () => {
         const backend = BackendManager.getBackend(ProgrammingLanguage.JavaScript);
         const eventHandler = jest.fn((e: BackendEvent) => BackendManager.publish(e));
         const eventProcessor = jest.fn((e: BackendEvent) => events.push(e));
-        const overflowHandler = jest.fn();
         BackendManager.subscribe(BackendEventType.Output, eventProcessor);
-        await backend.workerProxy.launch(eventHandler, overflowHandler);
+        await backend.workerProxy.launch(eventHandler);
         await backend.workerProxy.lintCode("");
         expect(eventHandler).toBeCalled();
         expect(eventProcessor).toBeCalled();

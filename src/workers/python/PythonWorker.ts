@@ -40,10 +40,9 @@ export class PythonWorker extends Backend<PyodideExtras> {
     }
 
     public async launch(
-        onEvent: (e: BackendEvent) => void,
-        onOverflow: () => void
+        onEvent: (e: BackendEvent) => void
     ): Promise<void> {
-        await super.launch(onEvent, onOverflow);
+        await super.launch(onEvent);
         this.pyodide = await PythonWorker.getPyodide();
         // Python calls our function with a PyProxy dict or a Js Map,
         // These must be converted to a PapyrosEvent (JS Object) to allow message passing

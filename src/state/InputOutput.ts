@@ -60,7 +60,17 @@ export class InputOutput extends State {
     }
 
     public logOutput(output: string) {
-        this.output = [...this.output, {type: OutputType.stdout, content: output}];
+        // lines have been merged to limit the number of events
+        // we split them again here, to simplify overflow detection
+        const lines = output.split("\n");
+        if (lines.length > 1) {
+            this.output = [...this.output,
+                ...lines.slice(0, -1).map(line => ({type: OutputType.stdout, content: line + "\n"})),
+                {type: OutputType.stdout, content: lines[lines.length - 1]}
+            ];
+        } else {
+            this.output = [...this.output, {type: OutputType.stdout, content: output}];
+        }
     }
 
     public provideInput(input: string) {

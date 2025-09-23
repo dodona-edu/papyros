@@ -4,21 +4,12 @@ import {OutputEntry, OutputType} from "../state/InputOutput";
 import {FriendlyError} from "../OutputManager";
 import "./helpers/Circle";
 import {PapyrosElement} from "./helpers/PapyrosElement";
+import {t} from "../util/Util";
 
 @customElement("p-output")
 export class Output extends PapyrosElement {
     static get styles() {
         return css`
-            :host {
-                display: block;
-                width: 100%;
-                height: 100%;
-                overflow: auto;
-                font-family: monospace;
-                padding: 1rem;
-                white-space: pre-wrap;
-            }
-            
             img {
                 max-width: 100%;
                 max-height: 300px;
@@ -44,7 +35,44 @@ export class Output extends PapyrosElement {
         return this.papyros.io.output.slice(0, this.maxOutputLength);
     }
 
-    protected override render(): TemplateResult[] {
+    get overflow(): OutputEntry[] {
+        return this.papyros.io.output.slice(this.maxOutputLength);
+    }
+
+    get showOverflowWarning(): boolean {
+        return !this.papyros.debugger.active && this.papyros.io.output.length > this.maxOutputLength;
+    }
+
+    get downloadOverflowUrl(): string {
+        const blob = new Blob(this.overflow.map(o => {
+            if(o.type === OutputType.img) {
+                return `[Image output of type ${o.contentType} omitted]\n`;
+            } else if(o.type === OutputType.stdout) {
+                return o.content;
+            } else if(o.type === OutputType.stderr) {
+                if(typeof o.content === "string") {
+                    return `Error: ${o.content}\n`;
+                } else {
+                    const errorObject = o.content as FriendlyError;
+                    let errorString = `Error: ${errorObject.name}\nInfo: ${errorObject.info}\nTraceback: ${errorObject.traceback}\n`;
+                    if(errorObject.where) {
+                        errorString += `Where: ${errorObject.where.trim()}\n`;
+                    }
+                    if(errorObject.what) {
+                        errorString += `What: ${errorObject.what.trim()}\n`;
+                    }
+                    if(errorObject.why) {
+                        errorString += `Why: ${errorObject.why.trim()}\n`;
+                    }
+                    return errorString;
+                }
+            }
+        }), {type: 'text/plain'});
+
+        return URL.createObjectURL(blob);
+    }
+
+    get renderedOutputs(): TemplateResult[] {
         return this.outputs.map(o => {
             if (o.type === OutputType.stdout) {
                 return html`${o.content}`;
@@ -69,5 +97,19 @@ export class Output extends PapyrosElement {
                 }
             }
         })
+    }
+
+    protected override render(): TemplateResult {
+        return html`
+            <pre>${this.renderedOutputs}</pre>
+            ${this.showOverflowWarning ? html`
+                <p>
+                    ${t("Papyros.output_overflow")}
+                    <a href="${this.downloadOverflowUrl}" download="papyros_output.txt">
+                    ${t("Papyros.output_overflow_download")}
+                    </a>
+                </p>
+            ` : html``}
+        `;
     }
 }
