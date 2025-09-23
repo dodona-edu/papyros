@@ -7,8 +7,7 @@ import {
     ViewPlugin,
     ViewUpdate
 } from "@codemirror/view";
-import {EditorState, RangeSet, StateEffect, StateField} from "@codemirror/state";
-import readOnlyRangesExtension from "codemirror-readonly-ranges";
+import {RangeSet, StateEffect, StateField} from "@codemirror/state";
 
 // --- Decorations & Markers ---
 const usedLineDecoration = Decoration.line({ class: "cm-activeLine" });
@@ -31,7 +30,7 @@ const markedUsedLines = StateField.define<number | undefined>({
 // --- Gutter Highlighter ---
 const markedLineGutterHighlighter = gutterLineClass.compute([markedUsedLines], (state) => {
     const line = state.field(markedUsedLines);
-    if (line === undefined) return RangeSet.empty;
+    if (line === undefined || line === 0) return RangeSet.empty;
     return RangeSet.of([usedLineGutterMarker.range(0, state.doc.line(line).from)]);
 });
 
@@ -51,7 +50,7 @@ const lineDecorationPlugin = ViewPlugin.fromClass(class {
 
     getDecorations(state: EditorView["state"]): DecorationSet {
         const line = state.field(markedUsedLines);
-        if (line === undefined) return Decoration.none;
+        if (line === undefined || line === 0) return Decoration.none;
         const decorations = [];
         for(let i = 1; i <= line; i++) {
             decorations.push(usedLineDecoration.range(state.doc.line(i).from));
@@ -77,7 +76,7 @@ const usedLineGutter = gutter({
     },
     lineMarker: (view, line) => {
         const usedLines = view.state.field(markedUsedLines);
-        if (usedLines === undefined) { return null; }
+        if (usedLines === undefined || usedLines === 0) { return null; }
         const usedLineFrom = view.state.doc.line(usedLines).from;
         if (line.from <= usedLineFrom) {
             return usedMarker;
@@ -92,11 +91,6 @@ export function usedLineExtension(): any[] {
         markedLineGutterHighlighter,
         lineDecorationPlugin,
         usedLineGutter,
-        readOnlyRangesExtension((state: EditorState) => {
-            const line = state.field(markedUsedLines);
-            if (line === undefined) return [];
-            return [{from: 0, to: state.doc.line(line).from}];
-        })
     ];
 }
 

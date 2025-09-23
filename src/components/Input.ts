@@ -22,7 +22,10 @@ export class Input extends LitElement {
     @property({state: true})
     buffer: string = '';
 
-    get usedLines(): number {
+    get usedLines(): number | undefined {
+        if(this.papyros.debugger.active && this.papyros.debugger.debugUsedInputs !== undefined) {
+            return this.papyros.debugger.debugUsedInputs;
+        }
         return this.papyros.io.inputs.length;
     }
 
@@ -49,11 +52,11 @@ export class Input extends LitElement {
 
     constructor() {
         super();
-        this.papyros.runner.subscribe(() => this.provideInput());
+        this.papyros.io.subscribe(() => this.provideInput(), "awaitingInput");
     }
 
     provideInput(): void {
-        if(this.papyros.runner.state === RunState.AwaitingInput && this.nextLine !== undefined) {
+        if(this.papyros.io.awaitingInput && this.nextLine !== undefined) {
             this.papyros.io.provideInput(this.nextLine);
         }
     }

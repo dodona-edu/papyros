@@ -25,6 +25,8 @@ export class InputOutput extends State {
     output: OutputEntry[] = [];
     @stateProperty
     prompt: string = "";
+    @stateProperty
+    awaitingInput: boolean = false;
 
     constructor(papyros: Papyros) {
         super();
@@ -45,6 +47,7 @@ export class InputOutput extends State {
         });
         BackendManager.subscribe(BackendEventType.Input, e => {
             this.prompt = e.data || "";
+            this.awaitingInput = true;
         });
     }
 
@@ -60,14 +63,17 @@ export class InputOutput extends State {
         this.output = [...this.output, {type: OutputType.stdout, content: output}];
     }
 
-    public provideInput(input: string) {
+    public async provideInput(input: string) {
         this.inputs = [...this.inputs, input];
-        this.papyros.runner.provideInput(input);
+        await this.papyros.runner.provideInput(input);
+        this.prompt = "";
+        this.awaitingInput = false;
     }
 
     public reset() {
         this.inputs = [];
         this.output = [];
         this.prompt = "";
+        this.awaitingInput = false;
     }
 }

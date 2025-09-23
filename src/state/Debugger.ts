@@ -84,7 +84,7 @@ export class Debugger extends State {
         return this.activeFrameState?.outputs
     }
 
-    get debugInputs(): number | undefined {
+    get debugUsedInputs(): number | undefined {
         return this.activeFrameState?.inputs
     }
 }
