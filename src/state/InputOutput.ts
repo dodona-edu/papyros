@@ -63,9 +63,9 @@ export class InputOutput extends State {
         this.output = [...this.output, {type: OutputType.stdout, content: output}];
     }
 
-    public async provideInput(input: string) {
+    public provideInput(input: string) {
         this.inputs = [...this.inputs, input];
-        await this.papyros.runner.provideInput(input);
+        this.papyros.runner.provideInput(input);
         this.prompt = "";
         this.awaitingInput = false;
     }

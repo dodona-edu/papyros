@@ -2,9 +2,9 @@ import {customElement, property} from "lit/decorators.js";
 import {html, LitElement, TemplateResult} from "lit";
 import {StateController} from "@dodona/lit-state";
 import {Papyros, papyros} from "../state/Papyros";
-import {RunState} from "../state/Runner";
-import "./code_mirror/BatchInputEditor";
 import {t} from "../util/Util";
+import "./input/BatchInput";
+import "./input/InteractiveInput";
 
 enum InputMode {
     batch = "batch",
@@ -18,61 +18,33 @@ export class Input extends LitElement {
     papyros: Papyros = papyros;
 
     @property({state: true})
-    mode: InputMode = InputMode.batch;
-    @property({state: true})
-    buffer: string = '';
+    mode: InputMode = InputMode.interactive;
 
-    get usedLines(): number | undefined {
-        if(this.papyros.debugger.active && this.papyros.debugger.debugUsedInputs !== undefined) {
-            return this.papyros.debugger.debugUsedInputs;
+    get activeMode(): InputMode {
+        if(this.papyros.debugger.active) {
+            return InputMode.batch;
         }
-        return this.papyros.io.inputs.length;
+        return this.mode;
     }
 
-    /**
-     * All lines except the last one that has not (yet) been terminated by a newline
-     */
-    get lines(): string[] {
-        return this.buffer.split('\n').slice(0,-1);
+    get otherMode(): InputMode {
+        return this.activeMode === InputMode.batch ? InputMode.interactive : InputMode.batch;
     }
 
-    get nextLine(): string | undefined {
-        if (this.lines.length > this.usedLines) {
-            return this.lines[this.usedLines];
-        }
-        return undefined;
-    }
-
-    get placeholder(): string {
-        if(this.papyros.io.prompt) {
-            return this.papyros.io.prompt;
-        }
-        return t(`Papyros.input_placeholder.${this.mode}`)
-    }
-
-    constructor() {
-        super();
-        this.papyros.io.subscribe(() => this.provideInput(), "awaitingInput");
-    }
-
-    provideInput(): void {
-        if(this.papyros.io.awaitingInput && this.nextLine !== undefined) {
-            this.papyros.io.provideInput(this.nextLine);
-        }
+    toggleMode(): void {
+        this.mode = this.otherMode;
     }
 
     protected override render(): TemplateResult {
         return html`
-            <p-batch-input-editor
-                .value=${this.buffer}
-                .usedLines=${this.usedLines}
-                .readOnly=${this.papyros.debugger.active}
-                .placeholder=${this.placeholder}
-                @change=${(e: CustomEvent) => {
-                    this.buffer = e.detail;
-                    this.provideInput();
-                }}
-            ></p-batch-input-editor>
-        `
+            ${this.activeMode === InputMode.batch ? 
+                    html`<p-batch-input .papyros=${this.papyros}></p-batch-input>` : 
+                    html`<p-interactive-input .papyros=${this.papyros}></p-interactive-input>`}
+            ${ this.papyros.debugger.active ? html`` : html`
+                <button @click=${() => this.toggleMode()}>
+                    ${t(`Papyros.switch_input_mode_to.${this.otherMode}`)}
+                </button>
+            `}
+        `;
     }
 }
