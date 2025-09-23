@@ -27,4 +27,7 @@ export class Theme extends State {
             </svg>`
     };
 
+    @stateProperty
+    indentationSize: number = 4;
+
 }

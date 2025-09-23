@@ -12,7 +12,7 @@ import {defaultKeymap, history, historyKeymap, indentWithTab} from "@codemirror/
 import {
     bracketMatching, defaultHighlightStyle,
     foldGutter,
-    indentOnInput,
+    indentOnInput, indentUnit,
     LanguageSupport,
     syntaxHighlighting
 } from "@codemirror/language";
@@ -129,6 +129,12 @@ export class CodeEditor extends CodeMirrorEditor {
                 })
             })
         })
+    }
+
+    set indentLength(length: number) {
+        this.configure({
+            indentUnit: indentUnit.of(" ".repeat(length))
+        });
     }
 
     constructor() {
