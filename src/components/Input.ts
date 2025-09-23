@@ -1,10 +1,9 @@
 import {customElement, property} from "lit/decorators.js";
-import {html, LitElement, TemplateResult} from "lit";
-import {StateController} from "@dodona/lit-state";
-import {Papyros, papyros} from "../state/Papyros";
+import {html, TemplateResult} from "lit";
 import {t} from "../util/Util";
 import "./input/BatchInput";
 import "./input/InteractiveInput";
+import {PapyrosElement} from "./helpers/PapyrosElement";
 
 enum InputMode {
     batch = "batch",
@@ -12,11 +11,7 @@ enum InputMode {
 }
 
 @customElement('p-input')
-export class Input extends LitElement {
-    controller = new StateController(this);
-    @property()
-    papyros: Papyros = papyros;
-
+export class Input extends PapyrosElement {
     @property({state: true})
     mode: InputMode = InputMode.interactive;
 

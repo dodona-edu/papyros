@@ -1,17 +1,12 @@
-import {customElement, property} from "lit/decorators.js";
-import {StateController} from "@dodona/lit-state";
-import {Papyros, papyros} from "../state/Papyros";
-import {css, html, LitElement, TemplateResult} from "lit";
+import {customElement} from "lit/decorators.js";
+import {css, html, TemplateResult} from "lit";
 import {OutputEntry, OutputType} from "../state/InputOutput";
 import {FriendlyError} from "../OutputManager";
-import "./Circle";
+import "./helpers/Circle";
+import {PapyrosElement} from "./helpers/PapyrosElement";
 
 @customElement("p-output")
-export class Output extends LitElement {
-    controller = new StateController(this);
-    @property()
-    papyros: Papyros = papyros
-
+export class Output extends PapyrosElement {
     static get styles() {
         return css`
             :host {

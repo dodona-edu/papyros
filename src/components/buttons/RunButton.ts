@@ -1,18 +1,13 @@
-import {html, LitElement, TemplateResult} from "lit";
+import {html, TemplateResult} from "lit";
 import {RunMode} from "../../Backend";
 import {customElement, property} from "lit/decorators.js";
 import {t} from "../../util/Util";
-import {Papyros} from "../../state/Papyros";
-import {papyros} from "../../state/Papyros";
-import {StateController} from "@dodona/lit-state";
+import {PapyrosElement} from "../helpers/PapyrosElement";
 
 @customElement('p-run-button')
-export class RunButton extends LitElement {
-    controller = new StateController(this);
+export class RunButton extends PapyrosElement {
     @property({ type: String })
     mode: RunMode = RunMode.Run;
-    @property()
-    papyros: Papyros = papyros;
 
     protected override render(): TemplateResult {
         return html`

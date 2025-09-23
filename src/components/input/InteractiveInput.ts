@@ -1,15 +1,10 @@
 import {customElement, property} from "lit/decorators.js";
-import {html, LitElement, TemplateResult} from "lit";
-import {StateController} from "@dodona/lit-state";
-import {Papyros, papyros} from "../../state/Papyros";
+import {html, TemplateResult} from "lit";
 import {t} from "../../util/Util";
+import {PapyrosElement} from "../helpers/PapyrosElement";
 
 @customElement("p-interactive-input")
-export class InteractiveInput extends LitElement {
-    controller = new StateController(this);
-    @property()
-    papyros: Papyros = papyros;
-
+export class InteractiveInput extends PapyrosElement {
     @property({state: true})
     value: string = '';
 

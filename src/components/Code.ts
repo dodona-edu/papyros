@@ -1,15 +1,10 @@
-import {html, LitElement, TemplateResult} from "lit";
-import {StateController} from "@dodona/lit-state";
+import {html, TemplateResult} from "lit";
 import "./code_mirror/CodeEditor"
-import {customElement, property} from "lit/decorators.js";
-import {papyros, Papyros} from "../state/Papyros";
+import {customElement} from "lit/decorators.js";
+import {PapyrosElement} from "./helpers/PapyrosElement";
 
 @customElement("p-code")
-export class Code extends LitElement {
-    controller = new StateController(this);
-    @property()
-    public papyros: Papyros = papyros;
-
+export class Code extends PapyrosElement {
     protected override render(): TemplateResult {
         return html`
             <p-code-editor

@@ -1,16 +1,11 @@
-import {html, LitElement, TemplateResult} from "lit";
-import {customElement, property} from "lit/decorators.js";
+import {html, TemplateResult} from "lit";
+import {customElement} from "lit/decorators.js";
 import {t} from "../../util/Util";
-import {Papyros, papyros} from "../../state/Papyros";
-import {StateController} from "@dodona/lit-state";
+import {PapyrosElement} from "../helpers/PapyrosElement";
 
 
 @customElement('p-stop-debug-button')
-export class StopDebugButton extends LitElement {
-    controller = new StateController(this);
-    @property()
-    papyros: Papyros = papyros;
-
+export class StopDebugButton extends PapyrosElement {
     protected override render(): TemplateResult {
         return html`
             <button @click=${() => this.papyros.debugger.active = false}>

@@ -1,18 +1,13 @@
-import {customElement, property} from "lit/decorators.js";
-import {css, html, LitElement, TemplateResult} from "lit";
-import {papyros, Papyros} from "../../state/Papyros";
+import {customElement} from "lit/decorators.js";
+import {css, html, TemplateResult} from "lit";
 import {RunState} from "../../state/Runner";
 import "./RunButton";
 import "./StopButton";
 import "./StopDebugButton";
-import {StateController} from "@dodona/lit-state";
+import {PapyrosElement} from "../helpers/PapyrosElement";
 
 @customElement('p-button-lint')
-export class ButtonLint extends LitElement {
-    controller = new StateController(this);
-    @property()
-    papyros: Papyros = papyros;
-
+export class ButtonLint extends PapyrosElement {
     static get styles() {
         return css`
             :host {
@@ -30,12 +25,12 @@ export class ButtonLint extends LitElement {
     get buttons(): TemplateResult | TemplateResult[] {
         if(this.papyros.runner.state === RunState.Ready) {
             if(this.papyros.debugger.active) {
-                return html`<p-stop-debug-button></p-stop-debug-button>`;
+                return html`<p-stop-debug-button .papyros=${this.papyros}></p-stop-debug-button>`;
             } else {
-                return this.papyros.runner.runModes.map(mode => html`<p-run-button .mode=${mode}></p-run-button>`);
+                return this.papyros.runner.runModes.map(mode => html`<p-run-button .mode=${mode} .papyros=${this.papyros}></p-run-button>`);
             }
         } else {
-            return html`<p-stop-button></p-stop-button>`;
+            return html`<p-stop-button .papyros=${this.papyros}></p-stop-button>`;
         }
     }
 
