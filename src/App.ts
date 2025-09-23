@@ -8,9 +8,8 @@ import { Papyros, PapyrosConfig } from "./Papyros";
 import { InputMode } from "./InputManager";
 import { BatchInputHandler } from "./input/BatchInputHandler";
 import { CodeMirrorEditor } from "./editor/CodeMirrorEditor";
-import "./components/Code";
+import "./components/CodeRunner";
 import "./components/Debugger";
-import "./components/buttons/ButtonLint";
 import "./components/Output";
 import "./components/Input";
 
