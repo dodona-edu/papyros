@@ -26,6 +26,7 @@
 
   <p-code></p-code>
   <p-button-lint></p-button-lint>
+  <p-input></p-input>
   <p-output></p-output>
   <p-debugger></p-debugger>
   <script type="module">
@@ -40,7 +41,10 @@ def printPiramid(n):
     for i in range(n):
         print(' ' * (n - i - 1) + '* ' * (i + 1))
 printPiramid(5)
-print(x+1)
+print(input("help?"))
+print(int(input()) + 1)
+print(input())
+print(input())
     `;
   </script>
 </body>

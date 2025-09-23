@@ -1,9 +1,9 @@
 import {State, stateProperty} from "@dodona/lit-state";
-import {InputMode} from "./Papyros";
 import {FriendlyError} from "../OutputManager";
 import {BackendManager} from "../BackendManager";
 import {BackendEventType} from "../BackendEvent";
 import {parseData} from "../util/Util";
+import {Papyros} from "./Papyros";
 
 export enum OutputType {
     stdout = "stdout",
@@ -18,8 +18,7 @@ export type OutputEntry = {
 }
 
 export class InputOutput extends State {
-    @stateProperty
-    inputMode: InputMode = InputMode.batch;
+    private papyros: Papyros;
     @stateProperty
     inputs: string[] = [];
     @stateProperty
@@ -27,8 +26,9 @@ export class InputOutput extends State {
     @stateProperty
     prompt: string = "";
 
-    constructor() {
+    constructor(papyros: Papyros) {
         super();
+        this.papyros = papyros;
         this.reset();
         BackendManager.subscribe(BackendEventType.Start, () => this.reset());
         BackendManager.subscribe(BackendEventType.Output, e => {
@@ -43,6 +43,9 @@ export class InputOutput extends State {
             const data = parseData(e.data, e.contentType);
             this.logError(data);
         });
+        BackendManager.subscribe(BackendEventType.Input, e => {
+            this.prompt = e.data || "";
+        });
     }
 
     public logError(error: FriendlyError | string) {
@@ -55,6 +58,11 @@ export class InputOutput extends State {
 
     public logOutput(output: string) {
         this.output = [...this.output, {type: OutputType.stdout, content: output}];
+    }
+
+    public provideInput(input: string) {
+        this.inputs = [...this.inputs, input];
+        this.papyros.runner.provideInput(input);
     }
 
     public reset() {

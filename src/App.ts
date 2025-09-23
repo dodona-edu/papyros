@@ -12,6 +12,7 @@ import "./components/Code";
 import "./components/Debugger";
 import "./components/buttons/ButtonLint";
 import "./components/Output";
+import "./components/Input";
 
 const LOCAL_STORAGE_KEYS = {
     code: addPapyrosPrefix("previous-code"),

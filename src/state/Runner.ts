@@ -235,6 +235,12 @@ export class Runner extends State {
         }
     }
 
+    public async provideInput(input: string): Promise<void> {
+        const backend = await this.backend;
+        await backend.writeMessage(input);
+        this.setState(RunState.Running);
+    }
+
     // public async provideFiles(inlinedFiles: Record<string, string>, hrefFiles: Record<string, string>): Promise<void> {
     //     const fileNames = [...Object.keys(inlinedFiles), ...Object.keys(hrefFiles)];
     //     if (fileNames.length === 0) {
