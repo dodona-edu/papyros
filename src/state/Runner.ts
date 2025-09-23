@@ -88,7 +88,7 @@ export class Runner extends State {
             this._code = value;
             // Update run modes when code changes
             this.backend.then(async (backend) => {
-                this.runModes = await backend.workerProxy?.runModes(this.code);
+                this.runModes = [RunMode.Run, ...(await backend.workerProxy?.runModes(this.code))];
             })
         }
     }
@@ -104,7 +104,7 @@ export class Runner extends State {
     /**
      * available run modes for the current code
      */
-    public runModes: Array<RunMode> = [RunMode.Run];
+    public runModes: Array<RunMode> = [RunMode.Run, RunMode.Debug];
 
     /**
      * The global state where we are part of
