@@ -15,15 +15,8 @@ export class Input extends PapyrosElement {
     @property({state: true})
     mode: InputMode = InputMode.interactive;
 
-    get activeMode(): InputMode {
-        if(this.papyros.debugger.active) {
-            return InputMode.batch;
-        }
-        return this.mode;
-    }
-
     get otherMode(): InputMode {
-        return this.activeMode === InputMode.batch ? InputMode.interactive : InputMode.batch;
+        return this.mode === InputMode.batch ? InputMode.interactive : InputMode.batch;
     }
 
     toggleMode(): void {
@@ -31,8 +24,12 @@ export class Input extends PapyrosElement {
     }
 
     protected override render(): TemplateResult {
+        if (this.papyros.debugger.active) {
+            this.mode = InputMode.batch;
+        }
+
         return html`
-            ${this.activeMode === InputMode.batch ? 
+            ${this.mode === InputMode.batch ? 
                     html`<p-batch-input .papyros=${this.papyros}></p-batch-input>` : 
                     html`<p-interactive-input .papyros=${this.papyros}></p-interactive-input>`}
             ${ this.papyros.debugger.active ? html`` : html`

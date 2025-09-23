@@ -16,6 +16,7 @@ export class BatchInput extends PapyrosElement {
     mode: InputMode = InputMode.batch;
     @property({state: true})
     buffer: string = '';
+    unsubscribe: () => void;
 
     get usedLines(): number | undefined {
         if(this.papyros.debugger.active && this.papyros.debugger.debugUsedInputs !== undefined) {
@@ -45,9 +46,14 @@ export class BatchInput extends PapyrosElement {
         return t(`Papyros.input_placeholder.${this.mode}`)
     }
 
-    constructor() {
-        super();
-        this.papyros.io.subscribe(() => this.provideInput(), "awaitingInput");
+    connectedCallback() {
+        super.connectedCallback();
+        this.unsubscribe = this.papyros.io.subscribe(() => this.provideInput(), "awaitingInput");
+    }
+
+    disconnectedCallback() {
+        super.disconnectedCallback();
+        this.unsubscribe();
     }
 
     provideInput(): void {
