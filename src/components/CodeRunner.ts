@@ -19,6 +19,18 @@ export class CodeRunner extends PapyrosElement {
             div {
                 flex-grow: 1;
                 min-height: 0;
+                position: relative;
+            }
+            
+            p-run-state {
+                position: absolute;
+                bottom: 0;
+                right: 0;
+                background-color: var(--papyros-surface, #000000);
+                color: var(--papyros-on-surface, #fff);
+                padding: 0.25rem 1rem;
+                border-top-right-radius: 1rem;
+                border-top-left-radius: 1rem;
             }
         `
     }
@@ -27,7 +39,7 @@ export class CodeRunner extends PapyrosElement {
         return html`
             <div>
                 <p-code .papyros=${this.papyros}></p-code>
-                <p-run-state .papyros=${this.papyros}></p-run-state>
+                ${this.papyros.runner.stateMessage ? html`<p-run-state .papyros=${this.papyros}></p-run-state>`:""}
             </div>
             <p-button-lint .papyros=${this.papyros}>
                 <slot name="buttons"></slot>
