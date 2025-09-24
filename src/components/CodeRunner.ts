@@ -11,7 +11,6 @@ export class CodeRunner extends PapyrosElement {
         return css`
             :host {
                 width: 100%;
-                height: 100%;
                 display: flex;
                 flex-direction: column;
             }

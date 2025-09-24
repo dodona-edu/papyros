@@ -10,6 +10,13 @@ import {t} from "../util/Util";
 export class Output extends PapyrosElement {
     static get styles() {
         return css`
+            :host {
+                width: 100%;
+                height: 100%;
+                overflow: auto;
+                display: block;
+            }
+
             img {
                 max-width: 100%;
                 max-height: 300px;

@@ -1,5 +1,5 @@
 import {customElement, property} from "lit/decorators.js";
-import {html, TemplateResult} from "lit";
+import {css, html, TemplateResult} from "lit";
 import "../code_mirror/BatchInputEditor";
 import {t} from "../../util/Util";
 import {RunState} from "../../state/Runner";
@@ -17,6 +17,17 @@ export class BatchInput extends PapyrosElement {
     @property({state: true})
     buffer: string = '';
     unsubscribe: () => void;
+
+    static get styles() {
+        return css`
+            :host {
+                width: 100%;
+                height: 100%;
+                overflow: auto;
+                display: block;
+            }
+        `
+    }
 
     get usedLines(): number | undefined {
         if(this.papyros.debugger.active && this.papyros.debugger.debugUsedInputs !== undefined) {

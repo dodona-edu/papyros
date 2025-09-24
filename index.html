@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="tailwind-html tailwind">
+<html lang="en" style="height: 100%">
 
 <head>
   <meta charset="utf-8" />
@@ -13,23 +13,14 @@
       user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
     -->
   <link rel="manifest" href="public/manifest.json" />
-  <link href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css" rel="stylesheet" type="text/css">
-  <!-- Wait with running the script until the elements are loaded as they are needed immediately -->
-  <script type="module" src="./src/App.ts" defer></script>
+  <script type="module" src="./src/components/app/App.ts" defer></script>
 
   <title>Papyros</title>
 </head>
 
-<body class="tailwind-body">
+<body style="margin: 0; height: 100%; width: 100%;">
   <noscript>You need to enable JavaScript to run this app.</noscript>
-  <div id="root"></div>
-
-  <div style="height: 500px">
-    <p-code-runner></p-code-runner>
-  </div>
-  <p-input></p-input>
-  <p-output></p-output>
-  <p-debugger></p-debugger>
+  <p-app></p-app>
   <script type="module">
     import { papyros } from "./src/state/Papyros";
     papyros.runner.launch();
