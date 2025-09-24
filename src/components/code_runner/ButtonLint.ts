@@ -14,6 +14,8 @@ export class ButtonLint extends PapyrosElement {
             :host {
                 display: flex;
                 justify-content: space-between;
+                height: fit-content;
+                padding: 0.5rem;
             }
             
             .buttons {

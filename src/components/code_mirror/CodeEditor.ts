@@ -46,6 +46,11 @@ export class CodeEditor extends CodeMirrorEditor {
 
     static get styles() {
         return css`
+            :host {
+                width: 100%;
+                height: 100%;
+            }
+
             .papyros-test-code {
                 background-color: rgba(143, 182, 130, 0.1);
             }

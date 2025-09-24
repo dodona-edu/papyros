@@ -29,7 +29,20 @@ export class CodeMirrorEditor extends LitElement {
         return this.__value;
     }
 
+    set theme(theme: Record<string, any>) {
+            this.configure({ theme: EditorView.theme({
+                    ".cm-scroller": { overflow: "auto" },
+                    "&": {
+                        "height": "100%",
+                        "width": "100%",
+                        "font-size": "14px" // use proper size to align gutters with editor
+                    },
+                    ...theme
+                }) });
+    }
+
     private initView() {
+        this.theme = {};
         this.view = new EditorView({
             parent: (this.shadowRoot as ShadowRoot),
             state: EditorState.create({ doc: this.__value, extensions: [

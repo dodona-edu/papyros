@@ -1,10 +1,19 @@
-import {html, TemplateResult} from "lit";
+import {css, html, TemplateResult} from "lit";
 import "../code_mirror/CodeEditor"
 import {customElement} from "lit/decorators.js";
 import {PapyrosElement} from "../extras/PapyrosElement";
 
 @customElement("p-code")
 export class Code extends PapyrosElement {
+    static get styles() {
+        return css`
+            :host {
+                width: 100%;
+                height: 100%;
+            }
+        `
+    }
+
     protected override render(): TemplateResult {
         return html`
             <p-code-editor
