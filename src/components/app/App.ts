@@ -66,6 +66,11 @@ export class App extends PapyrosElement {
         `;
     }
 
+    constructor() {
+        super();
+        this.papyros.launch();
+    }
+
     protected override render() {
         return html`
             <div class="rows">

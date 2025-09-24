@@ -133,9 +133,6 @@ export class Runner extends State {
         }
 
         this.papyros.debugger.active = false;
-        // TODO
-        // this.inputManager.inputHandler.reset();
-        // this.outputManager.reset();
     }
 
     /**

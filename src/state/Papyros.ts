@@ -5,6 +5,9 @@ import {InputOutput} from "./InputOutput";
 import {Theme} from "./Theme";
 import {Constants} from "./Constants";
 import {Examples} from "./Examples";
+import {BackendManager} from "../BackendManager";
+import {makeChannel} from "sync-message";
+import {cleanCurrentUrl, t} from "../util/Util";
 
 export class Papyros extends State {
     readonly debugger: Debugger = new Debugger(this);
@@ -18,9 +21,54 @@ export class Papyros extends State {
     locale: string = "en";
     @stateProperty
     darkMode: boolean = false;
-
     @stateProperty
-    files: Record<string, string> = {};
+    serviceWorkerName: string = "InputServiceWorker.js";
+
+    /**
+     * Launch this instance of Papyros, making it ready to run code
+     * @return {Promise<Papyros>} Promise of launching, chainable
+     */
+    public async launch(): Promise<Papyros> {
+        if (!await this.configureInput()) {
+            alert(t("Papyros.service_worker_error"));
+        } else {
+            try {
+                await this.runner.launch();
+            } catch {
+                if (confirm(t("Papyros.launch_error"))) {
+                    return this.launch();
+                }
+            }
+        }
+        return this;
+    }
+
+    /**
+     * Configure how user input is handled within Papyros
+     * By default, we will try to use SharedArrayBuffers
+     * If this option is not available, the optional arguments in the channelOptions config are used
+     * They are needed to register a service worker to handle communication between threads
+     * @return {Promise<boolean>} Promise of configuring input
+     */
+    private async configureInput(): Promise<boolean> {
+        if (typeof SharedArrayBuffer === "undefined") {
+            if (!this.serviceWorkerName || !("serviceWorker" in navigator)) {
+                return false;
+            }
+            const serviceWorkerRoot = cleanCurrentUrl(true);
+            const serviceWorkerUrl = serviceWorkerRoot + this.serviceWorkerName;
+            try {
+                await navigator.serviceWorker.register(serviceWorkerUrl, { scope: "/" });
+                BackendManager.channel = makeChannel({ serviceWorker: { scope: serviceWorkerRoot } })!;
+            } catch(e) {
+                console.error("Error registering service worker:", e);
+                return false;
+            }
+        } else {
+            BackendManager.channel = makeChannel({atomics: {  }})!;
+        }
+        return true;
+    }
 }
 
 export const papyros = new Papyros();
