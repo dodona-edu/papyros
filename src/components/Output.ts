@@ -2,8 +2,8 @@ import {customElement} from "lit/decorators.js";
 import {css, html, TemplateResult} from "lit";
 import {OutputEntry, OutputType} from "../state/InputOutput";
 import {FriendlyError} from "../OutputManager";
-import "./helpers/Circle";
-import {PapyrosElement} from "./helpers/PapyrosElement";
+import "./extras/Circle";
+import {PapyrosElement} from "./extras/PapyrosElement";
 import {t} from "../util/Util";
 
 @customElement("p-output")

@@ -3,7 +3,7 @@ import {html, TemplateResult} from "lit";
 import "../code_mirror/BatchInputEditor";
 import {t} from "../../util/Util";
 import {RunState} from "../../state/Runner";
-import {PapyrosElement} from "../helpers/PapyrosElement";
+import {PapyrosElement} from "../extras/PapyrosElement";
 
 enum InputMode {
     batch = "batch",

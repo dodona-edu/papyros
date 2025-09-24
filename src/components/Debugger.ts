@@ -2,7 +2,7 @@ import {html, TemplateResult} from "lit";
 import "@dodona/trace-component"
 import {customElement} from "lit/decorators.js";
 import {t} from "../util/Util";
-import {PapyrosElement} from "./helpers/PapyrosElement";
+import {PapyrosElement} from "./extras/PapyrosElement";
 
 @customElement("p-debugger")
 export class Debugger extends PapyrosElement {

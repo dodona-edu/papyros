@@ -1,9 +1,9 @@
 import {customElement} from "lit/decorators.js";
-import {PapyrosElement} from "./helpers/PapyrosElement";
+import {PapyrosElement} from "./extras/PapyrosElement";
 import {html, TemplateResult} from "lit";
-import "./helpers/Code";
-import "./helpers/RunState";
-import "./buttons/ButtonLint";
+import "./code_runner/Code";
+import "./code_runner/RunState";
+import "./code_runner/ButtonLint";
 
 @customElement('p-code-runner')
 export class CodeRunner extends PapyrosElement {

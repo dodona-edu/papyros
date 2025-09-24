@@ -2,7 +2,7 @@ import {customElement, property} from "lit/decorators.js";
 import {createRef, Ref, ref} from "lit/directives/ref.js";
 import {html, PropertyValues, TemplateResult} from "lit";
 import {t} from "../../util/Util";
-import {PapyrosElement} from "../helpers/PapyrosElement";
+import {PapyrosElement} from "../extras/PapyrosElement";
 
 @customElement("p-interactive-input")
 export class InteractiveInput extends PapyrosElement {

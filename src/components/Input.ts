@@ -3,7 +3,7 @@ import {html, TemplateResult} from "lit";
 import {t} from "../util/Util";
 import "./input/BatchInput";
 import "./input/InteractiveInput";
-import {PapyrosElement} from "./helpers/PapyrosElement";
+import {PapyrosElement} from "./extras/PapyrosElement";
 
 enum InputMode {
     batch = "batch",

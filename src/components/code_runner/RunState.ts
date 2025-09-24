@@ -1,5 +1,5 @@
 import {customElement} from "lit/decorators.js";
-import {PapyrosElement} from "./PapyrosElement";
+import {PapyrosElement} from "../extras/PapyrosElement";
 import {RunState} from "../../state/Runner";
 import {css, html} from "lit";
 
