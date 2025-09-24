@@ -1,9 +1,10 @@
 import {customElement, property} from "lit/decorators.js";
-import {html, TemplateResult} from "lit";
+import {css, html, TemplateResult} from "lit";
 import {t} from "../util/Util";
 import "./input/BatchInput";
 import "./input/InteractiveInput";
 import {PapyrosElement} from "./extras/PapyrosElement";
+import "@material/web/switch/switch";
 
 enum InputMode {
     batch = "batch",
@@ -14,6 +15,16 @@ enum InputMode {
 export class Input extends PapyrosElement {
     @property({state: true})
     mode: InputMode = InputMode.interactive;
+    static get styles() {
+        return css`
+            label {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                margin-top: 0.5rem;
+            }
+        `
+    }
 
     get otherMode(): InputMode {
         return this.mode === InputMode.batch ? InputMode.interactive : InputMode.batch;
@@ -32,11 +43,12 @@ export class Input extends PapyrosElement {
             ${this.mode === InputMode.batch ? 
                     html`<p-batch-input .papyros=${this.papyros}></p-batch-input>` : 
                     html`<p-interactive-input .papyros=${this.papyros}></p-interactive-input>`}
-            ${ this.papyros.debugger.active ? html`` : html`
-                <button @click=${() => this.toggleMode()}>
-                    ${t(`Papyros.switch_input_mode_to.${this.otherMode}`)}
-                </button>
-            `}
+            <label>
+                <md-switch .selected=${this.mode === InputMode.batch}
+                           ?disabled=${this.papyros.debugger.active}
+                           @change=${() => this.toggleMode()}></md-switch>
+                ${t(`Papyros.switch_input_mode_to.${this.otherMode}`)}
+            </label>
         `;
     }
 }
