@@ -1,9 +1,11 @@
 import {customElement} from "lit/decorators.js";
 import {css, html, TemplateResult} from "lit";
 import {RunState} from "../../state/Runner";
-import "../extras/Button";
 import {PapyrosElement} from "../extras/PapyrosElement";
 import {t} from "../../util/Util";
+import {RunMode} from "../../Backend";
+import "@material/web/button/filled-button";
+import "@material/web/button/outlined-button";
 
 @customElement('p-button-lint')
 export class ButtonLint extends PapyrosElement {
@@ -25,26 +27,30 @@ export class ButtonLint extends PapyrosElement {
         if(this.papyros.runner.state === RunState.Ready) {
             if(this.papyros.debugger.active) {
                 return html`
-                    <p-button .papyros=${this.papyros} 
-                              .icon="stopDebug"
-                              @click=${() => this.papyros.debugger.active = false}>
+                    <md-outlined-button @click=${() => this.papyros.debugger.active = false}>
+                        <span slot="icon">${this.papyros.theme.icons.stopDebug}</span>
                         ${t(`Papyros.debug.stop`)}
-                    </p-button>`;
+                    </md-outlined-button>`;
             } else {
-                return this.papyros.runner.runModes.map(mode => html`
-                    <p-button .papyros=${this.papyros}
-                              .icon=${mode}
-                              @click=${() => this.papyros.runner.start(mode)}>
-                        ${t(`Papyros.run_modes.${mode}`)}
-                    </p-button>`);
+                return [
+                    html`
+                    <md-filled-button @click=${() => this.papyros.runner.start(RunMode.Run)}>
+                        <span slot="icon">${this.papyros.theme.icons[RunMode.Run]}</span>
+                        ${t(`Papyros.run_modes.${RunMode.Run}`)}
+                    </md-filled-button>`,
+                    ...this.papyros.runner.runModes.map(mode => html`
+                        <md-outlined-button @click=${() => this.papyros.runner.start(mode)}>
+                            <span slot="icon">${this.papyros.theme.icons[mode]}</span>
+                            ${t(`Papyros.run_modes.${mode}`)}
+                        </md-outlined-button>`)
+                ]
             }
         } else {
             return html`
-                <p-button .papyros=${this.papyros}
-                          .icon="stop"
-                          @click=${() => this.papyros.runner.stop()}>
+                <md-filled-button @click=${() => this.papyros.runner.stop()}>
+                    <span slot="icon">${this.papyros.theme.icons.stop}</span>
                     ${t(`Papyros.stop`)}
-                </p-button>`;
+                </md-filled-button>`;
         }
     }
 
