@@ -20,7 +20,11 @@ export class CodeMirrorEditor extends LitElement {
         if (!this.view) return;
 
         const data = {
-            changes: { from: 0, insert: this.__value }
+            changes: {
+                from: 0,
+                to: this.view.state.doc.length,
+                insert: this.__value
+            }
         };
         this.view.dispatch(this.view.state.update(data));
     }
