@@ -4,6 +4,7 @@ import {Runner} from "./Runner";
 import {InputOutput} from "./InputOutput";
 import {Theme} from "./Theme";
 import {Constants} from "./Constants";
+import {Examples} from "./Examples";
 
 export class Papyros extends State {
     readonly debugger: Debugger = new Debugger(this);
@@ -11,6 +12,7 @@ export class Papyros extends State {
     readonly io: InputOutput = new InputOutput(this);
     readonly theme: Theme = new Theme();
     readonly constants: Constants = new Constants();
+    readonly examples: Examples = new Examples(this);
 
     @stateProperty
     locale: string = "en";

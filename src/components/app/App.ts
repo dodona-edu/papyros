@@ -6,6 +6,7 @@ import "../Debugger";
 import "../Output";
 import "../Input";
 import "./ProgrammingLanguagePicker";
+import "./ExamplePicker";
 
 @customElement("p-app")
 export class App extends PapyrosElement {
@@ -74,6 +75,7 @@ export class App extends PapyrosElement {
                             <p-programming-language-picker .papyros=${this.papyros}
                                                            slot="buttons"
                             ></p-programming-language-picker>
+                            <p-example-picker .papyros=${this.papyros} slot="buttons"></p-example-picker>
                         </p-code-runner>
                     </div>
                     <div class="right">
