@@ -107,7 +107,6 @@ export class CodeEditor extends CodeMirrorEditor {
     }
 
     set programmingLanguage(value: string) {
-        console.log("Setting programming language to", value);
         if (!(value in languageExtensions)) {
             console.warn(`Language ${value} not supported, defaulting to javascript`);
             this.configure({

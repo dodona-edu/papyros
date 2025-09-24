@@ -5,6 +5,7 @@ import "../CodeRunner";
 import "../Debugger";
 import "../Output";
 import "../Input";
+import "./ProgrammingLanguagePicker";
 
 @customElement("p-app")
 export class App extends PapyrosElement {
@@ -68,11 +69,13 @@ export class App extends PapyrosElement {
         return html`
             <div class="rows">
                 <div class="top">
-                    <!-- Container A -->
                     <div class="left">
-                        <p-code-runner .papyros=${this.papyros} class="container"></p-code-runner>
+                        <p-code-runner .papyros=${this.papyros} class="container">
+                            <p-programming-language-picker .papyros=${this.papyros}
+                                                           slot="buttons"
+                            ></p-programming-language-picker>
+                        </p-code-runner>
                     </div>
-                    <!-- Containers B + C -->
                     <div class="right">
                         <div class="container grow">
                             <p-output .papyros=${this.papyros}></p-output>
@@ -82,7 +85,6 @@ export class App extends PapyrosElement {
                         </div>
                     </div>
                 </div>
-                <!-- Container D -->
                 <div class="bottom container">
                     <p-debugger .papyros=${this.papyros}></p-debugger>
                 </div>

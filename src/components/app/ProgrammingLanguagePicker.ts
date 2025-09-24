@@ -1,0 +1,29 @@
+import {customElement} from "lit/decorators.js";
+import {PapyrosElement} from "../extras/PapyrosElement";
+import {html} from "lit";
+import {ProgrammingLanguage} from "../../ProgrammingLanguage";
+import "@material/web/select/outlined-select";
+import "@material/web/select/select-option";
+import {t} from "../../util/Util";
+
+@customElement('p-programming-language-picker')
+export class ProgrammingLanguagePicker extends PapyrosElement {
+    protected override render() {
+        return html`
+            <md-outlined-select
+                    label=${t('Papyros.programming_language')}
+                    @input=${(e: InputEvent) => {
+                        this.papyros.runner.programmingLanguage = (e.target as HTMLInputElement).value as ProgrammingLanguage;
+                    }}>
+                ${Object.values(ProgrammingLanguage).map(lang => html`
+                                    <md-select-option
+                                        value=${lang}
+                                        ?selected=${this.papyros.runner.programmingLanguage === lang}
+                                    >
+                                        <div slot="headline">${lang}</div>
+                                    </md-select-option>
+                                `)}
+            </md-outlined-select>
+        `;
+    }
+}
