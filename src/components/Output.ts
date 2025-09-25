@@ -22,8 +22,18 @@ export class Output extends PapyrosElement {
                 margin: 0.5rem 0;
             }
             
+            pre {
+                font-family: monospace;
+                margin: 0;
+            }
+            
             .error {
-                color: var(--papyros-error, #b00020);
+                color: var(--md-sys-color-error);
+            }
+            
+            .place-holder {
+                color: var(--md-sys-color-on-surface);
+                opacity: 0.5;
             }
         `
     }
@@ -105,6 +115,10 @@ export class Output extends PapyrosElement {
     }
 
     protected override render(): TemplateResult {
+        if(this.outputs.length === 0) {
+            return html`<pre class="place-holder">${this.t("Papyros.output_placeholder")}</pre>`;
+        }
+
         return html`
             <pre>${this.renderedOutputs}</pre>
             ${this.showOverflowWarning ? html`

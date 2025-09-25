@@ -1,6 +1,6 @@
 import {LitElement} from "lit";
 import { customElement, property } from "lit/decorators.js";
-import {EditorView, ViewUpdate} from "@codemirror/view";
+import {EditorView, ViewUpdate, placeholder} from "@codemirror/view";
 import {Compartment, EditorState, Extension, StateEffect} from "@codemirror/state";
 
 type extensionFactory = (view: EditorView) => Extension;
@@ -31,6 +31,13 @@ export class CodeMirrorEditor extends LitElement {
 
     public get value(): string {
         return this.__value;
+    }
+
+    @property({type: String})
+    set placeholder(value: string) {
+        this.configure({
+            placeholder: placeholder(value),
+        })
     }
 
     set theme(theme: Extension) {

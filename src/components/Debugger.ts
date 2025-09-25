@@ -31,12 +31,17 @@ export class Debugger extends PapyrosElement {
                 --tc-tertiary-outline-color: var(--md-sys-color-outline);
                 --tc-tertiary-color: var(--md-sys-color-tertiary);
             }
+
+            .place-holder {
+                color: var(--md-sys-color-on-surface);
+                opacity: 0.5;
+            }
         `
     }
 
     protected override render(): TemplateResult {
         if(!this.papyros.debugger.active) {
-            return html``;
+            return html`<div class="place-holder">${this.t("Papyros.debug_placeholder")}</div>`;
         }
 
         return html`<tc-trace 

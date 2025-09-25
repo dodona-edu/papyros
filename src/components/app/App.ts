@@ -67,7 +67,7 @@ export class App extends PapyrosElement {
             }
 
             .container {
-                padding: 1rem;
+                padding: 1.5rem;
                 margin: 0.5rem;
                 border-radius: 1rem;
                 background-color: var(--md-sys-color-surface-container);
@@ -128,8 +128,8 @@ export class App extends PapyrosElement {
                 </div>
                 <div class="content">
                     <div class="top">
-                        <div class="left">
-                            <p-code-runner .papyros=${this.papyros} class="container overflow">
+                        <div class="left container">
+                            <p-code-runner .papyros=${this.papyros} class="overflow">
                                 <p-programming-language-picker .papyros=${this.papyros}
                                                                slot="buttons"
                                 ></p-programming-language-picker>

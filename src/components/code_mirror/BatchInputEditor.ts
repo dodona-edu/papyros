@@ -1,6 +1,6 @@
 import {customElement, property} from "lit/decorators.js";
 import {CodeMirrorEditor} from "./CodeMirrorEditor";
-import {EditorView, placeholder} from "@codemirror/view";
+import {EditorView} from "@codemirror/view";
 import {markUsedLines, usedLineExtension} from "./UsedLineExtension";
 import {css} from "lit";
 
@@ -13,13 +13,6 @@ export class BatchInputEditor extends CodeMirrorEditor {
                 height: 100%;
             }
         `
-    }
-
-    @property({type: String})
-    set placeholder(value: string) {
-        this.configure({
-            placeholder: placeholder(value),
-        })
     }
 
     @property({type: Number})

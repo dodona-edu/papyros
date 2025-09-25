@@ -14,7 +14,7 @@ export const materialTheme = EditorView.theme({
     },
 
     ".cm-gutters": {
-        backgroundColor: "var(--md-sys-color-surface-container)",
+        backgroundColor: "var(--md-sys-color-surface-container-high)",
         color: "var(--md-sys-color-on-surface-variant)",
         border: "none",
         fontSize: "12px",
@@ -52,14 +52,9 @@ export const materialTheme = EditorView.theme({
     },
 
     ".cm-panels": {
-        backgroundColor: "var(--md-sys-color-background)",
-        color: "var(--md-sys-color-on-background)",
-    },
-    ".cm-panels.cm-panels-top": {
-        borderBottom: "2px solid var(--md-sys-color-outline)",
-    },
-    ".cm-panels.cm-panels-bottom": {
-        borderTop: "2px solid var(--md-sys-color-outline)",
+        backgroundColor: "var(--md-sys-color-surface-container-high)",
+        color: "var(--md-sys-color-on-surface)",
+        border: "none",
     },
 
     ".cm-searchMatch": {
