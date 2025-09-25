@@ -145,7 +145,6 @@ export class CodeEditor extends CodeMirrorEditor {
         super();
         this.configure({
             language: [],
-            syntaxHighlighting: syntaxHighlighting(defaultHighlightStyle),
             codingExtensions: [
                lineNumbers(),
                highlightSpecialChars(),

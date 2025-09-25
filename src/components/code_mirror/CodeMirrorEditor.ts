@@ -33,8 +33,8 @@ export class CodeMirrorEditor extends LitElement {
         return this.__value;
     }
 
-    set theme(theme: Record<string, any>) {
-            this.configure({ theme: EditorView.theme(theme) });
+    set theme(theme: Extension) {
+            this.configure({ theme: theme });
     }
 
     set translations(translations: Record<string, string>) {
