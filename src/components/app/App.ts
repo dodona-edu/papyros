@@ -124,15 +124,14 @@ export class App extends PapyrosElement {
                     <div class="header-options">
                         <p-theme-picker></p-theme-picker>
                         <p-language-picker .papyros=${this.papyros}></p-language-picker>
+                        <p-programming-language-picker .papyros=${this.papyros}
+                        ></p-programming-language-picker>
                     </div>
                 </div>
                 <div class="content">
                     <div class="top">
                         <div class="left container">
                             <p-code-runner .papyros=${this.papyros} class="overflow">
-                                <p-programming-language-picker .papyros=${this.papyros}
-                                                               slot="buttons"
-                                ></p-programming-language-picker>
                                 <p-example-picker .papyros=${this.papyros} slot="buttons"></p-example-picker>
                             </p-code-runner>
                         </div>

@@ -26,14 +26,14 @@ export class CodeRunner extends PapyrosElement {
                 position: absolute;
                 bottom: 0;
                 right: 6px;
-                background-color: var(--md-sys-color-surface-container-high);
+                background-color: var(--md-sys-color-surface-container);
                 padding: 0.25rem 1rem;
                 border-top-right-radius: 1rem;
                 border-top-left-radius: 1rem;
             }
             
             p-button-lint {
-                background-color: var(--md-sys-color-surface-container-high);
+                background-color: var(--md-sys-color-surface-container);
             }
         `
     }
