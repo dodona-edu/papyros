@@ -29,19 +29,19 @@ export class ButtonLint extends PapyrosElement {
             if(this.papyros.debugger.active) {
                 return html`
                     <md-outlined-button @click=${() => this.papyros.debugger.active = false}>
-                        <span slot="icon">${this.papyros.theme.icons.stopDebug}</span>
+                        <span slot="icon">${this.papyros.constants.icons.stopDebug}</span>
                         ${this.t(`Papyros.debug.stop`)}
                     </md-outlined-button>`;
             } else {
                 return [
                     html`
                     <md-filled-button @click=${() => this.papyros.runner.start(RunMode.Run)}>
-                        <span slot="icon">${this.papyros.theme.icons[RunMode.Run]}</span>
+                        <span slot="icon">${this.papyros.constants.icons[RunMode.Run]}</span>
                         ${this.t(`Papyros.run_modes.${RunMode.Run}`)}
                     </md-filled-button>`,
                     ...this.papyros.runner.runModes.map(mode => html`
                         <md-outlined-button @click=${() => this.papyros.runner.start(mode)}>
-                            <span slot="icon">${this.papyros.theme.icons[mode]}</span>
+                            <span slot="icon">${this.papyros.constants.icons[mode]}</span>
                             ${this.t(`Papyros.run_modes.${mode}`)}
                         </md-outlined-button>`)
                 ]
@@ -49,7 +49,7 @@ export class ButtonLint extends PapyrosElement {
         } else {
             return html`
                 <md-filled-button @click=${() => this.papyros.runner.stop()}>
-                    <span slot="icon">${this.papyros.theme.icons.stop}</span>
+                    <span slot="icon">${this.papyros.constants.icons.stop}</span>
                     ${this.t(`Papyros.stop`)}
                 </md-filled-button>`;
         }
