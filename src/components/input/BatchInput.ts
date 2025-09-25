@@ -79,6 +79,7 @@ export class BatchInput extends PapyrosElement {
                 .usedLines=${this.usedLines}
                 .readOnly=${this.papyros.debugger.active && this.papyros.runner.state === RunState.Ready}
                 .placeholder=${this.placeholder}
+                .translations=${this.t("CodeMirror")}
                 @change=${(e: CustomEvent) => {
                     this.buffer = e.detail;
                     this.provideInput();

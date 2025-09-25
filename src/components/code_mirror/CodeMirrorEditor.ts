@@ -45,6 +45,10 @@ export class CodeMirrorEditor extends LitElement {
                 }) });
     }
 
+    set translations(translations: Record<string, string>) {
+        this.configure({ translations: EditorState.phrases.of(translations) });
+    }
+
     private initView() {
         this.theme = {};
         this.view = new EditorView({

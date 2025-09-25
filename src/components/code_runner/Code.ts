@@ -23,6 +23,7 @@ export class Code extends PapyrosElement {
                 .value=${this.papyros.runner.code}
                 .lintingSource=${this.papyros.runner.lintSource.bind(this.papyros.runner)}
                 .indentLength=${this.papyros.theme.indentationSize}
+                .translations=${this.t("CodeMirror")}
                 @change=${(e: CustomEvent) => this.papyros.runner.code = e.detail}
             ></p-code-editor>
         `
