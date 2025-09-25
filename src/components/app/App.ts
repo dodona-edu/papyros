@@ -24,6 +24,10 @@ export class App extends PapyrosElement {
                 --md-ref-typeface-plain: var(--md-ref-typeface-brand);
                 font-family: var(--md-ref-typeface-brand);
                 font-size: 16px;
+                --md-outlined-field-bottom-space: 8px;
+                --md-outlined-field-top-space: 8px;
+                --md-outlined-text-field-bottom-space: 8px;
+                --md-outlined-text-field-top-space: 8px;
             }
 
             .rows {
