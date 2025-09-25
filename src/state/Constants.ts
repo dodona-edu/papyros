@@ -1,6 +1,7 @@
 import {State, stateProperty} from "@dodona/lit-state";
 import {RunMode} from "../Backend";
 import {html} from "lit";
+import {StyleSpec} from "style-mod";
 
 export class Constants extends State {
     /**
@@ -45,4 +46,14 @@ export class Constants extends State {
 
     @stateProperty
     indentationSize: number = 4;
+
+    @stateProperty
+    CodeMirrorTheme:  {[p: string]: StyleSpec} = {
+        ".cm-scroller": { overflow: "auto" },
+        "&": {
+            "height": "100%", // use full height of host
+            "width": "100%", // use full width of host
+            "font-size": "14px" // use proper size to align gutters with editor
+        },
+    };
 }
