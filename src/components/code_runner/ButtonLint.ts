@@ -22,6 +22,7 @@ export class ButtonLint extends PapyrosElement {
             .buttons {
                 display: flex;
                 gap: 0.5rem;
+                flex-wrap: wrap;
             }
         `
     }
