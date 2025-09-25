@@ -39,7 +39,7 @@ export class Output extends PapyrosElement {
     }
 
     private get maxOutputLength(): number {
-        if(this.papyros.debugger.active && this.papyros.debugger.debugOutputs) {
+        if(this.papyros.debugger.active && this.papyros.debugger.debugOutputs !== undefined) {
             return this.papyros.debugger.debugOutputs;
         }
 
