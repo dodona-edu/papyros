@@ -8,6 +8,7 @@ import "../Input";
 import "./ProgrammingLanguagePicker";
 import "./ExamplePicker";
 import "./LanguagePicker";
+import "./themes/ThemePicker";
 
 @customElement("p-app")
 export class App extends PapyrosElement {
@@ -84,7 +85,10 @@ export class App extends PapyrosElement {
             <div class="rows">
                 <div class="header">
                     <strong>${this.t("Papyros.Papyros")}</strong>
-                    <p-language-picker .papyros=${this.papyros}></p-language-picker>
+                    <div>
+                        <p-theme-picker></p-theme-picker>
+                        <p-language-picker .papyros=${this.papyros}></p-language-picker>
+                    </div>
                 </div>
                 <div class="top">
                     <div class="left">
