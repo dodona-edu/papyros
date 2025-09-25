@@ -71,6 +71,7 @@ export class App extends PapyrosElement {
                 margin: 0.5rem;
                 border-radius: 1rem;
                 background-color: var(--md-sys-color-surface-container);
+                color: var(--md-sys-color-on-surface);
             }
             
             .overflow {
@@ -79,9 +80,33 @@ export class App extends PapyrosElement {
             
             .header {
                 align-items: center;
-                padding: 1rem;
+                padding: 1rem 2rem;
                 display: flex;
                 justify-content: space-between;
+                background-color: var(--md-sys-color-surface-container);
+                color: var(--md-sys-color-on-surface);
+            }
+            
+            .title {
+                font-size: 1.5rem;
+                font-weight: bold;
+                color: var(--md-sys-color-primary);
+            }
+            
+            .header-options {
+                display: flex;
+                gap: 0.5rem;
+                align-items: center;
+            }
+            
+            .content {
+                max-width: 1500px;
+                width: 100%;
+                height: 100%;
+                margin: 1rem auto;
+                display: flex;
+                flex-direction: column;
+                flex: 1;
             }
         `;
     }
@@ -95,32 +120,34 @@ export class App extends PapyrosElement {
         return html`
             <div class="rows">
                 <div class="header">
-                    <strong>${this.t("Papyros.Papyros")}</strong>
-                    <div>
+                    <span class="title">${this.t("Papyros.Papyros")}</span>
+                    <div class="header-options">
                         <p-theme-picker></p-theme-picker>
                         <p-language-picker .papyros=${this.papyros}></p-language-picker>
                     </div>
                 </div>
-                <div class="top">
-                    <div class="left">
-                        <p-code-runner .papyros=${this.papyros} class="container overflow">
-                            <p-programming-language-picker .papyros=${this.papyros}
-                                                           slot="buttons"
-                            ></p-programming-language-picker>
-                            <p-example-picker .papyros=${this.papyros} slot="buttons"></p-example-picker>
-                        </p-code-runner>
-                    </div>
-                    <div class="right">
-                        <div class="container grow overflow">
-                            <p-output .papyros=${this.papyros}></p-output>
+                <div class="content">
+                    <div class="top">
+                        <div class="left">
+                            <p-code-runner .papyros=${this.papyros} class="container overflow">
+                                <p-programming-language-picker .papyros=${this.papyros}
+                                                               slot="buttons"
+                                ></p-programming-language-picker>
+                                <p-example-picker .papyros=${this.papyros} slot="buttons"></p-example-picker>
+                            </p-code-runner>
                         </div>
-                        <div class="container">
-                            <p-input .papyros=${this.papyros}></p-input>
+                        <div class="right">
+                            <div class="container grow overflow">
+                                <p-output .papyros=${this.papyros}></p-output>
+                            </div>
+                            <div class="container">
+                                <p-input .papyros=${this.papyros}></p-input>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="bottom container overflow">
-                    <p-debugger .papyros=${this.papyros}></p-debugger>
+                    <div class="bottom container overflow">
+                        <p-debugger .papyros=${this.papyros}></p-debugger>
+                    </div>
                 </div>
             </div>
         `;
