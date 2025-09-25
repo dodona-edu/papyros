@@ -2,7 +2,7 @@
 // Empty strings are considered missing by i18n-extract
 // Therefore the ready-key is an explicit space now, which is still invisible
 
-const ENGLISH_TRANSLATION = {
+export const ENGLISH_TRANSLATION = {
     "Papyros": "Papyros",
     "code": "Code",
     "code_placeholder": "Write your %{programmingLanguage} code here and click 'Run' to execute...",
@@ -71,7 +71,7 @@ const ENGLISH_TRANSLATION = {
     },
 };
 
-const DUTCH_TRANSLATION = {
+export const DUTCH_TRANSLATION = {
     "Papyros": "Papyros",
     "code": "Code",
     "code_placeholder": "Schrijf hier je %{programmingLanguage} code en klik op 'Uitvoeren' om uit te voeren...",
@@ -141,7 +141,7 @@ const DUTCH_TRANSLATION = {
 };
 
 // Override some default English phrases to also use capitalized text
-const ENGLISH_PHRASES = {
+export const ENGLISH_PHRASES = {
     // @codemirror/search
     "Go to line": "Go to line",
     "go": "OK",
@@ -156,7 +156,7 @@ const ENGLISH_PHRASES = {
     "close": "Sluiten",
 }
 
-const DUTCH_PHRASES = {
+export const DUTCH_PHRASES = {
     // @codemirror/view
     "Control character": "Controlekarakter",
     // @codemirror/fold

@@ -1,7 +1,6 @@
 import { Extension, Line } from "@codemirror/state";
 import { Decoration, EditorView, WidgetType } from "@codemirror/view";
 import readOnlyRangesExtension from "codemirror-readonly-ranges";
-import { t } from "../../util/Util";
 import { LineEffectExtension } from "./LineEffectExtension";
 
 // The types used in this file should match the ones in the codemirror-readonly-ranges package

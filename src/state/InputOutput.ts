@@ -1,9 +1,38 @@
 import {State, stateProperty} from "@dodona/lit-state";
-import {FriendlyError} from "../OutputManager";
 import {BackendManager} from "../BackendManager";
 import {BackendEventType} from "../BackendEvent";
 import {parseData} from "../util/Util";
 import {Papyros} from "./Papyros";
+
+/**
+ * Shape of Error objects that are easy to interpret
+ */
+export interface FriendlyError {
+    /**
+     * The name of the Error
+     */
+    name: string;
+    /**
+     * Traceback for where in the code the Error occurred
+     */
+    traceback?: string;
+    /**
+     * General information about this type of Error
+     */
+    info?: string;
+    /**
+     * Information about what went wrong in this case
+     */
+    what?: string;
+    /**
+     * Information about why this is wrong and how to fix it
+     */
+    why?: string;
+    /**
+     * Where specifically in the source code the Error occurred
+     */
+    where?: string;
+}
 
 export enum OutputType {
     stdout = "stdout",

@@ -3,7 +3,7 @@ import {SyncClient} from "comsync";
 import {Backend, RunMode, WorkerDiagnostic} from "../Backend";
 import {BackendEvent, BackendEventType} from "../BackendEvent";
 import {BackendManager} from "../BackendManager";
-import {downloadResults, parseData, t} from "../util/Util";
+import {parseData} from "../util/Util";
 import {State, stateProperty} from "@dodona/lit-state";
 import {Papyros} from "./Papyros";
 import {ProgrammingLanguage} from "../ProgrammingLanguage";
@@ -145,15 +145,8 @@ export class Runner extends State {
         // eslint-disable-next-line no-async-promise-executor
         this.backend = new Promise(async resolve => {
             const workerProxy = backend.workerProxy;
-            await workerProxy
-                // Allow passing messages between worker and main thread
-                .launch(
-                    proxy((e: BackendEvent) => BackendManager.publish(e)),
-                    proxy(() => {
-                        // TODO
-                        // this.outputManager.onOverflow(null);
-                    })
-                );
+            // Allow passing messages between worker and main thread
+            await workerProxy.launch(proxy((e: BackendEvent) => BackendManager.publish(e)));
             return resolve(backend);
         });
         this.setState(RunState.Ready);
@@ -201,7 +194,7 @@ export class Runner extends State {
             if (terminated) {
                 await this.launch();
             }
-            this.setState(RunState.Ready, t(
+            this.setState(RunState.Ready, this.papyros.i18n.t(
                 interrupted ? "Papyros.interrupted" : "Papyros.finished",
                 { time: (new Date().getTime() - this.runStartTime) / 1000 }));
         }
@@ -252,7 +245,7 @@ export class Runner extends State {
      * @param {string} message Optional message to indicate the state
      */
     public setState(state: RunState, message?: string): void {
-        this.stateMessage = message || t(`Papyros.states.${state}`);
+        this.stateMessage = message || this.papyros.i18n.t(`Papyros.states.${state}`);
         if (state !== this.state) {
             this.previousState = this.state;
             this.state = state;
@@ -285,7 +278,7 @@ export class Runner extends State {
             this.loadingPackages = [];
         }
         if (this.loadingPackages.length > 0) {
-            const packageMessage = t("Papyros.loading", {
+            const packageMessage = this.papyros.i18n.t("Papyros.loading", {
                 // limit amount of package names shown
                 packages: this.loadingPackages.slice(0, 3).join(", ")
             });

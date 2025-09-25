@@ -1,7 +1,6 @@
 import {html, TemplateResult} from "lit";
 import "@dodona/trace-component"
 import {customElement} from "lit/decorators.js";
-import {t} from "../util/Util";
 import {PapyrosElement} from "./extras/PapyrosElement";
 
 @customElement("p-debugger")
@@ -13,7 +12,7 @@ export class Debugger extends PapyrosElement {
 
         return html`<tc-trace 
                 .trace=${this.papyros.debugger.trace}
-                .translations=${(t("Papyros.debugger") as any)}
+                .translations=${(this.t("Papyros.debugger") as any)}
                 @frame-change=${(e: CustomEvent) => {
                     this.papyros.debugger.activeFrame = e.detail.frame;
                 }

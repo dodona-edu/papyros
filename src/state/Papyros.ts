@@ -7,7 +7,8 @@ import {Constants} from "./Constants";
 import {Examples} from "./Examples";
 import {BackendManager} from "../BackendManager";
 import {makeChannel} from "sync-message";
-import {cleanCurrentUrl, t} from "../util/Util";
+import {cleanCurrentUrl} from "../util/Util";
+import {I18n} from "./I18n";
 
 export class Papyros extends State {
     readonly debugger: Debugger = new Debugger(this);
@@ -16,6 +17,7 @@ export class Papyros extends State {
     readonly theme: Theme = new Theme();
     readonly constants: Constants = new Constants();
     readonly examples: Examples = new Examples(this);
+    readonly i18n = new I18n();
 
     @stateProperty
     locale: string = "en";
@@ -30,12 +32,12 @@ export class Papyros extends State {
      */
     public async launch(): Promise<Papyros> {
         if (!await this.configureInput()) {
-            alert(t("Papyros.service_worker_error"));
+            alert(this.i18n.t("Papyros.service_worker_error"));
         } else {
             try {
                 await this.runner.launch();
             } catch {
-                if (confirm(t("Papyros.launch_error"))) {
+                if (confirm(this.i18n.t("Papyros.launch_error"))) {
                     return this.launch();
                 }
             }

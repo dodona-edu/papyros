@@ -1,6 +1,5 @@
 import {customElement, property} from "lit/decorators.js";
 import {css, html, TemplateResult} from "lit";
-import {t} from "../util/Util";
 import "./input/BatchInput";
 import "./input/InteractiveInput";
 import {PapyrosElement} from "./extras/PapyrosElement";
@@ -57,7 +56,7 @@ export class Input extends PapyrosElement {
                 <md-switch .selected=${this.mode === InputMode.batch}
                            ?disabled=${this.papyros.debugger.active}
                            @change=${() => this.toggleMode()}></md-switch>
-                ${t(`Papyros.switch_input_mode_to.${this.otherMode}`)}
+                ${this.t(`Papyros.switch_input_mode_to.${this.otherMode}`)}
             </label>
         `;
     }

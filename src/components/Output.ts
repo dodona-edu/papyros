@@ -1,10 +1,8 @@
 import {customElement} from "lit/decorators.js";
 import {css, html, TemplateResult} from "lit";
-import {OutputEntry, OutputType} from "../state/InputOutput";
-import {FriendlyError} from "../OutputManager";
+import {FriendlyError, OutputEntry, OutputType} from "../state/InputOutput";
 import "./extras/Circle";
 import {PapyrosElement} from "./extras/PapyrosElement";
-import {t} from "../util/Util";
 
 @customElement("p-output")
 export class Output extends PapyrosElement {
@@ -111,9 +109,9 @@ export class Output extends PapyrosElement {
             <pre>${this.renderedOutputs}</pre>
             ${this.showOverflowWarning ? html`
                 <p>
-                    ${t("Papyros.output_overflow")}
+                    ${this.t("Papyros.output_overflow")}
                     <a href="${this.downloadOverflowUrl}" download="papyros_output.txt">
-                    ${t("Papyros.output_overflow_download")}
+                    ${this.t("Papyros.output_overflow_download")}
                     </a>
                 </p>
             ` : html``}

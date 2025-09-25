@@ -2,7 +2,6 @@ import {customElement} from "lit/decorators.js";
 import {css, html, TemplateResult} from "lit";
 import {RunState} from "../../state/Runner";
 import {PapyrosElement} from "../extras/PapyrosElement";
-import {t} from "../../util/Util";
 import {RunMode} from "../../Backend";
 import "@material/web/button/filled-button";
 import "@material/web/button/outlined-button";
@@ -31,19 +30,19 @@ export class ButtonLint extends PapyrosElement {
                 return html`
                     <md-outlined-button @click=${() => this.papyros.debugger.active = false}>
                         <span slot="icon">${this.papyros.theme.icons.stopDebug}</span>
-                        ${t(`Papyros.debug.stop`)}
+                        ${this.t(`Papyros.debug.stop`)}
                     </md-outlined-button>`;
             } else {
                 return [
                     html`
                     <md-filled-button @click=${() => this.papyros.runner.start(RunMode.Run)}>
                         <span slot="icon">${this.papyros.theme.icons[RunMode.Run]}</span>
-                        ${t(`Papyros.run_modes.${RunMode.Run}`)}
+                        ${this.t(`Papyros.run_modes.${RunMode.Run}`)}
                     </md-filled-button>`,
                     ...this.papyros.runner.runModes.map(mode => html`
                         <md-outlined-button @click=${() => this.papyros.runner.start(mode)}>
                             <span slot="icon">${this.papyros.theme.icons[mode]}</span>
-                            ${t(`Papyros.run_modes.${mode}`)}
+                            ${this.t(`Papyros.run_modes.${mode}`)}
                         </md-outlined-button>`)
                 ]
             }
@@ -51,7 +50,7 @@ export class ButtonLint extends PapyrosElement {
             return html`
                 <md-filled-button @click=${() => this.papyros.runner.stop()}>
                     <span slot="icon">${this.papyros.theme.icons.stop}</span>
-                    ${t(`Papyros.stop`)}
+                    ${this.t(`Papyros.stop`)}
                 </md-filled-button>`;
         }
     }

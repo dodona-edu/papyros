@@ -1,7 +1,6 @@
 import {customElement, property} from "lit/decorators.js";
 import {css, html, TemplateResult} from "lit";
 import "../code_mirror/BatchInputEditor";
-import {t} from "../../util/Util";
 import {RunState} from "../../state/Runner";
 import {PapyrosElement} from "../extras/PapyrosElement";
 
@@ -54,7 +53,7 @@ export class BatchInput extends PapyrosElement {
         if(this.papyros.io.prompt) {
             return this.papyros.io.prompt;
         }
-        return t(`Papyros.input_placeholder.${this.mode}`)
+        return this.t(`Papyros.input_placeholder.${this.mode}`)
     }
 
     connectedCallback() {

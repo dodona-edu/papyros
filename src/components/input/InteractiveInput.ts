@@ -1,7 +1,6 @@
 import {customElement, property} from "lit/decorators.js";
 import {createRef, Ref, ref} from "lit/directives/ref.js";
 import {css, html, PropertyValues, TemplateResult} from "lit";
-import {t} from "../../util/Util";
 import {PapyrosElement} from "../extras/PapyrosElement";
 import "@material/web/textfield/outlined-text-field";
 import "@material/web/button/outlined-button";
@@ -50,14 +49,14 @@ export class InteractiveInput extends PapyrosElement {
                            this.provideInput();
                        }
                    }}
-                   placeholder=${this.papyros.io.prompt || t(`Papyros.input_placeholder.interactive`)}
+                   placeholder=${this.papyros.io.prompt || this.t(`Papyros.input_placeholder.interactive`)}
                    ?disabled=${!this.papyros.io.awaitingInput}
                    ${ref(this.inputRef)}
             ></md-outlined-text-field>
             <md-outlined-button
                     @click=${() => this.provideInput()} 
                     ?disabled=${!this.papyros.io.awaitingInput}>
-                ${t('Papyros.enter')}
+                ${this.t('Papyros.enter')}
             </md-outlined-button>
         `;
     }

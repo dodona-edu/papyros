@@ -1,16 +1,4 @@
-import { I18n } from "i18n-js";
-import { TRANSLATIONS } from "../Translations";
 import { LogType, papyrosLog } from "./Logging";
-
-
-export const i18n = new I18n(TRANSLATIONS);
-
-// Shorthand for ease of use
-export const t = i18n.t.bind(i18n);
-
-export function getLocales(): Array<string> {
-    return Object.keys(TRANSLATIONS);
-}
 
 /**
  * Helper type to access a HTML element, either via its id or the element itself
