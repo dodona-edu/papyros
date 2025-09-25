@@ -7,6 +7,7 @@ import "../Output";
 import "../Input";
 import "./ProgrammingLanguagePicker";
 import "./ExamplePicker";
+import "./LanguagePicker";
 
 @customElement("p-app")
 export class App extends PapyrosElement {
@@ -63,6 +64,13 @@ export class App extends PapyrosElement {
                 background-color: var(--papyros-surface, #ccc);
                 overflow: auto;
             }
+            
+            .header {
+                align-items: center;
+                padding: 1rem;
+                display: flex;
+                justify-content: space-between;
+            }
         `;
     }
 
@@ -74,6 +82,10 @@ export class App extends PapyrosElement {
     protected override render() {
         return html`
             <div class="rows">
+                <div class="header">
+                    <strong>${this.t("Papyros.Papyros")}</strong>
+                    <p-language-picker .papyros=${this.papyros}></p-language-picker>
+                </div>
                 <div class="top">
                     <div class="left">
                         <p-code-runner .papyros=${this.papyros} class="container">

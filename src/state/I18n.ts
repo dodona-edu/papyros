@@ -1,14 +1,18 @@
-import {State, stateProperty} from "@dodona/lit-state";
+import {State, StateMap, stateProperty} from "@dodona/lit-state";
 import Polyglot from "node-polyglot";
 import {DUTCH_PHRASES, DUTCH_TRANSLATION, ENGLISH_PHRASES, ENGLISH_TRANSLATION} from "../Translations";
 
 export type Translations = Record<string, Translations | string>;
 
 export class I18n extends State {
-    private readonly polyglot = new Polyglot();
-    private readonly translations = new Map<string, Translations>();
+    private readonly polyglot = new Polyglot({allowMissing: true, onMissingKey: this.tryObjectFetch.bind(this)});
+    private readonly translations = new StateMap<string, Translations>();
     @stateProperty
-    locale: string = "en";
+    private _locale: string = "en";
+
+    get availableLocales(): string[] {
+        return [...this.translations.keys()];
+    }
 
     public setTranslations(locale: string, translations: Translations): void {
         this.translations.set(locale, translations);
@@ -18,10 +22,10 @@ export class I18n extends State {
         }
     }
 
-    public setLocale(locale: string): void {
+    public set locale(locale: string) {
         if (this.translations.has(locale)) {
             this.dispatchStateEvent("t");
-            this.locale = locale;
+            this._locale = locale;
             this.polyglot.locale(locale);
             this.polyglot.replace(this.translations.get(locale)!);
         } else {
@@ -29,9 +33,28 @@ export class I18n extends State {
         }
     }
 
-    public t(phrase: string, options?: Record<string, any>): string {
+    public get locale(): string {
+        return this._locale;
+    }
+
+    public t(phrase: string, options?: Record<string, any>): string | Translations {
         this.recordRead("t");
         return this.polyglot.t(phrase, options);
+    }
+
+    protected tryObjectFetch(key: string, options: Record<string, any>, locale: string): Translations | string {
+        if(this.translations.has(locale)) {
+            const keys = key.split('.');
+            let record: Translations | string = this.translations.get(locale)!;
+            for (const k of keys) {
+                if (typeof record === "string" || !(k in record)) {
+                    return key;
+                }
+                record = record[k];
+            }
+            return record;
+        }
+        return key;
     }
 
     constructor() {
