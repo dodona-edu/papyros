@@ -5,7 +5,7 @@ import {DUTCH_TRANSLATION, ENGLISH_TRANSLATION} from "../Translations";
 export type Translations = Record<string, Translations | string>;
 
 export class I18n extends State {
-    private readonly polyglot = new Polyglot({allowMissing: true, onMissingKey: this.tryObjectFetch.bind(this)});
+    private readonly polyglot = new Polyglot();
     private readonly translations = new StateMap<string, Translations>();
     @stateProperty
     private _locale: string = "en";
@@ -37,24 +37,30 @@ export class I18n extends State {
         return this._locale;
     }
 
-    public t(phrase: string, options?: Record<string, any>): string | Translations {
+    public t(phrase: string, options?: Record<string, any>): string {
         this.recordRead("t");
         return this.polyglot.t(phrase, options);
     }
 
-    protected tryObjectFetch(key: string, options: Record<string, any>, locale: string): Translations | string {
-        if(this.translations.has(locale)) {
-            const keys = key.split('.');
-            let record: Translations | string = this.translations.get(locale)!;
-            for (const k of keys) {
-                if (typeof record === "string" || !(k in record)) {
-                    return key;
-                }
-                record = record[k];
-            }
-            return record;
+    public getTranslations(key?: string): Translations | undefined {
+        if(!this.translations.has(this.locale)) {
+            return undefined;
         }
-        return key;
+        if (!key) {
+            return this.translations.get(this.locale);
+        }
+        const keys = key.split('.');
+        let record: Translations | string = this.translations.get(this.locale)!;
+        for (const k of keys) {
+            if (typeof record === "string" || !(k in record)) {
+                return undefined;
+            }
+            record = record[k];
+        }
+        if (typeof record === "string") {
+            return undefined;
+        }
+        return record;
     }
 
     constructor() {
