@@ -9,12 +9,12 @@ export const materialTheme = EditorView.theme({
         height: "100%", // use full height of host
         width: "100%", // use full width of host
         "font-size": "14px", // use proper size to align gutters with editor
-        backgroundColor: "var(--md-sys-color-surface-container-lowest)",
+        backgroundColor: "var(--md-sys-color-surface-container-highest)",
         color: "var(--md-sys-color-on-background)",
     },
 
     ".cm-gutters": {
-        backgroundColor: "var(--md-sys-color-surface)",
+        backgroundColor: "var(--md-sys-color-surface-container)",
         color: "var(--md-sys-color-on-surface-variant)",
         border: "none",
         fontSize: "12px",

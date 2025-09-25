@@ -1,9 +1,11 @@
 import {customElement} from "lit/decorators.js";
 import {html, LitElement, TemplateResult} from "lit";
-import blueLight from "./light.css?inline";
-import blueDark from "./dark.css?inline";
+import blueLight from "./blue-light.css?inline";
+import blueDark from "./blue-dark.css?inline";
 import greenLight from "./green-light.css?inline";
 import greenDark from "./green-dark.css?inline";
+import redLight from "./red-light.css?inline";
+import redDark from "./red-dark.css?inline";
 import "./ThemedButton";
 
 type Theme = { theme: CSSStyleSheet; dark: boolean };
@@ -12,6 +14,8 @@ const _themes = [
     { theme: blueDark, dark: true },
     { theme: greenLight, dark: false },
     { theme: greenDark, dark: true },
+    { theme: redLight, dark: false },
+    { theme: redDark, dark: true },
 ] as { theme: string; dark: boolean }[];
 
 const themes = _themes.map(t => {

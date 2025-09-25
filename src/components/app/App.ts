@@ -63,12 +63,13 @@ export class App extends PapyrosElement {
             }
 
             .container {
-                min-height: 0;
-                min-width: 0;
                 padding: 1rem;
                 margin: 0.5rem;
                 border-radius: 1rem;
                 background-color: var(--md-sys-color-surface-container);
+            }
+            
+            .overflow {
                 overflow: auto;
             }
             
@@ -98,7 +99,7 @@ export class App extends PapyrosElement {
                 </div>
                 <div class="top">
                     <div class="left">
-                        <p-code-runner .papyros=${this.papyros} class="container">
+                        <p-code-runner .papyros=${this.papyros} class="container overflow">
                             <p-programming-language-picker .papyros=${this.papyros}
                                                            slot="buttons"
                             ></p-programming-language-picker>
@@ -106,7 +107,7 @@ export class App extends PapyrosElement {
                         </p-code-runner>
                     </div>
                     <div class="right">
-                        <div class="container grow">
+                        <div class="container grow overflow">
                             <p-output .papyros=${this.papyros}></p-output>
                         </div>
                         <div class="container">
@@ -114,7 +115,7 @@ export class App extends PapyrosElement {
                         </div>
                     </div>
                 </div>
-                <div class="bottom container">
+                <div class="bottom container overflow">
                     <p-debugger .papyros=${this.papyros}></p-debugger>
                 </div>
             </div>
