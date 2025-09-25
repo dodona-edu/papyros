@@ -18,6 +18,12 @@ export class App extends PapyrosElement {
                 width: 100%;
                 height: 100%;
                 display: block;
+                background-color: var(--md-sys-color-background);
+                color: var(--md-sys-color-on-background);
+                --md-ref-typeface-brand: Roboto, "Helvetica Neue", sans-serif;
+                --md-ref-typeface-plain: var(--md-ref-typeface-brand);
+                font-family: var(--md-ref-typeface-brand);
+                font-size: 16px;
             }
 
             .rows {
@@ -62,7 +68,7 @@ export class App extends PapyrosElement {
                 padding: 1rem;
                 margin: 0.5rem;
                 border-radius: 1rem;
-                background-color: var(--papyros-surface, #ccc);
+                background-color: var(--md-sys-color-surface-container);
                 overflow: auto;
             }
             

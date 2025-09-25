@@ -25,8 +25,7 @@ export class CodeRunner extends PapyrosElement {
                 position: absolute;
                 bottom: 0;
                 right: 0;
-                background-color: var(--papyros-surface, #000000);
-                color: var(--papyros-on-surface, #fff);
+                background-color: var(--md-sys-color-surface-container-highest);
                 padding: 0.25rem 1rem;
                 border-top-right-radius: 1rem;
                 border-top-left-radius: 1rem;

@@ -6,6 +6,7 @@ import greenLight from "./green-light.css?inline";
 import greenDark from "./green-dark.css?inline";
 import "./ThemedButton";
 
+type Theme = { theme: CSSStyleSheet; dark: boolean };
 const _themes = [
     { theme: blueLight, dark: false },
     { theme: blueDark, dark: true },
@@ -21,15 +22,21 @@ const themes = _themes.map(t => {
 
 @customElement('p-theme-picker')
 export class ThemePicker extends LitElement {
+    constructor() {
+        super();
+        this.setTheme(themes[0]);
+    }
+
+    setTheme(theme: Theme) {
+        document.documentElement.style.setProperty('color-scheme', theme.dark ? 'dark' : 'light');
+        document.adoptedStyleSheets = [theme.theme];
+    }
 
     protected override render(): TemplateResult[] {
         return themes.map(t => html`
             <p-themed-button .theme=${t.theme} 
                              .dark=${t.dark}
-                            @click=${() => {
-                                document.documentElement.style.setProperty('color-scheme', t.dark ? 'dark' : 'light');
-                                document.adoptedStyleSheets = [t.theme];
-                            }}
+                            @click=${() => this.setTheme(t)}
             ></p-themed-button>
         `);
     }
