@@ -1,6 +1,6 @@
 import {State, StateMap, stateProperty} from "@dodona/lit-state";
 import Polyglot from "node-polyglot";
-import {DUTCH_PHRASES, DUTCH_TRANSLATION, ENGLISH_PHRASES, ENGLISH_TRANSLATION} from "../Translations";
+import {DUTCH_TRANSLATION, ENGLISH_TRANSLATION} from "../Translations";
 
 export type Translations = Record<string, Translations | string>;
 
@@ -60,13 +60,7 @@ export class I18n extends State {
     constructor() {
         super();
         this.polyglot.locale(this.locale);
-        this.setTranslations("en", {
-            "Papyros": ENGLISH_TRANSLATION,
-            "CodeMirror": ENGLISH_PHRASES,
-        })
-        this.setTranslations("nl", {
-            "Papyros": DUTCH_TRANSLATION,
-            "CodeMirror": DUTCH_PHRASES,
-        });
+        this.setTranslations("en", ENGLISH_TRANSLATION)
+        this.setTranslations("nl", DUTCH_TRANSLATION);
     }
 }
