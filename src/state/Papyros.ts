@@ -18,10 +18,6 @@ export class Papyros extends State {
     readonly i18n = new I18n();
 
     @stateProperty
-    locale: string = "en";
-    @stateProperty
-    darkMode: boolean = false;
-    @stateProperty
     serviceWorkerName: string = "InputServiceWorker.js";
 
     /**
