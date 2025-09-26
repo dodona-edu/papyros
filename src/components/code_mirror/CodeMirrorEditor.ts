@@ -3,15 +3,12 @@ import { customElement } from "lit/decorators.js";
 import {EditorView, ViewUpdate, placeholder} from "@codemirror/view";
 import {Compartment, EditorState, Extension, StateEffect} from "@codemirror/state";
 
-type extensionFactory = (view: EditorView) => Extension;
-type ExtensionOrFactory = Extension | extensionFactory;
-
 @customElement('p-code-mirror-editor')
 export class CodeMirrorEditor extends LitElement {
     private __value: string = '';
     protected view: EditorView | undefined;
     protected readonly compartments: Map<string, Compartment> = new Map();
-    protected readonly extensions: Map<string, ExtensionOrFactory> = new Map();
+    protected readonly extensions: Map<string, Extension> = new Map();
 
     public set value(value: string) {
         if(this.__value === value) return;
@@ -79,33 +76,25 @@ export class CodeMirrorEditor extends LitElement {
         this.view = undefined;
     }
 
-    protected configure(extensions: Record<String, ExtensionOrFactory>) {
+    protected configure(extensions: Record<String, Extension>) {
         Object.entries(extensions).forEach(([key, ext]) => {
-            this.extensions.set(key, ext as ExtensionOrFactory);
+            this.extensions.set(key, ext as Extension);
         });
+
+        const effects =  Object.keys(extensions).map(key => {
+            let extension = extensions[key];
+            if(this.compartments.has(key)) {
+                return this.compartments.get(key)!.reconfigure(extension)
+            }
+
+            const compartment = new Compartment();
+            this.compartments.set(key, compartment);
+            return StateEffect.appendConfig.of(compartment.of(extension));
+        })
 
 
         if (this.view) {
-            const effects =  Object.keys(extensions).map(key => {
-                let extension = extensions[key];
-                if(typeof extension === "function") {
-                    extension = (extension as extensionFactory)(this.view);
-                }
-
-                if(this.compartments.has(key)) {
-                    return this.compartments.get(key)!.reconfigure(extension)
-                }
-
-                const compartment = new Compartment();
-                this.compartments.set(key, compartment);
-                return StateEffect.appendConfig.of(compartment.of(extension));
-            })
             this.view.dispatch({ effects});
-        } else {
-            Object.keys(extensions).filter(k => !this.compartments.has(k)).forEach(key => {
-                const compartment = new Compartment();
-                this.compartments.set(key, compartment);
-            });
         }
     }
 }

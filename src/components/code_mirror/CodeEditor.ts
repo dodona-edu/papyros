@@ -1,7 +1,6 @@
 import {customElement} from "lit/decorators.js";
 import {CodeMirrorEditor} from "./CodeMirrorEditor";
 import {
-    Decoration,
     drawSelection, highlightActiveLine,
     highlightActiveLineGutter,
     highlightSpecialChars,
@@ -36,7 +35,7 @@ import {
     setDebugLines,
     setTestLines,
     testCodeWidgetExtension,
-    testLineExtension, testLineState,
+    testLineExtension,
 } from "./Extensions";
 import readOnlyRangesExtension from "codemirror-readonly-ranges";
 
