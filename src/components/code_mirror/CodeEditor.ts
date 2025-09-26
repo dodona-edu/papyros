@@ -1,7 +1,7 @@
-import {customElement, property} from "lit/decorators.js";
+import {customElement} from "lit/decorators.js";
 import {CodeMirrorEditor} from "./CodeMirrorEditor";
 import {
-    drawSelection, EditorView, highlightActiveLine,
+    drawSelection, highlightActiveLine,
     highlightActiveLineGutter,
     highlightSpecialChars,
     keymap,
@@ -10,11 +10,10 @@ import {
 } from "@codemirror/view";
 import {defaultKeymap, history, historyKeymap, indentWithTab} from "@codemirror/commands";
 import {
-    bracketMatching, defaultHighlightStyle,
+    bracketMatching,
     foldGutter,
     indentOnInput, indentUnit,
-    LanguageSupport,
-    syntaxHighlighting
+    LanguageSupport
 } from "@codemirror/language";
 import {EditorState} from "@codemirror/state";
 import {
@@ -25,14 +24,14 @@ import {
     completionKeymap
 } from "@codemirror/autocomplete";
 import {highlightSelectionMatches, searchKeymap} from "@codemirror/search";
-import {Diagnostic, linter, lintGutter, lintKeymap} from "@codemirror/lint";
-import {debugExtension, markDebugLine} from "./DebugExtension";
+import {linter, lintGutter, lintKeymap} from "@codemirror/lint";
 import {TestCodeExtension} from "./TestCodeExtension";
 import {css} from "lit";
 import {javascript} from "@codemirror/lang-javascript";
 import {python} from "@codemirror/lang-python";
 import {WorkerDiagnostic} from "../../Backend";
 import {ProgrammingLanguage} from "../../ProgrammingLanguage";
+import {debugLineExtension, setDebugLines} from "./Extensions";
 
 const tabCompletionKeyMap = [{ key: "Tab", run: acceptCompletion }];
 const languageExtensions: Record<ProgrammingLanguage, LanguageSupport> = {
@@ -87,7 +86,7 @@ export class CodeEditor extends CodeMirrorEditor {
 
     set debug(value: boolean) {
         this.configure({
-            debugging: value ? debugExtension() : [
+            debugging: value ? debugLineExtension : [
                 highlightActiveLineGutter(),
                 lintGutter(),
                 highlightActiveLine()
@@ -97,7 +96,7 @@ export class CodeEditor extends CodeMirrorEditor {
 
     set debugLine(value: number | undefined) {
         this.view?.dispatch({
-            effects: markDebugLine.of(value),
+            effects: setDebugLines.of(value ? [value] : []),
         });
     }
 
