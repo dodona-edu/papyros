@@ -109,6 +109,10 @@ export class InputOutput extends State {
         this.awaitingInput = false;
     }
 
+    public clearInputs() {
+        this.inputs = [];
+    }
+
     public reset() {
         this.inputs = [];
         this.output = [];

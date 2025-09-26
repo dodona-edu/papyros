@@ -84,6 +84,9 @@ export class BatchInput extends PapyrosElement {
                 @change=${(e: CustomEvent) => {
                     this.buffer = e.detail;
                     this.provideInput();
+                    if(!this.papyros.debugger.active && this.papyros.runner.state === RunState.Ready) {
+                        this.papyros.io.clearInputs();
+                    }
                 }}
             ></p-batch-input-editor>
         `

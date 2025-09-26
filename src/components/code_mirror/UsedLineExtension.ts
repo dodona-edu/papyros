@@ -32,7 +32,7 @@ const markedLineGutterHighlighter = gutterLineClass.compute([markedUsedLines], (
     const line = state.field(markedUsedLines);
     if (line === undefined || line === 0) return RangeSet.empty;
     const markers = [];
-    for(let i = 1; i <= line; i++) {
+    for(let i = 1; i <= line && i <= state.doc.lines; i++) {
         markers.push(usedLineGutterMarker.range(state.doc.line(i).from));
     }
     return RangeSet.of(markers);
@@ -82,6 +82,7 @@ const usedLineGutter = gutter({
     lineMarker: (view, line) => {
         const usedLines = view.state.field(markedUsedLines);
         if (usedLines === undefined || usedLines === 0) { return null; }
+        if( view.state.doc.lines < usedLines ) { return usedMarker; }
         const usedLineFrom = view.state.doc.line(usedLines).from;
         if (line.from <= usedLineFrom) {
             return usedMarker;

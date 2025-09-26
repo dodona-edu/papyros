@@ -1,8 +1,9 @@
 import {customElement, property} from "lit/decorators.js";
 import {CodeMirrorEditor} from "./CodeMirrorEditor";
-import {EditorView} from "@codemirror/view";
+import {EditorView, keymap} from "@codemirror/view";
 import {markUsedLines, usedLineExtension} from "./UsedLineExtension";
 import {css} from "lit";
+import {defaultKeymap} from "@codemirror/commands";
 
 @customElement('p-batch-input-editor')
 export class BatchInputEditor extends CodeMirrorEditor {
@@ -34,6 +35,7 @@ export class BatchInputEditor extends CodeMirrorEditor {
         this.configure({
             default: [
                 usedLineExtension(),
+                keymap.of(defaultKeymap),
             ]
         })
     }
