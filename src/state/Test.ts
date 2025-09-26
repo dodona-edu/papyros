@@ -5,11 +5,13 @@ export class Test extends State {
     papyros: Papyros;
 
     @stateProperty
-    private testLineCount: number | undefined = undefined;
+    public testLineCount: number | undefined = undefined;
     @stateProperty
     set testCode(value: string | undefined) {
         if( this.testLineCount !== undefined) {
-            this.papyros.runner.code = this.testfreeCode;
+            const freedCode = this.testfreeCode;
+            this.testLineCount = undefined;
+            this.papyros.runner.code = freedCode;
         }
         if (value) {
             this.testLineCount = value.split("\n").length;

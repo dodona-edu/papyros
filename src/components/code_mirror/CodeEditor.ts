@@ -1,6 +1,7 @@
 import {customElement} from "lit/decorators.js";
 import {CodeMirrorEditor} from "./CodeMirrorEditor";
 import {
+    Decoration,
     drawSelection, highlightActiveLine,
     highlightActiveLineGutter,
     highlightSpecialChars,
@@ -35,8 +36,9 @@ import {
     setDebugLines,
     setTestLines,
     testCodeWidgetExtension,
-    testLineExtension,
+    testLineExtension, testLineState,
 } from "./Extensions";
+import readOnlyRangesExtension from "codemirror-readonly-ranges";
 
 const tabCompletionKeyMap = [{ key: "Tab", run: acceptCompletion }];
 const languageExtensions: Record<ProgrammingLanguage, LanguageSupport> = {
@@ -108,6 +110,29 @@ export class CodeEditor extends CodeMirrorEditor {
         });
     }
 
+    /**
+     * Override the value setter to temporarily disable read-only ranges
+     */
+    override dispatchChange() {
+        const oldReadOnlyExtensions = this.extensions.get("testReadOnlyRanges") ?? [];
+        this.configure({
+            testReadOnlyRanges: [],
+        })
+        super.dispatchChange();
+        this.configure({
+            testReadOnlyRanges: oldReadOnlyExtensions,
+        })
+    }
+
+    set testLineCount(value: number | undefined) {
+        this.configure({
+            testReadOnlyRanges: value ? readOnlyRangesExtension((state) => {
+                const line = state.doc.lines - value + 1;
+                return [{ from: state.doc.line(line).from, to: state.doc.length }];
+            }) : [],
+        });
+    }
+
     set testTranslations(value: {description: string, edit: string, remove: string}) {
         this.configure({
             test: [
@@ -117,15 +142,6 @@ export class CodeEditor extends CodeMirrorEditor {
                 }, () => {
                     this.dispatchEvent(new CustomEvent("remove-test-code"));
                 }),
-                // readOnlyRangesExtension((state) => {
-                //     const lines = state.field(testLineState);
-                //     if (lines === undefined || lines.length === 0) return [];
-                //     console.log(lines);
-                //     console.log(lines.filter(line => line <= state.doc.lines)
-                //         .map(line => state.doc.line(line)));
-                //     return lines.filter(line => line <= state.doc.lines)
-                //                 .map(line => state.doc.line(line));
-                // }),
             ]
         })
     }

@@ -17,6 +17,7 @@ export class Code extends PapyrosElement {
     protected override render(): TemplateResult {
         return html`
             <p-code-editor
+                .testLineCount=${this.papyros.test.testLineCount}
                 .programmingLanguage=${this.papyros.runner.programmingLanguage}
                 .debug=${this.papyros.debugger.active}
                 .debugLine=${this.papyros.debugger.debugLine}
@@ -28,7 +29,7 @@ export class Code extends PapyrosElement {
                 .placeholder=${this.t("Papyros.code_placeholder", {programmingLanguage: this.papyros.runner.programmingLanguage})}
                 .testLines=${this.papyros.test.testLines}
                 .testTranslations=${this.papyros.i18n.getTranslations("Papyros.editor.test_code")}
-                @edit-test-code=${() => this.papyros.test.editTestCode()}
+                @edit-test-code=${() => this.papyros.test.testLineCount = undefined}
                 @remove-test-code=${() => this.papyros.test.testCode = undefined}
                 @change=${(e: CustomEvent) => this.papyros.runner.code = e.detail}
             ></p-code-editor>

@@ -10,14 +10,19 @@ type ExtensionOrFactory = Extension | extensionFactory;
 export class CodeMirrorEditor extends LitElement {
     private __value: string = '';
     protected view: EditorView | undefined;
-    private readonly compartments: Map<string, Compartment> = new Map();
-    private readonly extensions: Map<string, ExtensionOrFactory> = new Map();
+    protected readonly compartments: Map<string, Compartment> = new Map();
+    protected readonly extensions: Map<string, ExtensionOrFactory> = new Map();
 
     public set value(value: string) {
         if(this.__value === value) return;
         this.__value = value;
         if (!this.view) return;
 
+        this.dispatchChange()
+    }
+
+    protected dispatchChange() {
+        if (!this.view) return;
         this.view.dispatch({
             changes: {
                 from: 0,
