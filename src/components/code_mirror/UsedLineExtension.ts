@@ -31,7 +31,11 @@ const markedUsedLines = StateField.define<number | undefined>({
 const markedLineGutterHighlighter = gutterLineClass.compute([markedUsedLines], (state) => {
     const line = state.field(markedUsedLines);
     if (line === undefined || line === 0) return RangeSet.empty;
-    return RangeSet.of([usedLineGutterMarker.range(0, state.doc.line(line).from)]);
+    const markers = [];
+    for(let i = 1; i <= line; i++) {
+        markers.push(usedLineGutterMarker.range(state.doc.line(i).from));
+    }
+    return RangeSet.of(markers);
 });
 
 // --- Line Decoration Plugin ---
@@ -71,6 +75,7 @@ class UsedMarker extends GutterMarker {
 const usedMarker = new UsedMarker();
 
 const usedLineGutter = gutter({
+    class: "cm-usedline-gutter",
     markers: (view) => {
         return RangeSet.empty;
     },
@@ -91,6 +96,12 @@ export function usedLineExtension(): any[] {
         markedLineGutterHighlighter,
         lineDecorationPlugin,
         usedLineGutter,
+        EditorView.baseTheme({
+            ".cm-usedline-gutter": {
+                width: "17px",
+                textAlign: "center",
+            },
+        }),
     ];
 }
 

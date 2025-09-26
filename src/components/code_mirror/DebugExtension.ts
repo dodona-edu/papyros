@@ -60,7 +60,6 @@ const lineDecorationPlugin = ViewPlugin.fromClass(class {
 class DebugMarker extends GutterMarker {
     public override toDOM(): HTMLElement {
         const arrow = document.createElement("div");
-        arrow.className = "cm-debugArrow";
         arrow.textContent = "▶";
         return arrow;
     }
@@ -88,9 +87,10 @@ export function debugExtension(): Extension {
         lineDecorationPlugin,
         debugGutter,
         EditorView.baseTheme({
-            ".cm-debugline-gutter .cm-debugArrow": {
-                marginRight: "10px",
-            }
+            ".cm-debugline-gutter": {
+                width: "17px",
+                textAlign: "center",
+            },
         }),
         EditorView.editable.of(false),
     ];
