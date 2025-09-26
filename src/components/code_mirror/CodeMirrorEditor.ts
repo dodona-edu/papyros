@@ -1,5 +1,5 @@
 import {LitElement} from "lit";
-import { customElement, property } from "lit/decorators.js";
+import { customElement } from "lit/decorators.js";
 import {EditorView, ViewUpdate, placeholder} from "@codemirror/view";
 import {Compartment, EditorState, Extension, StateEffect} from "@codemirror/state";
 
@@ -13,27 +13,24 @@ export class CodeMirrorEditor extends LitElement {
     private readonly compartments: Map<string, Compartment> = new Map();
     private readonly extensions: Map<string, ExtensionOrFactory> = new Map();
 
-    @property({type: String})
     public set value(value: string) {
         if(this.__value === value) return;
         this.__value = value;
         if (!this.view) return;
 
-        const data = {
+        this.view.dispatch({
             changes: {
                 from: 0,
                 to: this.view.state.doc.length,
                 insert: this.__value
             }
-        };
-        this.view.dispatch(this.view.state.update(data));
+        });
     }
 
     public get value(): string {
         return this.__value;
     }
 
-    @property({type: String})
     set placeholder(value: string) {
         this.configure({
             placeholder: placeholder(value),

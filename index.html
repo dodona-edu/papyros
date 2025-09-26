@@ -34,13 +34,16 @@ def printPiramid(n):
     *
     """
     for i in range(n):
-        print(' ' * (n - i - 1) + '* ' * (i + 1))
-printPiramid(5)
+        print(' ' * (n - i - 1) + '* ' * (i + 1))`;
+    window.setTest = (code) => {
+      papyros.test.testCode = code;
+    };
+    papyros.test.testCode = `printPiramid(5)
 print(input("help?"))
 print(int(input()) + 1)
 print(input())
 print(input())
-    `;
+`;
   </script>
 </body>
 

@@ -1,11 +1,13 @@
 import {
     Decoration,
     DecorationSet,
-    EditorView, gutter,
+    EditorView,
+    gutter,
     gutterLineClass,
     GutterMarker,
     ViewPlugin,
-    ViewUpdate
+    ViewUpdate,
+    WidgetType
 } from "@codemirror/view";
 import {Extension, RangeSet, StateEffect, StateEffectType, StateField} from "@codemirror/state";
 
@@ -16,11 +18,20 @@ export type LineEffectExtensionConfig = {
 }
 export function lineEffectExtension(config: LineEffectExtensionConfig): [Extension, StateEffectType<number[] | undefined>, StateField<number[] | undefined>] {
     const setLines = StateEffect.define<number[] | undefined>();
+    let currentVal: number[] | undefined = undefined;
     const stateField = StateField.define<number[] | undefined>({
         create: () => undefined,
         update(value, tr) {
             for (const effect of tr.effects) {
-                if (effect.is(setLines)) return effect.value;
+                if (effect.is(setLines)){
+                    currentVal = effect.value;
+                    return currentVal;
+                }
+            }
+
+            if (tr.docChanged && currentVal !== undefined) {
+                // only return the lines that still exist
+                return  currentVal.filter(line => line <= tr.newDoc.lines);
             }
             return value;
         },
@@ -122,3 +133,64 @@ export function lineEffectExtension(config: LineEffectExtensionConfig): [Extensi
 
 export const [usedLineExtension, setUsedLines, usedLineState] = lineEffectExtension({marker: "✔"});
 export const [debugLineExtension, setDebugLines, debugLineState] = lineEffectExtension({marker: "▶"});
+export const [testLineExtension, setTestLines, testLineState] = lineEffectExtension({lineClass: "papyros-test-line", gutterClass: "papyros-test-line"});
+
+export function testCodeWidgetExtension(translations: {description: string, edit: string, remove: string}, handleEdit: () => void, handleRemove: () => void): Extension {
+    class TestCodeWidget extends WidgetType {
+        public toDOM(): HTMLElement {
+            const element = document.createElement("div");
+            element.classList.add("papyros-test-code-widget");
+
+            const span = document.createElement("span");
+            span.innerText = translations.description;
+            element.appendChild(span);
+
+            const buttons = document.createElement("div");
+            buttons.classList.add("papyros-test-code-buttons");
+
+            const editButton = document.createElement("a");
+            editButton.classList.add("papyros-icon-link");
+            editButton.innerHTML = "🖉";
+            editButton.addEventListener("click", handleEdit);
+            editButton.title = translations.edit;
+            buttons.appendChild(editButton);
+
+            const deleteButton = document.createElement("a");
+            deleteButton.classList.add("papyros-icon-link");
+            deleteButton.innerHTML = "⨯";
+            deleteButton.addEventListener("click", handleRemove);
+            deleteButton.title = translations.remove;
+            buttons.appendChild(deleteButton);
+
+            element.appendChild(buttons);
+            return element;
+        }
+
+        ignoreEvent(): boolean {
+            return false;
+        }
+    }
+
+    const testCodeDecoration = Decoration.widget({widget: new TestCodeWidget(), side: -1, block: true});
+    function getDecorations(state: EditorView["state"]): DecorationSet {
+        const lines = state.field(testLineState);
+        if (!lines || lines.length === 0) return Decoration.none;
+        const minLine = Math.min(...lines);
+        if (minLine > state.doc.lines) return Decoration.none;
+        return Decoration.set([testCodeDecoration.range(state.doc.line(minLine).from)]);
+    }
+
+    return StateField.define<DecorationSet>({
+        create(state) {
+            return getDecorations(state);
+        },
+        update(deco, tr) {
+            deco = deco.map(tr.changes)
+            for (const effect of tr.effects) {
+                if (effect.is(setTestLines) || tr.docChanged) return getDecorations(tr.state)
+            }
+            return deco;
+        },
+        provide: (f) => EditorView.decorations.from(f),
+    });
+}

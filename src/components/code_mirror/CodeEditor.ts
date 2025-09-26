@@ -25,13 +25,18 @@ import {
 } from "@codemirror/autocomplete";
 import {highlightSelectionMatches, searchKeymap} from "@codemirror/search";
 import {linter, lintGutter, lintKeymap} from "@codemirror/lint";
-import {TestCodeExtension} from "./TestCodeExtension";
 import {css} from "lit";
 import {javascript} from "@codemirror/lang-javascript";
 import {python} from "@codemirror/lang-python";
 import {WorkerDiagnostic} from "../../Backend";
 import {ProgrammingLanguage} from "../../ProgrammingLanguage";
-import {debugLineExtension, setDebugLines} from "./Extensions";
+import {
+    debugLineExtension,
+    setDebugLines,
+    setTestLines,
+    testCodeWidgetExtension,
+    testLineExtension,
+} from "./Extensions";
 
 const tabCompletionKeyMap = [{ key: "Tab", run: acceptCompletion }];
 const languageExtensions: Record<ProgrammingLanguage, LanguageSupport> = {
@@ -41,8 +46,6 @@ const languageExtensions: Record<ProgrammingLanguage, LanguageSupport> = {
 
 @customElement('p-code-editor')
 export class CodeEditor extends CodeMirrorEditor {
-    private testCodeExtension: TestCodeExtension;
-
     static get styles() {
         return css`
             :host {
@@ -50,36 +53,35 @@ export class CodeEditor extends CodeMirrorEditor {
                 height: 100%;
             }
 
-            .papyros-test-code {
-                background-color: rgba(143, 182, 130, 0.1);
-            }
-
-            .papyros-test-code.cm-activeLine {
-                background-color: rgba(143, 182, 130, 0.1)
+            .papyros-test-line {
+                background-color: var(--md-sys-color-surface-variant);
             }
             
             .papyros-test-code-widget {
-                background-color: rgba(143, 182, 130, 0.1);
-                color: #7d8799;
+                background-color: var(--md-sys-color-surface-variant);
+                color: var(--md-sys-color-on-surface-variant);
                 padding: 0 2px 0 6px;
                 position: relative;
             }
 
             .papyros-test-code-buttons {
+                background-color: var(--md-sys-color-surface-variant);
                 position: absolute;
-                top: -2px;
-                left: -42px;
+                top: 0;
+                left: -50px;
                 z-index: 220;
+                width: 50px;
+                padding-left: 4px;
             }
 
             .papyros-icon-link {
                 font-size: 16px;
-                padding: 2px;
+                padding: 0 4px;
                 cursor: pointer;
             }
 
             .papyros-icon-link:hover {
-                color: rgba(143, 182, 130);
+                color: var(--md-sys-color-primary);
             }
         `;
     }
@@ -100,9 +102,32 @@ export class CodeEditor extends CodeMirrorEditor {
         });
     }
 
-    set testCode(value: string) {
-        if (!this.testCodeExtension) return;
-        this.testCodeExtension.testCode = value;
+    set testLines(value: number[] | undefined) {
+        this.view?.dispatch({
+            effects: setTestLines.of(value),
+        });
+    }
+
+    set testTranslations(value: {description: string, edit: string, remove: string}) {
+        this.configure({
+            test: [
+                testLineExtension,
+                testCodeWidgetExtension(value, () => {
+                    this.dispatchEvent(new CustomEvent("edit-test-code"));
+                }, () => {
+                    this.dispatchEvent(new CustomEvent("remove-test-code"));
+                }),
+                // readOnlyRangesExtension((state) => {
+                //     const lines = state.field(testLineState);
+                //     if (lines === undefined || lines.length === 0) return [];
+                //     console.log(lines);
+                //     console.log(lines.filter(line => line <= state.doc.lines)
+                //         .map(line => state.doc.line(line)));
+                //     return lines.filter(line => line <= state.doc.lines)
+                //                 .map(line => state.doc.line(line));
+                // }),
+            ]
+        })
     }
 
     set programmingLanguage(value: string) {
@@ -168,10 +193,6 @@ export class CodeEditor extends CodeMirrorEditor {
                    indentWithTab
                ]),
             ],
-            tests: (view) => {
-                this.testCodeExtension = new TestCodeExtension(view);
-                return this.testCodeExtension.toExtension();
-            },
             debugging: [
                 highlightActiveLineGutter(),
                 lintGutter(),

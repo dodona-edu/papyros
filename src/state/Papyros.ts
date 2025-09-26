@@ -8,6 +8,7 @@ import {BackendManager} from "../BackendManager";
 import {makeChannel} from "sync-message";
 import {cleanCurrentUrl} from "../util/Util";
 import {I18n} from "./I18n";
+import {Test} from "./Test";
 
 export class Papyros extends State {
     readonly debugger: Debugger = new Debugger(this);
@@ -16,6 +17,7 @@ export class Papyros extends State {
     readonly constants: Constants = new Constants();
     readonly examples: Examples = new Examples(this);
     readonly i18n = new I18n();
+    readonly test: Test = new Test(this);
 
     @stateProperty
     serviceWorkerName: string = "InputServiceWorker.js";
