@@ -9,6 +9,7 @@ import "./ProgrammingLanguagePicker";
 import "./ExamplePicker";
 import "./LanguagePicker";
 import "./themes/ThemePicker";
+import {State} from "@dodona/lit-state";
 
 @customElement("p-app")
 export class App extends PapyrosElement {
@@ -114,6 +115,22 @@ export class App extends PapyrosElement {
     constructor() {
         super();
         this.papyros.launch();
+        this.initializeLocalStorageProperty(this.papyros.i18n, "locale");
+        this.initializeLocalStorageProperty(this.papyros.runner, "code");
+        this.initializeLocalStorageProperty(this.papyros.runner, "programmingLanguage");
+    }
+
+    initializeLocalStorageProperty(state: State, property: string) {
+        const storedValue = localStorage.getItem(property);
+        if (storedValue !== null) {
+            try {
+                state[property] = JSON.parse(storedValue);
+            } catch {}
+        }
+
+        state.subscribe(() => {
+            localStorage.setItem(property, JSON.stringify(state[property]));
+        }, property);
     }
 
     protected override render() {

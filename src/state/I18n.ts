@@ -33,6 +33,7 @@ export class I18n extends State {
         }
     }
 
+    @stateProperty
     public get locale(): string {
         return this._locale;
     }

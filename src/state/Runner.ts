@@ -43,7 +43,15 @@ export class Runner extends State {
      * The currently used programming language
      */
     @stateProperty
-    public programmingLanguage: ProgrammingLanguage = ProgrammingLanguage.Python;
+    private _programmingLanguage: ProgrammingLanguage = ProgrammingLanguage.Python;
+    @stateProperty
+    public get programmingLanguage(): ProgrammingLanguage {return this._programmingLanguage}
+    public set programmingLanguage(value: ProgrammingLanguage) {
+        if (this._programmingLanguage !== value) {
+            this._programmingLanguage = value;
+            this.launch();
+        }
+    }
     /**
      * The backend that executes the code asynchronously
      */
@@ -79,6 +87,7 @@ export class Runner extends State {
     @stateProperty
     public _code: string = "";
 
+    @stateProperty
     public get code(): string {
         return this._code;
     }
@@ -86,10 +95,7 @@ export class Runner extends State {
     public set code(value: string) {
         if (this._code !== value) {
             this._code = value;
-            // Update run modes when code changes
-            this.backend.then(async (backend) => {
-                this.runModes = await backend.workerProxy?.runModes(this.code);
-            })
+            this.updateRunModes();
         }
     }
 
@@ -147,6 +153,7 @@ export class Runner extends State {
             const workerProxy = backend.workerProxy;
             // Allow passing messages between worker and main thread
             await workerProxy.launch(proxy((e: BackendEvent) => BackendManager.publish(e)));
+            this.updateRunModes();
             return resolve(backend);
         });
         this.setState(RunState.Ready);
@@ -294,5 +301,15 @@ export class Runner extends State {
             this.runStartTime = new Date().getTime();
             this.setState(RunState.Running);
         }
+    }
+
+    private updateRunModes() {
+        this.backend.then(async (backend) => {
+            const proxy = await backend.workerProxy;
+
+            if(proxy) {
+                this.runModes = await proxy.runModes(this.code);
+            }
+        })
     }
 }

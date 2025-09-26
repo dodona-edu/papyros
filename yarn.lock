@@ -557,10 +557,10 @@
   resolved "https://registry.yarnpkg.com/@csstools/css-tokenizer/-/css-tokenizer-3.0.4.tgz#333fedabc3fd1a8e5d0100013731cf19e6a8c5d3"
   integrity sha512-Vd/9EVDiu6PPJt9yAh6roZP6El1xHrdvIVGjyBsHR0RYwNHgL7FJPyIIW4fANJNG6FtyZfvlRPpFI4ZM/lubvw==
 
-"@dodona/lit-state@^1.0.2":
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/@dodona/lit-state/-/lit-state-1.0.2.tgz#b2d2b1cf82a7fac55eed3d82540a8d8d0622b1d6"
-  integrity sha512-0YoIVFdWbnV1pWfgqA0UA90peKcsNki8+/aJedtGdKTlvGE8XOUfg76YA0t0DLNtUfECc64E4rHXoTDqt0y8QA==
+"@dodona/lit-state@^1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@dodona/lit-state/-/lit-state-1.1.0.tgz#1b0e897401d9c378a6fa32f8b62b94b0ed25b67b"
+  integrity sha512-04q8Cjcmxmz1dSjyyMYR8WTn0k9zWW4+jJCsf8uJOJPi7W3HA55nNqPciyWJDq+3abRW5TdudN37hY8UUU9F4w==
   dependencies:
     lit "^3.3.1"
 
