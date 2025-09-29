@@ -12,7 +12,7 @@ import "./themes/ThemePicker";
 import { State } from "@dodona/lit-state";
 import "@material/web/iconbutton/icon-button";
 import "@material/web/icon/icon";
-import {ThemeOption} from "../../state/Constants";
+import { ThemeOption } from "../../state/Constants";
 
 @customElement("p-app")
 export class App extends PapyrosElement {

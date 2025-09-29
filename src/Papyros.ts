@@ -9,7 +9,6 @@ import { makeChannel } from "sync-message";
 import { cleanCurrentUrl } from "./util/Util";
 import { I18n } from "./frontend/state/I18n";
 import { Test } from "./frontend/state/Test";
-import {LogType, papyrosLog} from "./util/Logging";
 
 export class Papyros extends State {
     readonly debugger: Debugger = new Debugger(this);
@@ -33,8 +32,7 @@ export class Papyros extends State {
         } else {
             try {
                 await this.runner.launch();
-            } catch (e) {
-                papyrosLog(LogType.Error, e);
+            } catch {
                 if (confirm(this.i18n.t("Papyros.launch_error"))) {
                     return this.launch();
                 }

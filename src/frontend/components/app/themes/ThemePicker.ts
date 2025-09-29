@@ -3,8 +3,8 @@ import { html, TemplateResult } from "lit";
 import "./ThemedButton";
 import "@material/web/icon/icon";
 import "@material/web/iconbutton/icon-button";
-import {PapyrosElement} from "../../PapyrosElement";
-import {ThemeOption} from "../../../state/Constants";
+import { PapyrosElement } from "../../PapyrosElement";
+import { ThemeOption } from "../../../state/Constants";
 
 
 @customElement("p-theme-picker")

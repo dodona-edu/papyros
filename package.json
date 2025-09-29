@@ -7,6 +7,7 @@
     "@eslint/eslintrc": "^3.2.0",
     "@eslint/js": "^9.18.0",
     "@types/i18n-js": "^4.0.1",
+    "@types/node": "^24.5.2",
     "@types/node-polyglot": "^2.5.0",
     "@types/serviceworker": "^0.0.152",
     "@vitest/browser": "^3.2.4",
