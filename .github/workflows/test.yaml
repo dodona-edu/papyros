@@ -18,6 +18,9 @@ jobs:
       run: |
         yarn install
         yarn playwright install
+    - name: Build service worker
+      run: |
+        yarn build:sw
     - name: Test
       run: |
         yarn test
