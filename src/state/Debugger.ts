@@ -24,11 +24,6 @@ export class Debugger extends State {
         this._active = active;
 
         this.reset();
-        if (!this._active) {
-            // TODO
-            // this.papyros.outputManager.reset();
-            // this.inputManager.inputHandler.reset();
-        }
     }
 
     public get active(): boolean {
