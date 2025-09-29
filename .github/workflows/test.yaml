@@ -21,6 +21,12 @@ jobs:
     - name: Build service worker
       run: |
         yarn build:sw
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - name: Build python backend
+      run: |
+        yarn setup
     - name: Test
       run: |
         yarn test
