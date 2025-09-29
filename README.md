@@ -79,8 +79,8 @@ The following headers must be set on resources using Papyros.
 If you are also embedding other components (such as iframes, videos or images) in those pages, you will also need to set the `Cross-Origin-Resource-Policy`-header to `cross-origin` to make them work correctly. If these elements come from external URLs, it will likely not be possible to keep using them. An alternative is described below.
 
 If you would like to use this project without enabling these HTTP headers, we provide a solution using a service worker.
-If your application does not use a service worker yet, you can create one based on the [service worker used in stand-alone mode](src/InputServiceWorker.ts)).
-If you already use a service worker, simply include our [InputWorker](src/workers/input/InputWorker.ts) in your existing service worker using imports (you can import it separately from /dist/workers/input/InputWorker). An example of how to use it can be found in our described service worker. Afterwards, inform Papyros of the location using the channelOptions described earlier.
+If your application does not use a service worker yet, you can create one based on the [service worker used in stand-alone mode](src/communication/InputServiceWorker.ts)).
+If you already use a service worker, simply include our [InputWorker](src/backend/workers/input/InputWorker.ts) in your existing service worker using imports (you can import it separately from /dist/workers/input/InputWorker). An example of how to use it can be found in our described service worker. Afterwards, inform Papyros of the location using the channelOptions described earlier.
 
 ### Code editor
 

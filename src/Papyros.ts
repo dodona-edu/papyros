@@ -1,14 +1,14 @@
 import { State, stateProperty } from "@dodona/lit-state";
-import { Debugger } from "./state/Debugger";
-import { Runner } from "./state/Runner";
-import { InputOutput } from "./state/InputOutput";
-import { Constants } from "./state/Constants";
-import { Examples } from "./state/Examples";
-import { BackendManager } from "./BackendManager";
+import { Debugger } from "./frontend/state/Debugger";
+import { Runner } from "./frontend/state/Runner";
+import { InputOutput } from "./frontend/state/InputOutput";
+import { Constants } from "./frontend/state/Constants";
+import { Examples } from "./frontend/state/Examples";
+import { BackendManager } from "./communication/BackendManager";
 import { makeChannel } from "sync-message";
 import { cleanCurrentUrl } from "./util/Util";
-import { I18n } from "./state/I18n";
-import { Test } from "./state/Test";
+import { I18n } from "./frontend/state/I18n";
+import { Test } from "./frontend/state/Test";
 
 export class Papyros extends State {
     readonly debugger: Debugger = new Debugger(this);

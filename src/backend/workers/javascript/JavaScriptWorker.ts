@@ -1,6 +1,6 @@
 import { Backend, WorkerDiagnostic } from "../../Backend";
 import { CompletionResult } from "@codemirror/autocomplete";
-import { BackendEventType } from "../../BackendEvent";
+import { BackendEventType } from "../../../communication/BackendEvent";
 import { SyncExtras } from "comsync";
 
 /**

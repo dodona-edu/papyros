@@ -1,8 +1,8 @@
 import { State, StateMap, stateProperty } from "@dodona/lit-state";
-import { ProgrammingLanguage } from "../ProgrammingLanguage";
-import { Papyros } from "../Papyros";
-import { JAVASCRIPT_EXAMPLES } from "../examples/JavaScriptExamples";
-import { PYTHON_EXAMPLES } from "../examples/PythonExamples";
+import { ProgrammingLanguage } from "../../ProgrammingLanguage";
+import { Papyros } from "../../Papyros";
+import { JAVASCRIPT_EXAMPLES } from "../components/app/examples/JavaScriptExamples";
+import { PYTHON_EXAMPLES } from "../components/app/examples/PythonExamples";
 
 export class Examples extends State {
     papyros: Papyros;

@@ -1,6 +1,6 @@
 import { State, StateMap, stateProperty } from "@dodona/lit-state";
 import Polyglot from "node-polyglot";
-import { DUTCH_TRANSLATION, ENGLISH_TRANSLATION } from "../Translations";
+import { DUTCH_TRANSLATION, ENGLISH_TRANSLATION } from "./Translations";
 
 export type Translations = { [key: string]: string | Translations };
 

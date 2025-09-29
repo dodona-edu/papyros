@@ -1,5 +1,5 @@
-import { BackendEventType } from "../../src/BackendEvent";
-import { BackendManager } from "../../src/BackendManager";
+import { BackendEventType } from "../../src/communication/BackendEvent";
+import { BackendManager } from "../../src/communication/BackendManager";
 import {
     INPUT_AREA_WRAPPER_ID,
     INPUT_TA_ID, SEND_INPUT_BTN_ID

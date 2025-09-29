@@ -1,5 +1,5 @@
 import { State, stateProperty } from "@dodona/lit-state";
-import { RunMode } from "../Backend";
+import { RunMode } from "../../backend/Backend";
 import { html } from "lit";
 import { material } from "../components/code_mirror/MaterialTheme";
 import { Extension } from "@codemirror/state";

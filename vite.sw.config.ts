@@ -5,7 +5,7 @@ export default defineConfig({
         outDir: 'public',       // output straight into public/
         emptyOutDir: false,     // don’t wipe public
         rollupOptions: {
-            input: './src/InputServiceWorker.ts',
+            input: './src/communication/InputServiceWorker.ts',
             output: {
                 entryFileNames: 'InputServiceWorker.js'
             }

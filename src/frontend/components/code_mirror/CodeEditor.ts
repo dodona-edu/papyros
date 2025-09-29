@@ -28,8 +28,8 @@ import { linter, lintGutter, lintKeymap } from "@codemirror/lint";
 import { css, CSSResult } from "lit";
 import { javascript } from "@codemirror/lang-javascript";
 import { python } from "@codemirror/lang-python";
-import { WorkerDiagnostic } from "../../Backend";
-import { ProgrammingLanguage } from "../../ProgrammingLanguage";
+import { WorkerDiagnostic } from "../../../backend/Backend";
+import { ProgrammingLanguage } from "../../../ProgrammingLanguage";
 import {
     debugLineExtension,
     setDebugLines,

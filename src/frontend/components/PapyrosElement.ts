@@ -1,7 +1,7 @@
 import { LitElement } from "lit";
 import { StateController } from "@dodona/lit-state";
 import { property } from "lit/decorators.js";
-import { Papyros, papyros } from "../Papyros";
+import { Papyros, papyros } from "../../Papyros";
 
 export abstract class PapyrosElement extends LitElement {
     controller = new StateController(this);

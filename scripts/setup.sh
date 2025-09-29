@@ -1,3 +1,3 @@
 #!/bin/bash
-cd src/workers/python
+cd src/backend/workers/python
 python3 build_package.py

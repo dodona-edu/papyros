@@ -1,6 +1,6 @@
 import { SyncExtras } from "comsync";
-import { Backend, WorkerDiagnostic } from "../../src/Backend";
-import { BackendEventType } from "../../src/BackendEvent";
+import { Backend, WorkerDiagnostic } from "../../src/backend/Backend";
+import { BackendEventType } from "../../src/communication/BackendEvent";
 
 /**
  * Implementation of a JavaScript backend for Papyros

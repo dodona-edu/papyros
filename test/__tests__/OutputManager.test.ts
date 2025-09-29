@@ -1,5 +1,5 @@
-import { BackendEventType } from "../../src/BackendEvent";
-import { BackendManager } from "../../src/BackendManager";
+import { BackendEventType } from "../../src/communication/BackendEvent";
+import { BackendManager } from "../../src/communication/BackendManager";
 import { OUTPUT_AREA_ID, OUTPUT_AREA_WRAPPER_ID } from "../../src/Constants";
 import { FriendlyError, OutputManager } from "../../src/OutputManager";
 import { getElement } from "../../src/util/Util";

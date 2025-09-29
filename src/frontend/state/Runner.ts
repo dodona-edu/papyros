@@ -1,12 +1,12 @@
 import { proxy } from "comlink";
 import { SyncClient } from "comsync";
-import { Backend, RunMode, WorkerDiagnostic } from "../Backend";
-import { BackendEvent, BackendEventType } from "../BackendEvent";
-import { BackendManager } from "../BackendManager";
-import { parseData } from "../util/Util";
+import { Backend, RunMode, WorkerDiagnostic } from "../../backend/Backend";
+import { BackendEvent, BackendEventType } from "../../communication/BackendEvent";
+import { BackendManager } from "../../communication/BackendManager";
+import { parseData } from "../../util/Util";
 import { State, stateProperty } from "@dodona/lit-state";
-import { Papyros } from "../Papyros";
-import { ProgrammingLanguage } from "../ProgrammingLanguage";
+import { Papyros } from "../../Papyros";
+import { ProgrammingLanguage } from "../../ProgrammingLanguage";
 
 
 /**

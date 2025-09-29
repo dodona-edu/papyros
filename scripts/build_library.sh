@@ -4,7 +4,7 @@
 rm -rf dist
 
 # build python package
-cd src/workers/python
+cd src/backend/workers/python
 python3 build_package.py
 cd -
 
@@ -16,4 +16,4 @@ yarn build:sw
 cp public/InputServiceWorker.js dist/InputServiceWorker.js
 
 # copy compiled python package to dist
-cp src/workers/python/python_package.tar.gz.load_by_url dist/workers/python
+cp src/backend/workers/python/python_package.tar.gz.load_by_url dist/backend/workers/python

@@ -1,8 +1,8 @@
 import { ProgrammingLanguage } from "../../src/ProgrammingLanguage";
-import { BackendManager } from "../../src/BackendManager";
+import { BackendManager } from "../../src/communication/BackendManager";
 // eslint-disable-next-line jest/no-mocks-import
 import { MockBackend } from "../__mocks__/MockBackend";
-import { BackendEvent, BackendEventType } from "../../src/BackendEvent";
+import { BackendEvent, BackendEventType } from "../../src/communication/BackendEvent";
 
 function registerMock(language: ProgrammingLanguage): void {
     BackendManager.registerBackend(language,

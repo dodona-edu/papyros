@@ -1,6 +1,6 @@
-import { BackendEvent, BackendEventType } from "./BackendEvent";
+import { BackendEvent, BackendEventType } from "../communication/BackendEvent";
 import { syncExpose, SyncExtras } from "comsync";
-import { BackendEventQueue } from "./BackendEventQueue";
+import { BackendEventQueue } from "../communication/BackendEventQueue";
 
 export interface WorkerDiagnostic {
     /**
