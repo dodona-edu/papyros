@@ -25,7 +25,7 @@ export const materialTheme = EditorView.theme({
     },
 
     ".cm-activeLine, .cm-activeLineGutter": {
-        backgroundColor: "color-mix(in srgb, var(--md-sys-color-surface-variant) 30%, transparent)",
+        backgroundColor: "color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent) !important",
     },
 
     "&.cm-focused": {
@@ -33,7 +33,7 @@ export const materialTheme = EditorView.theme({
     },
 
     ".cm-selectionBackground": {
-        backgroundColor: "var(--md-sys-color-surface-variant) !important",
+        backgroundColor: "color-mix(in srgb, var(--md-sys-color-primary) 30%, transparent) !important",
     },
 
     ".cm-cursor, .cm-dropCursor": {
