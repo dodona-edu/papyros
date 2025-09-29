@@ -65,12 +65,12 @@ export class CodeMirrorEditor extends LitElement {
         }
     }
 
-    protected override connectedCallback(): void {
+    public override connectedCallback(): void {
         super.connectedCallback();
         this.initView();
     }
 
-    protected override disconnectedCallback(): void {
+    public override disconnectedCallback(): void {
         super.disconnectedCallback();
         this.view?.destroy();
         this.view = undefined;

@@ -1,54 +1,37 @@
 import { customElement, property } from "lit/decorators.js";
-import { html, LitElement, TemplateResult } from "lit";
-import blueLight from "./blue-light.css?inline";
-import blueDark from "./blue-dark.css?inline";
-import greenLight from "./green-light.css?inline";
-import greenDark from "./green-dark.css?inline";
-import redLight from "./red-light.css?inline";
-import redDark from "./red-dark.css?inline";
+import { CSSResult, html, LitElement, TemplateResult } from "lit";
+import blueLight from "./blue-light";
+import blueDark from "./blue-dark";
+import greenLight from "./green-light";
+import greenDark from "./green-dark";
+import redLight from "./red-light";
+import redDark from "./red-dark";
 import "./ThemedButton";
 import "@material/web/icon/icon";
 import "@material/web/iconbutton/icon-button";
 
-type Theme = { theme: CSSStyleSheet; dark: boolean; name: string };
-const _themes = [
+export type Theme = {
+    theme: CSSResult;
+    dark: boolean;
+    name: string;
+};
+export const themes: Theme[] = [
     { theme: blueLight, dark: false, name: "Blue Light" },
     { theme: blueDark, dark: true, name: "Blue Dark" },
     { theme: greenLight, dark: false, name: "Green Light" },
     { theme: greenDark, dark: true, name: "Green Dark" },
     { theme: redLight, dark: false, name: "Red Light" },
     { theme: redDark, dark: true, name: "Red Dark" },
-] as { theme: string; dark: boolean, name: string }[];
-
-const themes = _themes.map(t => {
-    const sheet = new CSSStyleSheet();
-    sheet.replaceSync(t.theme);
-    return { theme: sheet, dark: t.dark, name: t.name }
-});
+];
 
 @customElement("p-theme-picker")
 export class ThemePicker extends LitElement {
     @property({ state: true })
         picking = false;
 
-    constructor() {
-        super();
-        const storedTheme = localStorage.getItem("theme");
-        if (storedTheme) {
-            const theme = themes.find(t => t.name === storedTheme);
-            if (theme) {
-                this.setTheme(theme);
-            }
-        } else {
-            this.setTheme(themes[0]);
-        }
-    }
-
     setTheme(theme: Theme): void {
         this.picking = false;
-        document.documentElement.style.setProperty("color-scheme", theme.dark ? "dark" : "light");
-        document.adoptedStyleSheets = [theme.theme];
-        localStorage.setItem("theme", theme.name);
+        this.dispatchEvent(new CustomEvent("change", { detail: { theme } }));
     }
 
     protected override render(): TemplateResult[] | TemplateResult {

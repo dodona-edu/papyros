@@ -1,3 +1,6 @@
+import { css } from "lit";
+
+export default css`
 :root, :host {
   --md-sys-color-primary: rgb(255 181 160);
   --md-sys-color-surface-tint: rgb(255 181 160);
@@ -49,3 +52,4 @@
   --md-sys-color-surface-container-high: rgb(50 40 37);
   --md-sys-color-surface-container-highest: rgb(61 50 47);
 }
+`;

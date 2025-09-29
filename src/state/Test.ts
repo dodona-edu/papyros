@@ -36,7 +36,7 @@ export class Test extends State {
     public get testLines(): number[] | undefined {
         const codeLines = this.papyros.runner.code.split("\n").length;
         if (this.testLineCount !== undefined && this.testLineCount <= codeLines) {
-            return Array.from({ length: this.testLineCount }, (_, i) => i + (codeLines - this.testLineCount) + 1);
+            return Array.from({ length: this.testLineCount }, (_, i) => i + (codeLines - this.testLineCount!) + 1);
         }
         return undefined;
     }

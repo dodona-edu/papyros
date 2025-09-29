@@ -1,13 +1,12 @@
 import { customElement } from "lit/decorators.js";
-import { css, html, TemplateResult } from "lit";
+import { css, CSSResult, html, TemplateResult } from "lit";
 import { FriendlyError, OutputEntry, OutputType } from "../state/InputOutput";
 import "./extras/Circle";
 import { PapyrosElement } from "./extras/PapyrosElement";
-import { CSSResultGroup } from "@lit/reactive-element/css-tag.js";
 
 @customElement("p-output")
 export class Output extends PapyrosElement {
-    static get styles(): CSSResultGroup {
+    static get styles(): CSSResult {
         return css`
             :host {
                 width: 100%;
@@ -64,7 +63,7 @@ export class Output extends PapyrosElement {
             if(o.type === OutputType.img) {
                 return `[Image output of type ${o.contentType} omitted]\n`;
             } else if(o.type === OutputType.stdout) {
-                return o.content;
+                return o.content as string;
             } else if(o.type === OutputType.stderr) {
                 if(typeof o.content === "string") {
                     return `Error: ${o.content}\n`;
@@ -82,6 +81,8 @@ export class Output extends PapyrosElement {
                     }
                     return errorString;
                 }
+            } else {
+                return "[Unsupported output type omitted]\n";
             }
         }), { type: "text/plain" });
 
@@ -111,6 +112,8 @@ export class Output extends PapyrosElement {
                     }
                     return html`<span class="error">${errorHTML}</span>`;
                 }
+            } else {
+                return html``; // unsupported output type
             }
         })
     }

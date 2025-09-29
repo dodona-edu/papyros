@@ -1,24 +1,16 @@
 import { customElement, property } from "lit/decorators.js";
-import { css, html, TemplateResult } from "lit";
+import { css, CSSResult, html, TemplateResult } from "lit";
 import "../code_mirror/BatchInputEditor";
 import { RunState } from "../../state/Runner";
 import { PapyrosElement } from "../extras/PapyrosElement";
-import { CSSResultGroup } from "@lit/reactive-element/css-tag.js";
-
-enum InputMode {
-    batch = "batch",
-    interactive = "interactive",
-}
 
 @customElement("p-batch-input")
 export class BatchInput extends PapyrosElement {
     @property({ state: true })
-        mode: InputMode = InputMode.batch;
-    @property({ state: true })
         buffer: string = "";
-    unsubscribe: () => void;
+    unsubscribe: () => void = () => {};
 
-    static get styles(): CSSResultGroup {
+    static get styles(): CSSResult {
         return css`
             :host {
                 width: 100%;
@@ -26,7 +18,7 @@ export class BatchInput extends PapyrosElement {
                 overflow: auto;
                 display: block;
             }
-        `
+        `;
     }
 
     get usedLines(): number | undefined {
@@ -44,7 +36,7 @@ export class BatchInput extends PapyrosElement {
     }
 
     get nextLine(): string | undefined {
-        if (this.lines.length > this.usedLines) {
+        if (this.usedLines !== undefined && this.lines.length > this.usedLines) {
             return this.lines[this.usedLines];
         }
         return undefined;
@@ -54,7 +46,7 @@ export class BatchInput extends PapyrosElement {
         if(this.papyros.io.prompt) {
             return this.papyros.io.prompt;
         }
-        return this.t(`Papyros.input_placeholder.${this.mode}`)
+        return this.t("Papyros.input_placeholder.batch")
     }
 
     connectedCallback(): void {

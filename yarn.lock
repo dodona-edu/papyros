@@ -446,10 +446,10 @@
   resolved "https://registry.yarnpkg.com/@csstools/css-tokenizer/-/css-tokenizer-3.0.4.tgz#333fedabc3fd1a8e5d0100013731cf19e6a8c5d3"
   integrity sha512-Vd/9EVDiu6PPJt9yAh6roZP6El1xHrdvIVGjyBsHR0RYwNHgL7FJPyIIW4fANJNG6FtyZfvlRPpFI4ZM/lubvw==
 
-"@dodona/lit-state@^1.1.0":
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/@dodona/lit-state/-/lit-state-1.1.0.tgz#1b0e897401d9c378a6fa32f8b62b94b0ed25b67b"
-  integrity sha512-04q8Cjcmxmz1dSjyyMYR8WTn0k9zWW4+jJCsf8uJOJPi7W3HA55nNqPciyWJDq+3abRW5TdudN37hY8UUU9F4w==
+"@dodona/lit-state@^1.1.1":
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/@dodona/lit-state/-/lit-state-1.1.1.tgz#6d9814c20dcfc47cafca9b785d7ad7eb40c15db4"
+  integrity sha512-VeilJ3Vz1wvMJRgSNgggaMPuqDlQUQ3H1LAXD/shdANBG2mRXRcjdpvAR5mWcT2ubF4ZOckbYVeN8sPUspjBUQ==
   dependencies:
     lit "^3.3.1"
 
@@ -1328,6 +1328,11 @@
   version "7.0.15"
   resolved "https://registry.yarnpkg.com/@types/json-schema/-/json-schema-7.0.15.tgz#596a1747233694d50f6ad8a7869fcb6f56cf5841"
   integrity sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==
+
+"@types/node-polyglot@^2.5.0":
+  version "2.5.0"
+  resolved "https://registry.yarnpkg.com/@types/node-polyglot/-/node-polyglot-2.5.0.tgz#5bb545c2c4b6ff9ebed1f9930357c7d137c463ae"
+  integrity sha512-GY0UiBTWM3qclfdCs2BM1mwW9Hs5fSksNXeoTkeHHZ90pHXTtjvQ+fe9GR9NdqFhALBiD7CEAGIIqnQ4eQ5VEw==
 
 "@types/node@*":
   version "20.10.1"

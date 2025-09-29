@@ -1,14 +1,13 @@
 import { customElement, property } from "lit/decorators.js";
 import { CodeMirrorEditor } from "./CodeMirrorEditor";
 import { EditorView, keymap } from "@codemirror/view";
-import { css } from "lit";
+import { css, CSSResult } from "lit";
 import { defaultKeymap } from "@codemirror/commands";
 import { setUsedLines, usedLineExtension } from "./Extensions";
-import { CSSResultGroup } from "@lit/reactive-element/css-tag.js";
 
 @customElement("p-batch-input-editor")
 export class BatchInputEditor extends CodeMirrorEditor {
-    static get styles(): CSSResultGroup {
+    static get styles(): CSSResult {
         return css`
             :host {
                 width: 100%;

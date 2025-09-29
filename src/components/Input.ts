@@ -1,10 +1,9 @@
 import { customElement, property } from "lit/decorators.js";
-import { css, html, TemplateResult } from "lit";
+import { css, CSSResult, html, TemplateResult } from "lit";
 import "./input/BatchInput";
 import "./input/InteractiveInput";
 import { PapyrosElement } from "./extras/PapyrosElement";
 import "@material/web/switch/switch";
-import { CSSResultGroup } from "@lit/reactive-element/css-tag.js";
 
 enum InputMode {
     batch = "batch",
@@ -15,7 +14,7 @@ enum InputMode {
 export class Input extends PapyrosElement {
     @property({ state: true })
         mode: InputMode = InputMode.interactive;
-    static get styles(): CSSResultGroup {
+    static get styles(): CSSResult {
         return css`
             label {
                 display: flex;

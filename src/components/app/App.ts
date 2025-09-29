@@ -1,5 +1,5 @@
 import { customElement } from "lit/decorators.js";
-import { css, html, TemplateResult } from "lit";
+import { adoptStyles, css, CSSResult, html, TemplateResult } from "lit";
 import { PapyrosElement } from "../extras/PapyrosElement";
 import "../CodeRunner";
 import "../Debugger";
@@ -12,11 +12,11 @@ import "./themes/ThemePicker";
 import { State } from "@dodona/lit-state";
 import "@material/web/iconbutton/icon-button";
 import "@material/web/icon/icon";
-import { CSSResultGroup } from "@lit/reactive-element/css-tag.js";
+import { Theme, themes } from "./themes/ThemePicker";
 
 @customElement("p-app")
 export class App extends PapyrosElement {
-    static get styles(): CSSResultGroup {
+    static get styles(): CSSResult {
         return css`
             :host {
                 width: 100%;
@@ -123,6 +123,11 @@ export class App extends PapyrosElement {
         this.initializeLocalStorageProperty(this.papyros.runner, "programmingLanguage");
     }
 
+    public override connectedCallback(): void {
+        super.connectedCallback();
+        this.initTheme();
+    }
+
     initializeLocalStorageProperty(state: State, property: string): void {
         const storedValue = localStorage.getItem(property);
         if (storedValue !== null) {
@@ -138,6 +143,24 @@ export class App extends PapyrosElement {
         }, property);
     }
 
+    initTheme(): void {
+        const storedTheme = localStorage.getItem("theme");
+        if (storedTheme) {
+            const theme = themes.find(t => t.name === storedTheme);
+            if (theme) {
+                this.setTheme(theme);
+            }
+        } else {
+            this.setTheme(themes[0]);
+        }
+    }
+
+    setTheme(theme: Theme): void {
+        document.documentElement.style.setProperty("color-scheme", theme.dark ? "dark" : "light");
+        adoptStyles((this.renderRoot as ShadowRoot), [App.styles, theme.theme]);
+        localStorage.setItem("theme", theme.name);
+    }
+
     protected override render(): TemplateResult {
         return html`
             <div class="rows">
@@ -151,7 +174,8 @@ export class App extends PapyrosElement {
                         </md-icon-button>
                     </div>
                     <div class="header-options">
-                        <p-theme-picker></p-theme-picker>
+                        <p-theme-picker @change=${(e: CustomEvent) => this.setTheme(e.detail.theme)}
+                        ></p-theme-picker>
                         <p-language-picker .papyros=${this.papyros}></p-language-picker>
                         <p-programming-language-picker .papyros=${this.papyros}
                         ></p-programming-language-picker>

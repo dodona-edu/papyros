@@ -1,4 +1,4 @@
-import { html, LitElement, TemplateResult } from "lit";
+import { adoptStyles, CSSResult, html, LitElement, TemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import "@material/web/icon/icon";
 import "@material/web/iconbutton/filled-icon-button";
@@ -6,13 +6,15 @@ import "@material/web/iconbutton/filled-icon-button";
 
 @customElement("p-themed-button")
 export class ThemedButton extends LitElement {
-    theme: CSSStyleSheet;
+    theme: CSSResult | undefined;
     @property({ type: Boolean })
         dark: boolean = false;
 
-    protected override connectedCallback(): void {
+    public override connectedCallback(): void {
         super.connectedCallback();
-        this.renderRoot.adoptedStyleSheets.push(this.theme);
+        if(this.theme) {
+            adoptStyles((this.renderRoot as ShadowRoot), [this.theme]);
+        }
     }
 
     protected override render(): TemplateResult {

@@ -1,15 +1,14 @@
 import { customElement } from "lit/decorators.js";
-import { css, html, TemplateResult } from "lit";
+import { css, CSSResult, html, TemplateResult } from "lit";
 import { RunState } from "../../state/Runner";
 import { PapyrosElement } from "../extras/PapyrosElement";
 import { RunMode } from "../../Backend";
 import "@material/web/button/filled-button";
 import "@material/web/button/outlined-button";
-import { CSSResultGroup } from "@lit/reactive-element/css-tag.js";
 
 @customElement("p-button-lint")
 export class ButtonLint extends PapyrosElement {
-    static get styles(): CSSResultGroup {
+    static get styles(): CSSResult {
         return css`
             :host {
                 display: flex;

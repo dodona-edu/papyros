@@ -1,18 +1,16 @@
 import { customElement, property } from "lit/decorators.js";
 import { createRef, Ref, ref } from "lit/directives/ref.js";
-import { css, html, PropertyValues, TemplateResult } from "lit";
+import { css, CSSResult, html, PropertyValues, TemplateResult } from "lit";
 import { PapyrosElement } from "../extras/PapyrosElement";
 import "@material/web/textfield/outlined-text-field";
 import "@material/web/button/outlined-button";
-import { CSSResultGroup } from "@lit/reactive-element/css-tag.js";
 
 @customElement("p-interactive-input")
 export class InteractiveInput extends PapyrosElement {
-    @property({ state: true })
-        value: string = "";
+    @property({ state: true }) value: string = "";
     inputRef: Ref<HTMLInputElement> = createRef();
 
-    static get styles(): CSSResultGroup {
+    static get styles(): CSSResult {
         return css`
             :host {
                 width: 100%;
@@ -23,7 +21,7 @@ export class InteractiveInput extends PapyrosElement {
             md-outlined-text-field {
                 flex-grow: 1;
             }
-        `
+        `;
     }
 
     provideInput(): void {

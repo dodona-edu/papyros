@@ -1,18 +1,17 @@
 import { customElement } from "lit/decorators.js";
-import { css, html, TemplateResult } from "lit";
-import { CSSResultGroup } from "@lit/reactive-element/css-tag.js";
+import { css, CSSResult, html, LitElement, TemplateResult } from "lit";
 
 @customElement("p-circle")
-export class Circle extends HTMLElement {
-    static get styles(): CSSResultGroup {
+export class Circle extends LitElement {
+    static get styles(): CSSResult {
         return css`
             :host {
                 display: inline-block;
                 width: 1rem;
                 height: 1rem;
                 border-radius: 50%;
-                background-color: var(--papyros-primary, #6200ee);
-                color: var(--papyros-on-primary, #ffffff);
+                background-color: var(--md-sys-color-error-container);
+                color: var(--md-sys-color-on-error-container);
             }
         `
     }

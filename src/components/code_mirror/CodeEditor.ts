@@ -25,7 +25,7 @@ import {
 } from "@codemirror/autocomplete";
 import { highlightSelectionMatches, searchKeymap } from "@codemirror/search";
 import { linter, lintGutter, lintKeymap } from "@codemirror/lint";
-import { css } from "lit";
+import { css, CSSResult } from "lit";
 import { javascript } from "@codemirror/lang-javascript";
 import { python } from "@codemirror/lang-python";
 import { WorkerDiagnostic } from "../../Backend";
@@ -38,7 +38,6 @@ import {
     testLineExtension,
 } from "./Extensions";
 import readOnlyRangesExtension from "codemirror-readonly-ranges";
-import { CSSResultGroup } from "@lit/reactive-element/css-tag.js";
 
 const tabCompletionKeyMap = [{ key: "Tab", run: acceptCompletion }];
 const languageExtensions: Record<ProgrammingLanguage, LanguageSupport> = {
@@ -48,7 +47,7 @@ const languageExtensions: Record<ProgrammingLanguage, LanguageSupport> = {
 
 @customElement("p-code-editor")
 export class CodeEditor extends CodeMirrorEditor {
-    static get styles(): CSSResultGroup {
+    static get styles(): CSSResult {
         return css`
             :host {
                 width: 100%;
@@ -146,11 +145,11 @@ export class CodeEditor extends CodeMirrorEditor {
         })
     }
 
-    set programmingLanguage(value: string) {
+    set programmingLanguage(value: ProgrammingLanguage) {
         if (!(value in languageExtensions)) {
             console.warn(`Language ${value} not supported, defaulting to javascript`);
             this.configure({
-                language: languageExtensions["javascript"],
+                language: languageExtensions.JavaScript,
             })
             return;
         }

@@ -1,12 +1,11 @@
-import { css, html, TemplateResult } from "lit";
+import { css, CSSResult, html, TemplateResult } from "lit";
 import "@dodona/trace-component"
 import { customElement } from "lit/decorators.js";
 import { PapyrosElement } from "./extras/PapyrosElement";
-import { CSSResultGroup } from "@lit/reactive-element/css-tag.js";
 
 @customElement("p-debugger")
 export class Debugger extends PapyrosElement {
-    static override get styles(): CSSResultGroup {
+    static override get styles(): CSSResult {
         return css`
             tc-trace,
             tc-trace * {
@@ -37,7 +36,7 @@ export class Debugger extends PapyrosElement {
                 color: var(--md-sys-color-on-surface);
                 opacity: 0.5;
             }
-        `
+        `;
     }
 
     protected override render(): TemplateResult {

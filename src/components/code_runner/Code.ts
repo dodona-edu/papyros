@@ -1,12 +1,11 @@
-import { css, html, TemplateResult } from "lit";
+import { css, CSSResult, html, TemplateResult } from "lit";
 import "../code_mirror/CodeEditor"
 import { customElement } from "lit/decorators.js";
 import { PapyrosElement } from "../extras/PapyrosElement";
-import { CSSResultGroup } from "@lit/reactive-element/css-tag.js";
 
 @customElement("p-code")
 export class Code extends PapyrosElement {
-    static get styles(): CSSResultGroup {
+    static get styles(): CSSResult {
         return css`
             :host {
                 width: 100%;
