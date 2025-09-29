@@ -50,7 +50,6 @@
     "build:lib": "bash scripts/build_library.sh",
     "test": "jest",
     "lint": "eslint src",
-    "validate:translations": "node scripts/ValidateTranslations.js"
   },
   "description": "Scratchpad for multiple programming languages in the browser.",
   "repository": {

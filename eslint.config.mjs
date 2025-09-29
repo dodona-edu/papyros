@@ -6,7 +6,6 @@ export default tseslint.config(
         ignores: [
             "**/jest.config.js",
             "src/Translations.js",
-            "scripts/ValidateTranslations.js",
             "**/dist",
         ],
     },
