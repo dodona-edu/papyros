@@ -1,12 +1,13 @@
-import {customElement} from "lit/decorators.js";
-import {PapyrosElement} from "../extras/PapyrosElement";
-import {RunState} from "../../state/Runner";
-import {css, html} from "lit";
+import { customElement } from "lit/decorators.js";
+import { PapyrosElement } from "../extras/PapyrosElement";
+import { RunState } from "../../state/Runner";
+import { css, html, TemplateResult } from "lit";
 import "@material/web/progress/circular-progress";
+import { CSSResultGroup } from "@lit/reactive-element/css-tag.js";
 
 @customElement("p-run-state")
 export class RunStateEl extends PapyrosElement {
-    static get styles() {
+    static get styles(): CSSResultGroup {
         return css`
             :host {
                 display: flex;
@@ -20,7 +21,7 @@ export class RunStateEl extends PapyrosElement {
         `;
     }
 
-    protected override render() {
+    protected override render(): TemplateResult {
         if (!this.papyros.runner.stateMessage) return html``;
 
         return html`

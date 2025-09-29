@@ -77,7 +77,7 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
      * @return {Promise<void>} Promise of launching
      */
     public async launch(
-        onEvent: (e: BackendEvent) => void,
+        onEvent: (e: BackendEvent) => void
     ): Promise<void> {
         this.onEvent = (e: BackendEvent) => {
             onEvent(e);

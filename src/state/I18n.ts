@@ -1,6 +1,6 @@
-import {State, StateMap, stateProperty} from "@dodona/lit-state";
+import { State, StateMap, stateProperty } from "@dodona/lit-state";
 import Polyglot from "node-polyglot";
-import {DUTCH_TRANSLATION, ENGLISH_TRANSLATION} from "../Translations";
+import { DUTCH_TRANSLATION, ENGLISH_TRANSLATION } from "../Translations";
 
 export type Translations = Record<string, Translations | string>;
 
@@ -50,7 +50,7 @@ export class I18n extends State {
         if (!key) {
             return this.translations.get(this.locale);
         }
-        const keys = key.split('.');
+        const keys = key.split(".");
         let record: Translations | string = this.translations.get(this.locale)!;
         for (const k of keys) {
             if (typeof record === "string" || !(k in record)) {

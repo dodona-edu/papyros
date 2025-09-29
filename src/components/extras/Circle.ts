@@ -1,9 +1,10 @@
-import {customElement} from "lit/decorators.js";
-import {css, html} from "lit";
+import { customElement } from "lit/decorators.js";
+import { css, html, TemplateResult } from "lit";
+import { CSSResultGroup } from "@lit/reactive-element/css-tag.js";
 
 @customElement("p-circle")
 export class Circle extends HTMLElement {
-    static get styles() {
+    static get styles(): CSSResultGroup {
         return css`
             :host {
                 display: inline-block;
@@ -16,7 +17,7 @@ export class Circle extends HTMLElement {
         `
     }
 
-    protected override render() {
+    protected override render(): TemplateResult {
         return html`<slot></slot>`;
     }
 }

@@ -1,13 +1,14 @@
-import {customElement} from "lit/decorators.js";
-import {PapyrosElement} from "./extras/PapyrosElement";
-import {css, html, TemplateResult} from "lit";
+import { customElement } from "lit/decorators.js";
+import { PapyrosElement } from "./extras/PapyrosElement";
+import { css, html, TemplateResult } from "lit";
 import "./code_runner/Code";
 import "./code_runner/RunState";
 import "./code_runner/ButtonLint";
+import { CSSResultGroup } from "@lit/reactive-element/css-tag.js";
 
-@customElement('p-code-runner')
+@customElement("p-code-runner")
 export class CodeRunner extends PapyrosElement {
-    static get styles() {
+    static get styles(): CSSResultGroup {
         return css`
             :host {
                 width: 100%;

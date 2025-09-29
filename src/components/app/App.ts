@@ -1,6 +1,6 @@
-import {customElement} from "lit/decorators.js";
-import {css, html} from "lit";
-import {PapyrosElement} from "../extras/PapyrosElement";
+import { customElement } from "lit/decorators.js";
+import { css, html, TemplateResult } from "lit";
+import { PapyrosElement } from "../extras/PapyrosElement";
 import "../CodeRunner";
 import "../Debugger";
 import "../Output";
@@ -9,13 +9,14 @@ import "./ProgrammingLanguagePicker";
 import "./ExamplePicker";
 import "./LanguagePicker";
 import "./themes/ThemePicker";
-import {State} from "@dodona/lit-state";
+import { State } from "@dodona/lit-state";
 import "@material/web/iconbutton/icon-button";
 import "@material/web/icon/icon";
+import { CSSResultGroup } from "@lit/reactive-element/css-tag.js";
 
 @customElement("p-app")
 export class App extends PapyrosElement {
-    static get styles() {
+    static get styles(): CSSResultGroup {
         return css`
             :host {
                 width: 100%;
@@ -122,12 +123,14 @@ export class App extends PapyrosElement {
         this.initializeLocalStorageProperty(this.papyros.runner, "programmingLanguage");
     }
 
-    initializeLocalStorageProperty(state: State, property: string) {
+    initializeLocalStorageProperty(state: State, property: string): void {
         const storedValue = localStorage.getItem(property);
         if (storedValue !== null) {
             try {
                 state[property] = JSON.parse(storedValue);
-            } catch {}
+            } catch {
+                // ignore invalid JSON
+            }
         }
 
         state.subscribe(() => {
@@ -135,7 +138,7 @@ export class App extends PapyrosElement {
         }, property);
     }
 
-    protected override render() {
+    protected override render(): TemplateResult {
         return html`
             <div class="rows">
                 <div class="header">

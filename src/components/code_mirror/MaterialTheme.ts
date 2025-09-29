@@ -1,7 +1,7 @@
 import { EditorView } from "@codemirror/view";
-import {HighlightStyle, syntaxHighlighting} from "@codemirror/language";
+import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
 import { tags } from "@lezer/highlight";
-import {Extension} from "@codemirror/state";
+import { Extension } from "@codemirror/state";
 
 export const materialTheme = EditorView.theme({
     ".cm-scroller": { overflow: "auto" },

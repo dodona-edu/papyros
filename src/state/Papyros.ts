@@ -1,14 +1,14 @@
-import {State, stateProperty} from "@dodona/lit-state";
-import {Debugger} from "./Debugger";
-import {Runner} from "./Runner";
-import {InputOutput} from "./InputOutput";
-import {Constants} from "./Constants";
-import {Examples} from "./Examples";
-import {BackendManager} from "../BackendManager";
-import {makeChannel} from "sync-message";
-import {cleanCurrentUrl} from "../util/Util";
-import {I18n} from "./I18n";
-import {Test} from "./Test";
+import { State, stateProperty } from "@dodona/lit-state";
+import { Debugger } from "./Debugger";
+import { Runner } from "./Runner";
+import { InputOutput } from "./InputOutput";
+import { Constants } from "./Constants";
+import { Examples } from "./Examples";
+import { BackendManager } from "../BackendManager";
+import { makeChannel } from "sync-message";
+import { cleanCurrentUrl } from "../util/Util";
+import { I18n } from "./I18n";
+import { Test } from "./Test";
 
 export class Papyros extends State {
     readonly debugger: Debugger = new Debugger(this);
@@ -20,7 +20,7 @@ export class Papyros extends State {
     readonly test: Test = new Test(this);
 
     @stateProperty
-    serviceWorkerName: string = "InputServiceWorker.js";
+        serviceWorkerName: string = "InputServiceWorker.js";
 
     /**
      * Launch this instance of Papyros, making it ready to run code
@@ -63,7 +63,7 @@ export class Papyros extends State {
                 return false;
             }
         } else {
-            BackendManager.channel = makeChannel({atomics: {  }})!;
+            BackendManager.channel = makeChannel({ atomics: {  } })!;
         }
         return true;
     }

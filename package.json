@@ -48,7 +48,7 @@
     "build:sw": "vite build --config vite.sw.config.ts",
     "build:lib": "bash scripts/build_library.sh",
     "test": "jest",
-    "lint": "eslint src",
+    "lint": "eslint src"
   },
   "description": "Scratchpad for multiple programming languages in the browser.",
   "repository": {

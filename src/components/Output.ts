@@ -1,12 +1,13 @@
-import {customElement} from "lit/decorators.js";
-import {css, html, TemplateResult} from "lit";
-import {FriendlyError, OutputEntry, OutputType} from "../state/InputOutput";
+import { customElement } from "lit/decorators.js";
+import { css, html, TemplateResult } from "lit";
+import { FriendlyError, OutputEntry, OutputType } from "../state/InputOutput";
 import "./extras/Circle";
-import {PapyrosElement} from "./extras/PapyrosElement";
+import { PapyrosElement } from "./extras/PapyrosElement";
+import { CSSResultGroup } from "@lit/reactive-element/css-tag.js";
 
 @customElement("p-output")
 export class Output extends PapyrosElement {
-    static get styles() {
+    static get styles(): CSSResultGroup {
         return css`
             :host {
                 width: 100%;
@@ -82,7 +83,7 @@ export class Output extends PapyrosElement {
                     return errorString;
                 }
             }
-        }), {type: 'text/plain'});
+        }), { type: "text/plain" });
 
         return URL.createObjectURL(blob);
     }

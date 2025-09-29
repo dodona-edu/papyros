@@ -1,5 +1,5 @@
-import {customElement, property} from "lit/decorators.js";
-import {html, LitElement, TemplateResult} from "lit";
+import { customElement, property } from "lit/decorators.js";
+import { html, LitElement, TemplateResult } from "lit";
 import blueLight from "./blue-light.css?inline";
 import blueDark from "./blue-dark.css?inline";
 import greenLight from "./green-light.css?inline";
@@ -26,14 +26,14 @@ const themes = _themes.map(t => {
     return { theme: sheet, dark: t.dark, name: t.name }
 });
 
-@customElement('p-theme-picker')
+@customElement("p-theme-picker")
 export class ThemePicker extends LitElement {
-    @property({state: true})
-    picking = false;
+    @property({ state: true })
+        picking = false;
 
     constructor() {
         super();
-        const storedTheme = localStorage.getItem('theme');
+        const storedTheme = localStorage.getItem("theme");
         if (storedTheme) {
             const theme = themes.find(t => t.name === storedTheme);
             if (theme) {
@@ -44,11 +44,11 @@ export class ThemePicker extends LitElement {
         }
     }
 
-    setTheme(theme: Theme) {
+    setTheme(theme: Theme): void {
         this.picking = false;
-        document.documentElement.style.setProperty('color-scheme', theme.dark ? 'dark' : 'light');
+        document.documentElement.style.setProperty("color-scheme", theme.dark ? "dark" : "light");
         document.adoptedStyleSheets = [theme.theme];
-        localStorage.setItem('theme', theme.name);
+        localStorage.setItem("theme", theme.name);
     }
 
     protected override render(): TemplateResult[] | TemplateResult {

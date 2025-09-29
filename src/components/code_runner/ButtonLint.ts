@@ -1,14 +1,15 @@
-import {customElement} from "lit/decorators.js";
-import {css, html, TemplateResult} from "lit";
-import {RunState} from "../../state/Runner";
-import {PapyrosElement} from "../extras/PapyrosElement";
-import {RunMode} from "../../Backend";
+import { customElement } from "lit/decorators.js";
+import { css, html, TemplateResult } from "lit";
+import { RunState } from "../../state/Runner";
+import { PapyrosElement } from "../extras/PapyrosElement";
+import { RunMode } from "../../Backend";
 import "@material/web/button/filled-button";
 import "@material/web/button/outlined-button";
+import { CSSResultGroup } from "@lit/reactive-element/css-tag.js";
 
-@customElement('p-button-lint')
+@customElement("p-button-lint")
 export class ButtonLint extends PapyrosElement {
-    static get styles() {
+    static get styles(): CSSResultGroup {
         return css`
             :host {
                 display: flex;
@@ -33,7 +34,7 @@ export class ButtonLint extends PapyrosElement {
                 return html`
                     <md-outlined-button @click=${() => this.papyros.debugger.active = false}>
                         <span slot="icon">${this.papyros.constants.icons.stopDebug}</span>
-                        ${this.t(`Papyros.debug.stop`)}
+                        ${this.t("Papyros.debug.stop")}
                     </md-outlined-button>`;
             } else {
                 return [
@@ -53,7 +54,7 @@ export class ButtonLint extends PapyrosElement {
             return html`
                 <md-filled-button @click=${() => this.papyros.runner.stop()}>
                     <span slot="icon">${this.papyros.constants.icons.stop}</span>
-                    ${this.t(`Papyros.stop`)}
+                    ${this.t("Papyros.stop")}
                 </md-filled-button>`;
         }
     }

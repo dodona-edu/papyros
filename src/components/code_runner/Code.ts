@@ -1,11 +1,12 @@
-import {css, html, TemplateResult} from "lit";
+import { css, html, TemplateResult } from "lit";
 import "../code_mirror/CodeEditor"
-import {customElement} from "lit/decorators.js";
-import {PapyrosElement} from "../extras/PapyrosElement";
+import { customElement } from "lit/decorators.js";
+import { PapyrosElement } from "../extras/PapyrosElement";
+import { CSSResultGroup } from "@lit/reactive-element/css-tag.js";
 
 @customElement("p-code")
 export class Code extends PapyrosElement {
-    static get styles() {
+    static get styles(): CSSResultGroup {
         return css`
             :host {
                 width: 100%;
@@ -26,7 +27,7 @@ export class Code extends PapyrosElement {
                 .indentLength=${this.papyros.constants.indentationSize}
                 .translations=${this.papyros.i18n.getTranslations("CodeMirror")}
                 .theme=${this.papyros.constants.CodeMirrorTheme}
-                .placeholder=${this.t("Papyros.code_placeholder", {programmingLanguage: this.papyros.runner.programmingLanguage})}
+                .placeholder=${this.t("Papyros.code_placeholder", { programmingLanguage: this.papyros.runner.programmingLanguage })}
                 .testLines=${this.papyros.test.testLines}
                 .testTranslations=${this.papyros.i18n.getTranslations("Papyros.editor.test_code")}
                 @edit-test-code=${() => this.papyros.test.testLineCount = undefined}

@@ -1,8 +1,8 @@
-import {State, stateProperty} from "@dodona/lit-state";
-import {BackendManager} from "../BackendManager";
-import {BackendEventType} from "../BackendEvent";
-import {parseData} from "../util/Util";
-import {Papyros} from "./Papyros";
+import { State, stateProperty } from "@dodona/lit-state";
+import { BackendManager } from "../BackendManager";
+import { BackendEventType } from "../BackendEvent";
+import { parseData } from "../util/Util";
+import { Papyros } from "./Papyros";
 
 /**
  * Shape of Error objects that are easy to interpret
@@ -49,13 +49,13 @@ export type OutputEntry = {
 export class InputOutput extends State {
     private papyros: Papyros;
     @stateProperty
-    inputs: string[] = [];
+        inputs: string[] = [];
     @stateProperty
-    output: OutputEntry[] = [];
+        output: OutputEntry[] = [];
     @stateProperty
-    prompt: string = "";
+        prompt: string = "";
     @stateProperty
-    awaitingInput: boolean = false;
+        awaitingInput: boolean = false;
 
     constructor(papyros: Papyros) {
         super();
@@ -80,40 +80,40 @@ export class InputOutput extends State {
         });
     }
 
-    public logError(error: FriendlyError | string) {
-        this.output = [...this.output, {type: OutputType.stderr, content: error}];
+    public logError(error: FriendlyError | string): void {
+        this.output = [...this.output, { type: OutputType.stderr, content: error }];
     }
 
-    public logImage(imageData: string, contentType: string = "img/png") {
-        this.output = [...this.output, {type: OutputType.img, content: imageData, contentType}];
+    public logImage(imageData: string, contentType: string = "img/png"): void {
+        this.output = [...this.output, { type: OutputType.img, content: imageData, contentType }];
     }
 
-    public logOutput(output: string) {
+    public logOutput(output: string): void {
         // lines have been merged to limit the number of events
         // we split them again here, to simplify overflow detection
         const lines = output.split("\n");
         if (lines.length > 1) {
             this.output = [...this.output,
-                ...lines.slice(0, -1).map(line => ({type: OutputType.stdout, content: line + "\n"})),
-                {type: OutputType.stdout, content: lines[lines.length - 1]}
+                ...lines.slice(0, -1).map(line => ({ type: OutputType.stdout, content: line + "\n" })),
+                { type: OutputType.stdout, content: lines[lines.length - 1] }
             ];
         } else {
-            this.output = [...this.output, {type: OutputType.stdout, content: output}];
+            this.output = [...this.output, { type: OutputType.stdout, content: output }];
         }
     }
 
-    public provideInput(input: string) {
+    public provideInput(input: string): void {
         this.inputs = [...this.inputs, input];
         this.papyros.runner.provideInput(input);
         this.prompt = "";
         this.awaitingInput = false;
     }
 
-    public clearInputs() {
+    public clearInputs(): void {
         this.inputs = [];
     }
 
-    public reset() {
+    public reset(): void {
         this.inputs = [];
         this.output = [];
         this.prompt = "";

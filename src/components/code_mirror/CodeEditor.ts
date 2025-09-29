@@ -1,5 +1,5 @@
-import {customElement} from "lit/decorators.js";
-import {CodeMirrorEditor} from "./CodeMirrorEditor";
+import { customElement } from "lit/decorators.js";
+import { CodeMirrorEditor } from "./CodeMirrorEditor";
 import {
     drawSelection, highlightActiveLine,
     highlightActiveLineGutter,
@@ -8,14 +8,14 @@ import {
     lineNumbers,
     rectangularSelection
 } from "@codemirror/view";
-import {defaultKeymap, history, historyKeymap, indentWithTab} from "@codemirror/commands";
+import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
 import {
     bracketMatching,
     foldGutter,
     indentOnInput, indentUnit,
     LanguageSupport
 } from "@codemirror/language";
-import {EditorState} from "@codemirror/state";
+import { EditorState } from "@codemirror/state";
 import {
     acceptCompletion,
     autocompletion,
@@ -23,13 +23,13 @@ import {
     closeBracketsKeymap,
     completionKeymap
 } from "@codemirror/autocomplete";
-import {highlightSelectionMatches, searchKeymap} from "@codemirror/search";
-import {linter, lintGutter, lintKeymap} from "@codemirror/lint";
-import {css} from "lit";
-import {javascript} from "@codemirror/lang-javascript";
-import {python} from "@codemirror/lang-python";
-import {WorkerDiagnostic} from "../../Backend";
-import {ProgrammingLanguage} from "../../ProgrammingLanguage";
+import { highlightSelectionMatches, searchKeymap } from "@codemirror/search";
+import { linter, lintGutter, lintKeymap } from "@codemirror/lint";
+import { css } from "lit";
+import { javascript } from "@codemirror/lang-javascript";
+import { python } from "@codemirror/lang-python";
+import { WorkerDiagnostic } from "../../Backend";
+import { ProgrammingLanguage } from "../../ProgrammingLanguage";
 import {
     debugLineExtension,
     setDebugLines,
@@ -38,6 +38,7 @@ import {
     testLineExtension,
 } from "./Extensions";
 import readOnlyRangesExtension from "codemirror-readonly-ranges";
+import { CSSResultGroup } from "@lit/reactive-element/css-tag.js";
 
 const tabCompletionKeyMap = [{ key: "Tab", run: acceptCompletion }];
 const languageExtensions: Record<ProgrammingLanguage, LanguageSupport> = {
@@ -45,9 +46,9 @@ const languageExtensions: Record<ProgrammingLanguage, LanguageSupport> = {
     Python: python()
 }
 
-@customElement('p-code-editor')
+@customElement("p-code-editor")
 export class CodeEditor extends CodeMirrorEditor {
-    static get styles() {
+    static get styles(): CSSResultGroup {
         return css`
             :host {
                 width: 100%;
@@ -112,7 +113,7 @@ export class CodeEditor extends CodeMirrorEditor {
     /**
      * Override the value setter to temporarily disable read-only ranges
      */
-    override dispatchChange() {
+    override dispatchChange(): void {
         const oldReadOnlyExtensions = this.extensions.get("testReadOnlyRanges") ?? [];
         this.configure({
             testReadOnlyRanges: [],
@@ -125,7 +126,7 @@ export class CodeEditor extends CodeMirrorEditor {
 
     set testLineCount(value: number | undefined) {
         this.configure({
-            testReadOnlyRanges: value ? readOnlyRangesExtension((state) => {
+            testReadOnlyRanges: value ? readOnlyRangesExtension(state => {
                 const line = state.doc.lines - value + 1;
                 return [{ from: state.doc.line(line).from, to: state.doc.length }];
             }) : [],
@@ -161,7 +162,7 @@ export class CodeEditor extends CodeMirrorEditor {
 
     set lintingSource( lintSource: () => Promise<readonly WorkerDiagnostic[]>) {
         this.configure({
-            linting: linter(async (view) => {
+            linting: linter(async view => {
                 const workerDiagnostics = await lintSource();
                 return workerDiagnostics.map(d => {
                     const fromline = view.state.doc.line(d.lineNr);
@@ -185,28 +186,28 @@ export class CodeEditor extends CodeMirrorEditor {
         this.configure({
             language: [],
             codingExtensions: [
-               lineNumbers(),
-               highlightSpecialChars(),
-               history(),
-               foldGutter(),
-               drawSelection(),
-               EditorState.allowMultipleSelections.of(true),
-               indentOnInput(),
-               bracketMatching(),
-               closeBrackets(),
-               autocompletion(),
-               rectangularSelection(),
-               highlightSelectionMatches(),
-               keymap.of([
-                   ...closeBracketsKeymap,
-                   ...defaultKeymap,
-                   ...searchKeymap,
-                   ...historyKeymap,
-                   ...completionKeymap,
-                   ...tabCompletionKeyMap,
-                   ...lintKeymap,
-                   indentWithTab
-               ]),
+                lineNumbers(),
+                highlightSpecialChars(),
+                history(),
+                foldGutter(),
+                drawSelection(),
+                EditorState.allowMultipleSelections.of(true),
+                indentOnInput(),
+                bracketMatching(),
+                closeBrackets(),
+                autocompletion(),
+                rectangularSelection(),
+                highlightSelectionMatches(),
+                keymap.of([
+                    ...closeBracketsKeymap,
+                    ...defaultKeymap,
+                    ...searchKeymap,
+                    ...historyKeymap,
+                    ...completionKeymap,
+                    ...tabCompletionKeyMap,
+                    ...lintKeymap,
+                    indentWithTab
+                ]),
             ],
             debugging: [
                 highlightActiveLineGutter(),

@@ -9,7 +9,7 @@ import {
     ViewUpdate,
     WidgetType
 } from "@codemirror/view";
-import {Extension, RangeSet, StateEffect, StateEffectType, StateField} from "@codemirror/state";
+import { Extension, RangeSet, StateEffect, StateEffectType, StateField } from "@codemirror/state";
 
 export type LineEffectExtensionConfig = {
     lineClass?: string;
@@ -42,7 +42,7 @@ export function lineEffectExtension(config: LineEffectExtensionConfig): [Extensi
         elementClass = config.gutterClass ?? "cm-activeLineGutter";
     };
 
-    const gutterHighlighter = gutterLineClass.compute([stateField], (state) => {
+    const gutterHighlighter = gutterLineClass.compute([stateField], state => {
         const lines = state.field(stateField);
         if (lines === undefined || lines.length === 0) return RangeSet.empty;
         const markers = [];
@@ -61,7 +61,7 @@ export function lineEffectExtension(config: LineEffectExtensionConfig): [Extensi
             this.decorations = this.getDecorations(view.state);
         }
 
-        update(update: ViewUpdate) {
+        update(update: ViewUpdate): void {
             if (update.state.field(stateField) !== update.startState.field(stateField)) {
                 this.decorations = this.getDecorations(update.state);
             }
@@ -79,7 +79,7 @@ export function lineEffectExtension(config: LineEffectExtensionConfig): [Extensi
             return Decoration.set(decorations);
         }
     }, {
-        decorations: (v) => v.decorations,
+        decorations: v => v.decorations,
     });
 
     const extensions: Extension[] = [
@@ -91,7 +91,7 @@ export function lineEffectExtension(config: LineEffectExtensionConfig): [Extensi
 
     if( config.marker !== undefined ) {
         class CustomMarker extends GutterMarker {
-            toDOM() {
+            toDOM(): Node {
                 const element = document.createElement("div");
                 element.textContent = config.marker!;
                 return element;
@@ -101,7 +101,7 @@ export function lineEffectExtension(config: LineEffectExtensionConfig): [Extensi
 
         const customGutter = gutter({
             class: "cm-custom-gutter",
-            markers: (view) => {
+            markers: () => {
                 return RangeSet.empty;
             },
             lineMarker: (view, line) => {
@@ -125,15 +125,15 @@ export function lineEffectExtension(config: LineEffectExtensionConfig): [Extensi
         }));
     }
     return [
-            extensions,
-            setLines,
-            stateField,
+        extensions,
+        setLines,
+        stateField,
     ];
 }
 
-export const [usedLineExtension, setUsedLines, usedLineState] = lineEffectExtension({marker: "✔"});
-export const [debugLineExtension, setDebugLines, debugLineState] = lineEffectExtension({marker: "▶"});
-export const [testLineExtension, setTestLines, testLineState] = lineEffectExtension({lineClass: "papyros-test-line", gutterClass: "papyros-test-line"});
+export const [usedLineExtension, setUsedLines, usedLineState] = lineEffectExtension({ marker: "✔" });
+export const [debugLineExtension, setDebugLines, debugLineState] = lineEffectExtension({ marker: "▶" });
+export const [testLineExtension, setTestLines, testLineState] = lineEffectExtension({ lineClass: "papyros-test-line", gutterClass: "papyros-test-line" });
 
 export function testCodeWidgetExtension(translations: {description: string, edit: string, remove: string}, handleEdit: () => void, handleRemove: () => void): Extension {
     class TestCodeWidget extends WidgetType {
@@ -171,7 +171,7 @@ export function testCodeWidgetExtension(translations: {description: string, edit
         }
     }
 
-    const testCodeDecoration = Decoration.widget({widget: new TestCodeWidget(), side: -1, block: true});
+    const testCodeDecoration = Decoration.widget({ widget: new TestCodeWidget(), side: -1, block: true });
     function getDecorations(state: EditorView["state"]): DecorationSet {
         const lines = state.field(testLineState);
         if (!lines || lines.length === 0) return Decoration.none;
@@ -185,12 +185,11 @@ export function testCodeWidgetExtension(translations: {description: string, edit
             return getDecorations(state);
         },
         update(deco, tr) {
-            deco = deco.map(tr.changes)
             for (const effect of tr.effects) {
                 if (effect.is(setTestLines) || tr.docChanged) return getDecorations(tr.state)
             }
-            return deco;
+            return deco.map(tr.changes);
         },
-        provide: (f) => EditorView.decorations.from(f),
+        provide: f => EditorView.decorations.from(f),
     });
 }

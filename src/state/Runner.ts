@@ -1,12 +1,12 @@
-import {proxy} from "comlink";
-import {SyncClient} from "comsync";
-import {Backend, RunMode, WorkerDiagnostic} from "../Backend";
-import {BackendEvent, BackendEventType} from "../BackendEvent";
-import {BackendManager} from "../BackendManager";
-import {parseData} from "../util/Util";
-import {State, stateProperty} from "@dodona/lit-state";
-import {Papyros} from "./Papyros";
-import {ProgrammingLanguage} from "../ProgrammingLanguage";
+import { proxy } from "comlink";
+import { SyncClient } from "comsync";
+import { Backend, RunMode, WorkerDiagnostic } from "../Backend";
+import { BackendEvent, BackendEventType } from "../BackendEvent";
+import { BackendManager } from "../BackendManager";
+import { parseData } from "../util/Util";
+import { State, stateProperty } from "@dodona/lit-state";
+import { Papyros } from "./Papyros";
+import { ProgrammingLanguage } from "../ProgrammingLanguage";
 
 
 /**
@@ -237,9 +237,9 @@ export class Runner extends State {
             return;
         }
         BackendManager.publish({ type: BackendEventType.Loading, data: JSON.stringify({
-                modules: fileNames,
-                status: "loading"
-            }) });
+            modules: fileNames,
+            status: "loading"
+        }) });
 
         const backend = await this.backend;
         await backend.workerProxy.provideFiles(inlinedFiles, hrefFiles);
@@ -303,8 +303,8 @@ export class Runner extends State {
         }
     }
 
-    private updateRunModes() {
-        this.backend.then(async (backend) => {
+    private updateRunModes(): void {
+        this.backend.then(async backend => {
             const proxy = await backend.workerProxy;
 
             if(proxy) {

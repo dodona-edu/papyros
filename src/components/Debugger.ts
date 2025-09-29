@@ -1,11 +1,12 @@
-import {css, html, TemplateResult} from "lit";
+import { css, html, TemplateResult } from "lit";
 import "@dodona/trace-component"
-import {customElement} from "lit/decorators.js";
-import {PapyrosElement} from "./extras/PapyrosElement";
+import { customElement } from "lit/decorators.js";
+import { PapyrosElement } from "./extras/PapyrosElement";
+import { CSSResultGroup } from "@lit/reactive-element/css-tag.js";
 
 @customElement("p-debugger")
 export class Debugger extends PapyrosElement {
-    static override get styles() {
+    static override get styles(): CSSResultGroup {
         return css`
             tc-trace,
             tc-trace * {
@@ -48,9 +49,9 @@ export class Debugger extends PapyrosElement {
                 .trace=${this.papyros.debugger.trace}
                 .translations=${this.papyros.i18n.getTranslations("Papyros.debugger")}
                 @frame-change=${(e: CustomEvent) => {
-                    this.papyros.debugger.activeFrame = e.detail.frame;
-                }
-        }
+        this.papyros.debugger.activeFrame = e.detail.frame;
+    }
+}
         ></tc-trace>`;
     }
 }

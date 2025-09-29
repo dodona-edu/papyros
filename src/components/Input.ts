@@ -1,20 +1,21 @@
-import {customElement, property} from "lit/decorators.js";
-import {css, html, TemplateResult} from "lit";
+import { customElement, property } from "lit/decorators.js";
+import { css, html, TemplateResult } from "lit";
 import "./input/BatchInput";
 import "./input/InteractiveInput";
-import {PapyrosElement} from "./extras/PapyrosElement";
+import { PapyrosElement } from "./extras/PapyrosElement";
 import "@material/web/switch/switch";
+import { CSSResultGroup } from "@lit/reactive-element/css-tag.js";
 
 enum InputMode {
     batch = "batch",
     interactive = "interactive",
 }
 
-@customElement('p-input')
+@customElement("p-input")
 export class Input extends PapyrosElement {
-    @property({state: true})
-    mode: InputMode = InputMode.interactive;
-    static get styles() {
+    @property({ state: true })
+        mode: InputMode = InputMode.interactive;
+    static get styles(): CSSResultGroup {
         return css`
             label {
                 display: flex;
@@ -50,8 +51,8 @@ export class Input extends PapyrosElement {
 
         return html`
             ${this.mode === InputMode.batch ? 
-                    html`<p-batch-input .papyros=${this.papyros}></p-batch-input>` : 
-                    html`<p-interactive-input .papyros=${this.papyros}></p-interactive-input>`}
+        html`<p-batch-input .papyros=${this.papyros}></p-batch-input>` : 
+        html`<p-interactive-input .papyros=${this.papyros}></p-interactive-input>`}
             <label>
                 <md-switch .selected=${this.mode === InputMode.batch}
                            ?disabled=${this.papyros.debugger.active}

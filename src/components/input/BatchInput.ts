@@ -1,23 +1,24 @@
-import {customElement, property} from "lit/decorators.js";
-import {css, html, TemplateResult} from "lit";
+import { customElement, property } from "lit/decorators.js";
+import { css, html, TemplateResult } from "lit";
 import "../code_mirror/BatchInputEditor";
-import {RunState} from "../../state/Runner";
-import {PapyrosElement} from "../extras/PapyrosElement";
+import { RunState } from "../../state/Runner";
+import { PapyrosElement } from "../extras/PapyrosElement";
+import { CSSResultGroup } from "@lit/reactive-element/css-tag.js";
 
 enum InputMode {
     batch = "batch",
     interactive = "interactive",
 }
 
-@customElement('p-batch-input')
+@customElement("p-batch-input")
 export class BatchInput extends PapyrosElement {
-    @property({state: true})
-    mode: InputMode = InputMode.batch;
-    @property({state: true})
-    buffer: string = '';
+    @property({ state: true })
+        mode: InputMode = InputMode.batch;
+    @property({ state: true })
+        buffer: string = "";
     unsubscribe: () => void;
 
-    static get styles() {
+    static get styles(): CSSResultGroup {
         return css`
             :host {
                 width: 100%;
@@ -39,7 +40,7 @@ export class BatchInput extends PapyrosElement {
      * All lines except the last one that has not (yet) been terminated by a newline
      */
     get lines(): string[] {
-        return this.buffer.split('\n').slice(0,-1);
+        return this.buffer.split("\n").slice(0,-1);
     }
 
     get nextLine(): string | undefined {
@@ -56,12 +57,12 @@ export class BatchInput extends PapyrosElement {
         return this.t(`Papyros.input_placeholder.${this.mode}`)
     }
 
-    connectedCallback() {
+    connectedCallback(): void {
         super.connectedCallback();
         this.unsubscribe = this.papyros.io.subscribe(() => this.provideInput(), "awaitingInput");
     }
 
-    disconnectedCallback() {
+    disconnectedCallback(): void {
         super.disconnectedCallback();
         this.unsubscribe();
     }
@@ -82,12 +83,12 @@ export class BatchInput extends PapyrosElement {
                 .translations=${this.papyros.i18n.getTranslations("CodeMirror")}
                 .theme=${this.papyros.constants.CodeMirrorTheme}
                 @change=${(e: CustomEvent) => {
-                    this.buffer = e.detail;
-                    this.provideInput();
-                    if(!this.papyros.debugger.active && this.papyros.runner.state === RunState.Ready) {
-                        this.papyros.io.clearInputs();
-                    }
-                }}
+        this.buffer = e.detail;
+        this.provideInput();
+        if(!this.papyros.debugger.active && this.papyros.runner.state === RunState.Ready) {
+            this.papyros.io.clearInputs();
+        }
+    }}
             ></p-batch-input-editor>
         `
     }
