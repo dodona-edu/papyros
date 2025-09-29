@@ -1,8 +1,8 @@
 import { customElement } from "lit/decorators.js";
 import { css, CSSResult, html, TemplateResult } from "lit";
 import { FriendlyError, OutputEntry, OutputType } from "../state/InputOutput";
-import "./extras/Circle";
 import { PapyrosElement } from "./extras/PapyrosElement";
+import "@material/web/icon/icon";
 
 @customElement("p-output")
 export class Output extends PapyrosElement {
@@ -34,6 +34,10 @@ export class Output extends PapyrosElement {
             .place-holder {
                 color: var(--md-sys-color-on-surface);
                 opacity: 0.5;
+            }
+            
+            md-icon {
+                vertical-align: bottom;
             }
         `
     }
@@ -101,7 +105,11 @@ export class Output extends PapyrosElement {
                 } else {
                     const errorObject = o.content as FriendlyError;
                     const errorHTML = [ // an array to avoid unintentional spaces/newlines
-                        html`<p-circle title="${errorObject.info}">?</p-circle>${errorObject.name} traceback: <p-circle title="${errorObject.traceback}">!</p-circle>\n`,
+                        html`<md-icon title="${errorObject.info}">
+                                ${this.papyros.constants.icons.help}
+                            </md-icon> ${errorObject.name} traceback: <md-icon title="${errorObject.traceback}">
+                                ${this.papyros.constants.icons.info}
+                        </md-icon>\n`,
                         html`<span class="where">${errorObject.where?.trim()}</span>\n`,
                     ]
                     if(errorObject.what) {
