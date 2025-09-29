@@ -2,7 +2,7 @@ import { customElement, property } from "lit/decorators.js";
 import { css, CSSResult, html, TemplateResult } from "lit";
 import "./input/BatchInput";
 import "./input/InteractiveInput";
-import { PapyrosElement } from "./extras/PapyrosElement";
+import { PapyrosElement } from "./PapyrosElement";
 import "@material/web/switch/switch";
 
 enum InputMode {

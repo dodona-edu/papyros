@@ -1,6 +1,6 @@
 import { customElement } from "lit/decorators.js";
 import { adoptStyles, css, CSSResult, html, TemplateResult } from "lit";
-import { PapyrosElement } from "../extras/PapyrosElement";
+import { PapyrosElement } from "../PapyrosElement";
 import "../CodeRunner";
 import "../Debugger";
 import "../Output";

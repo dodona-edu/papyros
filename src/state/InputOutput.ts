@@ -2,7 +2,7 @@ import { State, stateProperty } from "@dodona/lit-state";
 import { BackendManager } from "../BackendManager";
 import { BackendEventType } from "../BackendEvent";
 import { parseData } from "../util/Util";
-import { Papyros } from "./Papyros";
+import { Papyros } from "../Papyros";
 
 /**
  * Shape of Error objects that are easy to interpret

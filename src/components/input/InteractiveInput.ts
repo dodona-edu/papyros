@@ -1,7 +1,7 @@
 import { customElement, property } from "lit/decorators.js";
 import { createRef, Ref, ref } from "lit/directives/ref.js";
 import { css, CSSResult, html, PropertyValues, TemplateResult } from "lit";
-import { PapyrosElement } from "../extras/PapyrosElement";
+import { PapyrosElement } from "../PapyrosElement";
 import "@material/web/textfield/outlined-text-field";
 import "@material/web/button/outlined-button";
 

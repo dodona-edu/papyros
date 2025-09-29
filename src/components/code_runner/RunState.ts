@@ -1,5 +1,5 @@
 import { customElement } from "lit/decorators.js";
-import { PapyrosElement } from "../extras/PapyrosElement";
+import { PapyrosElement } from "../PapyrosElement";
 import { RunState } from "../../state/Runner";
 import { css, CSSResult, html, TemplateResult } from "lit";
 import "@material/web/progress/circular-progress";

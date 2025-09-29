@@ -2,7 +2,7 @@ import { customElement, property } from "lit/decorators.js";
 import { css, CSSResult, html, TemplateResult } from "lit";
 import "../code_mirror/BatchInputEditor";
 import { RunState } from "../../state/Runner";
-import { PapyrosElement } from "../extras/PapyrosElement";
+import { PapyrosElement } from "../PapyrosElement";
 
 @customElement("p-batch-input")
 export class BatchInput extends PapyrosElement {

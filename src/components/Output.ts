@@ -1,7 +1,7 @@
 import { customElement } from "lit/decorators.js";
 import { css, CSSResult, html, TemplateResult } from "lit";
 import { FriendlyError, OutputEntry, OutputType } from "../state/InputOutput";
-import { PapyrosElement } from "./extras/PapyrosElement";
+import { PapyrosElement } from "./PapyrosElement";
 import "@material/web/icon/icon";
 
 @customElement("p-output")

@@ -1,7 +1,7 @@
 import { customElement } from "lit/decorators.js";
 import { css, CSSResult, html, TemplateResult } from "lit";
 import { RunState } from "../../state/Runner";
-import { PapyrosElement } from "../extras/PapyrosElement";
+import { PapyrosElement } from "../PapyrosElement";
 import { RunMode } from "../../Backend";
 import "@material/web/button/filled-button";
 import "@material/web/button/outlined-button";

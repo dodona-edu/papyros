@@ -5,7 +5,7 @@ import { BackendEvent, BackendEventType } from "../BackendEvent";
 import { BackendManager } from "../BackendManager";
 import { parseData } from "../util/Util";
 import { State, stateProperty } from "@dodona/lit-state";
-import { Papyros } from "./Papyros";
+import { Papyros } from "../Papyros";
 import { ProgrammingLanguage } from "../ProgrammingLanguage";
 
 

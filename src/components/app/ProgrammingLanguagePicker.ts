@@ -1,5 +1,5 @@
 import { customElement } from "lit/decorators.js";
-import { PapyrosElement } from "../extras/PapyrosElement";
+import { PapyrosElement } from "../PapyrosElement";
 import { html, TemplateResult } from "lit";
 import { ProgrammingLanguage } from "../../ProgrammingLanguage";
 import "@material/web/select/outlined-select";

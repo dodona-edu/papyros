@@ -1,7 +1,7 @@
 import { css, CSSResult, html, TemplateResult } from "lit";
 import "../code_mirror/CodeEditor"
 import { customElement } from "lit/decorators.js";
-import { PapyrosElement } from "../extras/PapyrosElement";
+import { PapyrosElement } from "../PapyrosElement";
 
 @customElement("p-code")
 export class Code extends PapyrosElement {
