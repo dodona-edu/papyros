@@ -19,4 +19,4 @@ jobs:
         yarn install
     - name: Test
       run: |
-        yarn test --ci --runInBand
+        yarn test
