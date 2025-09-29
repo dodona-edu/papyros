@@ -4,7 +4,6 @@ import eslint from "@eslint/js";
 export default tseslint.config(
     {
         ignores: [
-            "**/jest.config.js",
             "src/Translations.js",
             "**/dist",
         ],

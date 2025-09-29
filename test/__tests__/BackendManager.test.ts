@@ -3,6 +3,8 @@ import { BackendManager } from "../../src/communication/BackendManager";
 // eslint-disable-next-line jest/no-mocks-import
 import { MockBackend } from "../__mocks__/MockBackend";
 import { BackendEvent, BackendEventType } from "../../src/communication/BackendEvent";
+import { describe, expect, it, beforeEach, vi } from "vitest";
+
 
 function registerMock(language: ProgrammingLanguage): void {
     BackendManager.registerBackend(language,
@@ -23,8 +25,8 @@ describe("BackendManager", () => {
     it("properly implements PubSub", async () => {
         const events: Array<BackendEvent> = [];
         const backend = BackendManager.getBackend(ProgrammingLanguage.JavaScript);
-        const eventHandler = jest.fn((e: BackendEvent) => BackendManager.publish(e));
-        const eventProcessor = jest.fn((e: BackendEvent) => events.push(e));
+        const eventHandler = vi.fn((e: BackendEvent) => BackendManager.publish(e));
+        const eventProcessor = vi.fn((e: BackendEvent) => events.push(e));
         BackendManager.subscribe(BackendEventType.Output, eventProcessor);
         await backend.workerProxy.launch(eventHandler);
         await backend.workerProxy.lintCode("");

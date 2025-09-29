@@ -9,5 +9,13 @@ export default defineConfig({
     },
     worker: {
         format: "es"
-    }
+    },
+    test: {
+        browser: {
+            enabled: true,
+            provider: 'playwright',
+            instances: [{browser: 'chromium',},],
+            headless: true,
+        },
+    },
 });

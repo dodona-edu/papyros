@@ -1,6 +1,7 @@
 import { SyncExtras } from "comsync";
 import { Backend, WorkerDiagnostic } from "../../src/backend/Backend";
 import { BackendEventType } from "../../src/communication/BackendEvent";
+import { vi } from "vitest";
 
 /**
  * Implementation of a JavaScript backend for Papyros
@@ -9,8 +10,8 @@ import { BackendEventType } from "../../src/communication/BackendEvent";
 export class MockBackend extends Backend<SyncExtras> {
     constructor() {
         super();
-        this.runCode = jest.fn(this.runCode);
-        this.lintCode = jest.fn(this.lintCode);
+        this.runCode = vi.fn(this.runCode);
+        this.lintCode = vi.fn(this.lintCode);
     }
 
     protected syncExpose() {
