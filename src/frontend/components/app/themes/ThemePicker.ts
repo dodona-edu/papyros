@@ -1,37 +1,20 @@
 import { customElement, property } from "lit/decorators.js";
-import { CSSResult, html, LitElement, TemplateResult } from "lit";
-import blueLight from "./blue-light";
-import blueDark from "./blue-dark";
-import greenLight from "./green-light";
-import greenDark from "./green-dark";
-import redLight from "./red-light";
-import redDark from "./red-dark";
+import { html, TemplateResult } from "lit";
 import "./ThemedButton";
 import "@material/web/icon/icon";
 import "@material/web/iconbutton/icon-button";
+import {PapyrosElement} from "../../PapyrosElement";
+import {ThemeOption} from "../../../state/Constants";
 
-export type Theme = {
-    theme: CSSResult;
-    dark: boolean;
-    name: string;
-};
-export const themes: Theme[] = [
-    { theme: blueLight, dark: false, name: "Blue Light" },
-    { theme: blueDark, dark: true, name: "Blue Dark" },
-    { theme: greenLight, dark: false, name: "Green Light" },
-    { theme: greenDark, dark: true, name: "Green Dark" },
-    { theme: redLight, dark: false, name: "Red Light" },
-    { theme: redDark, dark: true, name: "Red Dark" },
-];
 
 @customElement("p-theme-picker")
-export class ThemePicker extends LitElement {
+export class ThemePicker extends PapyrosElement {
     @property({ state: true })
         picking = false;
 
-    setTheme(theme: Theme): void {
+    setTheme(theme: ThemeOption): void {
         this.picking = false;
-        this.dispatchEvent(new CustomEvent("change", { detail: { theme } }));
+        this.papyros.constants.activeTheme = theme;
     }
 
     protected override render(): TemplateResult[] | TemplateResult {
@@ -45,7 +28,7 @@ export class ThemePicker extends LitElement {
                 `;
         }
 
-        return themes.map(t => html`
+        return Object.values(this.papyros.constants.themes).map(t => html`
             <p-themed-button .theme=${t.theme} 
                              .dark=${t.dark}
                             @click=${() => this.setTheme(t)}

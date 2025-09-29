@@ -12,10 +12,12 @@ import "./themes/ThemePicker";
 import { State } from "@dodona/lit-state";
 import "@material/web/iconbutton/icon-button";
 import "@material/web/icon/icon";
-import { Theme, themes } from "./themes/ThemePicker";
+import {ThemeOption} from "../../state/Constants";
 
 @customElement("p-app")
 export class App extends PapyrosElement {
+    subscriptions: (() => void)[] = []
+
     static get styles(): CSSResult {
         return css`
             :host {
@@ -118,14 +120,20 @@ export class App extends PapyrosElement {
     constructor() {
         super();
         this.papyros.launch();
-        this.initializeLocalStorageProperty(this.papyros.i18n, "locale");
-        this.initializeLocalStorageProperty(this.papyros.runner, "code");
-        this.initializeLocalStorageProperty(this.papyros.runner, "programmingLanguage");
     }
 
     public override connectedCallback(): void {
         super.connectedCallback();
-        this.initTheme();
+        this.initializeLocalStorageProperty(this.papyros.i18n, "locale");
+        this.initializeLocalStorageProperty(this.papyros.runner, "code");
+        this.initializeLocalStorageProperty(this.papyros.runner, "programmingLanguage");
+        this.initializeLocalStorageProperty(this.papyros.constants, "activeTheme");
+    }
+
+    public override disconnectedCallback(): void {
+        super.disconnectedCallback();
+        this.subscriptions.forEach(s => s());
+        this.subscriptions = [];
     }
 
     initializeLocalStorageProperty(state: State, property: string): void {
@@ -138,30 +146,19 @@ export class App extends PapyrosElement {
             }
         }
 
-        state.subscribe(() => {
+        const unsubscribe = state.subscribe(() => {
             localStorage.setItem(property, JSON.stringify(state[property]));
         }, property);
+        this.subscriptions.push(unsubscribe);
     }
 
-    initTheme(): void {
-        const storedTheme = localStorage.getItem("theme");
-        if (storedTheme) {
-            const theme = themes.find(t => t.name === storedTheme);
-            if (theme) {
-                this.setTheme(theme);
-            }
-        } else {
-            this.setTheme(themes[0]);
-        }
-    }
-
-    setTheme(theme: Theme): void {
+    setTheme(theme: ThemeOption): void {
         document.documentElement.style.setProperty("color-scheme", theme.dark ? "dark" : "light");
         adoptStyles((this.renderRoot as ShadowRoot), [App.styles, theme.theme]);
-        localStorage.setItem("theme", theme.name);
     }
 
     protected override render(): TemplateResult {
+        this.setTheme(this.papyros.constants.activeTheme);
         return html`
             <div class="rows">
                 <div class="header">
@@ -174,8 +171,7 @@ export class App extends PapyrosElement {
                         </md-icon-button>
                     </div>
                     <div class="header-options">
-                        <p-theme-picker @change=${(e: CustomEvent) => this.setTheme(e.detail.theme)}
-                        ></p-theme-picker>
+                        <p-theme-picker .papyros=${this.papyros}></p-theme-picker>
                         <p-language-picker .papyros=${this.papyros}></p-language-picker>
                         <p-programming-language-picker .papyros=${this.papyros}
                         ></p-programming-language-picker>
