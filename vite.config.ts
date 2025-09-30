@@ -17,5 +17,6 @@ export default defineConfig({
             instances: [{browser: 'chromium',},],
             headless: true,
         },
+        testTimeout: 100000, // loading pyodide can take a while
     },
 });
