@@ -221,8 +221,14 @@ export class Runner extends State {
         const backend = await this.backend;
         await backend.interrupt();
 
-        while (this.state === RunState.Stopping) {
+        const startTime = new Date().getTime();
+        while (this.state === RunState.Stopping && (new Date().getTime() - startTime) < 5000) {
             await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        if (this.state === RunState.Stopping) {
+            console.warn("Deadlock while stopping, restarting backend");
+            await this.launch();
+            this.setState(RunState.Ready, this.papyros.i18n.t("Papyros.interrupted", { time: (new Date().getTime() - this.runStartTime) / 1000 }));
         }
     }
 
