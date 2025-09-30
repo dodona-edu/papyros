@@ -29,4 +29,4 @@ jobs:
         yarn setup
     - name: Test
       run: |
-        yarn test
+        yarn test --poolOptions.forks.singleFork
