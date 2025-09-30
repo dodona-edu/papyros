@@ -12,113 +12,172 @@
   </a>
 </p>
 
-Papyros is a programming scratchpad in the browser. It allows running code
-directly in your browser, no installation required. Right now, the focus is on providing a great experience for Python, while also supporting JavaScript.
-By taking away obstacles between students and coding, the learning experience becomes
-smoother and less error-prone.
+Papyros is a programming scratchpad in the browser. It allows running code directly in your browser, no installation required. 
+Right now, the focus is on providing a great experience for Python, while also supporting JavaScript.
+By taking away obstacles between students and coding, the learning experience becomes smoother and less error-prone.
 
 Currently, Papyros provides support for the following programming languages:
 - Python, powered by [Pyodide](https://pyodide.org/en/stable/)
 - JavaScript, powered by your browser
 
-## Using Papyros in your own project
+---
 
-You can add Papyros to your project as follows:
-- npm:
+## Try it Online
+
+Start coding directly in your [browser](https://papyros.dodona.be/).
+
+---
+
+## Use papyros in your project
+
+### Installation
+
+Install via npm or yarn:
+
 ```shell
 npm install @dodona/papyros
-```
-- yarn:
-```shell
+# or
 yarn add @dodona/papyros
 ```
 
-Papyros currently supports two modes of operation: stand-alone and embedded.
+### Setup input handling
 
-In stand-alone mode, Papyros runs as a full application in the browser. 
-This includes extra UI elements to allow selecting a locale, a programming language, ...
+Running interactive programs in the browser requires special handling of synchronous input.
+Papyros supports two approaches (via [`sync-message`](https://github.com/alexmojaki/sync-message)):
 
-In embedded mode, the layout is reduced to the minimum. Dynamic selections are not displayed,
-as the user knows for what purpose Papyros is being used. For example, when used in the
-scope of a Python exercise in Dodona, there is no need to support other programming languages.
-The locale should also match that of the actual application.
+#### COOP/COEP headers
+Add the following HTTP headers to your server responses:
 
-Using Papyros in your project is done by following a few steps. First, you create a new
-Papyros instance with a `PapyrosConfig` object.
-The following options are supported:
-
-- `standAlone`: Whether to operate in stand-alone or embedded mode as described above.
-- `programmingLanguage`: The [programming language](/src/ProgrammingLanguage.ts) to use in the CodeEditor and Backend.
-- `locale`: The locale to use, currently English and Dutch translations are provided.
-- `inputMode`: How the users can provide input, according to the [InputMode enum](/src/InputManager.ts)
-- `example`: Optional name of the selected example, only appliccable in standAlone-mode
-- `channelOptions`: Optional options to provide to the [sync-message](https://github.com/alexmojaki/sync-message) channel. Extra is the serviceWorkerName, which is the relative pathname to the service worker script
-
-Furthermore, you can provide fine-grained configuration by providing `RenderOptions` to each main component in the application when rendering Papyros. You minimally need to specify the ID of the parent element.
-You can also specify attributes, such as `style`, `data`-attributes or `classNames` to be used.
-The components you can style like this are the following:
-- `standAloneOptions`: for the global application in standAlone mode
-- `codeEditorOptions`: for the CodeEditor.
-- `statusPanelOptions`: for the StatusPanel in the CodeEditor
-- `inputOptions`: for the field that handles the user input
-- `outputOptions`: for the panel that displays the output of the code
-
-### User input
-
-Important to note is that handling asynchronous input in a synchronous way is not straightforward.
-This requires advanced features which are not available by default in your browser. We support two options based on [sync-message](https://github.com/alexmojaki/sync-message).
-
-The most efficient and practical way is using SharedArrayBuffers, which requires the presence of certain HTTP headers.
-The following headers must be set on resources using Papyros.
 ```yaml
 {
   "Cross-Origin-Opener-Policy": "same-origin",
   "Cross-Origin-Embedder-Policy": "require-corp"
 }
 ```
-If you are also embedding other components (such as iframes, videos or images) in those pages, you will also need to set the `Cross-Origin-Resource-Policy`-header to `cross-origin` to make them work correctly. If these elements come from external URLs, it will likely not be possible to keep using them. An alternative is described below.
+These headers are required to enable `SharedArrayBuffer`, which is the preferred way to handle synchronous input.
+They need to be set on all assets that are loaded, including scripts, images, fonts, etc.
 
-If you would like to use this project without enabling these HTTP headers, we provide a solution using a service worker.
-If your application does not use a service worker yet, you can create one based on the [service worker used in stand-alone mode](src/communication/InputServiceWorker.ts)).
-If you already use a service worker, simply include our [InputWorker](src/communication/InputWorker.ts) in your existing service worker using imports (you can import it separately from /dist/workers/input/InputWorker). An example of how to use it can be found in our described service worker. Afterwards, inform Papyros of the location using the channelOptions described earlier.
+#### Service Worker
+If you cannot set these headers, you can use a service worker to handle input.
+We provide a compiled and minified version of the `InputServiceWorker` in the `dist` folder.
+You need to serve this file from the root of your domain (i.e. `/input-sw.js`).
+You can then register the service worker in your application before launching: `papyros.serviceWorkerName = 'input-sw.js';`.
 
-### Code editor
+---
 
-The editor used in Papyros is powered by [CodeMirror 6](https://codemirror.net/6/). It is accessible in code via an instance of Papyros and by default allows configuring many options:
-- the [programming language](/src/ProgrammingLanguage.ts) of the contents (for e.g. syntax higlighting)
-- the displayed placeholder
-- the indentation unit
-- the shown panel
-- the autocompletion source
-- the linting source
-- the theme used to style the editor
+## Usage
 
-If you need more specific functionality, this can be added in your own code by accessing the internal CodeMirror editorView.
+### Minimal setup
 
-## Documentation
+If you only want to use the state and runner logic without UI components:
 
-Visit our documentation page at <https://docs.dodona.be/papyros/>.
+```ts
+import { papyros } from "@dodona/papyros/Papyros";
 
-## Building and developing
+papyros.launch(); // heavy operation, loads workers and Pyodide
+papyros.runner.code = "print(input())";
 
-Clone the repository using git.
-```shell
-git@github.com:dodona-edu/papyros.git
+papyros.io.subscribe(
+  () => (papyros.io.awaitingInput ? papyros.io.provideInput("foo") : ""),
+  "awaitingInput"
+);
+
+await papyros.runner.start();
+console.log(papyros.runner.io.output[0].content);
 ```
 
-Install the required dependencies.
+### Minimal setup with components
+
+Papyros provides four web components for visualization.
+Each expects a `papyros` state instance, but defaults to the global `papyros`.
+
+```html
+<script type="module">
+  import { papyros } from "@dodona/papyros/Papyros";
+  import "@dodona/papyros/components";
+
+  papyros.launch();
+</script>
+
+<p-code-runner></p-code-runner>
+<p-debugger></p-debugger>
+<p-input></p-input>
+<p-output></p-output>
+```
+
+---
+
+## Theming
+
+Papyros uses [Material Web Components](https://github.com/material-components/material-web) for buttons, inputs, sliders, etc.
+All styling is driven by Material color system CSS variables (`--md-sys-color-...`).
+Generate your own theme using the [Material Theme Builder](https://material-foundation.github.io/material-theme-builder/).
+
+* Three example themes (light + dark) are provided via `papyros.constants.themes`.
+* A theme picker component is available out of the box.
+
+---
+
+## Structure
+
+The codebase organized into clear layers:
+
+* `backend`: code execution functionality (runs in Web Workers)
+* `communication`: helpers to connect frontend and backend
+* `frontend`: all browser-side code
+    * `state`: state management (e.g. execution state, debugger, input/output)
+    * `components`: visualization of that state, as Lit web components
+
+### Components
+
+#### `<p-code-runner>`
+
+A [CodeMirror 6](https://codemirror.net/6/) editor to edit, run, and debug code.
+Additional buttons can be added via the `.buttons` slot.
+
+#### `<p-input>`
+
+Lets users provide input (batch or interactive), passed to `papyros.io`.
+
+#### `<p-output>`
+
+Visualizes program output: stdout, stderr, and images.
+
+#### `<p-debugger>`
+
+Displays execution traces using [`@dodona/json-tracer`](https://github.com/dodona-edu/json-tracer).
+
+### State API
+
+A `Papyros` instance contains multiple logical parts:
+
+* `papyros.constants`: general settings, constants, and themes (can be overridden).
+* `papyros.debugger`: debug frames and currently active frame.
+* `papyros.examples`: available code examples.
+* `papyros.i18n`: translations (extend or override as needed).
+* `papyros.io`: input/output handling. Subscribe to `awaitingInput` to supply input when needed.
+* `papyros.runner`: code, execution state, programming language. Run code with `papyros.runner.start()`.
+* `papyros.test`: test code (appended to the code document).
+
+---
+
+## Development
+
+Clone the repository:
+
+```shell
+git clone git@github.com:dodona-edu/papyros.git
+cd papyros
+```
+
+Install dependencies:
+
 ```shell
 yarn install
 ```
 
-Start the local dev-server, powered by webpack.
+Start the local dev server:
+
 ```shell
 yarn start
 ```
-
-You can now develop with live-reloading.
-You can view the results in your browser by visting http://localhost:8080.
-
-## Try it online
-
-Start coding immediately in your [browser](https://papyros.dodona.be/).
