@@ -163,21 +163,23 @@ A `Papyros` instance contains multiple logical parts:
 
 ## Development
 
-Clone the repository:
-
 ```shell
+# Clone the repository:
 git clone git@github.com:dodona-edu/papyros.git
 cd papyros
-```
-
-Install dependencies:
-
-```shell
+# Install dependencies:
 yarn install
+# Build the python packages:
+yarn setup
+# Start a local server with live reload:
+yarn start
 ```
 
-Start the local dev server:
+## Publishing
 
 ```shell
-yarn start
+# Build as library
+yarn build:lib
+# Publish to npm
+yarn publish
 ```
