@@ -33,6 +33,7 @@ print("world")
 z = 1 + 2`;
         const unsubscribe = papyros.io.subscribe(() => papyros.io.awaitingInput ? papyros.io.provideInput("foo") : "", "awaitingInput");
         await papyros.runner.start(RunMode.Debug);
+        await new Promise(r => setTimeout(r, 50));
         expect(papyros.debugger.trace.length).toBe(5);
         papyros.debugger.activeFrame = 0;
         expect(papyros.debugger.debugOutputs).toBe(0);
