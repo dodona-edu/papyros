@@ -195,6 +195,7 @@ export class Runner extends State {
                 });
             }
         } finally {
+            console.log("Run finished");
             if (this.state === RunState.Stopping) {
                 // Was interrupted, End message already published
                 interrupted = true;
@@ -205,6 +206,7 @@ export class Runner extends State {
             this.setState(RunState.Ready, this.papyros.i18n.t(
                 interrupted ? "Papyros.interrupted" : "Papyros.finished",
                 { time: (new Date().getTime() - this.runStartTime) / 1000 }));
+            console.log("State set to ready");
         }
     }
 
@@ -303,6 +305,11 @@ export class Runner extends State {
     }
 
     private onStart(e: BackendEvent): void {
+        if( this.state !== RunState.Loading) {
+            // we probably already finished running, this is just a late event so ignore it
+            return;
+        }
+
         const startData = parseData(e.data, e.contentType) as string;
         if (startData.includes("RunCode")) {
             this.runStartTime = new Date().getTime();
