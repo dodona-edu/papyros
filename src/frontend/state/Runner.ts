@@ -195,7 +195,6 @@ export class Runner extends State {
                 });
             }
         } finally {
-            console.log("Run finished");
             if (this.state === RunState.Stopping) {
                 // Was interrupted, End message already published
                 interrupted = true;
@@ -206,7 +205,6 @@ export class Runner extends State {
             this.setState(RunState.Ready, this.papyros.i18n.t(
                 interrupted ? "Papyros.interrupted" : "Papyros.finished",
                 { time: (new Date().getTime() - this.runStartTime) / 1000 }));
-            console.log("State set to ready");
         }
     }
 
