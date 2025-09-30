@@ -21,5 +21,6 @@ export default defineConfig({
         sequence: {
             concurrent: false, // disable running tests in parallel
         },
+        fileParallelism: false, // disable running tests in parallel
     },
 });
