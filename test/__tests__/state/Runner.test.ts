@@ -3,6 +3,7 @@ import {Papyros} from "../../../src/Papyros";
 import {ProgrammingLanguage} from "../../../src/ProgrammingLanguage";
 import {RunState} from "../../../src/frontend/state/Runner";
 import {RunMode} from "../../../src/backend/Backend";
+import {waitForOutput} from "../../helpers";
 
 describe("Runner", () => {
     it("should run code", async () => {
@@ -49,6 +50,7 @@ const c = a + b;`;
         papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
         papyros.runner.code = "import numpy as np\nprint(np.arange(10))";
         await papyros.runner.start();
+        await waitForOutput(papyros);
         expect(papyros.io.output[0].content).toBe("[0 1 2 3 4 5 6 7 8 9]");
     });
 
@@ -75,6 +77,7 @@ print
 2
 """`;
         await papyros.runner.start(RunMode.Doctest);
+        await waitForOutput(papyros);
         expect(papyros.runner.state).toBe(RunState.Ready);
         expect(papyros.runner.stateMessage).toMatch(/^Code executed in /);
         expect(papyros.io.output[0].content).toBe("Trying:\n");
@@ -96,6 +99,7 @@ with open("readme.md", "r") as g:
     print(g.readline())
 `;
         await papyros.runner.start();
+        await waitForOutput(papyros);
         expect(papyros.io.output[0].content).toBe("Hello from file!\n");
         expect(papyros.io.output[1].content).toBe("# Papyros\n");
     });

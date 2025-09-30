@@ -3,7 +3,7 @@ import {ProgrammingLanguage} from "../../../src/ProgrammingLanguage";
 import {Papyros} from "../../../src/Papyros";
 import {RunMode} from "../../../src/backend/Backend";
 import {NonExceptionFrame} from "@dodona/trace-component/dist/trace_types";
-import {waitForOutput} from "../../helpers";
+import {waitForInputReady, waitForOutput} from "../../helpers";
 
 describe.sequential("Debugger", () => {
     it("can run in debug mode", async () => {
@@ -35,6 +35,7 @@ input("input: ")
 print("world")
 z = 1 + 2`;
         const unsubscribe = papyros.io.subscribe(() => papyros.io.awaitingInput ? papyros.io.provideInput("foo") : "", "awaitingInput");
+        await waitForInputReady();
         await papyros.runner.start(RunMode.Debug);
         await waitForOutput(papyros);
 
