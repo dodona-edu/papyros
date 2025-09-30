@@ -19,6 +19,4 @@ export async function waitForInputReady(timeout = 2000): Promise<void> {
         }
         await new Promise(r => setTimeout(r, 20));
     }
-    // Give it a bit more time to ensure the service worker is fully ready
-    await new Promise(r => setTimeout(r, 500));
 }

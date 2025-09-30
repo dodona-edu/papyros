@@ -18,5 +18,8 @@ export default defineConfig({
             headless: true,
         },
         testTimeout: 100000, // loading pyodide can take a while
+        sequence: {
+            concurrent: false, // disable running tests in parallel
+        },
     },
 });
