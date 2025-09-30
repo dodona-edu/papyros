@@ -2,7 +2,7 @@
  * Default service worker to process user input using HTTP requests
  */
 // Import service worker provided by the Papyros-package
-import { InputWorker } from "../backend/workers/input/InputWorker";
+import { InputWorker } from "./InputWorker";
 
 // Strip away the filename of the script to obtain the scope
 // let domain = location.href;
