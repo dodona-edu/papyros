@@ -31,3 +31,5 @@ translationIssues.txt
 # Ignore output of local pip install when building the tar
 src/backend/workers/python/python_package/
 src/backend/workers/python/python_package.tar.gz.load_by_url
+
+__screenshots__/
