@@ -163,6 +163,12 @@ export class CodeEditor extends CodeMirrorEditor {
         this.configure({
             linting: linter(async view => {
                 const workerDiagnostics = await lintSource();
+                if(workerDiagnostics.some(d => d.lineNr > view.state.doc.lines || d.endLineNr > view.state.doc.lines)) {
+                    // if the diagnostics are out of range, the document has changed since the linting was requested
+                    // these diagnostics are no longer valid
+                    return [];
+                }
+
                 return workerDiagnostics.map(d => {
                     const fromline = view.state.doc.line(d.lineNr);
                     const toLine = view.state.doc.line(d.endLineNr);
