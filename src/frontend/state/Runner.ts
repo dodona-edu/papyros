@@ -110,6 +110,7 @@ export class Runner extends State {
     /**
      * available run modes for the current code
      */
+    @stateProperty
     public runModes: Array<RunMode> = [RunMode.Debug];
 
     /**
