@@ -75,10 +75,10 @@ console.log("world!");
     it("can read multiple inputs", async () => {
         const papyros = new Papyros();
         await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.JavaScript;
+        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
         papyros.runner.code = `
-console.log("hello", prompt("input1"));
-console.log("world!", prompt("input2"));
+print("hello " + input("input1"))
+print("world! " + input("input2"))
 `;
         let inputCount = 0;
         const unsubscribe = papyros.io.subscribe(async () => {
@@ -91,8 +91,8 @@ console.log("world!", prompt("input2"));
         await waitForInputReady();
         await papyros.runner.start();
         await waitForOutput(papyros);
-        expect(papyros.io.output[0].content).toBe("hello foo1\n");
-        expect(papyros.io.output[1].content).toBe("world! foo2\n");
+        expect(papyros.io.output[0].content).toBe("hello foo1");
+        expect(papyros.io.output[3].content).toBe("world! foo2");
         unsubscribe();
     });
 });
