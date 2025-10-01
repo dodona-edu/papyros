@@ -17,17 +17,17 @@ export class Debugger extends PapyrosElement {
                 --tc-primary-color: var(--md-sys-color-primary);
 
                 /* Secondary */
-                --tc-secondary-surface-color: var(--md-sys-color-secondary-container);
-                --tc-secondary-on-surface-color: var(--md-sys-color-on-secondary-container);
+                --tc-secondary-surface-color: var(--md-sys-color-secondary-surface, var(--md-sys-color-secondary-container));
+                --tc-secondary-on-surface-color: var(--md-sys-color-on-secondary-surface, var(--md-sys-color-on-secondary-container));
                 --tc-secondary-surface-container-color: var(--md-sys-color-secondary-container);
-                --tc-secondary-outline-color: var(--md-sys-color-outline);
+                --tc-secondary-outline-color: var(--md-sys-color-secondary-outline, var(--md-sys-color-outline));
                 --tc-secondary-color: var(--md-sys-color-secondary);
 
                 /* Tertiary */
-                --tc-tertiary-surface-color: var(--md-sys-color-tertiary-container);
-                --tc-tertiary-on-surface-color: var(--md-sys-color-on-tertiary-container);
+                --tc-tertiary-surface-color: var(--md-sys-color-tertiary-surface, var(--md-sys-color-tertiary-container));
+                --tc-tertiary-on-surface-color: var(--md-sys-color-on-tertiary-surface, var(--md-sys-color-on-tertiary-container));
                 --tc-tertiary-surface-container-color: var(--md-sys-color-tertiary-container);
-                --tc-tertiary-outline-color: var(--md-sys-color-outline);
+                --tc-tertiary-outline-color: var(--md-sys-color-tertairy-outline, var(--md-sys-color-outline));
                 --tc-tertiary-color: var(--md-sys-color-tertiary);
             }
 
