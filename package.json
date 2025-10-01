@@ -9,7 +9,7 @@
     "@types/escape-html": "^1.0.3",
     "@types/i18n-js": "^4.0.1",
     "@types/jest": "^29.5.10",
-    "@types/serviceworker": "^0.0.152",
+    "@types/serviceworker": "^0.0.154",
     "autoprefixer": "^10.4.16",
     "css-loader": "^7.1.2",
     "eslint": "^9.17.0",
