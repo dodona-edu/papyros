@@ -133,7 +133,7 @@ export function lineEffectExtension(config: LineEffectExtensionConfig): [Extensi
 
 export const [usedLineExtension, setUsedLines, usedLineState] = lineEffectExtension({ marker: "✔" });
 export const [debugLineExtension, setDebugLines, debugLineState] = lineEffectExtension({ marker: "▶" });
-export const [testLineExtension, setTestLines, testLineState] = lineEffectExtension({ lineClass: "papyros-test-line", gutterClass: "papyros-test-line" });
+export const [testLineExtension, setTestLines, testLineState] = lineEffectExtension({ lineClass: "papyros-test-line", gutterClass: "" });
 
 export function testCodeWidgetExtension(translations: {description: string, edit: string, remove: string}, handleEdit: () => void, handleRemove: () => void): Extension {
     class TestCodeWidget extends WidgetType {

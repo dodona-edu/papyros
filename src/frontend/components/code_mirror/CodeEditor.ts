@@ -66,7 +66,6 @@ export class CodeEditor extends CodeMirrorEditor {
             }
 
             .papyros-test-code-buttons {
-                background-color: var(--md-sys-color-surface-variant);
                 position: absolute;
                 top: 0;
                 left: -50px;
