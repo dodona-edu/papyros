@@ -16,7 +16,7 @@ jobs:
           yarn install
           yarn build:library
       - name: Publish @dodona/papyros to NPM
-        uses: JS-DevTools/npm-publish@v3
+        uses: JS-DevTools/npm-publish@v4
         with:
           token: ${{ secrets.NPM_AUTH_TOKEN }}
           check-version: true
