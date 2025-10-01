@@ -2,7 +2,7 @@ import { BackendManager } from "../../communication/BackendManager";
 import { BackendEventType } from "../../communication/BackendEvent";
 import { Frame } from "@dodona/trace-component/dist/trace_types";
 import { State, stateProperty } from "@dodona/lit-state";
-import { Papyros } from "../../Papyros";
+import { Papyros } from "./Papyros";
 export type FrameState = {
     line: number;
     outputs: number;

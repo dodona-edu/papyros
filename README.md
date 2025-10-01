@@ -72,7 +72,7 @@ You can then register the service worker in your application before launching: `
 If you only want to use the state and runner logic without UI components:
 
 ```ts
-import { papyros } from "@dodona/papyros/Papyros";
+import { papyros } from "@dodona/papyros";
 
 papyros.launch(); // heavy operation, loads workers and Pyodide
 papyros.runner.code = "print(input())";
@@ -93,8 +93,7 @@ Each expects a `papyros` state instance, but defaults to the global `papyros`.
 
 ```html
 <script type="module">
-  import { papyros } from "@dodona/papyros/Papyros";
-  import "@dodona/papyros/components";
+  import { papyros } from "@dodona/papyros";
 
   papyros.launch();
 </script>

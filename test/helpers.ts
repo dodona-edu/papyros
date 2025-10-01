@@ -1,4 +1,4 @@
-import {Papyros} from "../src/Papyros";
+import {Papyros} from "../src/frontend/state/Papyros";
 
 export async function waitForOutput(papyros: Papyros, count: number = 1, timeout = 2000): Promise<void> {
     const start = Date.now();

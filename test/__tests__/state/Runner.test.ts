@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest";
-import {Papyros} from "../../../src/Papyros";
+import {Papyros} from "../../../src/frontend/state/Papyros";
 import {ProgrammingLanguage} from "../../../src/ProgrammingLanguage";
 import {RunState} from "../../../src/frontend/state/Runner";
 import {RunMode} from "../../../src/backend/Backend";

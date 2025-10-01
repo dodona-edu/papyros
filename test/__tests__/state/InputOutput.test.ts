@@ -1,4 +1,4 @@
-import {Papyros} from "../../../src/Papyros";
+import {Papyros} from "../../../src/frontend/state/Papyros";
 import {expect, it, describe} from "vitest";
 import {ProgrammingLanguage} from "../../../src/ProgrammingLanguage";
 import {FriendlyError, InputMode, OutputType} from "../../../src/frontend/state/InputOutput";

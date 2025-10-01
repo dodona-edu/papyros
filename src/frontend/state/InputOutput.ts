@@ -2,7 +2,7 @@ import { State, stateProperty } from "@dodona/lit-state";
 import { BackendManager } from "../../communication/BackendManager";
 import { BackendEventType } from "../../communication/BackendEvent";
 import { parseData } from "../../util/Util";
-import { Papyros } from "../../Papyros";
+import { Papyros } from "./Papyros";
 import { RunState } from "./Runner";
 
 /**

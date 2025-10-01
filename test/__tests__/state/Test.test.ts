@@ -1,5 +1,5 @@
 import {test, expect} from "vitest";
-import {Papyros} from "../../../src/Papyros";
+import {Papyros} from "../../../src/frontend/state/Papyros";
 
 test("testcode is appended to the end of the code", async () => {
     const papyros = new Papyros();

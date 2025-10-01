@@ -1,5 +1,5 @@
 import { State, stateProperty } from "@dodona/lit-state";
-import { Papyros } from "../../Papyros";
+import { Papyros } from "./Papyros";
 
 export class Test extends State {
     papyros: Papyros;

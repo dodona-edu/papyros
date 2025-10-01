@@ -1,6 +1,6 @@
 import {describe, it, expect} from "vitest";
 import {ProgrammingLanguage} from "../../../src/ProgrammingLanguage";
-import {Papyros} from "../../../src/Papyros";
+import {Papyros} from "../../../src/frontend/state/Papyros";
 import {RunMode} from "../../../src/backend/Backend";
 import {NonExceptionFrame} from "@dodona/trace-component/dist/trace_types";
 import {waitForInputReady, waitForOutput} from "../../helpers";

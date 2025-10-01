@@ -1,6 +1,6 @@
 import { State, StateMap, stateProperty } from "@dodona/lit-state";
 import { ProgrammingLanguage } from "../../ProgrammingLanguage";
-import { Papyros } from "../../Papyros";
+import { Papyros } from "./Papyros";
 import { JAVASCRIPT_EXAMPLES } from "../components/app/examples/JavaScriptExamples";
 import { PYTHON_EXAMPLES } from "../components/app/examples/PythonExamples";
 
