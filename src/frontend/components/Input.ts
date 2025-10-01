@@ -1,19 +1,13 @@
-import { customElement, property } from "lit/decorators.js";
+import { customElement } from "lit/decorators.js";
 import { css, CSSResult, html, TemplateResult } from "lit";
 import "./input/BatchInput";
 import "./input/InteractiveInput";
 import { PapyrosElement } from "./PapyrosElement";
 import "@material/web/switch/switch";
-
-enum InputMode {
-    batch = "batch",
-    interactive = "interactive",
-}
+import { InputMode } from "../state/InputOutput";
 
 @customElement("p-input")
 export class Input extends PapyrosElement {
-    @property({ state: true })
-        mode: InputMode = InputMode.interactive;
     static get styles(): CSSResult {
         return css`
             label {
@@ -35,17 +29,21 @@ export class Input extends PapyrosElement {
         `
     }
 
+    get mode(): InputMode {
+        return this.papyros.io.inputMode;
+    }
+
     get otherMode(): InputMode {
         return this.mode === InputMode.batch ? InputMode.interactive : InputMode.batch;
     }
 
     toggleMode(): void {
-        this.mode = this.otherMode;
+        this.papyros.io.inputMode = this.otherMode;
     }
 
     protected override render(): TemplateResult {
         if (this.papyros.debugger.active) {
-            this.mode = InputMode.batch;
+            this.papyros.io.inputMode = InputMode.batch;
         }
 
         return html`

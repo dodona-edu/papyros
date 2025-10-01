@@ -46,6 +46,11 @@ export type OutputEntry = {
     contentType?: string;
 }
 
+export enum InputMode {
+    batch = "batch",
+    interactive = "interactive",
+}
+
 export class InputOutput extends State {
     private papyros: Papyros;
     @stateProperty
@@ -56,6 +61,8 @@ export class InputOutput extends State {
         prompt: string = "";
     @stateProperty
         awaitingInput: boolean = false;
+    @stateProperty
+        inputMode: InputMode = InputMode.interactive
 
     constructor(papyros: Papyros) {
         super();
