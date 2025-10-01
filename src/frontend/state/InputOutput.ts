@@ -3,6 +3,7 @@ import { BackendManager } from "../../communication/BackendManager";
 import { BackendEventType } from "../../communication/BackendEvent";
 import { parseData } from "../../util/Util";
 import { Papyros } from "../../Papyros";
+import { RunState } from "./Runner";
 
 /**
  * Shape of Error objects that are easy to interpret
@@ -62,7 +63,30 @@ export class InputOutput extends State {
     @stateProperty
         awaitingInput: boolean = false;
     @stateProperty
-        inputMode: InputMode = InputMode.interactive
+        inputMode: InputMode = InputMode.interactive;
+
+    @stateProperty
+    private _inputBuffer: string = "";
+    @stateProperty
+    get inputBuffer(): string {
+        return this._inputBuffer;
+    }
+    set inputBuffer(value: string) {
+        this._inputBuffer = value;
+        if(this.nextBufferedLine !== undefined && this.inputMode === InputMode.batch && this.awaitingInput) {
+            this.provideInput(this.nextBufferedLine);
+        }
+        if(!this.papyros.debugger.active && this.papyros.runner.state === RunState.Ready) {
+            this.clearInputs();
+        }
+    }
+    private get nextBufferedLine(): string | undefined {
+        const bufferedLines = this.inputBuffer.split("\n").slice(0,-1);
+        if (bufferedLines.length > this.inputs.length) {
+            return bufferedLines[this.inputs.length];
+        }
+        return undefined;
+    }
 
     constructor(papyros: Papyros) {
         super();
@@ -82,6 +106,11 @@ export class InputOutput extends State {
             this.logError(data);
         });
         BackendManager.subscribe(BackendEventType.Input, e => {
+            if(this.nextBufferedLine !== undefined && this.inputMode === InputMode.batch) {
+                this.provideInput(this.nextBufferedLine);
+                return;
+            }
+
             this.prompt = e.data || "";
             this.awaitingInput = true;
         });

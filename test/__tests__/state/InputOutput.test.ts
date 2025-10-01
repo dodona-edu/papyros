@@ -1,7 +1,7 @@
 import {Papyros} from "../../../src/Papyros";
 import {expect, it, describe} from "vitest";
 import {ProgrammingLanguage} from "../../../src/ProgrammingLanguage";
-import {FriendlyError, OutputType} from "../../../src/frontend/state/InputOutput";
+import {FriendlyError, InputMode, OutputType} from "../../../src/frontend/state/InputOutput";
 import {waitForInputReady, waitForOutput} from "../../helpers";
 
 describe.sequential("InputOutput", () => {
@@ -94,5 +94,22 @@ print("world! " + input("input2"))
         expect(papyros.io.output[0].content).toBe("hello foo1");
         expect(papyros.io.output[3].content).toBe("world! foo2");
         unsubscribe();
+    });
+
+    it("can preprovide multiple inputs in the buffer", async () => {
+        const papyros = new Papyros();
+        await papyros.launch();
+        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
+        papyros.runner.code = `
+print("hello " + input("input1"))
+print("world! " + input("input2"))
+`;
+        papyros.io.inputMode = InputMode.batch;
+        papyros.io.inputBuffer = "foo1\nfoo2\n";
+        await waitForInputReady();
+        await papyros.runner.start();
+        await waitForOutput(papyros);
+        expect(papyros.io.output[0].content).toBe("hello foo1");
+        expect(papyros.io.output[3].content).toBe("world! foo2");
     });
 });
