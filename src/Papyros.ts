@@ -53,11 +53,9 @@ export class Papyros extends State {
             if (!this.serviceWorkerName || !("serviceWorker" in navigator)) {
                 return false;
             }
-            const serviceWorkerRoot = cleanCurrentUrl(true);
-            const serviceWorkerUrl = serviceWorkerRoot + this.serviceWorkerName;
             try {
-                await navigator.serviceWorker.register(serviceWorkerUrl, { scope: "/" });
-                BackendManager.channel = makeChannel({ serviceWorker: { scope: serviceWorkerRoot } })!;
+                await navigator.serviceWorker.register(this.serviceWorkerName, { scope: "/" });
+                BackendManager.channel = makeChannel({ serviceWorker: { scope: "/" } })!;
             } catch(e) {
                 console.error("Error registering service worker:", e);
                 return false;
