@@ -27,7 +27,7 @@ export class Debugger extends PapyrosElement {
                 --tc-tertiary-surface-color: var(--md-sys-color-tertiary-surface, var(--md-sys-color-tertiary-container));
                 --tc-tertiary-on-surface-color: var(--md-sys-color-on-tertiary-surface, var(--md-sys-color-on-tertiary-container));
                 --tc-tertiary-surface-container-color: var(--md-sys-color-tertiary-container);
-                --tc-tertiary-outline-color: var(--md-sys-color-tertairy-outline, var(--md-sys-color-outline));
+                --tc-tertiary-outline-color: var(--md-sys-color-tertiary-outline, var(--md-sys-color-outline));
                 --tc-tertiary-color: var(--md-sys-color-tertiary);
             }
 
