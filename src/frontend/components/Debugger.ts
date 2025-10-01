@@ -39,7 +39,7 @@ export class Debugger extends PapyrosElement {
     }
 
     protected override render(): TemplateResult {
-        if(!this.papyros.debugger.active) {
+        if(!this.papyros.debugger.active || this.papyros.debugger.trace.length === 0) {
             return html`<div class="place-holder">${this.t("Papyros.debug_placeholder")}</div>`;
         }
 
