@@ -1,29 +1,12 @@
-import { BackendEvent } from "./BackendEvent";
-import { CodeEditor } from "./editor/CodeEditor";
-import { InputManager, InputMode } from "./InputManager";
-import { FriendlyError, OutputManager } from "./OutputManager";
-import { Papyros, PapyrosConfig, PapyrosRenderOptions } from "./Papyros";
-import { CodeRunner, RunState } from "./CodeRunner";
-import { BackendManager } from "./BackendManager";
+import "./frontend/components/Input";
+import "./frontend/components/Output";
+import "./frontend/components/CodeRunner";
+import "./frontend/components/Debugger";
+import { Papyros, papyros } from "./frontend/state/Papyros";
+import { InputMode } from "./frontend/state/InputOutput";
+import { RunMode } from "./backend/Backend";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
-import { WorkerDiagnostic } from "./Backend";
-import { ButtonOptions, RenderOptions } from "./util/Rendering";
+import { OutputType, FriendlyError } from "./frontend/state/InputOutput";
 
-export type {
-    BackendEvent, FriendlyError,
-    WorkerDiagnostic,
-    PapyrosConfig, PapyrosRenderOptions,
-    RenderOptions, ButtonOptions
-};
-export {
-    Papyros,
-    ProgrammingLanguage,
-    BackendManager,
-    CodeEditor,
-    CodeRunner,
-    RunState,
-    InputManager,
-    InputMode,
-    OutputManager
-};
-
+export { Papyros, InputMode, RunMode, ProgrammingLanguage, OutputType, papyros };
+export type { FriendlyError };

@@ -4,11 +4,7 @@ import eslint from "@eslint/js";
 export default tseslint.config(
     {
         ignores: [
-            "**/tailwind.config.js",
-            "**/postcss.config.js",
-            "**/jest.config.js",
             "src/Translations.js",
-            "scripts/ValidateTranslations.js",
             "**/dist",
         ],
     },
