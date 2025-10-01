@@ -6,7 +6,6 @@ import { Constants } from "./frontend/state/Constants";
 import { Examples } from "./frontend/state/Examples";
 import { BackendManager } from "./communication/BackendManager";
 import { makeChannel } from "sync-message";
-import { cleanCurrentUrl } from "./util/Util";
 import { I18n } from "./frontend/state/I18n";
 import { Test } from "./frontend/state/Test";
 
