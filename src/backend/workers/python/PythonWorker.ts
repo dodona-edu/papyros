@@ -12,7 +12,7 @@ const pythonPackageUrl = new URL("./python_package.tar.gz.load_by_url", import.m
  */
 export class PythonWorker extends Backend<PyodideExtras> {
     private pyodide: PyodideInterface;
-    private papyros: PyProxy;
+    private papyros: PyProxy | undefined;
     /**
      * Promise to asynchronously install imports needed by the code
      */
@@ -20,7 +20,6 @@ export class PythonWorker extends Backend<PyodideExtras> {
     constructor() {
         super();
         this.pyodide = {} as PyodideInterface;
-        this.papyros = {} as PyProxy;
         this.installPromise = null;
     }
 
@@ -68,7 +67,7 @@ export class PythonWorker extends Backend<PyodideExtras> {
      */
     private async installImports(code: string): Promise<void> {
         if (this.installPromise == null) {
-            this.installPromise = this.papyros.install_imports.callKwargs(
+            this.installPromise = this.papyros?.install_imports.callKwargs(
                 {
                     source_code: code,
                     ignore_missing: true
@@ -80,7 +79,7 @@ export class PythonWorker extends Backend<PyodideExtras> {
 
     public override runModes(code: string): Array<RunMode> {
         let modes = super.runModes(code);
-        if (this.papyros.has_doctests(code)) {
+        if (this.papyros?.has_doctests(code)) {
             modes = [RunMode.Doctest, ...modes];
         }
         modes = [RunMode.Debug, ...modes];
@@ -94,7 +93,7 @@ export class PythonWorker extends Backend<PyodideExtras> {
             this.pyodide.setInterruptBuffer(extras.interruptBuffer);
         }
         await this.installImports(code);
-        return await this.papyros.run_async.callKwargs({
+        return await this.papyros?.run_async.callKwargs({
             source_code: code,
             mode: mode
         });
@@ -102,11 +101,11 @@ export class PythonWorker extends Backend<PyodideExtras> {
 
     public override async lintCode(code: string): Promise<Array<WorkerDiagnostic>> {
         await this.installImports(code);
-        return PythonWorker.convert(this.papyros.lint(code));
+        return PythonWorker.convert(this.papyros?.lint(code) || []);
     }
 
     public override async provideFiles(inlineFiles: Record<string, string>, hrefFiles: Record<string, string>): Promise<void> {
-        await this.papyros.provide_files.callKwargs({
+        await this.papyros?.provide_files.callKwargs({
             inline_files: JSON.stringify(inlineFiles),
             href_files: JSON.stringify(hrefFiles)
         });
