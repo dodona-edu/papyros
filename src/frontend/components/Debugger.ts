@@ -7,8 +7,7 @@ import { PapyrosElement } from "./PapyrosElement";
 export class Debugger extends PapyrosElement {
     static override get styles(): CSSResult {
         return css`
-            tc-trace,
-            tc-trace * {
+            :host {
                 /* Base / surface */
                 --tc-surface-color: var(--md-sys-color-surface-container);
                 --tc-on-surface-color: var(--md-sys-color-on-surface);
