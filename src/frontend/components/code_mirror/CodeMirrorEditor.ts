@@ -6,6 +6,7 @@ import { Compartment, EditorState, Extension, StateEffect } from "@codemirror/st
 @customElement("p-code-mirror-editor")
 export class CodeMirrorEditor extends LitElement {
     private __value: string = "";
+    private __readonly: boolean = false;
     protected view: EditorView | undefined;
     protected readonly compartments: Map<string, Compartment> = new Map();
     protected readonly extensions: Map<string, Extension> = new Map();
@@ -18,8 +19,18 @@ export class CodeMirrorEditor extends LitElement {
         this.dispatchChange()
     }
 
+    public set readonly(readonly: boolean) {
+        this.configure({
+            editable: EditorView.editable.of(!readonly),
+        });
+        this.__readonly = readonly;
+    }
+
     protected dispatchChange(): void {
         if (!this.view) return;
+        this.configure(
+            { editable: EditorView.editable.of(false) }
+        )
         this.view.dispatch({
             changes: {
                 from: 0,
@@ -27,6 +38,9 @@ export class CodeMirrorEditor extends LitElement {
                 insert: this.__value
             }
         });
+        this.configure(
+            { editable: EditorView.editable.of(!this.__readonly) }
+        )
     }
 
     public get value(): string {

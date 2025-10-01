@@ -94,6 +94,7 @@ export class CodeEditor extends CodeMirrorEditor {
                 highlightActiveLine()
             ]
         })
+        this.readonly = value;
     }
 
     set debugLine(value: number | undefined) {
