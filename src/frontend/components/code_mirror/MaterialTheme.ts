@@ -94,27 +94,22 @@ export const materialHighlight = HighlightStyle.define([
     { tag: [tags.comment, tags.lineComment, tags.blockComment, tags.docComment], color: "var(--md-sys-color-on-surface-variant)" },
 
     // Keywords & operators
-    { tag: [tags.keyword, tags.self, tags.controlKeyword, tags.operatorKeyword], color: "var(--md-sys-color-primary)" },
+    { tag: [tags.keyword, tags.self, tags.controlKeyword, tags.operatorKeyword, tags.operator], color: "var(--md-sys-color-primary)" },
     { tag: [tags.definitionKeyword, tags.moduleKeyword], color: "var(--md-sys-color-primary)", fontStyle: "italic" },
-    { tag: tags.atom, color: "var(--md-sys-color-secondary)" },
-    { tag: tags.bool, color: "var(--md-sys-color-secondary)" },
-    { tag: tags.operator, color: "var(--md-sys-color-primary)" },
 
     // Names
-    { tag: tags.variableName, color: "var(--md-sys-color-on-background)" },
+    { tag: [tags.variableName, tags.className, tags.namespace], color: "var(--md-sys-color-on-background)" },
     { tag: tags.standard(tags.variableName), color: "var(--md-sys-color-tertiary)", fontStyle: "italic" },
-    { tag: tags.function(tags.variableName), color: "var(--md-sys-color-tertiary)" },
+    { tag: [tags.function(tags.variableName), tags.attributeName ], color: "var(--md-sys-color-tertiary)" },
     { tag: tags.typeName, color: "var(--md-sys-color-primary)" },
-    { tag: tags.tagName, color: "var(--md-sys-color-primary)" },
-    { tag: tags.attributeName, color: "var(--md-sys-color-tertiary)" },
-    { tag: tags.className, color: "var(--md-sys-color-on-background)" },
     { tag: tags.labelName, color: "var(--md-sys-color-primary)", fontStyle: "italic" },
-    { tag: tags.namespace, color: "var(--md-sys-color-on-background)" },
 
     // Literals
-    { tag: tags.string, color: "var(--md-sys-color-tertiary)" },
+    { tag: tags.string, color: "var(--md-sys-color-secondary)" },
     { tag: tags.number, color: "var(--md-sys-color-secondary)" },
-    { tag: tags.regexp, color: "var(--md-sys-color-tertiary)" },
+    { tag: tags.regexp, color: "var(--md-sys-color-secondary)" },
+    { tag: tags.atom, color: "var(--md-sys-color-secondary)" },
+    { tag: tags.bool, color: "var(--md-sys-color-secondary)" },
 
     // Emphasis / headings
     { tag: tags.emphasis, textDecoration: "underline" },
