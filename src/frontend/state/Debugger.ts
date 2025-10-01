@@ -51,6 +51,7 @@ export class Debugger extends State {
             if (this.frameStates.length >= this.papyros.constants.maxDebugFrames) {
                 this.papyros.runner.stop();
             }
+            this.activeFrame = this.frameStates.length - 1;
         });
     }
 
