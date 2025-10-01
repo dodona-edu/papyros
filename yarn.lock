@@ -2634,9 +2634,9 @@ human-signals@^2.1.0:
   integrity sha512-B4FFZ6q/T2jhhksgkbEW3HBvWIfDW85snkQgawt07S7J5QXTk6BkNV+0yAeZrM5QpMAdYlocGoljn0sJ/WQkFw==
 
 i18n-extract@^0.6.7:
-  version "0.6.7"
-  resolved "https://registry.yarnpkg.com/i18n-extract/-/i18n-extract-0.6.7.tgz#90f0ee830e2e3d0c2767b72cc09dcbbc807aaf55"
-  integrity sha512-rwuQ/mXTSg6/8IrN9nUBTj2IOTqsWP49uxz8ZhUvhj9ojrqRxdwCvHQg9bLCgz7GZ1ocW0alvWP1eagbhFoWgQ==
+  version "0.6.8"
+  resolved "https://registry.yarnpkg.com/i18n-extract/-/i18n-extract-0.6.8.tgz#59276630ba8227a36bc8d75a99d40a985776109d"
+  integrity sha512-m3Zbjbimi+fLamwn2bcEAzq0Nts5O/rkdgTLUuV80qT2njQagq7T4Oinrxm5BXdXhylZ8UdZhtCltbXwFSfeYQ==
   dependencies:
     "@babel/core" "^7.4.0"
     "@babel/plugin-proposal-class-properties" "^7.4.0"
