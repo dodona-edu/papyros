@@ -104,7 +104,12 @@ export class Runner extends State {
      */
     public async lintSource(): Promise<WorkerDiagnostic[]> {
         const backend = await this.backend;
-        return await backend.workerProxy.lintCode(this.code);
+        const proxy = backend.workerProxy;
+
+        if(!proxy) {
+            return [];
+        }
+        return await proxy.lintCode(this.code);
     }
 
     /**
