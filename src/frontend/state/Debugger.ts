@@ -26,6 +26,7 @@ export class Debugger extends State {
         this.reset();
     }
 
+    @stateProperty
     public get active(): boolean {
         return this._active;
     }
