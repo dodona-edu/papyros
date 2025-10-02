@@ -85,11 +85,10 @@ export class App extends PapyrosElement {
             }
             
             .content {
-                max-width: 1500px;
-                width: 100%;
                 padding: 1rem;
                 flex: 1;
-                margin: auto;
+                min-width: 0;
+                min-height: 0;
             }
         `;
     }
