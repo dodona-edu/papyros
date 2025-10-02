@@ -9,10 +9,7 @@ export class Output extends PapyrosElement {
     static get styles(): CSSResult {
         return css`
             :host {
-                width: 100%;
-                height: 100%;
                 overflow: auto;
-                display: block;
             }
 
             img {

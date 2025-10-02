@@ -8,6 +8,7 @@ import "../Input";
 import "./ProgrammingLanguagePicker";
 import "./ExamplePicker";
 import "./LanguagePicker";
+import "./Resize";
 import "./themes/ThemePicker";
 import { State } from "@dodona/lit-state";
 import "@material/web/iconbutton/icon-button";
@@ -43,47 +44,17 @@ export class App extends PapyrosElement {
                 height: 100%;
             }
 
-            .top {
-                flex: 2;
-                display: flex;
-                min-height: 0;
-            }
-
-            .bottom {
-                flex: 1;
-                min-height: 0;
-            }
-
-            .left {
-                flex: 1;
-                min-width: 0;
-                display: flex;
-            }
-
-            .right {
-                flex: 1;
-                display: flex;
-                flex-direction: column;
-                min-width: 0;
-                min-height: 0;
-            }
-            
-            .grow {
-                flex-grow: 1;
-            }
-
             .container {
                 padding: 1.5rem;
-                margin: 0.5rem;
                 border-radius: 1rem;
                 background-color: var(--md-sys-color-surface-container);
                 color: var(--md-sys-color-on-surface);
-            }
-            
-            .overflow {
+                flex: 1;
                 overflow: auto;
+                min-height: 0;
+                min-width: 0;
             }
-            
+
             .header {
                 align-items: center;
                 padding: 1rem 2rem;
@@ -106,13 +77,17 @@ export class App extends PapyrosElement {
             }
             
             .content {
-                max-width: 1500px;
-                width: 100%;
-                height: 100%;
-                margin: 1rem auto;
-                display: flex;
-                flex-direction: column;
+                padding: 1rem;
                 flex: 1;
+                min-width: 0;
+                min-height: 0;
+            }
+            
+            .max-width {
+                max-width: 1500px;
+                height: 100%;
+                margin: auto;
+                display: flex;
             }
         `;
     }
@@ -178,23 +153,19 @@ export class App extends PapyrosElement {
                     </div>
                 </div>
                 <div class="content">
-                    <div class="top">
-                        <div class="left container">
-                            <p-code-runner .papyros=${this.papyros} class="overflow">
-                                <p-example-picker .papyros=${this.papyros} slot="buttons"></p-example-picker>
-                            </p-code-runner>
-                        </div>
-                        <div class="right">
-                            <div class="container grow overflow">
-                                <p-output .papyros=${this.papyros}></p-output>
-                            </div>
-                            <div class="container">
-                                <p-input .papyros=${this.papyros}></p-input>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bottom container overflow">
-                        <p-debugger .papyros=${this.papyros}></p-debugger>
+                    <div class="max-width">
+                        <p-resize .percentage=${55}>
+                            <p-resize column .percentage=${70} slot="first">
+                                <p-code-runner .papyros=${this.papyros} class="container" slot="first">
+                                    <p-example-picker .papyros=${this.papyros} slot="buttons"></p-example-picker>
+                                </p-code-runner>
+                                <p-input .papyros=${this.papyros} slot="second" class="container"></p-input>
+                            </p-resize>
+                            <p-resize column .percentage=${50} slot="second">
+                                <p-output .papyros=${this.papyros} slot="first" class="container"></p-output>
+                                <p-debugger .papyros=${this.papyros} slot="second" class="container"></p-debugger>
+                            </p-resize>
+                        </p-resize>
                     </div>
                 </div>
             </div>

@@ -16,15 +16,16 @@ export class Input extends PapyrosElement {
                 gap: 0.5rem;
                 margin-top: 0.5rem;
             }
-
-            :host {
-                width: 100%;
-                height: fit-content;
-                display: block;
+            
+            :host{
+                display: flex;
+                flex-direction: column;
             }
             
             p-batch-input {
-                height: 200px;
+                flex: 1;
+                min-height: 0;
+                overflow: auto;
             }
         `
     }
