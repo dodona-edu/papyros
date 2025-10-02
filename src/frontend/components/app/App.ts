@@ -43,10 +43,6 @@ export class App extends PapyrosElement {
                 width: 100%;
                 height: 100%;
             }
-            
-            .grow {
-                flex-grow: 1;
-            }
 
             .container {
                 padding: 1.5rem;
@@ -58,11 +54,7 @@ export class App extends PapyrosElement {
                 min-height: 0;
                 min-width: 0;
             }
-            
-            .overflow {
-                overflow: auto;
-            }
-            
+
             .header {
                 align-items: center;
                 padding: 1rem 2rem;
@@ -164,7 +156,7 @@ export class App extends PapyrosElement {
                     <div class="max-width">
                         <p-resize .percentage=${55}>
                             <p-resize column .percentage=${70} slot="first">
-                                <p-code-runner .papyros=${this.papyros} class="overflow container" slot="first">
+                                <p-code-runner .papyros=${this.papyros} class="container" slot="first">
                                     <p-example-picker .papyros=${this.papyros} slot="buttons"></p-example-picker>
                                 </p-code-runner>
                                 <p-input .papyros=${this.papyros} slot="second" class="container"></p-input>
