@@ -1,4 +1,4 @@
-import {customElement, property} from "lit/decorators.js";
+import { customElement, property } from "lit/decorators.js";
 import { adoptStyles, css, CSSResult, html, TemplateResult } from "lit";
 import { PapyrosElement } from "../PapyrosElement";
 import "../CodeRunner";
