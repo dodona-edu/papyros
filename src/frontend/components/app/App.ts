@@ -37,6 +37,12 @@ export class App extends PapyrosElement {
                 --md-outlined-field-top-space: 8px;
                 --md-outlined-text-field-bottom-space: 8px;
                 --md-outlined-text-field-top-space: 8px;
+
+
+
+                @media (max-width: 1000px) {
+                    height: 200vh;
+                }
             }
 
             .rows {
@@ -65,7 +71,7 @@ export class App extends PapyrosElement {
                 background-color: var(--md-sys-color-surface-container);
                 color: var(--md-sys-color-on-surface);
                 
-                @media (max-width: 600px) {
+                @media (max-width: 800px) {
                     flex-direction: column;
                 }
             }
@@ -104,6 +110,10 @@ export class App extends PapyrosElement {
                 flex: 1;
                 min-width: 0;
                 min-height: 0;
+                
+                @media (max-width: 1000px) {
+                    padding: 1rem 0.5rem;
+                }
             }
             
             .max-width {
@@ -182,7 +192,7 @@ export class App extends PapyrosElement {
                 </div>
                 <div class="content">
                     <div class="max-width">
-                        <p-resize .percentage=${55}>
+                        <p-resize .percentage=${55} .breakpoint=${1000}>
                             <p-resize column .percentage=${70} slot="first">
                                 <p-code-runner .papyros=${this.papyros} class="container" slot="first">
                                     <p-example-picker .papyros=${this.papyros} slot="buttons"></p-example-picker>
