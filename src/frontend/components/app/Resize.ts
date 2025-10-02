@@ -23,7 +23,7 @@ export class Resize extends LitElement {
         .handler {
             min-height: var(--p-drag-handle-size, 1rem);
             min-width: var(--p-drag-handle-size, 1rem);
-            background: var(--md-sys-color-background);
+            background: var(--p-drag-handle-color, var(--md-sys-color-background));
         }
     `;
 
@@ -39,16 +39,26 @@ export class Resize extends LitElement {
         }
     }
 
+    private handleMouseMove(e: MouseEvent): void {
+        if(this.dragging) {
+            this.resize(e);
+        }
+    }
+
+    private handleMouseUp(): void {
+        this.dragging = false;
+    }
+
     public override connectedCallback(): void {
         super.connectedCallback();
-        document.addEventListener("mousemove", (e: MouseEvent) => {
-            if(this.dragging) {
-                this.resize(e);
-            }
-        });
-        document.addEventListener("mouseup", () => {
-            this.dragging = false;
-        });
+        document.addEventListener("mousemove", this.handleMouseMove.bind(this));
+        document.addEventListener("mouseup", this.handleMouseUp.bind(this));
+    }
+
+    public override disconnectedCallback(): void {
+        super.disconnectedCallback();
+        document.removeEventListener("mousemove", this.handleMouseMove.bind(this));
+        document.removeEventListener("mouseup", this.handleMouseUp.bind(this));
     }
 
     get secondSize(): string {
