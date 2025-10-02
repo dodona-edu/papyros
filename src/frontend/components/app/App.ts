@@ -85,10 +85,11 @@ export class App extends PapyrosElement {
             }
             
             .content {
+                max-width: 1500px;
+                width: 100%;
                 padding: 1rem;
                 flex: 1;
-                min-height: 0;
-                min-width: 0;
+                margin: auto;
             }
         `;
     }
@@ -154,7 +155,7 @@ export class App extends PapyrosElement {
                     </div>
                 </div>
                 <div class="content">
-                    <p-resize .percentage=${60}>
+                    <p-resize .percentage=${55}>
                         <p-resize column .percentage=${70} slot="first">
                             <p-code-runner .papyros=${this.papyros} class="overflow container" slot="first">
                                 <p-example-picker .papyros=${this.papyros} slot="buttons"></p-example-picker>
