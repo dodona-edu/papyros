@@ -7,14 +7,6 @@ import { setUsedLines, usedLineExtension } from "./Extensions";
 
 @customElement("p-batch-input-editor")
 export class BatchInputEditor extends CodeMirrorEditor {
-    static get styles(): CSSResult {
-        return css`
-            :host {
-                width: 100%;
-                height: 100%;
-            }
-        `
-    }
 
     @property({ type: Number })
     set usedLines(value: number) {
