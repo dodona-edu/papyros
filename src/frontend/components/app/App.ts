@@ -1,4 +1,4 @@
-import { customElement } from "lit/decorators.js";
+import { customElement, property } from "lit/decorators.js";
 import { adoptStyles, css, CSSResult, html, TemplateResult } from "lit";
 import { PapyrosElement } from "../PapyrosElement";
 import "../CodeRunner";
@@ -18,6 +18,8 @@ import { ThemeOption } from "../../state/Constants";
 @customElement("p-app")
 export class App extends PapyrosElement {
     subscriptions: (() => void)[] = []
+    @property({ state: true })
+    private showMenu: boolean = false;
 
     static get styles(): CSSResult {
         return css`
@@ -35,6 +37,12 @@ export class App extends PapyrosElement {
                 --md-outlined-field-top-space: 8px;
                 --md-outlined-text-field-bottom-space: 8px;
                 --md-outlined-text-field-top-space: 8px;
+
+
+
+                @media (max-width: 1000px) {
+                    height: 200vh;
+                }
             }
 
             .rows {
@@ -62,6 +70,10 @@ export class App extends PapyrosElement {
                 justify-content: space-between;
                 background-color: var(--md-sys-color-surface-container);
                 color: var(--md-sys-color-on-surface);
+                
+                @media (max-width: 800px) {
+                    flex-direction: column;
+                }
             }
             
             .title {
@@ -70,10 +82,27 @@ export class App extends PapyrosElement {
                 color: var(--md-sys-color-primary);
             }
             
-            .header-options {
+            .header-part {
                 display: flex;
                 gap: 0.5rem;
                 align-items: center;
+            }
+            
+            .burger {
+                display: none;
+            }
+
+
+            @media (max-width: 800px) {
+                .header-options {
+                    flex-direction: column;
+                    gap: 1rem;
+                    display: none;
+                }
+                
+                .burger {
+                    display: inline-flex;
+                }
             }
             
             .content {
@@ -81,6 +110,10 @@ export class App extends PapyrosElement {
                 flex: 1;
                 min-width: 0;
                 min-height: 0;
+                
+                @media (max-width: 1000px) {
+                    padding: 1rem 0.5rem;
+                }
             }
             
             .max-width {
@@ -137,15 +170,20 @@ export class App extends PapyrosElement {
         return html`
             <div class="rows">
                 <div class="header">
-                    <div class="header-options">
+                    <div class="header-part">
                         <span class="title">${this.t("Papyros.Papyros")}</span>
                         <md-icon-button href="https://github.com/dodona-edu/papyros" target="_blank" rel="noopener">
                             <md-icon>
                                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg>
                             </md-icon>
                         </md-icon-button>
+                        <md-icon-button class="burger" @click=${() => this.showMenu = !this.showMenu} aria-label="Menu" title="Menu">
+                            <md-icon>
+                                <svg viewBox="0 -960 960 960" fill="currentColor"><path d="M120-240v-80h720v80H120Zm0-200v-80h720v80H120Zm0-200v-80h720v80H120Z"/></svg>
+                            </md-icon>
+                        </md-icon-button>
                     </div>
-                    <div class="header-options">
+                    <div class="header-part header-options" style=${this.showMenu ? "display: flex;" : ""}>
                         <p-theme-picker .papyros=${this.papyros}></p-theme-picker>
                         <p-language-picker .papyros=${this.papyros}></p-language-picker>
                         <p-programming-language-picker .papyros=${this.papyros}
@@ -154,7 +192,7 @@ export class App extends PapyrosElement {
                 </div>
                 <div class="content">
                     <div class="max-width">
-                        <p-resize .percentage=${55}>
+                        <p-resize .percentage=${55} .breakpoint=${1000}>
                             <p-resize column .percentage=${70} slot="first">
                                 <p-code-runner .papyros=${this.papyros} class="container" slot="first">
                                     <p-example-picker .papyros=${this.papyros} slot="buttons"></p-example-picker>
