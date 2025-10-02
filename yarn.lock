@@ -1802,9 +1802,9 @@ pyodide-worker-runner@1.4.0:
     p-retry "^5.0.0"
 
 pyodide@^0.28.2:
-  version "0.28.2"
-  resolved "https://registry.yarnpkg.com/pyodide/-/pyodide-0.28.2.tgz#41d3d8a3eaa1198704d0614a0d7b8afbfc5ba330"
-  integrity sha512-2BrZHrALvhYZfIuTGDHOvyiirHNLziHfBiBb1tpBFzLgAvDBb2ACxNPFFROCOzLnqapORmgArDYY8mJmMWH1Eg==
+  version "0.28.3"
+  resolved "https://registry.yarnpkg.com/pyodide/-/pyodide-0.28.3.tgz#5a97241448898c89778fd404731c2b9877064dbc"
+  integrity sha512-rtCsyTU55oNGpLzSVuAd55ZvruJDEX8o6keSdWKN9jPeBVSNlynaKFG7eRqkiIgU7i2M6HEgYtm0atCEQX3u4A==
   dependencies:
     ws "^8.5.0"
 
@@ -2132,15 +2132,10 @@ why-is-node-running@^2.3.0:
     siginfo "^2.0.0"
     stackback "0.0.2"
 
-ws@^8.18.2:
+ws@^8.18.2, ws@^8.5.0:
   version "8.18.3"
   resolved "https://registry.yarnpkg.com/ws/-/ws-8.18.3.tgz#b56b88abffde62791c639170400c93dcb0c95472"
   integrity sha512-PEIGCY5tSlUt50cqyMXfCzX+oOPqN0vuGqWzbcJ2xvnkzkq46oOpz7dQaTDBdfICb4N14+GARUDw2XV2N4tvzg==
-
-ws@^8.5.0:
-  version "8.18.0"
-  resolved "https://registry.yarnpkg.com/ws/-/ws-8.18.0.tgz#0d7505a6eafe2b0e712d232b42279f53bc289bbc"
-  integrity sha512-8VbfWfHLbbwu3+N6OKsOMpBdT4kXPDDB9cJk2bJ6mh9ucxdlnNvH1e+roYkKmN9Nxw2yjz7VzeO9oOz2zJ04Pw==
 
 yocto-queue@^0.1.0:
   version "0.1.0"
