@@ -90,6 +90,13 @@ export class App extends PapyrosElement {
                 min-width: 0;
                 min-height: 0;
             }
+            
+            .max-width {
+                max-width: 1500px;
+                height: 100%;
+                margin: auto;
+                display: flex;
+            }
         `;
     }
 
@@ -154,18 +161,20 @@ export class App extends PapyrosElement {
                     </div>
                 </div>
                 <div class="content">
-                    <p-resize .percentage=${55}>
-                        <p-resize column .percentage=${70} slot="first">
-                            <p-code-runner .papyros=${this.papyros} class="overflow container" slot="first">
-                                <p-example-picker .papyros=${this.papyros} slot="buttons"></p-example-picker>
-                            </p-code-runner>
-                            <p-input .papyros=${this.papyros} slot="second" class="container"></p-input>
+                    <div class="max-width">
+                        <p-resize .percentage=${55}>
+                            <p-resize column .percentage=${70} slot="first">
+                                <p-code-runner .papyros=${this.papyros} class="overflow container" slot="first">
+                                    <p-example-picker .papyros=${this.papyros} slot="buttons"></p-example-picker>
+                                </p-code-runner>
+                                <p-input .papyros=${this.papyros} slot="second" class="container"></p-input>
+                            </p-resize>
+                            <p-resize column .percentage=${50} slot="second">
+                                <p-output .papyros=${this.papyros} slot="first" class="container"></p-output>
+                                <p-debugger .papyros=${this.papyros} slot="second" class="container"></p-debugger>
+                            </p-resize>
                         </p-resize>
-                        <p-resize column .percentage=${50} slot="second">
-                            <p-output .papyros=${this.papyros} slot="first" class="container"></p-output>
-                            <p-debugger .papyros=${this.papyros} slot="second" class="container"></p-debugger>
-                        </p-resize>
-                    </p-resize>
+                    </div>
                 </div>
             </div>
         `;
