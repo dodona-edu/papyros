@@ -4,6 +4,7 @@ import {ProgrammingLanguage} from "../../../src/ProgrammingLanguage";
 import {RunState} from "../../../src/frontend/state/Runner";
 import {RunMode} from "../../../src/backend/Backend";
 import {waitForOutput, waitForPapyrosReady} from "../../helpers";
+import {FriendlyError} from "../../../src/frontend/state/InputOutput";
 
 describe("Runner", () => {
     it("should run code", async () => {
@@ -18,6 +19,20 @@ const c = a + b;`;
         await papyros.runner.start();
         await waitForPapyrosReady(papyros);
         expect(papyros.runner.stateMessage).toMatch(/^Code executed in/);
+    });
+
+    it("should run code that raises an error", async () => {
+        const papyros = new Papyros();
+        await papyros.launch();
+        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
+        papyros.runner.code = "raise ValueError(\"test\")\n";
+        expect(papyros.runner.state).toBe(RunState.Ready);
+        expect(papyros.runner.stateMessage).toBe("");
+        await papyros.runner.start();
+        await waitForPapyrosReady(papyros);
+        await waitForOutput(papyros);
+        expect(papyros.runner.stateMessage).toMatch(/^Code executed in/);
+        expect((papyros.io.output[0].content as FriendlyError).traceback).toMatch(/ValueError: test/);
     });
 
     it("should be able to interrupt code", async () => {

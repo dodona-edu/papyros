@@ -132,6 +132,7 @@ export class Runner extends State {
         BackendManager.subscribe(BackendEventType.Loading, e => this.onLoad(e));
         BackendManager.subscribe(BackendEventType.Start, e => this.onStart(e));
         BackendManager.subscribe(BackendEventType.End, e => this.onEnd(e));
+        BackendManager.subscribe(BackendEventType.Error, () => this.onError());
         BackendManager.subscribe(BackendEventType.Stop, () => this.stop());
     }
 
@@ -323,6 +324,9 @@ export class Runner extends State {
         }
     }
 
+    private onError(): void {
+        this.setState(RunState.Ready, this.papyros.i18n.t("Papyros.finished", { time: (new Date().getTime() - this.runStartTime) / 1000 }));
+    }
     private updateRunModes(): void {
         this.backend.then(async backend => {
             const proxy = await backend.workerProxy;
