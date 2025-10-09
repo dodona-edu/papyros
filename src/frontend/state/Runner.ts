@@ -131,6 +131,8 @@ export class Runner extends State {
         BackendManager.subscribe(BackendEventType.Input, () => this.setState(RunState.AwaitingInput));
         BackendManager.subscribe(BackendEventType.Loading, e => this.onLoad(e));
         BackendManager.subscribe(BackendEventType.Start, e => this.onStart(e));
+        BackendManager.subscribe(BackendEventType.End, e => this.onEnd(e));
+        BackendManager.subscribe(BackendEventType.Error, () => this.onError());
         BackendManager.subscribe(BackendEventType.Stop, () => this.stop());
     }
 
@@ -207,9 +209,9 @@ export class Runner extends State {
             if (terminated) {
                 await this.launch();
             }
-            this.setState(RunState.Ready, this.papyros.i18n.t(
-                interrupted ? "Papyros.interrupted" : "Papyros.finished",
-                { time: (new Date().getTime() - this.runStartTime) / 1000 }));
+            if (interrupted || terminated) {
+                this.setState(RunState.Ready, this.papyros.i18n.t("Papyros.interrupted", { time: (new Date().getTime() - this.runStartTime) / 1000 }));
+            }
         }
     }
 
@@ -239,8 +241,8 @@ export class Runner extends State {
 
     public async provideInput(input: string): Promise<void> {
         const backend = await this.backend;
-        await backend.writeMessage(input);
         this.setState(RunState.Running);
+        await backend.writeMessage(input);
     }
 
     public async provideFiles(inlinedFiles: Record<string, string>, hrefFiles: Record<string, string>): Promise<void> {
@@ -308,11 +310,6 @@ export class Runner extends State {
     }
 
     private onStart(e: BackendEvent): void {
-        if( this.state !== RunState.Loading) {
-            // we probably already finished running, this is just a late event so ignore it
-            return;
-        }
-
         const startData = parseData(e.data, e.contentType) as string;
         if (startData.includes("RunCode")) {
             this.runStartTime = new Date().getTime();
@@ -320,6 +317,16 @@ export class Runner extends State {
         }
     }
 
+    private onEnd(e: BackendEvent): void {
+        const endData = parseData(e.data, e.contentType) as string;
+        if (endData.includes("CodeFinished")) {
+            this.setState(RunState.Ready, this.papyros.i18n.t("Papyros.finished", { time: (new Date().getTime() - this.runStartTime) / 1000 }));
+        }
+    }
+
+    private onError(): void {
+        this.setState(RunState.Ready, this.papyros.i18n.t("Papyros.finished", { time: (new Date().getTime() - this.runStartTime) / 1000 }));
+    }
     private updateRunModes(): void {
         this.backend.then(async backend => {
             const proxy = await backend.workerProxy;
