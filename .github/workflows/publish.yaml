@@ -6,7 +6,11 @@ on:
   workflow_dispatch:
 
 jobs:
+  test:
+    uses: ./.github/workflows/test.yaml
+    secrets: inherit
   build-and-publish:
+    needs: [test]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -14,7 +18,7 @@ jobs:
       - name: Install and Build 🔧
         run: |
           yarn install
-          yarn build:library
+          yarn build:lib
       - name: Publish @dodona/papyros to NPM
         uses: JS-DevTools/npm-publish@v4
         with:
