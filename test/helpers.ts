@@ -1,5 +1,5 @@
-import {Papyros} from "../src/frontend/state/Papyros";
-import {RunState} from "../src/frontend/state/Runner";
+import { Papyros } from "../src/frontend/state/Papyros";
+import { RunState } from "../src/frontend/state/Runner";
 
 export async function waitForOutput(papyros: Papyros, count: number = 1, timeout = 2000): Promise<void> {
     const start = Date.now();
@@ -29,5 +29,15 @@ export async function waitForInputReady(timeout = 2000): Promise<void> {
             throw new Error("Timeout waiting for service worker to control this page");
         }
         await new Promise(r => setTimeout(r, 20));
+    }
+}
+
+export async function waitForAwaitingInput(papyros: Papyros, timeout: number = 5000): Promise<void> {
+    const start = Date.now();
+    while (!papyros.io.awaitingInput) {
+        if (Date.now() - start > timeout) {
+            throw new Error("Timeout waiting for awaiting input");
+        }
+        await new Promise(r => setTimeout(r, 10));
     }
 }
