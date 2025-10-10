@@ -55,6 +55,7 @@ export class Papyros extends State {
             try {
                 await navigator.serviceWorker.register(this.serviceWorkerName, { scope: "/" });
                 BackendManager.channel = makeChannel({ serviceWorker: { scope: "/" } })!;
+                await this.waitForActiveRegistration();
             } catch(e) {
                 console.error("Error registering service worker:", e);
                 return false;
@@ -63,6 +64,16 @@ export class Papyros extends State {
             BackendManager.channel = makeChannel({ atomics: {  } })!;
         }
         return true;
+    }
+
+    private async waitForActiveRegistration(timeout: number = 5000): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            const timeoutHandle = setTimeout(() => reject(new Error("Timed out waiting for activated service worker")), timeout);
+            navigator.serviceWorker.ready.then(() => {
+                clearTimeout(timeoutHandle);
+                resolve();
+            })
+        })
     }
 }
 
