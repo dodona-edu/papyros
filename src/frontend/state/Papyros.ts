@@ -17,6 +17,7 @@ export class Papyros extends State {
     readonly examples: Examples = new Examples(this);
     readonly i18n = new I18n();
     readonly test: Test = new Test(this);
+    errorHandler: (error: Error) => void = () => {};
 
     @stateProperty
         serviceWorkerName: string = "InputServiceWorker.js";
@@ -38,6 +39,15 @@ export class Papyros extends State {
             }
         }
         return this;
+    }
+
+    /**
+     * Set an error handler in papyros. Papyros will pass any errors to this handler that should be investigated but don't bubble up naturally.
+     *
+     * @param handler An error handler (e.g. something that passes the error on to sentry)
+     */
+    public setErrorHandler(handler: (error: Error) => void): void {
+        this.errorHandler = handler;
     }
 
     /**
