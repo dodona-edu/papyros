@@ -117,6 +117,13 @@ export class InputOutput extends State {
     }
 
     public logError(error: FriendlyError | string): void {
+        if (typeof error === "string") {
+            if (error.includes("service worker for reading input")) {
+                this.papyros.errorHandler(new Error("Service worker for reading input was not available", { cause: error }));
+            }
+        } else if (error.traceback?.includes("service worker for reading input")) {
+            this.papyros.errorHandler(new Error("Service worker for reading input was not available", { cause: error }));
+        }
         this.output = [...this.output, { type: OutputType.stderr, content: error }];
     }
 
