@@ -114,6 +114,9 @@ export class InputOutput extends State {
             this.prompt = e.data || "";
             this.awaitingInput = true;
         });
+        BackendManager.subscribe(BackendEventType.End, () => {
+            this.awaitingInput = false;
+        });
     }
 
     public logError(error: FriendlyError | string): void {

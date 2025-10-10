@@ -2,7 +2,7 @@ import {Papyros} from "../../../src/frontend/state/Papyros";
 import {expect, it, describe} from "vitest";
 import {ProgrammingLanguage} from "../../../src/ProgrammingLanguage";
 import {FriendlyError, InputMode, OutputType} from "../../../src/frontend/state/InputOutput";
-import {waitForInputReady, waitForOutput} from "../../helpers";
+import {waitForAwaitingInput, waitForInputReady, waitForOutput} from "../../helpers";
 
 describe.sequential("InputOutput", () => {
     it("can log output", async () => {
@@ -58,6 +58,18 @@ console.log("world!");
         await waitForOutput(papyros);
         expect(papyros.io.output[0].content).toBe("hello foo");
         unsubscribe();
+    });
+
+    it("stops asking for input on stop", async () => {
+        const papyros = new Papyros();
+        await papyros.launch();
+        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
+        papyros.runner.code = `print("hello " + input())`; // eslint-disable-line quotes
+        await waitForInputReady();
+        papyros.runner.start();
+        await waitForAwaitingInput(papyros);
+        await papyros.runner.stop();
+        expect(papyros.io.awaitingInput).toBe(false);
     });
 
     it("can log friendly errors", async () => {
