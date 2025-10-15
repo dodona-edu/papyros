@@ -46,6 +46,7 @@ export class Debugger extends PapyrosElement {
         return html`<tc-trace 
                 .trace=${this.papyros.debugger.trace}
                 .translations=${this.papyros.i18n.getTranslations("Papyros.debugger")}
+                .selectedFrame=${this.papyros.debugger.activeFrame ?? 0}
                 @frame-change=${(e: CustomEvent) => {
         this.papyros.debugger.activeFrame = e.detail.frame;
     }
