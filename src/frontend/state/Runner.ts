@@ -329,7 +329,7 @@ export class Runner extends State {
     }
     private updateRunModes(): void {
         this.backend.then(async backend => {
-            const proxy = await backend.workerProxy;
+            const proxy = backend.workerProxy;
 
             if(proxy) {
                 this.runModes = await proxy.runModes(this.code);
