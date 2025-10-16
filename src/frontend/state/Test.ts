@@ -8,7 +8,7 @@ export class Test extends State {
     public testLineCount: number | undefined = undefined;
     @stateProperty
     set testCode(value: string | undefined) {
-        if( this.testLineCount !== undefined) {
+        if (this.testLineCount !== undefined) {
             const freedCode = this.testfreeCode;
             this.testLineCount = undefined;
             this.papyros.runner.code = freedCode;

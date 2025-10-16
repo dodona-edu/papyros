@@ -33,7 +33,7 @@ export interface WorkerDiagnostic {
 export enum RunMode {
     Run = "run",
     Debug = "debug",
-    Doctest = "doctest"
+    Doctest = "doctest",
 }
 
 export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
@@ -76,9 +76,7 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
      * @param {function(BackendEvent):void} onEvent Callback for when events occur
      * @return {Promise<void>} Promise of launching
      */
-    public async launch(
-        onEvent: (e: BackendEvent) => void
-    ): Promise<void> {
+    public async launch(onEvent: (e: BackendEvent) => void): Promise<void> {
         this.onEvent = (e: BackendEvent) => {
             onEvent(e);
             if (e.type === BackendEventType.Sleep) {

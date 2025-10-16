@@ -42,8 +42,7 @@ export abstract class BackendManager {
      * @param {ProgrammingLanguage} language The language to support
      * @param {Function} backendCreator The constructor for a SyncClient
      */
-    public static registerBackend(language: ProgrammingLanguage,
-        backendCreator: () => SyncClient<Backend>): void {
+    public static registerBackend(language: ProgrammingLanguage, backendCreator: () => SyncClient<Backend>): void {
         BackendManager.removeBackend(language);
         BackendManager.createBackendMap.set(language, backendCreator);
     }
@@ -54,7 +53,8 @@ export abstract class BackendManager {
      * @return {SyncClient<Backend>} A SyncClient for the Backend
      */
     public static getBackend(language: ProgrammingLanguage): SyncClient<Backend> {
-        if (this.backendMap.has(language)) { // Cached
+        if (this.backendMap.has(language)) {
+            // Cached
             return this.backendMap.get(language)!;
         } else if (this.createBackendMap.has(language)) {
             // Create and then cache
@@ -102,7 +102,7 @@ export abstract class BackendManager {
             BackendManager.halted = false;
         }
         if ((!BackendManager.halted || e.type === BackendEventType.FrameChange) && this.subscriberMap.has(e.type)) {
-            this.subscriberMap.get(e.type)!.forEach(cb => cb(e));
+            this.subscriberMap.get(e.type)!.forEach((cb) => cb(e));
         }
     }
 
@@ -118,21 +118,27 @@ export abstract class BackendManager {
         BackendManager.createBackendMap = new Map();
         BackendManager.backendMap = new Map();
         BackendManager.subscriberMap = new Map();
-        BackendManager.registerBackend(ProgrammingLanguage.Python,
-            () => new PyodideClient<Backend>(
-                () => new Worker(new URL("../backend/workers/python/worker", import.meta.url), {
-                    type: "module",
-                }),
-                BackendManager.channel
-            )
+        BackendManager.registerBackend(
+            ProgrammingLanguage.Python,
+            () =>
+                new PyodideClient<Backend>(
+                    () =>
+                        new Worker(new URL("../backend/workers/python/worker", import.meta.url), {
+                            type: "module",
+                        }),
+                    BackendManager.channel,
+                ),
         );
-        BackendManager.registerBackend(ProgrammingLanguage.JavaScript,
-            () => new SyncClient<Backend>(
-                () => new Worker(new URL("../backend/workers/javascript/worker", import.meta.url), {
-                    type: "module",
-                }),
-                BackendManager.channel
-            )
+        BackendManager.registerBackend(
+            ProgrammingLanguage.JavaScript,
+            () =>
+                new SyncClient<Backend>(
+                    () =>
+                        new Worker(new URL("../backend/workers/javascript/worker", import.meta.url), {
+                            type: "module",
+                        }),
+                    BackendManager.channel,
+                ),
         );
         BackendManager.halted = false;
         BackendManager.subscribe(BackendEventType.End, () => BackendManager.halt());

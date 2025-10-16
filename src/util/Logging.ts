@@ -3,7 +3,9 @@
  * This is helpful for debugging while allowing filtering in production
  */
 export enum LogType {
-    Debug, Error, Important
+    Debug,
+    Error,
+    Important,
 }
 
 const ENVIRONMENT: string = process.env.NODE_ENV || "development";

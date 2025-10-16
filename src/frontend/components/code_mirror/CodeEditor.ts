@@ -1,27 +1,23 @@
 import { customElement } from "lit/decorators.js";
 import { CodeMirrorEditor } from "./CodeMirrorEditor";
 import {
-    drawSelection, highlightActiveLine,
+    drawSelection,
+    highlightActiveLine,
     highlightActiveLineGutter,
     highlightSpecialChars,
     keymap,
     lineNumbers,
-    rectangularSelection
+    rectangularSelection,
 } from "@codemirror/view";
 import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
-import {
-    bracketMatching,
-    foldGutter,
-    indentOnInput, indentUnit,
-    LanguageSupport
-} from "@codemirror/language";
+import { bracketMatching, foldGutter, indentOnInput, indentUnit, LanguageSupport } from "@codemirror/language";
 import { EditorState } from "@codemirror/state";
 import {
     acceptCompletion,
     autocompletion,
     closeBrackets,
     closeBracketsKeymap,
-    completionKeymap
+    completionKeymap,
 } from "@codemirror/autocomplete";
 import { highlightSelectionMatches, searchKeymap } from "@codemirror/search";
 import { linter, lintGutter, lintKeymap } from "@codemirror/lint";
@@ -42,8 +38,8 @@ import readOnlyRangesExtension from "codemirror-readonly-ranges";
 const tabCompletionKeyMap = [{ key: "Tab", run: acceptCompletion }];
 const languageExtensions: Record<ProgrammingLanguage, LanguageSupport> = {
     JavaScript: javascript(),
-    Python: python()
-}
+    Python: python(),
+};
 
 @customElement("p-code-editor")
 export class CodeEditor extends CodeMirrorEditor {
@@ -57,7 +53,7 @@ export class CodeEditor extends CodeMirrorEditor {
             .papyros-test-line {
                 background-color: var(--md-sys-color-surface-variant);
             }
-            
+
             .papyros-test-code-widget {
                 background-color: var(--md-sys-color-surface-variant);
                 color: var(--md-sys-color-on-surface-variant);
@@ -88,12 +84,8 @@ export class CodeEditor extends CodeMirrorEditor {
 
     set debug(value: boolean) {
         this.configure({
-            debugging: value ? debugLineExtension : [
-                highlightActiveLineGutter(),
-                lintGutter(),
-                highlightActiveLine()
-            ]
-        })
+            debugging: value ? debugLineExtension : [highlightActiveLineGutter(), lintGutter(), highlightActiveLine()],
+        });
         this.readonly = value;
     }
 
@@ -116,33 +108,39 @@ export class CodeEditor extends CodeMirrorEditor {
         const oldReadOnlyExtensions = this.extensions.get("testReadOnlyRanges") ?? [];
         this.configure({
             testReadOnlyRanges: [],
-        })
+        });
         super.dispatchChange();
         this.configure({
             testReadOnlyRanges: oldReadOnlyExtensions,
-        })
+        });
     }
 
     set testLineCount(value: number | undefined) {
         this.configure({
-            testReadOnlyRanges: value ? readOnlyRangesExtension(state => {
-                const line = state.doc.lines - value + 1;
-                return [{ from: state.doc.line(line).from, to: state.doc.length }];
-            }) : [],
+            testReadOnlyRanges: value
+                ? readOnlyRangesExtension((state) => {
+                      const line = state.doc.lines - value + 1;
+                      return [{ from: state.doc.line(line).from, to: state.doc.length }];
+                  })
+                : [],
         });
     }
 
-    set testTranslations(value: {description: string, edit: string, remove: string}) {
+    set testTranslations(value: { description: string; edit: string; remove: string }) {
         this.configure({
             test: [
                 testLineExtension,
-                testCodeWidgetExtension(value, () => {
-                    this.dispatchEvent(new CustomEvent("edit-test-code"));
-                }, () => {
-                    this.dispatchEvent(new CustomEvent("remove-test-code"));
-                }),
-            ]
-        })
+                testCodeWidgetExtension(
+                    value,
+                    () => {
+                        this.dispatchEvent(new CustomEvent("edit-test-code"));
+                    },
+                    () => {
+                        this.dispatchEvent(new CustomEvent("remove-test-code"));
+                    },
+                ),
+            ],
+        });
     }
 
     set programmingLanguage(value: ProgrammingLanguage) {
@@ -150,7 +148,7 @@ export class CodeEditor extends CodeMirrorEditor {
             console.warn(`Language ${value} not supported, defaulting to javascript`);
             this.configure({
                 language: languageExtensions.JavaScript,
-            })
+            });
             return;
         }
 
@@ -159,30 +157,32 @@ export class CodeEditor extends CodeMirrorEditor {
         });
     }
 
-    set lintingSource( lintSource: () => Promise<readonly WorkerDiagnostic[]>) {
+    set lintingSource(lintSource: () => Promise<readonly WorkerDiagnostic[]>) {
         this.configure({
-            linting: linter(async view => {
+            linting: linter(async (view) => {
                 const workerDiagnostics = await lintSource();
-                if(workerDiagnostics.some(d => d.lineNr > view.state.doc.lines || d.endLineNr > view.state.doc.lines)) {
+                if (
+                    workerDiagnostics.some((d) => d.lineNr > view.state.doc.lines || d.endLineNr > view.state.doc.lines)
+                ) {
                     // if the diagnostics are out of range, the document has changed since the linting was requested
                     // these diagnostics are no longer valid
                     return [];
                 }
 
-                return workerDiagnostics.map(d => {
+                return workerDiagnostics.map((d) => {
                     const fromline = view.state.doc.line(d.lineNr);
                     const toLine = view.state.doc.line(d.endLineNr);
                     const from = Math.min(fromline.from + d.columnNr, fromline.to);
                     const to = Math.min(toLine.from + d.endColumnNr, toLine.to);
                     return { ...d, from: from, to: to };
-                })
-            })
-        })
+                });
+            }),
+        });
     }
 
     set indentLength(length: number) {
         this.configure({
-            indentUnit: indentUnit.of(" ".repeat(length))
+            indentUnit: indentUnit.of(" ".repeat(length)),
         });
     }
 
@@ -211,14 +211,10 @@ export class CodeEditor extends CodeMirrorEditor {
                     ...completionKeymap,
                     ...tabCompletionKeyMap,
                     ...lintKeymap,
-                    indentWithTab
+                    indentWithTab,
                 ]),
             ],
-            debugging: [
-                highlightActiveLineGutter(),
-                lintGutter(),
-                highlightActiveLine()
-            ],
+            debugging: [highlightActiveLineGutter(), lintGutter(), highlightActiveLine()],
         });
     }
 }

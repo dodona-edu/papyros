@@ -6,14 +6,14 @@ import "@material/web/progress/circular-progress";
 
 @customElement("p-run-state")
 export class RunStateEl extends PapyrosElement {
-    static get styles(): CSSResult{
+    static get styles(): CSSResult {
         return css`
             :host {
                 display: flex;
                 align-items: center;
                 gap: 0.5rem;
             }
-            
+
             md-circular-progress {
                 --md-circular-progress-size: 2rem;
             }
@@ -24,10 +24,10 @@ export class RunStateEl extends PapyrosElement {
         if (!this.papyros.runner.stateMessage) return html``;
 
         return html`
-            ${this.papyros.runner.state ===  RunState.Ready ? "" : html`
-                <md-circular-progress indeterminate></md-circular-progress>
-            `}
+            ${this.papyros.runner.state === RunState.Ready
+                ? ""
+                : html` <md-circular-progress indeterminate></md-circular-progress> `}
             ${this.papyros.runner.stateMessage}
-        `
+        `;
     }
 }

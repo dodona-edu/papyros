@@ -17,7 +17,7 @@ export class InteractiveInput extends PapyrosElement {
                 display: flex;
                 gap: 0.5rem;
             }
-            
+
             md-outlined-text-field {
                 flex-grow: 1;
             }
@@ -39,22 +39,20 @@ export class InteractiveInput extends PapyrosElement {
     protected override render(): TemplateResult {
         return html`
             <md-outlined-text-field
-                    type="text"
-                   .value=${this.value}
-                   @input=${(e: Event) => this.value = (e.target as HTMLInputElement).value}
-                   @keydown=${(e: KeyboardEvent) => {
-        if (e.key === "Enter") {
-            e.preventDefault();
-            this.provideInput();
-        }
-    }}
-                   placeholder=${this.papyros.io.prompt || this.t("Papyros.input_placeholder.interactive")}
-                   ?disabled=${!this.papyros.io.awaitingInput}
-                   ${ref(this.inputRef)}
+                type="text"
+                .value=${this.value}
+                @input=${(e: Event) => (this.value = (e.target as HTMLInputElement).value)}
+                @keydown=${(e: KeyboardEvent) => {
+                    if (e.key === "Enter") {
+                        e.preventDefault();
+                        this.provideInput();
+                    }
+                }}
+                placeholder=${this.papyros.io.prompt || this.t("Papyros.input_placeholder.interactive")}
+                ?disabled=${!this.papyros.io.awaitingInput}
+                ${ref(this.inputRef)}
             ></md-outlined-text-field>
-            <md-outlined-button
-                    @click=${() => this.provideInput()} 
-                    ?disabled=${!this.papyros.io.awaitingInput}>
+            <md-outlined-button @click=${() => this.provideInput()} ?disabled=${!this.papyros.io.awaitingInput}>
                 ${this.t("Papyros.enter")}
             </md-outlined-button>
         `;

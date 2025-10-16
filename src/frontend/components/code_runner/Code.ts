@@ -1,5 +1,5 @@
 import { css, CSSResult, html, TemplateResult } from "lit";
-import "../code_mirror/CodeEditor"
+import "../code_mirror/CodeEditor";
 import { customElement } from "lit/decorators.js";
 import { PapyrosElement } from "../PapyrosElement";
 
@@ -11,7 +11,7 @@ export class Code extends PapyrosElement {
                 width: 100%;
                 height: 100%;
             }
-        `
+        `;
     }
 
     protected override render(): TemplateResult {
@@ -26,13 +26,15 @@ export class Code extends PapyrosElement {
                 .indentLength=${this.papyros.constants.indentationSize}
                 .translations=${this.papyros.i18n.getTranslations("CodeMirror")}
                 .theme=${this.papyros.constants.CodeMirrorTheme}
-                .placeholder=${this.t("Papyros.code_placeholder", { programmingLanguage: this.papyros.runner.programmingLanguage })}
+                .placeholder=${this.t("Papyros.code_placeholder", {
+                    programmingLanguage: this.papyros.runner.programmingLanguage,
+                })}
                 .testLines=${this.papyros.test.testLines}
                 .testTranslations=${this.papyros.i18n.getTranslations("Papyros.editor.test_code")}
-                @edit-test-code=${() => this.papyros.test.testLineCount = undefined}
-                @remove-test-code=${() => this.papyros.test.testCode = undefined}
-                @change=${(e: CustomEvent) => this.papyros.runner.code = e.detail}
+                @edit-test-code=${() => (this.papyros.test.testLineCount = undefined)}
+                @remove-test-code=${() => (this.papyros.test.testCode = undefined)}
+                @change=${(e: CustomEvent) => (this.papyros.runner.code = e.detail)}
             ></p-code-editor>
-        `
+        `;
     }
 }

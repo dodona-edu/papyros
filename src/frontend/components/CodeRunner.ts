@@ -21,7 +21,7 @@ export class CodeRunner extends PapyrosElement {
                 min-height: 0;
                 position: relative;
             }
-            
+
             p-run-state {
                 position: absolute;
                 bottom: 0;
@@ -31,23 +31,22 @@ export class CodeRunner extends PapyrosElement {
                 border-top-right-radius: 1rem;
                 border-top-left-radius: 1rem;
             }
-            
+
             p-button-lint {
                 background-color: var(--md-sys-color-surface-container);
             }
-        `
+        `;
     }
 
     protected override render(): TemplateResult {
         return html`
             <div>
                 <p-code .papyros=${this.papyros}></p-code>
-                ${this.papyros.runner.stateMessage ? html`<p-run-state .papyros=${this.papyros}></p-run-state>`:""}
+                ${this.papyros.runner.stateMessage ? html`<p-run-state .papyros=${this.papyros}></p-run-state>` : ""}
             </div>
             <p-button-lint .papyros=${this.papyros}>
                 <slot name="buttons"></slot>
             </p-button-lint>
-        `
+        `;
     }
-
 }

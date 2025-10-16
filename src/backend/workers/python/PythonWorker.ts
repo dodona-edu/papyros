@@ -38,25 +38,21 @@ export class PythonWorker extends Backend<PyodideExtras> {
         return await loadPyodideAndPackage({ url: pythonPackageUrl, format: ".tgz" });
     }
 
-    public async launch(
-        onEvent: (e: BackendEvent) => void
-    ): Promise<void> {
+    public async launch(onEvent: (e: BackendEvent) => void): Promise<void> {
         await super.launch(onEvent);
         this.pyodide = await PythonWorker.getPyodide();
         // Python calls our function with a PyProxy dict or a Js Map,
         // These must be converted to a PapyrosEvent (JS Object) to allow message passing
-        this.papyros = this.pyodide.pyimport("papyros").Papyros.callKwargs(
-            {
-                callback: (e: any) => {
-                    const converted = PythonWorker.convert(e);
-                    return this.onEvent(converted);
-                },
-                buffer_constructor: (cb: (e: BackendEvent) => void) => {
-                    this.queue.setCallback(cb);
-                    return this.queue;
-                }
-            }
-        );
+        this.papyros = this.pyodide.pyimport("papyros").Papyros.callKwargs({
+            callback: (e: any) => {
+                const converted = PythonWorker.convert(e);
+                return this.onEvent(converted);
+            },
+            buffer_constructor: (cb: (e: BackendEvent) => void) => {
+                this.queue.setCallback(cb);
+                return this.queue;
+            },
+        });
         // preload micropip to allow installing packages
         await (this.pyodide as any).loadPackage("micropip");
     }
@@ -67,11 +63,10 @@ export class PythonWorker extends Backend<PyodideExtras> {
      */
     private async installImports(code: string): Promise<void> {
         if (this.installPromise == null) {
-            this.installPromise = this.papyros?.install_imports.callKwargs(
-                {
-                    source_code: code,
-                    ignore_missing: true
-                });
+            this.installPromise = this.papyros?.install_imports.callKwargs({
+                source_code: code,
+                ignore_missing: true,
+            });
         }
         await this.installPromise;
         this.installPromise = null;
@@ -86,8 +81,7 @@ export class PythonWorker extends Backend<PyodideExtras> {
         return modes;
     }
 
-    public override async runCode(extras: PyodideExtras, code: string, mode = "exec"):
-        Promise<any> {
+    public override async runCode(extras: PyodideExtras, code: string, mode = "exec"): Promise<any> {
         this.extras = extras;
         if (extras.interruptBuffer) {
             this.pyodide.setInterruptBuffer(extras.interruptBuffer);
@@ -95,7 +89,7 @@ export class PythonWorker extends Backend<PyodideExtras> {
         await this.installImports(code);
         return await this.papyros?.run_async.callKwargs({
             source_code: code,
-            mode: mode
+            mode: mode,
         });
     }
 
@@ -104,11 +98,13 @@ export class PythonWorker extends Backend<PyodideExtras> {
         return PythonWorker.convert(this.papyros?.lint(code) || []);
     }
 
-    public override async provideFiles(inlineFiles: Record<string, string>, hrefFiles: Record<string, string>): Promise<void> {
+    public override async provideFiles(
+        inlineFiles: Record<string, string>,
+        hrefFiles: Record<string, string>,
+    ): Promise<void> {
         await this.papyros?.provide_files.callKwargs({
             inline_files: JSON.stringify(inlineFiles),
-            href_files: JSON.stringify(hrefFiles)
+            href_files: JSON.stringify(hrefFiles),
         });
     }
 }
-

@@ -1,15 +1,12 @@
 export const PYTHON_EXAMPLES = {
     "Hello, World!": "print('Hello, World!')",
-    "Input":
-        `name = input('What is your name?')
+    Input: `name = input('What is your name?')
 print(f'Hello, {name}!')`,
-    "Fibonacci":
-        `def fibonacci(n):
+    Fibonacci: `def fibonacci(n):
     return n if n <= 1 else fibonacci(n- 2) + fibonacci(n - 1)
 
 print([fibonacci(n) for n in range(10)])`,
-    "Doctests":
-        `def factorial(n):
+    Doctests: `def factorial(n):
     """Return the factorial of n, an exact integer >= 0.
 
     >>> [factorial(n) for n in range(6)]
@@ -59,8 +56,7 @@ def wrong_factorial(n):
     """
     return 0
 `,
-    "Async":
-        `import asyncio
+    Async: `import asyncio
 
 async def nested():
     print(42)
@@ -76,8 +72,7 @@ async def main():
 
 await main()
 `,
-    "Erroneous":
-        `def bitonic_search(numbers, query):
+    Erroneous: `def bitonic_search(numbers, query):
     if not numbers:
         return -1
     if len(numbers) == 1:
@@ -109,14 +104,12 @@ def find_bitonic_query(numbers, query, start, stop, comp):
         else:
             stop = midden
 `,
-    "Unicode":
-        `import random
+    Unicode: `import random
 emoji = '🎅🤶👪🦌🌟❄️☃️🔥🎄🎁🧦🔔🎶🕯️🦆'
 for _ in range(10):
     print(''.join(random.choice(emoji) for _ in range(30)))
 `,
-    "Files":
-        `with open("names.txt", "w") as out_file:
+    Files: `with open("names.txt", "w") as out_file:
     for name in ["Alice", "Bob", "Claire"]:
         print(name, file=out_file)
 
@@ -124,8 +117,7 @@ with open("names.txt", "r") as in_file:
     for line in in_file:
         print(line.rstrip())
 `,
-    "Matplotlib":
-        `import matplotlib.pyplot as plt
+    Matplotlib: `import matplotlib.pyplot as plt
 import networkx as nx
 
 plt.rcParams["font.size"] = 10
@@ -144,7 +136,7 @@ nx.draw_networkx_nodes(G, pos, node_color='r', node_size=12)
 
 plt.show()
 `,
-    "Sleep": `import time
+    Sleep: `import time
 text = """What is the air-speed velocity of an unladen swallow?
 What do you mean? An African or European swallow?
 What? I, I don't know that.
@@ -153,7 +145,7 @@ for character in text:
     print(character, end="")
     time.sleep(0.1)
 `,
-    "Overflow": `from functools import lru_cache
+    Overflow: `from functools import lru_cache
 
 @lru_cache
 def fibonacci(n):
@@ -162,9 +154,9 @@ def fibonacci(n):
 for index in range(5000):
     print(f'{index}: {fibonacci(index)}')
 `,
-    "Interrupt": `i = 0
+    Interrupt: `i = 0
 while i >= 0:
     print(i)
     i += 1
-`
+`,
 };

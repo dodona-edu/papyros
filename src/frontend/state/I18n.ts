@@ -44,7 +44,7 @@ export class I18n extends State {
     }
 
     public getTranslations(key?: string): Translations | undefined {
-        if(!this.translations.has(this.locale)) {
+        if (!this.translations.has(this.locale)) {
             return undefined;
         }
         if (!key) {
@@ -67,7 +67,7 @@ export class I18n extends State {
     constructor() {
         super();
         this.polyglot.locale(this.locale);
-        this.setTranslations("en", ENGLISH_TRANSLATION)
+        this.setTranslations("en", ENGLISH_TRANSLATION);
         this.setTranslations("nl", DUTCH_TRANSLATION);
     }
 }

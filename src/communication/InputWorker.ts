@@ -33,24 +33,25 @@ export class InputWorker {
             return true;
         }
         const url = event.request.url;
-        if (this.hostName && url.includes(this.hostName)) { // requests to our own domain
+        if (this.hostName && url.includes(this.hostName)) {
+            // requests to our own domain
             event.respondWith(
-                fetch(event.request)
-                    .then(response => {
-                        // Add new headers to be able to use SharedArrayBuffers
-                        // if the browser supports them
-                        const newHeaders = new Headers(response.headers);
-                        newHeaders.set("Cross-Origin-Embedder-Policy", "require-corp");
-                        newHeaders.set("Cross-Origin-Opener-Policy", "same-origin");
-                        newHeaders.set("Cross-Origin-Resource-Policy", "cross-origin");
+                fetch(event.request).then((response) => {
+                    // Add new headers to be able to use SharedArrayBuffers
+                    // if the browser supports them
+                    const newHeaders = new Headers(response.headers);
+                    newHeaders.set("Cross-Origin-Embedder-Policy", "require-corp");
+                    newHeaders.set("Cross-Origin-Opener-Policy", "same-origin");
+                    newHeaders.set("Cross-Origin-Resource-Policy", "cross-origin");
 
-                        const moddedResponse = new Response(response.body, {
-                            status: response.status || 200,
-                            statusText: response.statusText,
-                            headers: newHeaders,
-                        });
-                        return moddedResponse;
-                    }));
+                    const moddedResponse = new Response(response.body, {
+                        status: response.status || 200,
+                        statusText: response.statusText,
+                        headers: newHeaders,
+                    });
+                    return moddedResponse;
+                }),
+            );
             return true;
         } else {
             return false;

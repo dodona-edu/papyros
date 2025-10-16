@@ -8,7 +8,6 @@ import { State, stateProperty } from "@dodona/lit-state";
 import { Papyros } from "./Papyros";
 import { ProgrammingLanguage } from "../../ProgrammingLanguage";
 
-
 /**
  * Enum representing the possible states while processing code
  */
@@ -17,7 +16,7 @@ export enum RunState {
     Running = "running",
     AwaitingInput = "awaiting_input",
     Stopping = "stopping",
-    Ready = "ready"
+    Ready = "ready",
 }
 
 /**
@@ -32,7 +31,6 @@ export interface LoadingData {
      * The status of the import
      */
     status: "loading" | "loaded" | "failed";
-
 }
 
 /**
@@ -45,7 +43,9 @@ export class Runner extends State {
     @stateProperty
     private _programmingLanguage: ProgrammingLanguage = ProgrammingLanguage.Python;
     @stateProperty
-    public get programmingLanguage(): ProgrammingLanguage {return this._programmingLanguage}
+    public get programmingLanguage(): ProgrammingLanguage {
+        return this._programmingLanguage;
+    }
     public set programmingLanguage(value: ProgrammingLanguage) {
         if (this._programmingLanguage !== value) {
             this._programmingLanguage = value;
@@ -106,7 +106,7 @@ export class Runner extends State {
         const backend = await this.backend;
         const proxy = backend.workerProxy;
 
-        if(!proxy) {
+        if (!proxy) {
             return [];
         }
         return await proxy.lintCode(this.code);
@@ -129,9 +129,9 @@ export class Runner extends State {
         this.backend = Promise.resolve({} as SyncClient<Backend>);
 
         BackendManager.subscribe(BackendEventType.Input, () => this.setState(RunState.AwaitingInput));
-        BackendManager.subscribe(BackendEventType.Loading, e => this.onLoad(e));
-        BackendManager.subscribe(BackendEventType.Start, e => this.onStart(e));
-        BackendManager.subscribe(BackendEventType.End, e => this.onEnd(e));
+        BackendManager.subscribe(BackendEventType.Loading, (e) => this.onLoad(e));
+        BackendManager.subscribe(BackendEventType.Start, (e) => this.onStart(e));
+        BackendManager.subscribe(BackendEventType.End, (e) => this.onEnd(e));
         BackendManager.subscribe(BackendEventType.Error, () => this.onError());
         BackendManager.subscribe(BackendEventType.Stop, () => this.stop());
     }
@@ -157,7 +157,7 @@ export class Runner extends State {
         const backend = BackendManager.getBackend(this.programmingLanguage);
         // Use a Promise to immediately enable running while downloading
         // eslint-disable-next-line no-async-promise-executor
-        this.backend = new Promise(async resolve => {
+        this.backend = new Promise(async (resolve) => {
             const workerProxy = backend.workerProxy;
             // Allow passing messages between worker and main thread
             await workerProxy.launch(proxy((e: BackendEvent) => BackendManager.publish(e)));
@@ -181,7 +181,8 @@ export class Runner extends State {
         this.previousState = RunState.Loading;
         BackendManager.publish({
             type: BackendEventType.Start,
-            data: "StartClicked", contentType: "text/plain"
+            data: "StartClicked",
+            contentType: "text/plain",
         });
         let interrupted = false;
         let terminated = false;
@@ -198,7 +199,8 @@ export class Runner extends State {
                 this.papyros.io.logError(error);
                 BackendManager.publish({
                     type: BackendEventType.End,
-                    data: "RunError", contentType: "text/plain"
+                    data: "RunError",
+                    contentType: "text/plain",
                 });
             }
         } finally {
@@ -210,7 +212,12 @@ export class Runner extends State {
                 await this.launch();
             }
             if (interrupted || terminated) {
-                this.setState(RunState.Ready, this.papyros.i18n.t("Papyros.interrupted", { time: (new Date().getTime() - this.runStartTime) / 1000 }));
+                this.setState(
+                    RunState.Ready,
+                    this.papyros.i18n.t("Papyros.interrupted", {
+                        time: (new Date().getTime() - this.runStartTime) / 1000,
+                    }),
+                );
             }
         }
     }
@@ -223,19 +230,23 @@ export class Runner extends State {
         this.setState(RunState.Stopping);
         BackendManager.publish({
             type: BackendEventType.End,
-            data: "User cancelled run", contentType: "text/plain"
+            data: "User cancelled run",
+            contentType: "text/plain",
         });
         const backend = await this.backend;
         await backend.interrupt();
 
         const startTime = new Date().getTime();
-        while (this.state === RunState.Stopping && (new Date().getTime() - startTime) < 5000) {
-            await new Promise(resolve => setTimeout(resolve, 100));
+        while (this.state === RunState.Stopping && new Date().getTime() - startTime < 5000) {
+            await new Promise((resolve) => setTimeout(resolve, 100));
         }
         if (this.state === RunState.Stopping) {
             console.warn("Deadlock while stopping, restarting backend");
             await this.launch();
-            this.setState(RunState.Ready, this.papyros.i18n.t("Papyros.interrupted", { time: (new Date().getTime() - this.runStartTime) / 1000 }));
+            this.setState(
+                RunState.Ready,
+                this.papyros.i18n.t("Papyros.interrupted", { time: (new Date().getTime() - this.runStartTime) / 1000 }),
+            );
         }
     }
 
@@ -250,15 +261,17 @@ export class Runner extends State {
         if (fileNames.length === 0) {
             return;
         }
-        BackendManager.publish({ type: BackendEventType.Loading, data: JSON.stringify({
-            modules: fileNames,
-            status: "loading"
-        }) });
+        BackendManager.publish({
+            type: BackendEventType.Loading,
+            data: JSON.stringify({
+                modules: fileNames,
+                status: "loading",
+            }),
+        });
 
         const backend = await this.backend;
         await backend.workerProxy.provideFiles(inlinedFiles, hrefFiles);
     }
-
 
     /**
      * Show the current state of the program to the user
@@ -280,19 +293,20 @@ export class Runner extends State {
     private onLoad(e: BackendEvent): void {
         const loadingData = parseData(e.data, e.contentType) as LoadingData;
         if (loadingData.status === "loading") {
-            loadingData.modules.forEach(m => {
+            loadingData.modules.forEach((m) => {
                 if (!this.loadingPackages.includes(m)) {
                     this.loadingPackages.push(m);
                 }
             });
         } else if (loadingData.status === "loaded") {
-            loadingData.modules.forEach(m => {
+            loadingData.modules.forEach((m) => {
                 const index = this.loadingPackages.indexOf(m);
                 if (index !== -1) {
                     this.loadingPackages.splice(index, 1);
                 }
             });
-        } else { // failed
+        } else {
+            // failed
             // If it is a true module, an Exception will be raised when running
             // So this does not need to be handled here, as it is often an incomplete package-name
             // that causes micropip to not find the correct wheel
@@ -301,7 +315,7 @@ export class Runner extends State {
         if (this.loadingPackages.length > 0) {
             const packageMessage = this.papyros.i18n.t("Papyros.loading", {
                 // limit amount of package names shown
-                packages: this.loadingPackages.slice(0, 3).join(", ")
+                packages: this.loadingPackages.slice(0, 3).join(", "),
             });
             this.setState(RunState.Loading, packageMessage);
         } else {
@@ -320,20 +334,26 @@ export class Runner extends State {
     private onEnd(e: BackendEvent): void {
         const endData = parseData(e.data, e.contentType) as string;
         if (endData.includes("CodeFinished")) {
-            this.setState(RunState.Ready, this.papyros.i18n.t("Papyros.finished", { time: (new Date().getTime() - this.runStartTime) / 1000 }));
+            this.setState(
+                RunState.Ready,
+                this.papyros.i18n.t("Papyros.finished", { time: (new Date().getTime() - this.runStartTime) / 1000 }),
+            );
         }
     }
 
     private onError(): void {
-        this.setState(RunState.Ready, this.papyros.i18n.t("Papyros.finished", { time: (new Date().getTime() - this.runStartTime) / 1000 }));
+        this.setState(
+            RunState.Ready,
+            this.papyros.i18n.t("Papyros.finished", { time: (new Date().getTime() - this.runStartTime) / 1000 }),
+        );
     }
     private updateRunModes(): void {
-        this.backend.then(async backend => {
+        this.backend.then(async (backend) => {
             const proxy = backend.workerProxy;
 
-            if(proxy) {
+            if (proxy) {
                 this.runModes = await proxy.runModes(this.code);
             }
-        })
+        });
     }
 }
