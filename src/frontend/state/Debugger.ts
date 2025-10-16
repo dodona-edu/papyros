@@ -40,6 +40,7 @@ export class Debugger extends State {
             this.reset();
         });
         BackendManager.subscribe(BackendEventType.Frame, e => {
+            this.activeFrame ??= 0
             const frame = JSON.parse(e.data);
             const frameState = {
                 line: frame.line,
@@ -51,7 +52,6 @@ export class Debugger extends State {
             if (this.frameStates.length >= this.papyros.constants.maxDebugFrames) {
                 this.papyros.runner.stop();
             }
-            this.activeFrame = this.frameStates.length - 1;
         });
     }
 
@@ -59,6 +59,7 @@ export class Debugger extends State {
         this.frameStates = [];
         this.currentOutputs = 0;
         this.currentInputs = 0;
+        this.activeFrame = undefined;
         this.trace = [];
     }
 
