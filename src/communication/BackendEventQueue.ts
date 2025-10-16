@@ -69,18 +69,21 @@ export class BackendEventQueue {
                 extraArgs = extra;
             }
         }
-        if (this.queue.length === 0 ||
+        if (
+            this.queue.length === 0 ||
             !contentType.startsWith("text") || // Non textual cannot be combined
             this.queue[this.queue.length - 1].type !== type || // Different type
             // Can't be combined if contentType doesn't match
-            this.queue[this.queue.length - 1].contentType !== contentType) {
+            this.queue[this.queue.length - 1].contentType !== contentType
+        ) {
             this.queue.push({
                 type: type,
                 data: stringData,
                 contentType: contentType,
-                ...extraArgs
+                ...extraArgs,
             });
-        } else { // Same kind of event, combine into one
+        } else {
+            // Same kind of event, combine into one
             this.queue[this.queue.length - 1].data += stringData;
         }
         if (this.shouldFlush()) {
@@ -92,8 +95,10 @@ export class BackendEventQueue {
      * @return {boolean} Whether the queue contents should be flushed
      */
     protected shouldFlush(): boolean {
-        return this.queue.length > 1 || // different types of Events present
-            new Date().getTime() - this.lastFlushTime > this.flushTime;
+        return (
+            this.queue.length > 1 || // different types of Events present
+            new Date().getTime() - this.lastFlushTime > this.flushTime
+        );
     }
 
     /**
@@ -108,7 +113,7 @@ export class BackendEventQueue {
      * Flush the queue contents using the callback
      */
     public flush(): void {
-        this.queue.forEach(e => {
+        this.queue.forEach((e) => {
             this.callback(e);
         });
         this.queue = [];

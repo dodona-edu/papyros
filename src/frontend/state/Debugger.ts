@@ -39,13 +39,13 @@ export class Debugger extends State {
         BackendManager.subscribe(BackendEventType.Start, () => {
             this.reset();
         });
-        BackendManager.subscribe(BackendEventType.Frame, e => {
-            this.activeFrame ??= 0
+        BackendManager.subscribe(BackendEventType.Frame, (e) => {
+            this.activeFrame ??= 0;
             const frame = JSON.parse(e.data);
             const frameState = {
                 line: frame.line,
                 outputs: this.papyros.io.output.length,
-                inputs: this.papyros.io.inputs.length
+                inputs: this.papyros.io.inputs.length,
             };
             this.frameStates = [...this.frameStates, frameState];
             this.trace = [...this.trace, frame];
@@ -64,7 +64,7 @@ export class Debugger extends State {
     }
 
     get activeFrameState(): FrameState | undefined {
-        if(this.activeFrame === undefined) {
+        if (this.activeFrame === undefined) {
             return undefined;
         }
 
@@ -76,10 +76,10 @@ export class Debugger extends State {
     }
 
     get debugOutputs(): number | undefined {
-        return this.activeFrameState?.outputs
+        return this.activeFrameState?.outputs;
     }
 
     get debugUsedInputs(): number | undefined {
-        return this.activeFrameState?.inputs
+        return this.activeFrameState?.inputs;
     }
 }

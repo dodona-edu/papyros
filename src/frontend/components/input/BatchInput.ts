@@ -18,17 +18,17 @@ export class BatchInput extends PapyrosElement {
     }
 
     get usedLines(): number | undefined {
-        if(this.papyros.debugger.active && this.papyros.debugger.debugUsedInputs !== undefined) {
+        if (this.papyros.debugger.active && this.papyros.debugger.debugUsedInputs !== undefined) {
             return this.papyros.debugger.debugUsedInputs;
         }
         return this.papyros.io.inputs.length;
     }
 
     get placeholder(): string {
-        if(this.papyros.io.prompt) {
+        if (this.papyros.io.prompt) {
             return this.papyros.io.prompt;
         }
-        return this.t("Papyros.input_placeholder.batch")
+        return this.t("Papyros.input_placeholder.batch");
     }
 
     protected override render(): TemplateResult {
@@ -40,8 +40,8 @@ export class BatchInput extends PapyrosElement {
                 .placeholder=${this.placeholder}
                 .translations=${this.papyros.i18n.getTranslations("CodeMirror")}
                 .theme=${this.papyros.constants.CodeMirrorTheme}
-                @change=${(e: CustomEvent) => this.papyros.io.inputBuffer = e.detail }
+                @change=${(e: CustomEvent) => (this.papyros.io.inputBuffer = e.detail)}
             ></p-batch-input-editor>
-        `
+        `;
     }
 }

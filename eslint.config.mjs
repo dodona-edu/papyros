@@ -1,5 +1,8 @@
 import tseslint from "typescript-eslint";
 import eslint from "@eslint/js";
+import eslintPluginLit from 'eslint-plugin-lit';
+import eslintPluginWc from 'eslint-plugin-wc';
+import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended";
 
 export default tseslint.config(
     {
@@ -40,5 +43,8 @@ export default tseslint.config(
             "@typescript-eslint/no-explicit-any": "off",
             "@typescript-eslint/no-non-null-assertion": "off",
         },
-    }
+    },
+    eslintPluginLit.configs["flat/recommended"],
+    eslintPluginWc.configs["flat/recommended"],
+    eslintPluginPrettierRecommended,
 );

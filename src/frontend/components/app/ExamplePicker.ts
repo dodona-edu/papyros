@@ -10,16 +10,21 @@ export class ExamplePicker extends PapyrosElement {
     protected override render(): TemplateResult {
         return html`
             <md-outlined-select
-                    ?disabled=${this.papyros.runner.state !== RunState.Ready || this.papyros.debugger.active}
-                    label=${this.t("Papyros.examples")}
-                    @input=${(e: InputEvent) => {
-        this.papyros.runner.code = this.papyros.examples.getExampleCode((e.target as HTMLInputElement).value);
-    }}>
-                ${this.papyros.examples.names.map(name => html`
-                                    <md-select-option value=${name}>
-                                        <div slot="headline">${name}</div>
-                                    </md-select-option>
-                                `)}
+                ?disabled=${this.papyros.runner.state !== RunState.Ready || this.papyros.debugger.active}
+                label=${this.t("Papyros.examples")}
+                @input=${(e: InputEvent) => {
+                    this.papyros.runner.code = this.papyros.examples.getExampleCode(
+                        (e.target as HTMLInputElement).value,
+                    );
+                }}
+            >
+                ${this.papyros.examples.names.map(
+                    (name) => html`
+                        <md-select-option value=${name}>
+                            <div slot="headline">${name}</div>
+                        </md-select-option>
+                    `,
+                )}
             </md-outlined-select>
         `;
     }

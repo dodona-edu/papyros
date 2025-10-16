@@ -3,104 +3,112 @@ import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
 import { tags } from "@lezer/highlight";
 import { Extension } from "@codemirror/state";
 
-export const materialTheme = EditorView.theme({
-    ".cm-scroller": { overflow: "auto" },
-    "&": {
-        height: "100%", // use full height of host
-        width: "100%", // use full width of host
-        "font-size": "14px", // use proper size to align gutters with editor
-        backgroundColor: "var(--md-sys-color-surface-container-highest)",
-        color: "var(--md-sys-color-on-background)",
-    },
+export const materialTheme = EditorView.theme(
+    {
+        ".cm-scroller": { overflow: "auto" },
+        "&": {
+            height: "100%", // use full height of host
+            width: "100%", // use full width of host
+            "font-size": "14px", // use proper size to align gutters with editor
+            backgroundColor: "var(--md-sys-color-surface-container-highest)",
+            color: "var(--md-sys-color-on-background)",
+        },
 
-    ".cm-gutters": {
-        backgroundColor: "var(--md-sys-color-surface-container)",
-        color: "var(--md-sys-color-on-surface-variant)",
-        border: "none",
-        fontSize: "12px",
-    },
+        ".cm-gutters": {
+            backgroundColor: "var(--md-sys-color-surface-container)",
+            color: "var(--md-sys-color-on-surface-variant)",
+            border: "none",
+            fontSize: "12px",
+        },
 
-    ".cm-content": {
-        color: "var(--md-sys-color-on-background)",
-    },
+        ".cm-content": {
+            color: "var(--md-sys-color-on-background)",
+        },
 
-    ".cm-activeLine, .cm-activeLineGutter": {
-        backgroundColor: "color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent) !important",
-    },
+        ".cm-activeLine, .cm-activeLineGutter": {
+            backgroundColor: "color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent) !important",
+        },
 
-    "&.cm-focused": {
-        outline: "none",
-    },
+        "&.cm-focused": {
+            outline: "none",
+        },
 
-    ".cm-selectionBackground": {
-        backgroundColor: "color-mix(in srgb, var(--md-sys-color-primary) 30%, transparent) !important",
-    },
+        ".cm-selectionBackground": {
+            backgroundColor: "color-mix(in srgb, var(--md-sys-color-primary) 30%, transparent) !important",
+        },
 
-    ".cm-cursor, .cm-dropCursor": {
-        borderLeft: "1.2px solid var(--md-sys-color-secondary) !important",
-    },
+        ".cm-cursor, .cm-dropCursor": {
+            borderLeft: "1.2px solid var(--md-sys-color-secondary) !important",
+        },
 
-    ".cm-tooltip": {
-        backgroundColor: "var(--md-sys-color-surface)",
-        border: "none",
-        boxShadow: "0px 2px 6px rgba(0,0,0,0.2)",
+        ".cm-tooltip": {
+            backgroundColor: "var(--md-sys-color-surface)",
+            border: "none",
+            boxShadow: "0px 2px 6px rgba(0,0,0,0.2)",
 
-        "& li[aria-selected]": {
-            backgroundColor: "var(--md-sys-color-secondary)",
+            "& li[aria-selected]": {
+                backgroundColor: "var(--md-sys-color-secondary)",
+                color: "var(--md-sys-color-on-secondary)",
+            },
+        },
+
+        ".cm-panels": {
+            backgroundColor: "var(--md-sys-color-surface-container)",
+            color: "var(--md-sys-color-on-surface)",
+            border: "none",
+        },
+
+        ".cm-searchMatch": {
+            backgroundColor: "color-mix(in srgb, var(--md-sys-color-secondary) 30%, transparent)",
+        },
+        ".cm-searchMatch.cm-searchMatch-selected": {
+            backgroundColor: "color-mix(in srgb, var(--md-sys-color-surface-variant) 30%, transparent)",
+            outline: "1px solid var(--md-sys-color-outline)",
+        },
+        ".cm-selectionMatch": {
+            backgroundColor: "color-mix(in srgb, var(--md-sys-color-secondary) 30%, transparent)",
+        },
+        ".cm-button": {
+            background: "var(--md-sys-color-surface-variant)",
+            color: "var(--md-sys-color-on-surface-variant)",
+            border: "none",
+        },
+        ".cm-button:hover": {
+            background: "var(--md-sys-color-secondary)",
             color: "var(--md-sys-color-on-secondary)",
         },
+        ".cm-textfield": {
+            background: "var(--md-sys-color-surface-variant)",
+            color: "var(--md-sys-color-on-surface-variant)",
+            border: "none",
+        },
+        ".cm-textfield:focus": {
+            outline: "none",
+            border: "none",
+            boxShadow: "0 0 0 2px var(--md-sys-color-primary)",
+        },
     },
-
-    ".cm-panels": {
-        backgroundColor: "var(--md-sys-color-surface-container)",
-        color: "var(--md-sys-color-on-surface)",
-        border: "none",
-    },
-
-    ".cm-searchMatch": {
-        backgroundColor: "color-mix(in srgb, var(--md-sys-color-secondary) 30%, transparent)",
-    },
-    ".cm-searchMatch.cm-searchMatch-selected": {
-        backgroundColor: "color-mix(in srgb, var(--md-sys-color-surface-variant) 30%, transparent)",
-        outline: "1px solid var(--md-sys-color-outline)",
-    },
-    ".cm-selectionMatch": {
-        backgroundColor: "color-mix(in srgb, var(--md-sys-color-secondary) 30%, transparent)",
-    },
-    ".cm-button": {
-        background: "var(--md-sys-color-surface-variant)",
-        color: "var(--md-sys-color-on-surface-variant)",
-        border: "none",
-    },
-    ".cm-button:hover": {
-        background: "var(--md-sys-color-secondary)",
-        color: "var(--md-sys-color-on-secondary)",
-    },
-    ".cm-textfield": {
-        background: "var(--md-sys-color-surface-variant)",
-        color: "var(--md-sys-color-on-surface-variant)",
-        border: "none",
-    },
-    ".cm-textfield:focus": {
-        outline: "none",
-        border: "none",
-        boxShadow: "0 0 0 2px var(--md-sys-color-primary)",
-    },
-
-}, { dark: false });
+    { dark: false },
+);
 
 export const materialHighlight = HighlightStyle.define([
     // Comments
-    { tag: [tags.comment, tags.lineComment, tags.blockComment, tags.docComment], color: "var(--md-sys-color-on-surface-variant)" },
+    {
+        tag: [tags.comment, tags.lineComment, tags.blockComment, tags.docComment],
+        color: "var(--md-sys-color-on-surface-variant)",
+    },
 
     // Keywords & operators
-    { tag: [tags.keyword, tags.self, tags.controlKeyword, tags.operatorKeyword, tags.operator], color: "var(--md-sys-color-primary)" },
+    {
+        tag: [tags.keyword, tags.self, tags.controlKeyword, tags.operatorKeyword, tags.operator],
+        color: "var(--md-sys-color-primary)",
+    },
     { tag: [tags.definitionKeyword, tags.moduleKeyword], color: "var(--md-sys-color-primary)", fontStyle: "italic" },
 
     // Names
     { tag: [tags.variableName, tags.className, tags.namespace], color: "var(--md-sys-color-on-background)" },
     { tag: tags.standard(tags.variableName), color: "var(--md-sys-color-tertiary)", fontStyle: "italic" },
-    { tag: [tags.function(tags.variableName), tags.attributeName ], color: "var(--md-sys-color-tertiary)" },
+    { tag: [tags.function(tags.variableName), tags.attributeName], color: "var(--md-sys-color-tertiary)" },
     { tag: tags.typeName, color: "var(--md-sys-color-primary)" },
     { tag: tags.labelName, color: "var(--md-sys-color-primary)", fontStyle: "italic" },
 

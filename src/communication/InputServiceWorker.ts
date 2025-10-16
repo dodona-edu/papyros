@@ -11,7 +11,7 @@ const domain = ""; // Disable SharedArrayBuffers to use same environment as Dodo
 const inputHandler = new InputWorker(domain);
 
 addEventListener("fetch", async function (event: FetchEvent) {
-    if (!await inputHandler.handleInputRequest(event)) {
+    if (!(await inputHandler.handleInputRequest(event))) {
         // Not a Papyros-specific request
         // Fetch as we would handle a normal request
         // Default action is to let browser handle it by not responding here
@@ -26,4 +26,4 @@ addEventListener("activate", function (event: ExtendableEvent) {
     event.waitUntil(clients.claim());
 });
 
-export { };
+export {};

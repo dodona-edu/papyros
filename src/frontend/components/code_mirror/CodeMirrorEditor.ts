@@ -12,11 +12,11 @@ export class CodeMirrorEditor extends LitElement {
     protected readonly extensions: Map<string, Extension> = new Map();
 
     public set value(value: string) {
-        if(this.__value === value) return;
+        if (this.__value === value) return;
         this.__value = value;
         if (!this.view) return;
 
-        this.dispatchChange()
+        this.dispatchChange();
     }
 
     public set readonly(readonly: boolean) {
@@ -28,19 +28,15 @@ export class CodeMirrorEditor extends LitElement {
 
     protected dispatchChange(): void {
         if (!this.view) return;
-        this.configure(
-            { editable: EditorView.editable.of(false) }
-        )
+        this.configure({ editable: EditorView.editable.of(false) });
         this.view.dispatch({
             changes: {
                 from: 0,
                 to: this.view.state.doc.length,
-                insert: this.__value
-            }
+                insert: this.__value,
+            },
         });
-        this.configure(
-            { editable: EditorView.editable.of(!this.__readonly) }
-        )
+        this.configure({ editable: EditorView.editable.of(!this.__readonly) });
     }
 
     public get value(): string {
@@ -50,7 +46,7 @@ export class CodeMirrorEditor extends LitElement {
     set placeholder(value: string) {
         this.configure({
             placeholder: placeholder(value),
-        })
+        });
     }
 
     set theme(theme: Extension) {
@@ -63,11 +59,14 @@ export class CodeMirrorEditor extends LitElement {
 
     private initView(): void {
         this.view = new EditorView({
-            parent: (this.shadowRoot as ShadowRoot),
-            state: EditorState.create({ doc: this.__value, extensions: [
-                EditorView.updateListener.of(this.onViewUpdate.bind(this)),
-                [...this.compartments.keys().map(k => this.compartments.get(k)!.of([]))],
-            ] })
+            parent: this.shadowRoot as ShadowRoot,
+            state: EditorState.create({
+                doc: this.__value,
+                extensions: [
+                    EditorView.updateListener.of(this.onViewUpdate.bind(this)),
+                    [...this.compartments.keys().map((k) => this.compartments.get(k)!.of([]))],
+                ],
+            }),
         });
         this.configure(Object.fromEntries(this.extensions));
     }
@@ -75,7 +74,7 @@ export class CodeMirrorEditor extends LitElement {
     private onViewUpdate(v: ViewUpdate): void {
         if (v.docChanged) {
             this.__value = v.state.doc.toString();
-            this.dispatchEvent(new CustomEvent("change", { detail: this.value }))
+            this.dispatchEvent(new CustomEvent("change", { detail: this.value }));
         }
     }
 
@@ -95,17 +94,16 @@ export class CodeMirrorEditor extends LitElement {
             this.extensions.set(key, ext as Extension);
         });
 
-        const effects =  Object.keys(extensions).map(key => {
+        const effects = Object.keys(extensions).map((key) => {
             const extension = extensions[key];
-            if(this.compartments.has(key)) {
-                return this.compartments.get(key)!.reconfigure(extension)
+            if (this.compartments.has(key)) {
+                return this.compartments.get(key)!.reconfigure(extension);
             }
 
             const compartment = new Compartment();
             this.compartments.set(key, compartment);
             return StateEffect.appendConfig.of(compartment.of(extension));
-        })
-
+        });
 
         if (this.view) {
             this.view.dispatch({ effects });

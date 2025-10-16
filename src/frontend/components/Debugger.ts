@@ -1,5 +1,5 @@
 import { css, CSSResult, html, TemplateResult } from "lit";
-import "@dodona/trace-component"
+import "@dodona/trace-component";
 import { customElement } from "lit/decorators.js";
 import { PapyrosElement } from "./PapyrosElement";
 
@@ -17,15 +17,27 @@ export class Debugger extends PapyrosElement {
                 --tc-primary-color: var(--md-sys-color-primary);
 
                 /* Secondary */
-                --tc-secondary-surface-color: var(--md-sys-color-secondary-surface, var(--md-sys-color-secondary-container));
-                --tc-secondary-on-surface-color: var(--md-sys-color-on-secondary-surface, var(--md-sys-color-on-secondary-container));
+                --tc-secondary-surface-color: var(
+                    --md-sys-color-secondary-surface,
+                    var(--md-sys-color-secondary-container)
+                );
+                --tc-secondary-on-surface-color: var(
+                    --md-sys-color-on-secondary-surface,
+                    var(--md-sys-color-on-secondary-container)
+                );
                 --tc-secondary-surface-container-color: var(--md-sys-color-secondary-container);
                 --tc-secondary-outline-color: var(--md-sys-color-secondary-outline, var(--md-sys-color-outline));
                 --tc-secondary-color: var(--md-sys-color-secondary);
 
                 /* Tertiary */
-                --tc-tertiary-surface-color: var(--md-sys-color-tertiary-surface, var(--md-sys-color-tertiary-container));
-                --tc-tertiary-on-surface-color: var(--md-sys-color-on-tertiary-surface, var(--md-sys-color-on-tertiary-container));
+                --tc-tertiary-surface-color: var(
+                    --md-sys-color-tertiary-surface,
+                    var(--md-sys-color-tertiary-container)
+                );
+                --tc-tertiary-on-surface-color: var(
+                    --md-sys-color-on-tertiary-surface,
+                    var(--md-sys-color-on-tertiary-container)
+                );
                 --tc-tertiary-surface-container-color: var(--md-sys-color-tertiary-container);
                 --tc-tertiary-outline-color: var(--md-sys-color-tertiary-outline, var(--md-sys-color-outline));
                 --tc-tertiary-color: var(--md-sys-color-tertiary);
@@ -39,18 +51,17 @@ export class Debugger extends PapyrosElement {
     }
 
     protected override render(): TemplateResult {
-        if(!this.papyros.debugger.active || this.papyros.debugger.trace.length === 0) {
+        if (!this.papyros.debugger.active || this.papyros.debugger.trace.length === 0) {
             return html`<div class="place-holder">${this.t("Papyros.debug_placeholder")}</div>`;
         }
 
-        return html`<tc-trace 
-                .trace=${this.papyros.debugger.trace}
-                .translations=${this.papyros.i18n.getTranslations("Papyros.debugger")}
-                .selectedFrame=${this.papyros.debugger.activeFrame ?? 0}
-                @frame-change=${(e: CustomEvent) => {
-        this.papyros.debugger.activeFrame = e.detail.frame;
-    }
-}
+        return html`<tc-trace
+            .trace=${this.papyros.debugger.trace}
+            .translations=${this.papyros.i18n.getTranslations("Papyros.debugger")}
+            .selectedFrame=${this.papyros.debugger.activeFrame ?? 0}
+            @frame-change=${(e: CustomEvent) => {
+                this.papyros.debugger.activeFrame = e.detail.frame;
+            }}
         ></tc-trace>`;
     }
 }

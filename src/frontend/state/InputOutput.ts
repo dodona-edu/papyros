@@ -45,7 +45,7 @@ export type OutputEntry = {
     type: OutputType;
     content: string | FriendlyError;
     contentType?: string;
-}
+};
 
 export enum InputMode {
     batch = "batch",
@@ -55,15 +55,15 @@ export enum InputMode {
 export class InputOutput extends State {
     private papyros: Papyros;
     @stateProperty
-        inputs: string[] = [];
+    inputs: string[] = [];
     @stateProperty
-        output: OutputEntry[] = [];
+    output: OutputEntry[] = [];
     @stateProperty
-        prompt: string = "";
+    prompt: string = "";
     @stateProperty
-        awaitingInput: boolean = false;
+    awaitingInput: boolean = false;
     @stateProperty
-        inputMode: InputMode = InputMode.interactive;
+    inputMode: InputMode = InputMode.interactive;
 
     @stateProperty
     private _inputBuffer: string = "";
@@ -73,15 +73,15 @@ export class InputOutput extends State {
     }
     set inputBuffer(value: string) {
         this._inputBuffer = value;
-        if(this.nextBufferedLine !== undefined && this.inputMode === InputMode.batch && this.awaitingInput) {
+        if (this.nextBufferedLine !== undefined && this.inputMode === InputMode.batch && this.awaitingInput) {
             this.provideInput(this.nextBufferedLine);
         }
-        if(!this.papyros.debugger.active && this.papyros.runner.state === RunState.Ready) {
+        if (!this.papyros.debugger.active && this.papyros.runner.state === RunState.Ready) {
             this.clearInputs();
         }
     }
     private get nextBufferedLine(): string | undefined {
-        const bufferedLines = this.inputBuffer.split("\n").slice(0,-1);
+        const bufferedLines = this.inputBuffer.split("\n").slice(0, -1);
         if (bufferedLines.length > this.inputs.length) {
             return bufferedLines[this.inputs.length];
         }
@@ -93,7 +93,7 @@ export class InputOutput extends State {
         this.papyros = papyros;
         this.reset();
         BackendManager.subscribe(BackendEventType.Start, () => this.reset());
-        BackendManager.subscribe(BackendEventType.Output, e => {
+        BackendManager.subscribe(BackendEventType.Output, (e) => {
             const data = parseData(e.data, e.contentType);
             if (e.contentType && e.contentType.startsWith("img")) {
                 this.logImage(data, e.contentType);
@@ -101,12 +101,12 @@ export class InputOutput extends State {
                 this.logOutput(data);
             }
         });
-        BackendManager.subscribe(BackendEventType.Error, e => {
+        BackendManager.subscribe(BackendEventType.Error, (e) => {
             const data = parseData(e.data, e.contentType);
             this.logError(data);
         });
-        BackendManager.subscribe(BackendEventType.Input, e => {
-            if(this.nextBufferedLine !== undefined && this.inputMode === InputMode.batch) {
+        BackendManager.subscribe(BackendEventType.Input, (e) => {
+            if (this.nextBufferedLine !== undefined && this.inputMode === InputMode.batch) {
                 this.provideInput(this.nextBufferedLine);
                 return;
             }
@@ -122,10 +122,14 @@ export class InputOutput extends State {
     public logError(error: FriendlyError | string): void {
         if (typeof error === "string") {
             if (error.includes("service worker for reading input")) {
-                this.papyros.errorHandler(new Error("Service worker for reading input was not available", { cause: error }));
+                this.papyros.errorHandler(
+                    new Error("Service worker for reading input was not available", { cause: error }),
+                );
             }
         } else if (error.traceback?.includes("service worker for reading input")) {
-            this.papyros.errorHandler(new Error("Service worker for reading input was not available", { cause: error }));
+            this.papyros.errorHandler(
+                new Error("Service worker for reading input was not available", { cause: error }),
+            );
         }
         this.output = [...this.output, { type: OutputType.stderr, content: error }];
     }
@@ -139,9 +143,10 @@ export class InputOutput extends State {
         // we split them again here, to simplify overflow detection
         const lines = output.split("\n");
         if (lines.length > 1) {
-            this.output = [...this.output,
-                ...lines.slice(0, -1).map(line => ({ type: OutputType.stdout, content: line + "\n" })),
-                { type: OutputType.stdout, content: lines[lines.length - 1] }
+            this.output = [
+                ...this.output,
+                ...lines.slice(0, -1).map((line) => ({ type: OutputType.stdout, content: line + "\n" })),
+                { type: OutputType.stdout, content: lines[lines.length - 1] },
             ];
         } else {
             this.output = [...this.output, { type: OutputType.stdout, content: output }];

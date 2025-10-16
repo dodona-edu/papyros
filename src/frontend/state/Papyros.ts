@@ -20,14 +20,14 @@ export class Papyros extends State {
     errorHandler: (error: Error) => void = () => {};
 
     @stateProperty
-        serviceWorkerName: string = "InputServiceWorker.js";
+    serviceWorkerName: string = "InputServiceWorker.js";
 
     /**
      * Launch this instance of Papyros, making it ready to run code
      * @return {Promise<Papyros>} Promise of launching, chainable
      */
     public async launch(): Promise<Papyros> {
-        if (!await this.configureInput()) {
+        if (!(await this.configureInput())) {
             alert(this.i18n.t("Papyros.service_worker_error"));
         } else {
             try {
@@ -66,24 +66,27 @@ export class Papyros extends State {
                 await navigator.serviceWorker.register(this.serviceWorkerName, { scope: "/" });
                 BackendManager.channel = makeChannel({ serviceWorker: { scope: "/" } })!;
                 await this.waitForActiveRegistration();
-            } catch(e) {
+            } catch (e) {
                 console.error("Error registering service worker:", e);
                 return false;
             }
         } else {
-            BackendManager.channel = makeChannel({ atomics: {  } })!;
+            BackendManager.channel = makeChannel({ atomics: {} })!;
         }
         return true;
     }
 
     private async waitForActiveRegistration(timeout: number = 5000): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            const timeoutHandle = setTimeout(() => reject(new Error("Timed out waiting for activated service worker")), timeout);
+            const timeoutHandle = setTimeout(
+                () => reject(new Error("Timed out waiting for activated service worker")),
+                timeout,
+            );
             navigator.serviceWorker.ready.then(() => {
                 clearTimeout(timeoutHandle);
                 resolve();
-            })
-        })
+            });
+        });
     }
 }
 
