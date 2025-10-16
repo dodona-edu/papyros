@@ -21,7 +21,7 @@ export class Code extends PapyrosElement {
                 .programmingLanguage=${this.papyros.runner.programmingLanguage}
                 .debug=${this.papyros.debugger.active}
                 .debugLine=${this.papyros.debugger.debugLine}
-                .value=${this.papyros.runner.code}
+                .value=${this.papyros.runner.effectiveCode}
                 .lintingSource=${this.papyros.runner.lintSource.bind(this.papyros.runner)}
                 .indentLength=${this.papyros.constants.indentationSize}
                 .translations=${this.papyros.i18n.getTranslations("CodeMirror")}
@@ -31,9 +31,9 @@ export class Code extends PapyrosElement {
                 })}
                 .testLines=${this.papyros.test.testLines}
                 .testTranslations=${this.papyros.i18n.getTranslations("Papyros.editor.test_code")}
-                @edit-test-code=${() => (this.papyros.test.testLineCount = undefined)}
+                @edit-test-code=${() => this.papyros.test.editTestCode()}
                 @remove-test-code=${() => (this.papyros.test.testCode = undefined)}
-                @change=${(e: CustomEvent) => (this.papyros.runner.code = e.detail)}
+                @change=${(e: CustomEvent) => (this.papyros.runner.effectiveCode = e.detail)}
             ></p-code-editor>
         `;
     }
