@@ -119,7 +119,7 @@ export class CodeEditor extends CodeMirrorEditor {
         this.configure({
             testReadOnlyRanges: value
                 ? readOnlyRangesExtension((state) => {
-                      const line = state.doc.lines - value + 1;
+                      const line = state.doc.lines - value;
                       return [{ from: state.doc.line(line).from, to: state.doc.length }];
                   })
                 : [],

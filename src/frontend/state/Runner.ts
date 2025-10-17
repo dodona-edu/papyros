@@ -99,6 +99,28 @@ export class Runner extends State {
         }
     }
 
+    static CODE_SEPARATOR = "\n\n";
+
+    @stateProperty
+    public get effectiveCode(): string {
+        let result = this.code;
+        if (this.papyros.test.testCode !== undefined) {
+            result += `${Runner.CODE_SEPARATOR}${this.papyros.test.testCode}`;
+        }
+        return result;
+    }
+
+    public set effectiveCode(value: string) {
+        let codeWithoutTest = value;
+        if (this.papyros.test.testCode !== undefined) {
+            codeWithoutTest = codeWithoutTest.slice(
+                0,
+                -(Runner.CODE_SEPARATOR.length + this.papyros.test.testCode.length),
+            );
+        }
+        this.code = codeWithoutTest;
+    }
+
     /**
      * Async getter for the linting diagnostics of the current code
      */
@@ -189,7 +211,7 @@ export class Runner extends State {
         const backend = await this.backend;
         this.runStartTime = new Date().getTime();
         try {
-            await backend.call(backend.workerProxy.runCode, this.code, mode);
+            await backend.call(backend.workerProxy.runCode, this.effectiveCode, mode);
         } catch (error: any) {
             if (error.type === "InterruptError") {
                 // Error signaling forceful interrupt
@@ -352,7 +374,7 @@ export class Runner extends State {
             const proxy = backend.workerProxy;
 
             if (proxy) {
-                this.runModes = await proxy.runModes(this.code);
+                this.runModes = await proxy.runModes(this.effectiveCode);
             }
         });
     }
