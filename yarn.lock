@@ -707,7 +707,16 @@
     "@typescript-eslint/types" "8.46.2"
     eslint-visitor-keys "^4.2.1"
 
-"@vitest/browser@^4.0.6":
+"@vitest/browser-playwright@^4.0.6":
+  version "4.0.6"
+  resolved "https://registry.yarnpkg.com/@vitest/browser-playwright/-/browser-playwright-4.0.6.tgz#cc5bb73c55a918e719a288ecd4b28eae13f04977"
+  integrity sha512-u6DliDabPQYXz8U4ZwnCvr9q2kJnribkenO6FK0qv5Gu/m1X884JOf0IZ71x7rLrmSsoP3YD3hVnNutAbhEX3A==
+  dependencies:
+    "@vitest/browser" "4.0.6"
+    "@vitest/mocker" "4.0.6"
+    tinyrainbow "^3.0.3"
+
+"@vitest/browser@4.0.6", "@vitest/browser@^4.0.6":
   version "4.0.6"
   resolved "https://registry.yarnpkg.com/@vitest/browser/-/browser-4.0.6.tgz#93944b2f98f4fc0e4398575b792cc26e4f656b3d"
   integrity sha512-SdrcvwvP6q8n82cS2BthbZuHGFPHeKkjbpeIRhGaeV8hJ8P0swWFx5lUZ/Vnd7G0CsfL6m4/3lOaqd/n12vtZA==
