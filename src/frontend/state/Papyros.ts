@@ -32,7 +32,8 @@ export class Papyros extends State {
         } else {
             try {
                 await this.runner.launch();
-            } catch {
+            } catch (e) {
+                this.errorHandler(new Error("Error launching papyros after registering service worker", { cause: e }));
                 if (confirm(this.i18n.t("Papyros.launch_error"))) {
                     return this.launch();
                 }
@@ -67,7 +68,7 @@ export class Papyros extends State {
                 BackendManager.channel = makeChannel({ serviceWorker: { scope: "/" } })!;
                 await this.waitForActiveRegistration();
             } catch (e) {
-                console.error("Error registering service worker:", e);
+                this.errorHandler(new Error("Error registering service worker", { cause: e }));
                 return false;
             }
         } else {
