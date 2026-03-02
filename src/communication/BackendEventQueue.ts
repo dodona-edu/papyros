@@ -50,7 +50,7 @@ export class BackendEventQueue {
      * If the contentType is not textual, an error is thrown
      */
     public put(type: BackendEventType, text: string | BufferSource | number, extra: string | any): void {
-        let stringData = "";
+        let stringData;
         if (typeof text === "number") {
             stringData = text.toString();
         } else if (typeof text !== "string") {
