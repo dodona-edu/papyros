@@ -13,6 +13,7 @@ updates:
     eslint:
       patterns:
         - "eslint*"
+        - "@eslint/*"
     codemirror:
       patterns:
         - "*codemirror*"
