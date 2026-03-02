@@ -109,7 +109,7 @@ export class JavaScriptWorker extends Backend<SyncExtras> {
                 .map((k) => `${k} = ctx['${k}'];`)
                 .join("\n"),
         )(newContext);
-        let result = null;
+        let result;
         try {
             // run the user's code
             this.onEvent({
