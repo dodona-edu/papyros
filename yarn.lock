@@ -605,10 +605,10 @@
   resolved "https://registry.yarnpkg.com/@types/retry/-/retry-0.12.1.tgz#d8f1c0d0dc23afad6dc16a9e993a0865774b4065"
   integrity sha512-xoDlM2S4ortawSWORYqsdU+2rxdh4LRW9ytc3zmT37RIKQh6IHyKwwtKhKis9ah8ol07DCkZxPt8BBvPjC6v4g==
 
-"@types/serviceworker@^0.0.192":
-  version "0.0.192"
-  resolved "https://registry.yarnpkg.com/@types/serviceworker/-/serviceworker-0.0.192.tgz#a7270c426772144a8939e2f58c9bda6bc4ed0894"
-  integrity sha512-v9ve7JDYs3JnWow0OcSEtodcxlArlmOGFxb7nPMMRzQd8wEBueKA8wIvzQj8OQWeMd75DuqB2RCLoKxZByEbhw==
+"@types/serviceworker@^0.0.193":
+  version "0.0.193"
+  resolved "https://registry.yarnpkg.com/@types/serviceworker/-/serviceworker-0.0.193.tgz#4ba3eb515499e9cb50a145413e82b7bb823e7f30"
+  integrity sha512-3nZH1ahex0tTmAuCRF/zJWsxq730GW9xItPm5U4EtZYF0MdqKEdyypgOteJnikWZ8QGPGetEkooSD4z7nQblRw==
 
 "@types/trusted-types@^2.0.2":
   version "2.0.7"
