@@ -2,6 +2,7 @@ import { customElement } from "lit/decorators.js";
 import { CodeMirrorEditor } from "./CodeMirrorEditor";
 import {
     drawSelection,
+    EditorView,
     highlightActiveLine,
     highlightActiveLineGutter,
     highlightSpecialChars,
@@ -11,7 +12,7 @@ import {
 } from "@codemirror/view";
 import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
 import { bracketMatching, foldGutter, indentOnInput, indentUnit, LanguageSupport } from "@codemirror/language";
-import { EditorState } from "@codemirror/state";
+import { EditorState, StateEffect } from "@codemirror/state";
 import {
     acceptCompletion,
     autocompletion,
@@ -90,9 +91,13 @@ export class CodeEditor extends CodeMirrorEditor {
     }
 
     set debugLine(value: number | undefined) {
-        this.view?.dispatch({
-            effects: setDebugLines.of(value ? [value] : []),
-        });
+        if (!this.view) return;
+        const effects: StateEffect<any>[] = [setDebugLines.of(value ? [value] : [])];
+        if (value && value >= 1 && value <= this.view.state.doc.lines) {
+            const line = this.view.state.doc.line(value);
+            effects.push(EditorView.scrollIntoView(line.from, { y: "center" }));
+        }
+        this.view.dispatch({ effects });
     }
 
     set testLines(value: number[] | undefined) {
