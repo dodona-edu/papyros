@@ -1,3 +1,5 @@
+import gc
+import io
 import os
 import sys
 import json
@@ -116,6 +118,14 @@ class Papyros(python_runner.PyodideRunner):
         module_names = [mod["module"] for mod in modules]
         self.callback("loading", data=dict(status=status, modules=module_names), contentType="application/json")
 
+    def _flush_open_files(self):
+        for obj in gc.get_objects():
+            if isinstance(obj, io.IOBase) and not obj.closed:
+                try:
+                    obj.flush()
+                except Exception:
+                    pass
+
     def _emit_created_files(self, emit_empty=False):
         cwd = os.getcwd()
         result = {}
@@ -153,6 +163,7 @@ class Papyros(python_runner.PyodideRunner):
                 yield
             except BaseException as e:
                 self.output("traceback", **self.serialize_traceback(e))
+                self._flush_open_files()
                 self._emit_created_files()
         self.post_run()
 
@@ -176,6 +187,7 @@ if __name__ == "{MODULE_NAME}":
                     if mode == "debug":
                         from tracer import JSONTracer
                         def frame_callback(frame):
+                            self._flush_open_files()
                             self._emit_created_files(emit_empty=True)
                             self.callback("frame", data=frame, contentType="application/json")
 
@@ -184,6 +196,7 @@ if __name__ == "{MODULE_NAME}":
                         result = self.execute(code_obj, mode)
                     while isinstance(result, Awaitable):
                         result = await result
+                    self._flush_open_files()
                     self._emit_created_files()
                     self.callback("end", data="CodeFinished", contentType="text/plain")
                     return result
