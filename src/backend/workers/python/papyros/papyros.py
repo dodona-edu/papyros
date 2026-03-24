@@ -116,7 +116,7 @@ class Papyros(python_runner.PyodideRunner):
         module_names = [mod["module"] for mod in modules]
         self.callback("loading", data=dict(status=status, modules=module_names), contentType="application/json")
 
-    def _emit_created_files(self):
+    def _emit_created_files(self, emit_empty=False):
         cwd = os.getcwd()
         result = {}
         try:
@@ -140,7 +140,7 @@ class Papyros(python_runner.PyodideRunner):
                         continue
         except Exception:
             return
-        if result:
+        if result or emit_empty:
             self.callback("files", data=json.dumps(result), contentType="application/json")
 
     @contextmanager
@@ -176,6 +176,7 @@ if __name__ == "{MODULE_NAME}":
                     if mode == "debug":
                         from tracer import JSONTracer
                         def frame_callback(frame):
+                            self._emit_created_files(emit_empty=True)
                             self.callback("frame", data=frame, contentType="application/json")
 
                         result = JSONTracer(frame_callback=frame_callback, module_name=MODULE_NAME).runscript(source_code)

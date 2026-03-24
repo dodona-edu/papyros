@@ -1,10 +1,13 @@
-import { customElement } from "lit/decorators.js";
+import { customElement, property } from "lit/decorators.js";
 import { PapyrosElement } from "./PapyrosElement";
 import { css, CSSResult, html, TemplateResult } from "lit";
-import { CODE_TAB } from "../state/InputOutput";
+import { CODE_TAB, FileEntry } from "../state/InputOutput";
 
 @customElement("p-editor-tabs")
 export class EditorTabs extends PapyrosElement {
+    @property({ attribute: false })
+    files: FileEntry[] = [];
+
     static get styles(): CSSResult {
         return css`
             :host {
@@ -78,20 +81,23 @@ export class EditorTabs extends PapyrosElement {
 
     protected override render(): TemplateResult {
         const activeTab = this.papyros.io.activeEditorTab;
+        const debugActive = this.papyros.debugger.active;
         return html`
             <button class=${activeTab === CODE_TAB ? "active" : ""} @click=${() => this.setTab(CODE_TAB)}>
                 ${this.t("Papyros.editor_tab_code")}
             </button>
-            ${this.papyros.io.files.map(
+            ${this.files.map(
                 (f) => html`
                     <button class=${activeTab === f.name ? "active" : ""} @click=${() => this.setTab(f.name)}>
                         ${f.name}
-                        <span
-                            class="close-btn"
-                            aria-label=${this.t("Papyros.close_file_tab")}
-                            @click=${(e: Event) => this.closeFile(e, f.name)}
-                            >×</span
-                        >
+                        ${debugActive
+                            ? ""
+                            : html`<span
+                                  class="close-btn"
+                                  aria-label=${this.t("Papyros.close_file_tab")}
+                                  @click=${(e: Event) => this.closeFile(e, f.name)}
+                                  >×</span
+                              >`}
                     </button>
                 `,
             )}

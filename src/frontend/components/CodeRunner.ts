@@ -42,12 +42,15 @@ export class CodeRunner extends PapyrosElement {
     }
 
     protected override render(): TemplateResult {
-        const files = this.papyros.io.files;
+        const files = this.papyros.debugger.active ? this.papyros.debugger.debugFiles : this.papyros.io.files;
         const activeTab = this.papyros.io.activeEditorTab;
         const activeFile = files.find((f) => f.name === activeTab);
+        if (activeTab !== CODE_TAB && !activeFile) {
+            this.papyros.io.activeEditorTab = "code";
+        }
 
         return html`
-            ${files.length > 0 ? html`<p-editor-tabs .papyros=${this.papyros}></p-editor-tabs>` : ""}
+            ${files.length > 0 ? html`<p-editor-tabs .papyros=${this.papyros} .files=${files}></p-editor-tabs>` : ""}
             <div>
                 ${activeTab === CODE_TAB
                     ? html`<p-code .papyros=${this.papyros}></p-code>`
