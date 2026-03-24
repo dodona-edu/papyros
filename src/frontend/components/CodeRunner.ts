@@ -1,9 +1,12 @@
 import { customElement } from "lit/decorators.js";
 import { PapyrosElement } from "./PapyrosElement";
 import { css, CSSResult, html, TemplateResult } from "lit";
+import { CODE_TAB } from "../state/InputOutput";
 import "./code_runner/Code";
 import "./code_runner/RunState";
 import "./code_runner/ButtonLint";
+import "./EditorTabs";
+import "./FileViewer";
 
 @customElement("p-code-runner")
 export class CodeRunner extends PapyrosElement {
@@ -39,9 +42,16 @@ export class CodeRunner extends PapyrosElement {
     }
 
     protected override render(): TemplateResult {
+        const files = this.papyros.io.files;
+        const activeTab = this.papyros.io.activeEditorTab;
+        const activeFile = files.find((f) => f.name === activeTab);
+
         return html`
+            ${files.length > 0 ? html`<p-editor-tabs .papyros=${this.papyros}></p-editor-tabs>` : ""}
             <div>
-                <p-code .papyros=${this.papyros}></p-code>
+                ${activeTab === CODE_TAB
+                    ? html`<p-code .papyros=${this.papyros}></p-code>`
+                    : html`<p-file-viewer .papyros=${this.papyros} .file=${activeFile}></p-file-viewer>`}
                 ${this.papyros.runner.stateMessage ? html`<p-run-state .papyros=${this.papyros}></p-run-state>` : ""}
             </div>
             <p-button-lint .papyros=${this.papyros}>

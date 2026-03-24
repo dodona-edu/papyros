@@ -52,12 +52,24 @@ export enum InputMode {
     interactive = "interactive",
 }
 
+export interface FileEntry {
+    name: string;
+    content: string;
+    binary: boolean;
+}
+
+export const CODE_TAB = "code";
+
 export class InputOutput extends State {
     private papyros: Papyros;
     @stateProperty
     inputs: string[] = [];
     @stateProperty
     output: OutputEntry[] = [];
+    @stateProperty
+    files: FileEntry[] = [];
+    @stateProperty
+    activeEditorTab: string = CODE_TAB;
     @stateProperty
     prompt: string = "";
     @stateProperty
@@ -117,6 +129,10 @@ export class InputOutput extends State {
         BackendManager.subscribe(BackendEventType.End, () => {
             this.awaitingInput = false;
         });
+        BackendManager.subscribe(BackendEventType.Files, (e) => {
+            const parsed: Record<string, { content: string; binary: boolean }> = JSON.parse(e.data);
+            this.files = Object.entries(parsed).map(([name, { content, binary }]) => ({ name, content, binary }));
+        });
     }
 
     public logError(error: FriendlyError | string): void {
@@ -169,5 +185,7 @@ export class InputOutput extends State {
         this.output = [];
         this.prompt = "";
         this.awaitingInput = false;
+        this.files = [];
+        this.activeEditorTab = "code";
     }
 }

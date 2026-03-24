@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import base64
 import doctest
 import re
 import python_runner
@@ -113,6 +114,46 @@ class Papyros(python_runner.PyodideRunner):
         module_names = [mod["module"] for mod in modules]
         self.callback("loading", data=dict(status=status, modules=module_names), contentType="application/json")
                 
+    def _snapshot_cwd(self):
+        try:
+            self._cwd_snapshot = set(os.listdir(os.getcwd()))
+        except Exception:
+            self._cwd_snapshot = set()
+        self._files_emitted = False
+
+    def _emit_created_files(self):
+        if getattr(self, "_files_emitted", False):
+            return
+        self._files_emitted = True
+        cwd = os.getcwd()
+        try:
+            current = set(os.listdir(cwd))
+        except Exception:
+            return
+        snapshot = getattr(self, "_cwd_snapshot", set())
+        new_files = current - snapshot
+        result = {}
+        for filename in new_files:
+            if filename == "__papyros_dev_null":
+                continue
+            try:
+                path = os.path.join(cwd, filename)
+                size = os.path.getsize(path)
+                if size > 1024 * 1024:
+                    continue
+                try:
+                    with open(path, "r", encoding="utf-8") as f:
+                        content = f.read()
+                    result[filename] = {"content": content, "binary": False}
+                except (UnicodeDecodeError, IOError):
+                    with open(path, "rb") as f:
+                        content = base64.b64encode(f.read()).decode("ascii")
+                    result[filename] = {"content": content, "binary": True}
+            except Exception:
+                continue
+        if result:
+            self.callback("files", data=json.dumps(result), contentType="application/json")
+
     @contextmanager
     def _execute_context(self):
         with (
@@ -123,6 +164,7 @@ class Papyros(python_runner.PyodideRunner):
                 yield
             except BaseException as e:
                 self.output("traceback", **self.serialize_traceback(e))
+                self._emit_created_files()
         self.post_run()
 
     def pre_run(self, source_code, mode="exec", top_level_await=False):
@@ -137,6 +179,7 @@ if __name__ == "{MODULE_NAME}":
         return super().pre_run(source_code, mode=mode, top_level_await=top_level_await)
 
     async def run_async(self, source_code, mode="exec", top_level_await=True):
+        self._snapshot_cwd()
         with self._execute_context():
             try:
                 code_obj = self.pre_run(source_code, mode=mode, top_level_await=top_level_await)
@@ -152,6 +195,7 @@ if __name__ == "{MODULE_NAME}":
                         result = self.execute(code_obj, mode)
                     while isinstance(result, Awaitable):
                         result = await result
+                    self._emit_created_files()
                     self.callback("end", data="CodeFinished", contentType="text/plain")
                     return result
             except ModuleNotFoundError as mnf:

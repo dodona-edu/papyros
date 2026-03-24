@@ -70,6 +70,9 @@ export const ENGLISH_TRANSLATION = {
         debug: {
             stop: "Stop debugging",
         },
+        editor_tab_code: "Code",
+        files_download: "Download",
+        files_binary: "Binary file",
     },
     CodeMirror: {
         // @codemirror/search
@@ -157,6 +160,9 @@ export const DUTCH_TRANSLATION = {
         debug: {
             stop: "Stop debugger",
         },
+        editor_tab_code: "Code",
+        files_download: "Downloaden",
+        files_binary: "Binair bestand",
     },
     CodeMirror: {
         // @codemirror/view

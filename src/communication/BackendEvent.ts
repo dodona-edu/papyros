@@ -13,6 +13,7 @@ export enum BackendEventType {
     Frame = "frame",
     FrameChange = "frame-change",
     Stop = "stop",
+    Files = "files",
 }
 
 /**
