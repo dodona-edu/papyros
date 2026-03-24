@@ -34,6 +34,9 @@ class Papyros(python_runner.PyodideRunner):
         if buffer_constructor is not None:
             self.OutputBufferClass = lambda f: buffer_constructor(create_proxy(f))
         super().__init__(source_code=source_code, filename=filename)
+        self.workspace = os.path.join(os.getcwd(), "workspace")
+        os.makedirs(self.workspace, exist_ok=True)
+        os.chdir(self.workspace)
         self.limit = limit
         self.override_globals()
         self.set_event_callback(callback)
@@ -115,29 +118,28 @@ class Papyros(python_runner.PyodideRunner):
 
     def _emit_created_files(self):
         cwd = os.getcwd()
+        result = {}
         try:
-            files = set(os.listdir(cwd))
+            for dirpath, dirnames, filenames in os.walk(cwd):
+                for filename in filenames:
+                    try:
+                        path = os.path.join(dirpath, filename)
+                        size = os.path.getsize(path)
+                        if size > 1024 * 1024:
+                            continue
+                        key = os.path.relpath(path, cwd)
+                        try:
+                            with open(path, "r", encoding="utf-8") as f:
+                                content = f.read()
+                            result[key] = {"content": content, "binary": False}
+                        except (UnicodeDecodeError, IOError):
+                            with open(path, "rb") as f:
+                                content = base64.b64encode(f.read()).decode("ascii")
+                            result[key] = {"content": content, "binary": True}
+                    except Exception:
+                        continue
         except Exception:
             return
-        result = {}
-        for filename in files:
-            if filename == "__papyros_dev_null":
-                continue
-            try:
-                path = os.path.join(cwd, filename)
-                size = os.path.getsize(path)
-                if size > 1024 * 1024:
-                    continue
-                try:
-                    with open(path, "r", encoding="utf-8") as f:
-                        content = f.read()
-                    result[filename] = {"content": content, "binary": False}
-                except (UnicodeDecodeError, IOError):
-                    with open(path, "rb") as f:
-                        content = base64.b64encode(f.read()).decode("ascii")
-                    result[filename] = {"content": content, "binary": True}
-            except Exception:
-                continue
         if result:
             self.callback("files", data=json.dumps(result), contentType="application/json")
 
@@ -246,7 +248,7 @@ if __name__ == "{MODULE_NAME}":
     def lint(self, code):
         # PyLint runs into an issue when trying to import its dependencies
         # Temporarily overriding os.devnull solves this issue
-        TEMP_DEV_NULL = "__papyros_dev_null"
+        TEMP_DEV_NULL = "/home/pyodide/__papyros_dev_null"
         with open(TEMP_DEV_NULL, "w") as f:
             pass
         orig_dev_null = os.devnull
@@ -255,6 +257,10 @@ if __name__ == "{MODULE_NAME}":
         self.set_source_code(code)
         from .linting import lint
         os.devnull = orig_dev_null
+        try:
+            os.remove(TEMP_DEV_NULL)
+        except OSError:
+            pass
         return lint(code)
 
     def has_doctests(self, code):

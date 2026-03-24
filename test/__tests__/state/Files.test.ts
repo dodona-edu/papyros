@@ -46,6 +46,24 @@ open("b.txt", "w").write("bbb")
         expect(papyros.io.files.length).toBe(0);
     });
 
+    it("writing a file in a subdirectory emits it with relative path", async () => {
+        const papyros = new Papyros();
+        await papyros.launch();
+        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
+        papyros.runner.code = `
+import os
+os.makedirs("subdir", exist_ok=True)
+open("subdir/nested.txt", "w").write("nested content")
+`;
+        await waitForInputReady();
+        await papyros.runner.start();
+        await waitForFiles(papyros, 1);
+        expect(papyros.io.files.length).toBe(1);
+        expect(papyros.io.files[0].name).toBe("subdir/nested.txt");
+        expect(papyros.io.files[0].content).toBe("nested content");
+        expect(papyros.io.files[0].binary).toBe(false);
+    });
+
     it("file written before crash still appears", async () => {
         const papyros = new Papyros();
         await papyros.launch();
