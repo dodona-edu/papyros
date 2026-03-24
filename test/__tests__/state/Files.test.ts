@@ -46,22 +46,6 @@ open("b.txt", "w").write("bbb")
         expect(papyros.io.files.length).toBe(0);
     });
 
-    it("files are reset on new run", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
-        papyros.runner.code = `open("reset_test.txt", "w").write("data")`;
-        await waitForInputReady();
-        await papyros.runner.start();
-        await waitForFiles(papyros, 1);
-        expect(papyros.io.files.length).toBe(1);
-
-        papyros.runner.code = `print("hello")`;
-        await papyros.runner.start();
-        await waitForPapyrosReady(papyros);
-        expect(papyros.io.files.length).toBe(0);
-    });
-
     it("file written before crash still appears", async () => {
         const papyros = new Papyros();
         await papyros.launch();

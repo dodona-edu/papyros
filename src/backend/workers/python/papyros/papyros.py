@@ -79,7 +79,6 @@ class Papyros(python_runner.PyodideRunner):
             import matplotlib.pyplot
             import base64
             from io import BytesIO
-            
 
             def show():
                 buf = BytesIO()
@@ -113,27 +112,15 @@ class Papyros(python_runner.PyodideRunner):
             modules = [modules]
         module_names = [mod["module"] for mod in modules]
         self.callback("loading", data=dict(status=status, modules=module_names), contentType="application/json")
-                
-    def _snapshot_cwd(self):
-        try:
-            self._cwd_snapshot = set(os.listdir(os.getcwd()))
-        except Exception:
-            self._cwd_snapshot = set()
-        self._files_emitted = False
 
     def _emit_created_files(self):
-        if getattr(self, "_files_emitted", False):
-            return
-        self._files_emitted = True
         cwd = os.getcwd()
         try:
-            current = set(os.listdir(cwd))
+            files = set(os.listdir(cwd))
         except Exception:
             return
-        snapshot = getattr(self, "_cwd_snapshot", set())
-        new_files = current - snapshot
         result = {}
-        for filename in new_files:
+        for filename in files:
             if filename == "__papyros_dev_null":
                 continue
             try:
@@ -179,7 +166,6 @@ if __name__ == "{MODULE_NAME}":
         return super().pre_run(source_code, mode=mode, top_level_await=top_level_await)
 
     async def run_async(self, source_code, mode="exec", top_level_await=True):
-        self._snapshot_cwd()
         with self._execute_context():
             try:
                 code_obj = self.pre_run(source_code, mode=mode, top_level_await=top_level_await)
@@ -215,7 +201,7 @@ if __name__ == "{MODULE_NAME}":
                     self.callback("interrupt", data="KeyboardInterrupt", contentType="text/plain")
                 else:
                     raise
-                
+
     def serialize_syntax_error(self, exc):
         raise  # Rethrow to ensure FriendlyTraceback library is imported correctly
 
@@ -278,6 +264,9 @@ if __name__ == "{MODULE_NAME}":
             return bool(tests)
         except ValueError:
             return False
+
+    def delete_file(self, name):
+        os.remove(os.path.join(os.getcwd(), name))
 
     async def provide_files(self, inline_files, href_files):
         inline_files = json.loads(inline_files)

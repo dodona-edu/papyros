@@ -27,6 +27,9 @@ export class EditorTabs extends PapyrosElement {
                 background-color: var(--md-sys-color-surface-variant);
                 color: var(--md-sys-color-on-surface-variant);
                 white-space: nowrap;
+                display: flex;
+                align-items: center;
+                gap: 0.375rem;
             }
 
             button.active {
@@ -37,11 +40,40 @@ export class EditorTabs extends PapyrosElement {
             button:hover:not(.active) {
                 opacity: 0.8;
             }
+
+            .close-btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 1rem;
+                height: 1rem;
+                border-radius: 50%;
+                font-size: 0.75rem;
+                line-height: 1;
+                padding: 0;
+                background: transparent;
+                border: none;
+                cursor: pointer;
+                color: inherit;
+                opacity: 0.6;
+            }
+
+            .close-btn:hover {
+                opacity: 1;
+                background-color: var(--md-sys-color-error);
+                color: var(--md-sys-color-on-error);
+            }
         `;
     }
 
     private setTab(tab: string): void {
         this.papyros.io.activeEditorTab = tab;
+    }
+
+    private closeFile(e: Event, name: string): void {
+        e.stopPropagation();
+        this.papyros.io.removeFile(name);
+        void this.papyros.runner.deleteFile(name);
     }
 
     protected override render(): TemplateResult {
@@ -54,6 +86,12 @@ export class EditorTabs extends PapyrosElement {
                 (f) => html`
                     <button class=${activeTab === f.name ? "active" : ""} @click=${() => this.setTab(f.name)}>
                         ${f.name}
+                        <span
+                            class="close-btn"
+                            aria-label=${this.t("Papyros.close_file_tab")}
+                            @click=${(e: Event) => this.closeFile(e, f.name)}
+                            >×</span
+                        >
                     </button>
                 `,
             )}

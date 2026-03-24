@@ -176,6 +176,13 @@ export class InputOutput extends State {
         this.awaitingInput = false;
     }
 
+    public removeFile(name: string): void {
+        if (this.activeEditorTab === name) {
+            this.activeEditorTab = CODE_TAB;
+        }
+        this.files = this.files.filter((f) => f.name !== name);
+    }
+
     public clearInputs(): void {
         this.inputs = [];
     }
