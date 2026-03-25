@@ -46,6 +46,7 @@ class Papyros(python_runner.PyodideRunner):
         self._tracked_files = set()
         self._tracking_files = False
         self._original_open = builtins.open
+        self._last_emitted_snapshot = None
         self._install_open_tracking()
         self.limit = limit
         self.override_globals()
@@ -184,13 +185,18 @@ class Papyros(python_runner.PyodideRunner):
                             continue
             except Exception:
                 return
+            snapshot = json.dumps(result, sort_keys=True)
+            if snapshot == self._last_emitted_snapshot and not emit_empty:
+                return
+            self._last_emitted_snapshot = snapshot
             if result or emit_empty:
-                self.callback("files", data=json.dumps(result), contentType="text/json")
+                self.callback("files", data=snapshot, contentType="text/json")
 
     @contextmanager
     def _execute_context(self):
         self._tracked_files.clear()
         self._tracking_files = True
+        self._last_emitted_snapshot = None
         with (
             redirect_stdout(python_runner.output.SysStream("output", self.output_buffer)),
             redirect_stderr(python_runner.output.SysStream("error", self.output_buffer)),
@@ -331,7 +337,8 @@ if __name__ == "{MODULE_NAME}":
         with self._without_file_tracking():
             inline_files = json.loads(inline_files)
             for f in inline_files:
-                open(f, "w").write(inline_files[f])
+                with open(f, "w") as fd:
+                    fd.write(inline_files[f])
                 self.callback("loading", data=dict(status="loaded", modules=[f]), contentType="application/json")
 
             href_files = json.loads(href_files)
