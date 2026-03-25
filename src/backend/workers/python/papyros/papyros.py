@@ -1,4 +1,5 @@
-import gc
+import builtins
+import functools
 import io
 import os
 import shutil
@@ -42,6 +43,10 @@ class Papyros(python_runner.PyodideRunner):
             shutil.rmtree(self.workspace)
         os.makedirs(self.workspace)
         os.chdir(self.workspace)
+        self._tracked_files = set()
+        self._tracking_files = False
+        self._original_open = builtins.open
+        self._install_open_tracking()
         self.limit = limit
         self.override_globals()
         self.set_event_callback(callback)
@@ -121,43 +126,71 @@ class Papyros(python_runner.PyodideRunner):
         module_names = [mod["module"] for mod in modules]
         self.callback("loading", data=dict(status=status, modules=module_names), contentType="application/json")
 
+    def _install_open_tracking(self):
+        papyros = self
+
+        @functools.wraps(self._original_open)
+        def tracked_open(*args, **kwargs):
+            f = papyros._original_open(*args, **kwargs)
+            if papyros._tracking_files:
+                papyros._tracked_files.add(f)
+            return f
+
+        builtins.open = tracked_open
+
+    @contextmanager
+    def _without_file_tracking(self):
+        was_tracking = self._tracking_files
+        self._tracking_files = False
+        try:
+            yield
+        finally:
+            self._tracking_files = was_tracking
+
     def _flush_open_files(self):
-        for obj in gc.get_objects():
-            if isinstance(obj, io.IOBase) and not obj.closed:
+        closed = set()
+        for f in self._tracked_files:
+            if f.closed:
+                closed.add(f)
+            else:
                 try:
-                    obj.flush()
+                    f.flush()
                 except Exception:
                     pass
+        self._tracked_files -= closed
 
     def _emit_created_files(self, emit_empty=False):
-        cwd = os.getcwd()
-        result = {}
-        try:
-            for dirpath, dirnames, filenames in os.walk(cwd):
-                for filename in filenames:
-                    try:
-                        path = os.path.join(dirpath, filename)
-                        size = os.path.getsize(path)
-                        if size > 1024 * 1024:
-                            continue
-                        key = os.path.relpath(path, cwd)
+        with self._without_file_tracking():
+            cwd = os.getcwd()
+            result = {}
+            try:
+                for dirpath, dirnames, filenames in os.walk(cwd):
+                    for filename in filenames:
                         try:
-                            with open(path, "r", encoding="utf-8") as f:
-                                content = f.read()
-                            result[key] = {"content": content, "binary": False}
-                        except (UnicodeDecodeError, IOError):
-                            with open(path, "rb") as f:
-                                content = base64.b64encode(f.read()).decode("ascii")
-                            result[key] = {"content": content, "binary": True}
-                    except Exception:
-                        continue
-        except Exception:
-            return
-        if result or emit_empty:
-            self.callback("files", data=json.dumps(result), contentType="text/json")
+                            path = os.path.join(dirpath, filename)
+                            size = os.path.getsize(path)
+                            if size > 1024 * 1024:
+                                continue
+                            key = os.path.relpath(path, cwd)
+                            try:
+                                with open(path, "r", encoding="utf-8") as f:
+                                    content = f.read()
+                                result[key] = {"content": content, "binary": False}
+                            except (UnicodeDecodeError, IOError):
+                                with open(path, "rb") as f:
+                                    content = base64.b64encode(f.read()).decode("ascii")
+                                result[key] = {"content": content, "binary": True}
+                        except Exception:
+                            continue
+            except Exception:
+                return
+            if result or emit_empty:
+                self.callback("files", data=json.dumps(result), contentType="text/json")
 
     @contextmanager
     def _execute_context(self):
+        self._tracked_files.clear()
+        self._tracking_files = True
         with (
             redirect_stdout(python_runner.output.SysStream("output", self.output_buffer)),
             redirect_stderr(python_runner.output.SysStream("error", self.output_buffer)),
@@ -168,6 +201,8 @@ class Papyros(python_runner.PyodideRunner):
                 self.output("traceback", **self.serialize_traceback(e))
                 self._flush_open_files()
                 self._emit_created_files()
+            finally:
+                self._tracking_files = False
         self.post_run()
 
     def pre_run(self, source_code, mode="exec", top_level_await=False):
@@ -263,22 +298,23 @@ if __name__ == "{MODULE_NAME}":
         )
 
     def lint(self, code):
-        # PyLint runs into an issue when trying to import its dependencies
-        # Temporarily overriding os.devnull solves this issue
-        TEMP_DEV_NULL = "/home/pyodide/__papyros_dev_null"
-        with open(TEMP_DEV_NULL, "w") as f:
-            pass
-        orig_dev_null = os.devnull
-        os.devnull = TEMP_DEV_NULL
+        with self._without_file_tracking():
+            # PyLint runs into an issue when trying to import its dependencies
+            # Temporarily overriding os.devnull solves this issue
+            TEMP_DEV_NULL = "/home/pyodide/__papyros_dev_null"
+            with open(TEMP_DEV_NULL, "w") as f:
+                pass
+            orig_dev_null = os.devnull
+            os.devnull = TEMP_DEV_NULL
 
-        self.set_source_code(code)
-        from .linting import lint
-        os.devnull = orig_dev_null
-        try:
-            os.remove(TEMP_DEV_NULL)
-        except OSError:
-            pass
-        return lint(code)
+            self.set_source_code(code)
+            from .linting import lint
+            os.devnull = orig_dev_null
+            try:
+                os.remove(TEMP_DEV_NULL)
+            except OSError:
+                pass
+            return lint(code)
 
     def has_doctests(self, code):
         parser = doctest.DocTestParser()
@@ -292,18 +328,19 @@ if __name__ == "{MODULE_NAME}":
         os.remove(os.path.join(os.getcwd(), name))
 
     async def provide_files(self, inline_files, href_files):
-        inline_files = json.loads(inline_files)
-        for f in inline_files:
-            open(f, "w").write(inline_files[f])
-            self.callback("loading", data=dict(status="loaded", modules=[f]), contentType="application/json")
+        with self._without_file_tracking():
+            inline_files = json.loads(inline_files)
+            for f in inline_files:
+                open(f, "w").write(inline_files[f])
+                self.callback("loading", data=dict(status="loaded", modules=[f]), contentType="application/json")
 
-        href_files = json.loads(href_files)
-        for f in href_files:
-            url = href_files[f]
-            r = await pyfetch(url, stream=True)
-            with open(f, "wb") as fd:
-                fd.write(await r.bytes())
-            self.callback("loading", data=dict(status="loaded", modules=[f]), contentType="application/json")
+            href_files = json.loads(href_files)
+            for f in href_files:
+                url = href_files[f]
+                r = await pyfetch(url, stream=True)
+                with open(f, "wb") as fd:
+                    fd.write(await r.bytes())
+                self.callback("loading", data=dict(status="loaded", modules=[f]), contentType="application/json")
 
     def reset(self):
         """
