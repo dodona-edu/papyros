@@ -349,6 +349,8 @@ if __name__ == "{MODULE_NAME}":
                     fd.write(await r.bytes())
                 self.callback("loading", data=dict(status="loaded", modules=[f]), contentType="application/json")
 
+            self._emit_created_files()
+
     def reset(self):
         """
         overwritten from PyodideRunner to change the module name
