@@ -26,7 +26,7 @@ export class FileViewer extends PapyrosElement {
                 color: var(--md-sys-color-on-surface);
             }
 
-            .binary-container {
+            .placeholder-container {
                 display: flex;
                 flex-direction: column;
                 align-items: center;
@@ -70,9 +70,16 @@ export class FileViewer extends PapyrosElement {
         }
         if (this.file.binary) {
             return html`
-                <div class="binary-container">
+                <div class="placeholder-container">
                     <span>${this.t("Papyros.files_binary")}</span>
                     <button @click=${this.downloadBinary}>${this.t("Papyros.files_download")}</button>
+                </div>
+            `;
+        }
+        if (this.file.content === "") {
+            return html`
+                <div class="placeholder-container">
+                    <span>${this.t("Papyros.files_empty")}</span>
                 </div>
             `;
         }

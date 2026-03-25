@@ -74,6 +74,7 @@ export const ENGLISH_TRANSLATION = {
         close_file_tab: "Close file",
         files_download: "Download",
         files_binary: "Binary file",
+        files_empty: "Empty file",
     },
     CodeMirror: {
         // @codemirror/search
@@ -165,6 +166,7 @@ export const DUTCH_TRANSLATION = {
         close_file_tab: "Bestand sluiten",
         files_download: "Downloaden",
         files_binary: "Binair bestand",
+        files_empty: "Leeg bestand",
     },
     CodeMirror: {
         // @codemirror/view
