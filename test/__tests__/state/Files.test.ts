@@ -1,8 +1,7 @@
 import { Papyros } from "../../../src/frontend/state/Papyros";
 import { expect, it, describe } from "vitest";
 import { ProgrammingLanguage } from "../../../src/ProgrammingLanguage";
-import { waitForFiles, waitForPapyrosReady } from "../../helpers";
-import { waitForInputReady } from "../../helpers";
+import { waitForFiles, waitForPapyrosReady, waitForInputReady } from "../../helpers";
 
 describe.sequential("Files", () => {
     it("writing a single file emits it", async () => {

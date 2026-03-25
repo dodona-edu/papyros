@@ -94,6 +94,8 @@ export class EditorTabs extends PapyrosElement {
                             ? ""
                             : html`<span
                                   class="close-btn"
+                                  role="button"
+                                  tabindex="0"
                                   aria-label=${this.t("Papyros.close_file_tab")}
                                   @click=${(e: Event) => this.closeFile(e, f.name)}
                                   >×</span

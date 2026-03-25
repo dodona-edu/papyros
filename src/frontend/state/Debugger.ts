@@ -3,7 +3,7 @@ import { BackendEventType } from "../../communication/BackendEvent";
 import { Frame } from "@dodona/trace-component/dist/trace_types";
 import { State, stateProperty } from "@dodona/lit-state";
 import { Papyros } from "./Papyros";
-import { FileEntry } from "./InputOutput";
+import { FileEntry, parseFileEntries } from "./InputOutput";
 export type FrameState = {
     line: number;
     outputs: number;
@@ -45,13 +45,7 @@ export class Debugger extends State {
         });
         BackendManager.subscribe(BackendEventType.Files, (e) => {
             if (this._active) {
-                const parsed = JSON.parse(e.data) as Record<string, { content: string; binary: boolean }>;
-                const entries: FileEntry[] = Object.entries(parsed).map(([name, { content, binary }]) => ({
-                    name,
-                    content,
-                    binary,
-                }));
-                this.fileHistory = [...this.fileHistory, entries];
+                this.fileHistory = [...this.fileHistory, parseFileEntries(e.data, e.contentType)];
             }
         });
         BackendManager.subscribe(BackendEventType.Frame, (e) => {

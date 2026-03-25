@@ -1,6 +1,7 @@
 import gc
 import io
 import os
+import shutil
 import sys
 import json
 import base64
@@ -36,8 +37,10 @@ class Papyros(python_runner.PyodideRunner):
         if buffer_constructor is not None:
             self.OutputBufferClass = lambda f: buffer_constructor(create_proxy(f))
         super().__init__(source_code=source_code, filename=filename)
-        self.workspace = os.path.join(os.getcwd(), "workspace")
-        os.makedirs(self.workspace, exist_ok=True)
+        self.workspace = "/home/pyodide/workspace"
+        if os.path.exists(self.workspace):
+            shutil.rmtree(self.workspace)
+        os.makedirs(self.workspace)
         os.chdir(self.workspace)
         self.limit = limit
         self.override_globals()
@@ -151,7 +154,7 @@ class Papyros(python_runner.PyodideRunner):
         except Exception:
             return
         if result or emit_empty:
-            self.callback("files", data=json.dumps(result), contentType="application/json")
+            self.callback("files", data=json.dumps(result), contentType="text/json")
 
     @contextmanager
     def _execute_context(self):

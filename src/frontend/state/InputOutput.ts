@@ -60,6 +60,11 @@ export interface FileEntry {
 
 export const CODE_TAB = "code";
 
+export function parseFileEntries(data: string, contentType?: string): FileEntry[] {
+    const parsed = parseData(data, contentType) as Record<string, { content: string; binary: boolean }>;
+    return Object.entries(parsed).map(([name, { content, binary }]) => ({ name, content, binary }));
+}
+
 export class InputOutput extends State {
     private papyros: Papyros;
     @stateProperty
@@ -130,8 +135,7 @@ export class InputOutput extends State {
             this.awaitingInput = false;
         });
         BackendManager.subscribe(BackendEventType.Files, (e) => {
-            const parsed: Record<string, { content: string; binary: boolean }> = JSON.parse(e.data);
-            this.files = Object.entries(parsed).map(([name, { content, binary }]) => ({ name, content, binary }));
+            this.files = parseFileEntries(e.data, e.contentType);
         });
     }
 
@@ -193,6 +197,6 @@ export class InputOutput extends State {
         this.prompt = "";
         this.awaitingInput = false;
         this.files = [];
-        this.activeEditorTab = "code";
+        this.activeEditorTab = CODE_TAB;
     }
 }
