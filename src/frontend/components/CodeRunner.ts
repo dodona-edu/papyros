@@ -45,9 +45,6 @@ export class CodeRunner extends PapyrosElement {
         const files = this.papyros.debugger.active ? this.papyros.debugger.debugFiles : this.papyros.io.files;
         const activeTab = this.papyros.io.activeEditorTab;
         const activeFile = files.find((f) => f.name === activeTab);
-        if (activeTab !== CODE_TAB && !activeFile) {
-            this.papyros.io.activeEditorTab = CODE_TAB;
-        }
 
         return html`
             ${files.length > 0 ? html`<p-editor-tabs .papyros=${this.papyros} .files=${files}></p-editor-tabs>` : ""}

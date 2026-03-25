@@ -3,7 +3,7 @@ import { BackendEventType } from "../../communication/BackendEvent";
 import { Frame } from "@dodona/trace-component/dist/trace_types";
 import { State, stateProperty } from "@dodona/lit-state";
 import { Papyros } from "./Papyros";
-import { FileEntry, parseFileEntries } from "./InputOutput";
+import { CODE_TAB, FileEntry, parseFileEntries } from "./InputOutput";
 export type FrameState = {
     line: number;
     outputs: number;
@@ -16,7 +16,17 @@ export class Debugger extends State {
     @stateProperty
     private frameStates: FrameState[] = [];
     @stateProperty
-    public activeFrame: number | undefined = undefined;
+    private _activeFrame: number | undefined = undefined;
+
+    public set activeFrame(value: number | undefined) {
+        this._activeFrame = value;
+        this.validateActiveTab();
+    }
+
+    @stateProperty
+    public get activeFrame(): number | undefined {
+        return this._activeFrame;
+    }
     @stateProperty
     public trace: Frame[] = [];
     @stateProperty
@@ -69,9 +79,16 @@ export class Debugger extends State {
         this.frameStates = [];
         this.currentOutputs = 0;
         this.currentInputs = 0;
-        this.activeFrame = undefined;
+        this._activeFrame = undefined;
         this.trace = [];
         this.fileHistory = [];
+    }
+
+    private validateActiveTab(): void {
+        const tab = this.papyros.io.activeEditorTab;
+        if (tab !== CODE_TAB && !this.debugFiles.some((f) => f.name === tab)) {
+            this.papyros.io.activeEditorTab = CODE_TAB;
+        }
     }
 
     get activeFrameState(): FrameState | undefined {
