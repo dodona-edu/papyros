@@ -187,6 +187,14 @@ export class InputOutput extends State {
         this.files = this.files.filter((f) => f.name !== name);
     }
 
+    public addFile(name: string, content: string = "", binary: boolean = false): void {
+        if (this.files.some((f) => f.name === name)) {
+            return;
+        }
+        this.files = [...this.files, { name, content, binary }];
+        this.activeEditorTab = name;
+    }
+
     public updateFileContent(name: string, content: string): void {
         this.files = this.files.map((f) => (f.name === name ? { ...f, content } : f));
     }

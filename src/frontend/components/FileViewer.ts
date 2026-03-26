@@ -1,14 +1,18 @@
 import { customElement, property } from "lit/decorators.js";
 import { PapyrosElement } from "./PapyrosElement";
 import { css, CSSResult, html, TemplateResult } from "lit";
+import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { FileEntry } from "../state/InputOutput";
 import { debounce } from "../../util/Util";
+import type { FileEditor } from "./code_mirror/FileEditor";
 import "./code_mirror/FileEditor";
 
 @customElement("p-file-viewer")
 export class FileViewer extends PapyrosElement {
     @property({ type: Object })
     file: FileEntry | undefined = undefined;
+
+    private editorRef: Ref<FileEditor> = createRef();
 
     private debouncedUpdateFile = debounce((name: string, content: string) => {
         void this.papyros.runner.updateFile(name, content);
@@ -64,7 +68,13 @@ export class FileViewer extends PapyrosElement {
         a.href = url;
         a.download = this.file.name;
         a.click();
-        setTimeout(() => URL.revokeObjectURL(url), 0);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    protected override updated(): void {
+        if (this.file && !this.file.binary) {
+            this.editorRef.value?.focus();
+        }
     }
 
     private onEditorChange(e: CustomEvent): void {
@@ -90,6 +100,7 @@ export class FileViewer extends PapyrosElement {
         const readonly = this.papyros.debugger.active;
         return html`
             <p-file-editor
+                ${ref(this.editorRef)}
                 .value=${this.file.content}
                 .readonly=${readonly}
                 .theme=${this.papyros.constants.CodeMirrorTheme}

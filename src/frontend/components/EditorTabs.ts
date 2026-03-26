@@ -1,12 +1,18 @@
-import { customElement, property } from "lit/decorators.js";
+import { customElement, property, state } from "lit/decorators.js";
 import { PapyrosElement } from "./PapyrosElement";
 import { css, CSSResult, html, TemplateResult } from "lit";
+import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { CODE_TAB, FileEntry } from "../state/InputOutput";
 
 @customElement("p-editor-tabs")
 export class EditorTabs extends PapyrosElement {
     @property({ attribute: false })
     files: FileEntry[] = [];
+
+    @state()
+    private adding = false;
+
+    private addInputRef: Ref<HTMLInputElement> = createRef();
 
     static get styles(): CSSResult {
         return css`
@@ -66,6 +72,23 @@ export class EditorTabs extends PapyrosElement {
                 background-color: var(--md-sys-color-error);
                 color: var(--md-sys-color-on-error);
             }
+
+            .add-btn {
+                padding: 0.375rem 0.5rem;
+                font-size: 1rem;
+                line-height: 1;
+            }
+
+            .add-input {
+                font-size: 0.875rem;
+                padding: 0.25rem 0.5rem;
+                border: 1px solid var(--md-sys-color-outline);
+                border-radius: 0.375rem 0.375rem 0 0;
+                background-color: var(--md-sys-color-surface);
+                color: var(--md-sys-color-on-surface);
+                width: 8rem;
+                outline: none;
+            }
         `;
     }
 
@@ -77,6 +100,39 @@ export class EditorTabs extends PapyrosElement {
         e.stopPropagation();
         this.papyros.io.removeFile(name);
         void this.papyros.runner.deleteFile(name);
+    }
+
+    private startAdding(): void {
+        this.adding = true;
+    }
+
+    private confirmAdd(input: HTMLInputElement): void {
+        const name = input.value.trim();
+        if (!name || this.files.some((f) => f.name === name)) {
+            this.adding = false;
+            return;
+        }
+        this.papyros.io.addFile(name);
+        void this.papyros.runner.updateFile(name, "");
+        this.adding = false;
+    }
+
+    private cancelAdd(): void {
+        this.adding = false;
+    }
+
+    private onAddKeydown(e: KeyboardEvent): void {
+        if (e.key === "Enter") {
+            this.confirmAdd(e.target as HTMLInputElement);
+        } else if (e.key === "Escape") {
+            this.cancelAdd();
+        }
+    }
+
+    protected override updated(): void {
+        if (this.adding) {
+            this.addInputRef.value?.focus();
+        }
     }
 
     protected override render(): TemplateResult {
@@ -103,6 +159,19 @@ export class EditorTabs extends PapyrosElement {
                     </button>
                 `,
             )}
+            ${debugActive
+                ? ""
+                : this.adding
+                  ? html`<input
+                        ${ref(this.addInputRef)}
+                        class="add-input"
+                        placeholder=${this.t("Papyros.add_file_placeholder")}
+                        @keydown=${this.onAddKeydown}
+                        @blur=${this.cancelAdd}
+                    />`
+                  : html`<button class="add-btn" aria-label=${this.t("Papyros.add_file")} @click=${this.startAdding}>
+                        +
+                    </button>`}
         `;
     }
 }
