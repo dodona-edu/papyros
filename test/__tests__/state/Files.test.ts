@@ -1,7 +1,7 @@
 import { Papyros } from "../../../src/frontend/state/Papyros";
 import { expect, it, describe } from "vitest";
 import { ProgrammingLanguage } from "../../../src/ProgrammingLanguage";
-import { waitForFiles, waitForPapyrosReady, waitForInputReady } from "../../helpers";
+import { waitForFiles, waitForPapyrosReady, waitForInputReady, waitForOutput } from "../../helpers";
 
 describe.sequential("Files", () => {
     it("writing a single file emits it", async () => {
@@ -102,5 +102,38 @@ raise ValueError("intentional error")
         expect(papyros.io.files.length).toBe(1);
         expect(papyros.io.files[0].name).toBe("crash_test.txt");
         expect(papyros.io.files[0].content).toBe("before crash");
+    });
+
+    it("updateFileContent updates the in-memory content of an existing file", async () => {
+        const papyros = new Papyros();
+        await papyros.launch();
+        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
+        await waitForInputReady();
+        await papyros.runner.provideFiles({ "editable.txt": "original content" }, {});
+        await waitForFiles(papyros, 1);
+
+        papyros.io.updateFileContent("editable.txt", "updated content");
+
+        expect(papyros.io.files[0].content).toBe("updated content");
+    });
+
+    it("runner.updateFile updates the file content in the backend", async () => {
+        const papyros = new Papyros();
+        await papyros.launch();
+        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
+        await waitForInputReady();
+        await papyros.runner.provideFiles({ "editable.txt": "original content" }, {});
+        await waitForFiles(papyros, 1);
+
+        await papyros.runner.updateFile("editable.txt", "updated content");
+
+        papyros.runner.code = `
+with open("editable.txt", "r") as f:
+    print(f.read(), end="")
+`;
+        await papyros.runner.start();
+        await waitForOutput(papyros);
+        await waitForPapyrosReady(papyros);
+        expect(papyros.io.output[0].content).toBe("updated content");
     });
 });

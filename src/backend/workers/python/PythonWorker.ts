@@ -111,4 +111,8 @@ export class PythonWorker extends Backend<PyodideExtras> {
     public override async deleteFile(name: string): Promise<void> {
         await this.papyros?.delete_file(name);
     }
+
+    public override async updateFile(name: string, content: string): Promise<void> {
+        await this.papyros?.update_file(name, content);
+    }
 }

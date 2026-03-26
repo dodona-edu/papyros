@@ -187,6 +187,13 @@ export class InputOutput extends State {
         this.files = this.files.filter((f) => f.name !== name);
     }
 
+    public updateFileContent(name: string, content: string): void {
+        const file = this.files.find((f) => f.name === name);
+        if (file) {
+            file.content = content;
+        }
+    }
+
     public clearInputs(): void {
         this.inputs = [];
     }

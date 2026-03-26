@@ -134,4 +134,15 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
     public deleteFile(name: string): Promise<void> {
         return Promise.resolve();
     }
+
+    /**
+     * Update the content of a file in the backend filesystem
+     * @param {string} name The name of the file to update
+     * @param {string} content The new content of the file
+     * @return {Promise<void>} Resolves when the file has been updated
+     */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public updateFile(name: string, content: string): Promise<void> {
+        return Promise.resolve();
+    }
 }
