@@ -1,5 +1,13 @@
 import { LogType, papyrosLog } from "./Logging";
 
+export function debounce<T extends (...args: any[]) => void>(fn: T, delay: number): T {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    return ((...args: Parameters<T>) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn(...args), delay);
+    }) as T;
+}
+
 /**
  * Parse the data contained within a PapyrosEvent using its contentType
  * Supported content types are: text/plain, text/json, img/png;base64
