@@ -107,4 +107,8 @@ export class PythonWorker extends Backend<PyodideExtras> {
             href_files: JSON.stringify(hrefFiles),
         });
     }
+
+    public override async deleteFile(name: string): Promise<void> {
+        await this.papyros?.delete_file(name);
+    }
 }

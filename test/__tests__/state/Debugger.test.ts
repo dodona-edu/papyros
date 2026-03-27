@@ -3,7 +3,7 @@ import {ProgrammingLanguage} from "../../../src/ProgrammingLanguage";
 import {Papyros} from "../../../src/frontend/state/Papyros";
 import {RunMode} from "../../../src/backend/Backend";
 import {NonExceptionFrame} from "@dodona/trace-component/dist/trace_types";
-import {waitForInputReady, waitForOutput} from "../../helpers";
+import {waitForInputReady, waitForOutput, waitForPapyrosReady} from "../../helpers";
 
 describe.sequential("Debugger", () => {
     it("can run in debug mode", async () => {
@@ -57,6 +57,30 @@ z = 1 + 2`;
         expect(firstNOutputs(papyros.debugger.debugOutputs as number)).toBe("hello\nworld\n");
         expect(papyros.debugger.debugUsedInputs).toBe(1);
         unsubscribe();
+    });
+
+    it("shows correct files per debug frame", async () => {
+        const papyros = new Papyros();
+        await papyros.launch();
+        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
+        papyros.runner.code = `x = 1\nwith open('test.txt', 'w') as f:\n    f.write('hello')\ny = 2`;
+        await papyros.runner.start(RunMode.Debug);
+        await waitForPapyrosReady(papyros);
+
+        expect(papyros.debugger.trace.length).toBeGreaterThanOrEqual(4);
+
+        // At the first frame, no file has been created yet
+        papyros.debugger.activeFrame = 0;
+        expect(papyros.debugger.debugFiles).toEqual([]);
+
+        // At the last frame, test.txt should be visible
+        papyros.debugger.activeFrame = papyros.debugger.trace.length - 1;
+        expect(papyros.debugger.debugFiles.length).toBe(1);
+        expect(papyros.debugger.debugFiles[0].name).toBe("test.txt");
+
+        // Stepping backward restores the empty state
+        papyros.debugger.activeFrame = 0;
+        expect(papyros.debugger.debugFiles).toEqual([]);
     });
 
     it("resets when deactivated", async () => {

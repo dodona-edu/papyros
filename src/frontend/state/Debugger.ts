@@ -3,10 +3,12 @@ import { BackendEventType } from "../../communication/BackendEvent";
 import { Frame } from "@dodona/trace-component/dist/trace_types";
 import { State, stateProperty } from "@dodona/lit-state";
 import { Papyros } from "./Papyros";
+import { CODE_TAB, FileEntry, parseFileEntries } from "./InputOutput";
 export type FrameState = {
     line: number;
     outputs: number;
     inputs: number;
+    files: number;
 };
 
 export class Debugger extends State {
@@ -14,11 +16,23 @@ export class Debugger extends State {
     @stateProperty
     private frameStates: FrameState[] = [];
     @stateProperty
-    public activeFrame: number | undefined = undefined;
+    private _activeFrame: number | undefined = undefined;
+
+    public set activeFrame(value: number | undefined) {
+        this._activeFrame = value;
+        this.validateActiveTab();
+    }
+
+    @stateProperty
+    public get activeFrame(): number | undefined {
+        return this._activeFrame;
+    }
     @stateProperty
     public trace: Frame[] = [];
     @stateProperty
     private _active: boolean = false;
+    @stateProperty
+    private fileHistory: FileEntry[][] = [];
 
     public set active(active: boolean) {
         this._active = active;
@@ -39,6 +53,11 @@ export class Debugger extends State {
         BackendManager.subscribe(BackendEventType.Start, () => {
             this.reset();
         });
+        BackendManager.subscribe(BackendEventType.Files, (e) => {
+            if (this._active) {
+                this.fileHistory = [...this.fileHistory, parseFileEntries(e.data, e.contentType)];
+            }
+        });
         BackendManager.subscribe(BackendEventType.Frame, (e) => {
             this.activeFrame ??= 0;
             const frame = JSON.parse(e.data);
@@ -46,6 +65,7 @@ export class Debugger extends State {
                 line: frame.line,
                 outputs: this.papyros.io.output.length,
                 inputs: this.papyros.io.inputs.length,
+                files: this.fileHistory.length,
             };
             this.frameStates = [...this.frameStates, frameState];
             this.trace = [...this.trace, frame];
@@ -59,8 +79,16 @@ export class Debugger extends State {
         this.frameStates = [];
         this.currentOutputs = 0;
         this.currentInputs = 0;
-        this.activeFrame = undefined;
+        this._activeFrame = undefined;
         this.trace = [];
+        this.fileHistory = [];
+    }
+
+    private validateActiveTab(): void {
+        const tab = this.papyros.io.activeEditorTab;
+        if (tab !== CODE_TAB && !this.debugFiles.some((f) => f.name === tab)) {
+            this.papyros.io.activeEditorTab = CODE_TAB;
+        }
     }
 
     get activeFrameState(): FrameState | undefined {
@@ -81,5 +109,13 @@ export class Debugger extends State {
 
     get debugUsedInputs(): number | undefined {
         return this.activeFrameState?.inputs;
+    }
+
+    get debugFiles(): FileEntry[] {
+        const idx = this.activeFrameState?.files;
+        if (idx === undefined || idx === 0) {
+            return [];
+        }
+        return this.fileHistory[idx - 1] ?? [];
     }
 }

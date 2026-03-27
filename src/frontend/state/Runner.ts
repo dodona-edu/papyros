@@ -278,6 +278,11 @@ export class Runner extends State {
         await backend.writeMessage(input);
     }
 
+    public async deleteFile(name: string): Promise<void> {
+        const backend = await this.backend;
+        await backend.workerProxy.deleteFile(name);
+    }
+
     public async provideFiles(inlinedFiles: Record<string, string>, hrefFiles: Record<string, string>): Promise<void> {
         const fileNames = [...Object.keys(inlinedFiles), ...Object.keys(hrefFiles)];
         if (fileNames.length === 0) {

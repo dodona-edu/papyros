@@ -41,3 +41,13 @@ export async function waitForAwaitingInput(papyros: Papyros, timeout: number = 5
         await new Promise(r => setTimeout(r, 10));
     }
 }
+
+export async function waitForFiles(papyros: Papyros, count: number = 1, timeout = 10000): Promise<void> {
+    const start = Date.now();
+    while (papyros.io.files.length < count) {
+        if (Date.now() - start > timeout) {
+            throw new Error(`Timeout waiting for ${count} files`);
+        }
+        await new Promise(r => setTimeout(r, 10));
+    }
+}

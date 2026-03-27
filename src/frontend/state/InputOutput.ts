@@ -52,12 +52,29 @@ export enum InputMode {
     interactive = "interactive",
 }
 
+export interface FileEntry {
+    name: string;
+    content: string;
+    binary: boolean;
+}
+
+export const CODE_TAB = "code";
+
+export function parseFileEntries(data: string, contentType?: string): FileEntry[] {
+    const parsed = parseData(data, contentType) as Record<string, { content: string; binary: boolean }>;
+    return Object.entries(parsed).map(([name, { content, binary }]) => ({ name, content, binary }));
+}
+
 export class InputOutput extends State {
     private papyros: Papyros;
     @stateProperty
     inputs: string[] = [];
     @stateProperty
     output: OutputEntry[] = [];
+    @stateProperty
+    files: FileEntry[] = [];
+    @stateProperty
+    activeEditorTab: string = CODE_TAB;
     @stateProperty
     prompt: string = "";
     @stateProperty
@@ -117,6 +134,9 @@ export class InputOutput extends State {
         BackendManager.subscribe(BackendEventType.End, () => {
             this.awaitingInput = false;
         });
+        BackendManager.subscribe(BackendEventType.Files, (e) => {
+            this.files = parseFileEntries(e.data, e.contentType);
+        });
     }
 
     public logError(error: FriendlyError | string): void {
@@ -160,6 +180,13 @@ export class InputOutput extends State {
         this.awaitingInput = false;
     }
 
+    public removeFile(name: string): void {
+        if (this.activeEditorTab === name) {
+            this.activeEditorTab = CODE_TAB;
+        }
+        this.files = this.files.filter((f) => f.name !== name);
+    }
+
     public clearInputs(): void {
         this.inputs = [];
     }
@@ -169,5 +196,7 @@ export class InputOutput extends State {
         this.output = [];
         this.prompt = "";
         this.awaitingInput = false;
+        this.files = [];
+        this.activeEditorTab = CODE_TAB;
     }
 }

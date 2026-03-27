@@ -1,6 +1,11 @@
+import builtins
+import functools
+import io
 import os
+import shutil
 import sys
 import json
+import base64
 import doctest
 import re
 import python_runner
@@ -33,6 +38,16 @@ class Papyros(python_runner.PyodideRunner):
         if buffer_constructor is not None:
             self.OutputBufferClass = lambda f: buffer_constructor(create_proxy(f))
         super().__init__(source_code=source_code, filename=filename)
+        self.workspace = "/home/pyodide/workspace"
+        if os.path.exists(self.workspace):
+            shutil.rmtree(self.workspace)
+        os.makedirs(self.workspace)
+        os.chdir(self.workspace)
+        self._tracked_files = set()
+        self._tracking_files = False
+        self._original_open = builtins.open
+        self._last_emitted_snapshot = None
+        self._install_open_tracking()
         self.limit = limit
         self.override_globals()
         self.set_event_callback(callback)
@@ -78,7 +93,6 @@ class Papyros(python_runner.PyodideRunner):
             import matplotlib.pyplot
             import base64
             from io import BytesIO
-            
 
             def show():
                 buf = BytesIO()
@@ -112,9 +126,77 @@ class Papyros(python_runner.PyodideRunner):
             modules = [modules]
         module_names = [mod["module"] for mod in modules]
         self.callback("loading", data=dict(status=status, modules=module_names), contentType="application/json")
-                
+
+    def _install_open_tracking(self):
+        papyros = self
+
+        @functools.wraps(self._original_open)
+        def tracked_open(*args, **kwargs):
+            f = papyros._original_open(*args, **kwargs)
+            if papyros._tracking_files:
+                papyros._tracked_files.add(f)
+            return f
+
+        builtins.open = tracked_open
+
+    @contextmanager
+    def _without_file_tracking(self):
+        was_tracking = self._tracking_files
+        self._tracking_files = False
+        try:
+            yield
+        finally:
+            self._tracking_files = was_tracking
+
+    def _flush_open_files(self):
+        closed = set()
+        for f in self._tracked_files:
+            if f.closed:
+                closed.add(f)
+            else:
+                try:
+                    f.flush()
+                except Exception:
+                    pass
+        self._tracked_files -= closed
+
+    def _emit_created_files(self, emit_empty=False):
+        with self._without_file_tracking():
+            cwd = os.getcwd()
+            result = {}
+            try:
+                for dirpath, dirnames, filenames in os.walk(cwd):
+                    for filename in filenames:
+                        try:
+                            path = os.path.join(dirpath, filename)
+                            size = os.path.getsize(path)
+                            if size > 1024 * 1024:
+                                continue
+                            key = os.path.relpath(path, cwd)
+                            try:
+                                with open(path, "r", encoding="utf-8") as f:
+                                    content = f.read()
+                                result[key] = {"content": content, "binary": False}
+                            except (UnicodeDecodeError, IOError):
+                                with open(path, "rb") as f:
+                                    content = base64.b64encode(f.read()).decode("ascii")
+                                result[key] = {"content": content, "binary": True}
+                        except Exception:
+                            continue
+            except Exception:
+                return
+            snapshot = json.dumps(result, sort_keys=True)
+            if snapshot == self._last_emitted_snapshot and not emit_empty:
+                return
+            self._last_emitted_snapshot = snapshot
+            if result or emit_empty:
+                self.callback("files", data=snapshot, contentType="text/json")
+
     @contextmanager
     def _execute_context(self):
+        self._tracked_files.clear()
+        self._tracking_files = True
+        self._last_emitted_snapshot = None
         with (
             redirect_stdout(python_runner.output.SysStream("output", self.output_buffer)),
             redirect_stderr(python_runner.output.SysStream("error", self.output_buffer)),
@@ -123,6 +205,10 @@ class Papyros(python_runner.PyodideRunner):
                 yield
             except BaseException as e:
                 self.output("traceback", **self.serialize_traceback(e))
+                self._flush_open_files()
+                self._emit_created_files()
+            finally:
+                self._tracking_files = False
         self.post_run()
 
     def pre_run(self, source_code, mode="exec", top_level_await=False):
@@ -145,6 +231,8 @@ if __name__ == "{MODULE_NAME}":
                     if mode == "debug":
                         from tracer import JSONTracer
                         def frame_callback(frame):
+                            self._flush_open_files()
+                            self._emit_created_files(emit_empty=True)
                             self.callback("frame", data=frame, contentType="application/json")
 
                         result = JSONTracer(frame_callback=frame_callback, module_name=MODULE_NAME).runscript(source_code)
@@ -152,6 +240,8 @@ if __name__ == "{MODULE_NAME}":
                         result = self.execute(code_obj, mode)
                     while isinstance(result, Awaitable):
                         result = await result
+                    self._flush_open_files()
+                    self._emit_created_files()
                     self.callback("end", data="CodeFinished", contentType="text/plain")
                     return result
             except ModuleNotFoundError as mnf:
@@ -171,7 +261,7 @@ if __name__ == "{MODULE_NAME}":
                     self.callback("interrupt", data="KeyboardInterrupt", contentType="text/plain")
                 else:
                     raise
-                
+
     def serialize_syntax_error(self, exc):
         raise  # Rethrow to ensure FriendlyTraceback library is imported correctly
 
@@ -214,18 +304,23 @@ if __name__ == "{MODULE_NAME}":
         )
 
     def lint(self, code):
-        # PyLint runs into an issue when trying to import its dependencies
-        # Temporarily overriding os.devnull solves this issue
-        TEMP_DEV_NULL = "__papyros_dev_null"
-        with open(TEMP_DEV_NULL, "w") as f:
-            pass
-        orig_dev_null = os.devnull
-        os.devnull = TEMP_DEV_NULL
+        with self._without_file_tracking():
+            # PyLint runs into an issue when trying to import its dependencies
+            # Temporarily overriding os.devnull solves this issue
+            TEMP_DEV_NULL = "/home/pyodide/__papyros_dev_null"
+            with open(TEMP_DEV_NULL, "w") as f:
+                pass
+            orig_dev_null = os.devnull
+            os.devnull = TEMP_DEV_NULL
 
-        self.set_source_code(code)
-        from .linting import lint
-        os.devnull = orig_dev_null
-        return lint(code)
+            self.set_source_code(code)
+            from .linting import lint
+            os.devnull = orig_dev_null
+            try:
+                os.remove(TEMP_DEV_NULL)
+            except OSError:
+                pass
+            return lint(code)
 
     def has_doctests(self, code):
         parser = doctest.DocTestParser()
@@ -235,19 +330,24 @@ if __name__ == "{MODULE_NAME}":
         except ValueError:
             return False
 
-    async def provide_files(self, inline_files, href_files):
-        inline_files = json.loads(inline_files)
-        for f in inline_files:
-            open(f, "w").write(inline_files[f])
-            self.callback("loading", data=dict(status="loaded", modules=[f]), contentType="application/json")
+    def delete_file(self, name):
+        os.remove(os.path.join(os.getcwd(), name))
 
-        href_files = json.loads(href_files)
-        for f in href_files:
-            url = href_files[f]
-            r = await pyfetch(url, stream=True)
-            with open(f, "wb") as fd:
-                fd.write(await r.bytes())
-            self.callback("loading", data=dict(status="loaded", modules=[f]), contentType="application/json")
+    async def provide_files(self, inline_files, href_files):
+        with self._without_file_tracking():
+            inline_files = json.loads(inline_files)
+            for f in inline_files:
+                with open(f, "w") as fd:
+                    fd.write(inline_files[f])
+                self.callback("loading", data=dict(status="loaded", modules=[f]), contentType="application/json")
+
+            href_files = json.loads(href_files)
+            for f in href_files:
+                url = href_files[f]
+                r = await pyfetch(url, stream=True)
+                with open(f, "wb") as fd:
+                    fd.write(await r.bytes())
+                self.callback("loading", data=dict(status="loaded", modules=[f]), contentType="application/json")
 
     def reset(self):
         """

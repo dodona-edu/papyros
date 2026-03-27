@@ -101,7 +101,10 @@ export abstract class BackendManager {
         if (e.type === BackendEventType.Start) {
             BackendManager.halted = false;
         }
-        if ((!BackendManager.halted || e.type === BackendEventType.FrameChange) && this.subscriberMap.has(e.type)) {
+        if (
+            (!BackendManager.halted || e.type === BackendEventType.FrameChange || e.type === BackendEventType.Files) &&
+            this.subscriberMap.has(e.type)
+        ) {
             this.subscriberMap.get(e.type)!.forEach((cb) => cb(e));
         }
     }
