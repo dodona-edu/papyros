@@ -105,9 +105,9 @@ export class CodeRunner extends PapyrosElement {
     }
 
     private onDragOver = (e: DragEvent): void => {
-        if (this.papyros.debugger.active) return;
         e.preventDefault();
         e.stopPropagation();
+        if (this.papyros.debugger.active) return;
         this.dragOver = true;
     };
 
