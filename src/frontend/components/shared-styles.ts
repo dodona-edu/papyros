@@ -36,4 +36,8 @@ export const inlineInputStyles: CSSResult = css`
         width: 8rem;
         outline: none;
     }
+
+    .inline-input.invalid {
+        border-color: var(--md-sys-color-error);
+    }
 `;

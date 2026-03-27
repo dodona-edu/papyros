@@ -13,6 +13,9 @@ export class EditorTab extends PapyrosElement {
     @state()
     private renaming = false;
 
+    @state()
+    private invalid = false;
+
     private renameInputRef: Ref<HTMLInputElement> = createRef();
 
     static get styles(): CSSResult {
@@ -21,12 +24,11 @@ export class EditorTab extends PapyrosElement {
 
             .close-btn,
             .rename-btn {
-                display: inline-flex;
+                display: none;
                 align-items: center;
                 justify-content: center;
-                width: 0;
+                width: 1rem;
                 height: 1rem;
-                overflow: hidden;
                 border-radius: 50%;
                 font-size: 0.75rem;
                 line-height: 1;
@@ -44,7 +46,7 @@ export class EditorTab extends PapyrosElement {
             button:focus-within .close-btn,
             button.active .rename-btn,
             button.active .close-btn {
-                width: 1rem;
+                display: inline-flex;
             }
 
             .close-btn:hover {
@@ -75,21 +77,31 @@ export class EditorTab extends PapyrosElement {
 
     private startRenaming(): void {
         this.renaming = true;
+        this.invalid = false;
     }
 
     private confirmRename(): void {
         if (!this.renaming) return;
         const oldName = this.file.name;
         const newName = this.renameInputRef.value?.value.trim() ?? "";
-        this.renaming = false;
+        if (newName === oldName) {
+            this.renaming = false;
+            return;
+        }
         if (!this.papyros.io.renameFile(oldName, newName)) {
             return;
         }
+        this.renaming = false;
         void this.papyros.runner.renameFile(oldName, newName);
     }
 
     private cancelRename(): void {
         this.renaming = false;
+    }
+
+    private onRenameInput(): void {
+        const value = this.renameInputRef.value?.value.trim() ?? "";
+        this.invalid = !value || (value !== this.file.name && this.papyros.io.files.some((f) => f.name === value));
     }
 
     private onRenameKeydown(e: KeyboardEvent): void {
@@ -146,8 +158,9 @@ export class EditorTab extends PapyrosElement {
         if (!debugActive && this.renaming) {
             return html`<input
                 ${ref(this.renameInputRef)}
-                class="inline-input"
+                class=${this.invalid ? "inline-input invalid" : "inline-input"}
                 .value=${this.file.name}
+                @input=${this.onRenameInput}
                 @keydown=${this.onRenameKeydown}
                 @blur=${this.confirmRename}
             />`;

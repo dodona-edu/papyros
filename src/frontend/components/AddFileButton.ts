@@ -9,6 +9,9 @@ export class AddFileButton extends PapyrosElement {
     @state()
     private adding = false;
 
+    @state()
+    private invalid = false;
+
     private addInputRef: Ref<HTMLInputElement> = createRef();
 
     static get styles(): CSSResult {
@@ -34,12 +37,12 @@ export class AddFileButton extends PapyrosElement {
 
     private startAdding(): void {
         this.adding = true;
+        this.invalid = false;
     }
 
     private confirmAdd(): void {
         const name = this.addInputRef.value?.value.trim() ?? "";
         if (!this.papyros.io.addFile(name)) {
-            this.adding = false;
             return;
         }
         void this.papyros.runner.updateFile(name, "", false);
@@ -48,6 +51,11 @@ export class AddFileButton extends PapyrosElement {
 
     private cancelAdd(): void {
         this.adding = false;
+    }
+
+    private onAddInput(): void {
+        const value = this.addInputRef.value?.value.trim() ?? "";
+        this.invalid = !value || this.papyros.io.files.some((f) => f.name === value);
     }
 
     private onAddKeydown(e: KeyboardEvent): void {
@@ -68,8 +76,9 @@ export class AddFileButton extends PapyrosElement {
         if (this.adding) {
             return html`<input
                 ${ref(this.addInputRef)}
-                class="inline-input"
+                class=${this.invalid ? "inline-input invalid" : "inline-input"}
                 placeholder=${this.t("Papyros.add_file_placeholder")}
+                @input=${this.onAddInput}
                 @keydown=${this.onAddKeydown}
                 @blur=${this.cancelAdd}
             />`;
