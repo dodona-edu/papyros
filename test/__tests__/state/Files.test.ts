@@ -112,7 +112,7 @@ raise ValueError("intentional error")
         await papyros.runner.provideFiles({ "editable.txt": "original content" }, {});
         await waitForFiles(papyros, 1);
 
-        papyros.io.updateFileContent("editable.txt", "updated content");
+        papyros.io.updateFileContent("editable.txt", "updated content", false);
 
         expect(papyros.io.files[0].content).toBe("updated content");
     });
@@ -125,7 +125,7 @@ raise ValueError("intentional error")
         await papyros.runner.provideFiles({ "editable.txt": "original content" }, {});
         await waitForFiles(papyros, 1);
 
-        await papyros.runner.updateFile("editable.txt", "updated content");
+        await papyros.runner.updateFile("editable.txt", "updated content", false);
 
         papyros.runner.code = `
 with open("editable.txt", "r") as f:

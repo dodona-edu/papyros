@@ -136,18 +136,18 @@ export class CodeRunner extends PapyrosElement {
             reader.onload = (): void => {
                 const content = reader.result as string;
                 if (!this.papyros.io.addFile(file.name, content, false)) {
-                    this.papyros.io.updateFileContent(file.name, content);
+                    this.papyros.io.updateFileContent(file.name, content, false);
                 }
-                void this.papyros.runner.updateFile(file.name, content);
+                void this.papyros.runner.updateFile(file.name, content, false);
             };
             reader.readAsText(file);
         } else {
             reader.onload = (): void => {
                 const content = arrayBufferToBase64(reader.result as ArrayBuffer);
                 if (!this.papyros.io.addFile(file.name, content, true)) {
-                    this.papyros.io.updateFileContent(file.name, content);
+                    this.papyros.io.updateFileContent(file.name, content, true);
                 }
-                void this.papyros.runner.updateFile(file.name, content);
+                void this.papyros.runner.updateFile(file.name, content, true);
             };
             reader.readAsArrayBuffer(file);
         }

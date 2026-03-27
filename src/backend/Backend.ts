@@ -138,11 +138,12 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
     /**
      * Update the content of a file in the backend filesystem
      * @param {string} name The name of the file to update
-     * @param {string} content The new content of the file
+     * @param {string} content The new content of the file; base64-encoded when binary is true
+     * @param {boolean} binary Whether the content is binary (base64-encoded) rather than plain text
      * @return {Promise<void>} Resolves when the file has been updated
      */
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    public updateFile(name: string, content: string): Promise<void> {
+    public updateFile(name: string, content: string, binary: boolean): Promise<void> {
         return Promise.resolve();
     }
 }

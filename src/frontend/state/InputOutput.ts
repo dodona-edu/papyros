@@ -196,8 +196,8 @@ export class InputOutput extends State {
         return true;
     }
 
-    public updateFileContent(name: string, content: string): void {
-        this.files = this.files.map((f) => (f.name === name ? { ...f, content } : f));
+    public updateFileContent(name: string, content: string, binary: boolean): void {
+        this.files = this.files.map((f) => (f.name === name ? { ...f, content, binary } : f));
     }
 
     public clearInputs(): void {

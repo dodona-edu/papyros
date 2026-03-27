@@ -283,9 +283,9 @@ export class Runner extends State {
         await backend.workerProxy.deleteFile(name);
     }
 
-    public async updateFile(name: string, content: string): Promise<void> {
+    public async updateFile(name: string, content: string, binary: boolean): Promise<void> {
         const backend = await this.backend;
-        await backend.workerProxy.updateFile(name, content);
+        await backend.workerProxy.updateFile(name, content, binary);
     }
 
     public async provideFiles(inlinedFiles: Record<string, string>, hrefFiles: Record<string, string>): Promise<void> {

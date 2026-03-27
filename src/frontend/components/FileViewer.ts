@@ -15,7 +15,7 @@ export class FileViewer extends PapyrosElement {
     private editorRef: Ref<FileEditor> = createRef();
 
     private debouncedUpdateFile = debounce((name: string, content: string) => {
-        void this.papyros.runner.updateFile(name, content);
+        void this.papyros.runner.updateFile(name, content, false);
     }, 300);
 
     static get styles(): CSSResult {
@@ -81,7 +81,7 @@ export class FileViewer extends PapyrosElement {
         if (!this.file || this.papyros.debugger.active) return;
         const name = this.file.name;
         const content = e.detail as string;
-        this.papyros.io.updateFileContent(name, content);
+        this.papyros.io.updateFileContent(name, content, this.file.binary);
         this.debouncedUpdateFile(name, content);
     }
 

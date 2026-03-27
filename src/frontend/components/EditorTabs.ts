@@ -114,7 +114,7 @@ export class EditorTabs extends PapyrosElement {
             return;
         }
         this.papyros.io.addFile(name);
-        void this.papyros.runner.updateFile(name, "");
+        void this.papyros.runner.updateFile(name, "", false);
         this.adding = false;
     }
 
