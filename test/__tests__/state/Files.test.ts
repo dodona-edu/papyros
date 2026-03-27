@@ -63,6 +63,31 @@ open("subdir/nested.txt", "w").write("nested content")
         expect(papyros.io.files[0].binary).toBe(false);
     });
 
+    it("provided inline files appear before code execution", async () => {
+        const papyros = new Papyros();
+        await papyros.launch();
+        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
+        await waitForInputReady();
+        await papyros.runner.provideFiles({ "provided.txt": "provided content" }, {});
+        await waitForFiles(papyros, 1);
+        expect(papyros.io.files.length).toBe(1);
+        expect(papyros.io.files[0].name).toBe("provided.txt");
+        expect(papyros.io.files[0].content).toBe("provided content");
+        expect(papyros.io.files[0].binary).toBe(false);
+    });
+
+    it("multiple provided inline files all appear before code execution", async () => {
+        const papyros = new Papyros();
+        await papyros.launch();
+        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
+        await waitForInputReady();
+        await papyros.runner.provideFiles({ "a.txt": "aaa", "b.txt": "bbb" }, {});
+        await waitForFiles(papyros, 2);
+        expect(papyros.io.files.length).toBe(2);
+        const names = papyros.io.files.map((f) => f.name).sort();
+        expect(names).toEqual(["a.txt", "b.txt"]);
+    });
+
     it("file written before crash still appears", async () => {
         const papyros = new Papyros();
         await papyros.launch();
