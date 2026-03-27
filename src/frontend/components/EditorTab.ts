@@ -20,6 +20,10 @@ export class EditorTab extends PapyrosElement {
 
     static get styles(): CSSResult {
         return css`
+            :host {
+                display: flex;
+            }
+
             ${tabButtonStyles}
 
             .close-btn,

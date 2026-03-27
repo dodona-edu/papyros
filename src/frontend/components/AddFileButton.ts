@@ -16,6 +16,10 @@ export class AddFileButton extends PapyrosElement {
 
     static get styles(): CSSResult {
         return css`
+            :host {
+                display: flex;
+            }
+
             .add-btn {
                 padding: 0.375rem 0.5rem;
                 border: none;
