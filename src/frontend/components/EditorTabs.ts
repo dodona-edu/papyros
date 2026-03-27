@@ -107,8 +107,8 @@ export class EditorTabs extends PapyrosElement {
         this.adding = true;
     }
 
-    private confirmAdd(input: HTMLInputElement): void {
-        const name = input.value.trim();
+    private confirmAdd(): void {
+        const name = this.addInputRef.value?.value.trim() ?? "";
         if (!name || this.files.some((f) => f.name === name)) {
             this.adding = false;
             return;
@@ -124,7 +124,7 @@ export class EditorTabs extends PapyrosElement {
 
     private onAddKeydown(e: KeyboardEvent): void {
         if (e.key === "Enter") {
-            this.confirmAdd(e.target as HTMLInputElement);
+            this.confirmAdd();
         } else if (e.key === "Escape") {
             this.cancelAdd();
         }

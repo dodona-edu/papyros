@@ -9,14 +9,14 @@ import "./code_runner/ButtonLint";
 import "./EditorTabs";
 import "./FileViewer";
 
-const TEXT_MIME_PREFIXES = ["text/", "application/json", "application/xml", "application/javascript"];
+const TEXT_MIME_PATTERNS = ["text/", "application/json", "application/xml", "application/javascript"];
 
 function isTextFile(file: File): boolean {
     if (!file.type) {
         // No MIME type — assume text
         return true;
     }
-    return TEXT_MIME_PREFIXES.some((prefix) => file.type.startsWith(prefix));
+    return TEXT_MIME_PATTERNS.some((prefix) => file.type.startsWith(prefix));
 }
 
 function arrayBufferToBase64(buffer: ArrayBuffer): string {
@@ -108,7 +108,7 @@ export class CodeRunner extends PapyrosElement {
         e.preventDefault();
         e.stopPropagation();
         if (this.papyros.debugger.active) return;
-        this.dragOver = true;
+        if (!this.dragOver) this.dragOver = true;
     };
 
     private onDragLeave = (e: DragEvent): void => {
@@ -130,24 +130,21 @@ export class CodeRunner extends PapyrosElement {
         }
     };
 
+    private upsertFile(name: string, content: string, binary: boolean): void {
+        this.papyros.io.upsertFile(name, content, binary);
+        void this.papyros.runner.updateFile(name, content, binary);
+    }
+
     private readAndAddFile(file: File): void {
         const reader = new FileReader();
         if (isTextFile(file)) {
             reader.onload = (): void => {
-                const content = reader.result as string;
-                if (!this.papyros.io.addFile(file.name, content, false)) {
-                    this.papyros.io.updateFileContent(file.name, content, false);
-                }
-                void this.papyros.runner.updateFile(file.name, content, false);
+                this.upsertFile(file.name, reader.result as string, false);
             };
             reader.readAsText(file);
         } else {
             reader.onload = (): void => {
-                const content = arrayBufferToBase64(reader.result as ArrayBuffer);
-                if (!this.papyros.io.addFile(file.name, content, true)) {
-                    this.papyros.io.updateFileContent(file.name, content, true);
-                }
-                void this.papyros.runner.updateFile(file.name, content, true);
+                this.upsertFile(file.name, arrayBufferToBase64(reader.result as ArrayBuffer), true);
             };
             reader.readAsArrayBuffer(file);
         }

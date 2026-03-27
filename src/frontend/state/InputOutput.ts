@@ -200,6 +200,12 @@ export class InputOutput extends State {
         this.files = this.files.map((f) => (f.name === name ? { ...f, content, binary } : f));
     }
 
+    public upsertFile(name: string, content: string, binary: boolean): void {
+        if (!this.addFile(name, content, binary)) {
+            this.updateFileContent(name, content, binary);
+        }
+    }
+
     public clearInputs(): void {
         this.inputs = [];
     }

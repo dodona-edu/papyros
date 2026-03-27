@@ -337,7 +337,6 @@ if __name__ == "{MODULE_NAME}":
         with self._without_file_tracking():
             path = os.path.join(os.getcwd(), name)
             if binary:
-                import base64
                 with open(path, "wb") as f:
                     f.write(base64.b64decode(content))
             else:

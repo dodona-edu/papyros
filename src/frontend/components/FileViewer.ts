@@ -71,8 +71,8 @@ export class FileViewer extends PapyrosElement {
         setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
 
-    protected override updated(): void {
-        if (this.file && !this.file.binary) {
+    protected override updated(changedProperties: Map<PropertyKey, unknown>): void {
+        if (changedProperties.has("file") && this.file && !this.file.binary) {
             this.editorRef.value?.focus();
         }
     }
