@@ -14,7 +14,7 @@
     "@codemirror/state": "^6.3.2",
     "@codemirror/view": "^6.28.0",
     "@dodona/lit-state": "^1.1.1",
-    "@dodona/trace-component": "1.3.3",
+    "@dodona/trace-component": "1.3.4",
     "@material/web": "^2.4.0",
     "codemirror-readonly-ranges": "^0.1.0-alpha.2",
     "comlink": "^4.4.1",
@@ -55,7 +55,8 @@
     "build:lib": "bash scripts/build_library.sh",
     "test": "vitest",
     "lint": "eslint src",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepack": "yarn build:lib"
   },
   "description": "Scratchpad for multiple programming languages in the browser.",
   "repository": {

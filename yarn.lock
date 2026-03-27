@@ -105,10 +105,10 @@
   dependencies:
     lit "^3.3.1"
 
-"@dodona/trace-component@1.3.3":
-  version "1.3.3"
-  resolved "https://registry.yarnpkg.com/@dodona/trace-component/-/trace-component-1.3.3.tgz#251ffc08f01a869ba7f727044488b18eb1262715"
-  integrity sha512-Mzf+LhBGSSj6M54P/naVXdUadDZ1PBHj8X/iG0JF96wlHTi029eigWKAJlRUmMfdsXBgJDn35kJEbWzyHnRYSw==
+"@dodona/trace-component@1.3.4":
+  version "1.3.4"
+  resolved "https://registry.yarnpkg.com/@dodona/trace-component/-/trace-component-1.3.4.tgz#8ff7b0881518ec64754f01527299363cf94947f1"
+  integrity sha512-7PFrzoHprb5tv8siWrpQ/A+syEGAdeAI6JR4BVcYVE5NndQvDp6AFOrNmjZ+4xPDV+nLoWRNOPQP1eSmymbRAw==
   dependencies:
     "@jsplumb/browser-ui" "^6.2.10"
     lit "^3.3.2"
