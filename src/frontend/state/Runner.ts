@@ -288,6 +288,11 @@ export class Runner extends State {
         await backend.workerProxy.updateFile(name, content, binary);
     }
 
+    public async renameFile(oldName: string, newName: string): Promise<void> {
+        const backend = await this.backend;
+        await backend.workerProxy.renameFile(oldName, newName);
+    }
+
     public async provideFiles(inlinedFiles: Record<string, string>, hrefFiles: Record<string, string>): Promise<void> {
         const fileNames = [...Object.keys(inlinedFiles), ...Object.keys(hrefFiles)];
         if (fileNames.length === 0) {

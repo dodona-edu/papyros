@@ -1,0 +1,81 @@
+import { customElement, state } from "lit/decorators.js";
+import { PapyrosElement } from "./PapyrosElement";
+import { css, CSSResult, html, TemplateResult } from "lit";
+import { createRef, ref, Ref } from "lit/directives/ref.js";
+import { inlineInputStyles } from "./shared-styles";
+
+@customElement("p-add-file-button")
+export class AddFileButton extends PapyrosElement {
+    @state()
+    private adding = false;
+
+    private addInputRef: Ref<HTMLInputElement> = createRef();
+
+    static get styles(): CSSResult {
+        return css`
+            .add-btn {
+                padding: 0.375rem 0.5rem;
+                border: none;
+                border-radius: 0.375rem 0.375rem 0 0;
+                cursor: pointer;
+                font-size: 1rem;
+                line-height: 1;
+                background-color: var(--md-sys-color-surface-variant);
+                color: var(--md-sys-color-on-surface-variant);
+            }
+
+            .add-btn:hover {
+                opacity: 0.8;
+            }
+
+            ${inlineInputStyles}
+        `;
+    }
+
+    private startAdding(): void {
+        this.adding = true;
+    }
+
+    private confirmAdd(): void {
+        const name = this.addInputRef.value?.value.trim() ?? "";
+        if (!this.papyros.io.addFile(name)) {
+            this.adding = false;
+            return;
+        }
+        void this.papyros.runner.updateFile(name, "", false);
+        this.adding = false;
+    }
+
+    private cancelAdd(): void {
+        this.adding = false;
+    }
+
+    private onAddKeydown(e: KeyboardEvent): void {
+        if (e.key === "Enter") {
+            this.confirmAdd();
+        } else if (e.key === "Escape") {
+            this.cancelAdd();
+        }
+    }
+
+    protected override updated(): void {
+        if (this.adding) {
+            this.addInputRef.value?.focus();
+        }
+    }
+
+    protected override render(): TemplateResult {
+        if (this.adding) {
+            return html`<input
+                ${ref(this.addInputRef)}
+                class="inline-input"
+                placeholder=${this.t("Papyros.add_file_placeholder")}
+                @keydown=${this.onAddKeydown}
+                @blur=${this.cancelAdd}
+            />`;
+        }
+        return html`<button class="add-btn" aria-label=${this.t("Papyros.add_file")} @click=${this.startAdding}>
+            +
+        </button>`;
+    }
+}

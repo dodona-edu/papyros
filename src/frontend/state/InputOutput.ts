@@ -188,7 +188,7 @@ export class InputOutput extends State {
     }
 
     public addFile(name: string, content: string = "", binary: boolean = false): boolean {
-        if (this.files.some((f) => f.name === name)) {
+        if (!name || this.files.some((f) => f.name === name)) {
             return false;
         }
         this.files = [...this.files, { name, content, binary }];
@@ -198,6 +198,22 @@ export class InputOutput extends State {
 
     public updateFileContent(name: string, content: string, binary: boolean): void {
         this.files = this.files.map((f) => (f.name === name ? { ...f, content, binary } : f));
+    }
+
+    public renameFile(oldName: string, newName: string): boolean {
+        if (
+            !newName ||
+            newName === oldName ||
+            !this.files.some((f) => f.name === oldName) ||
+            this.files.some((f) => f.name === newName)
+        ) {
+            return false;
+        }
+        this.files = this.files.map((f) => (f.name === oldName ? { ...f, name: newName } : f));
+        if (this.activeEditorTab === oldName) {
+            this.activeEditorTab = newName;
+        }
+        return true;
     }
 
     public upsertFile(name: string, content: string, binary: boolean): void {

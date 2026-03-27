@@ -146,4 +146,15 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
     public updateFile(name: string, content: string, binary: boolean): Promise<void> {
         return Promise.resolve();
     }
+
+    /**
+     * Rename a file in the backend filesystem
+     * @param {string} oldName The current name of the file
+     * @param {string} newName The new name of the file
+     * @return {Promise<void>} Resolves when the file has been renamed
+     */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public renameFile(oldName: string, newName: string): Promise<void> {
+        return Promise.resolve();
+    }
 }
