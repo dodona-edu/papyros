@@ -24,6 +24,7 @@ export class EditorTabs extends PapyrosElement {
                 background-color: var(--md-sys-color-surface-container);
                 border-radius: 0.5rem 0.5rem 0 0;
                 max-height: 2.5rem;
+                flex-shrink: 0;
                 overflow-x: auto;
             }
 
