@@ -330,16 +330,44 @@ if __name__ == "{MODULE_NAME}":
         except ValueError:
             return False
 
+    def _safe_path(self, name):
+        base = os.path.realpath(self.workspace)
+        target = os.path.realpath(os.path.join(base, name))
+        if target != base and not target.startswith(base + os.sep):
+            raise ValueError(f"Path escapes workspace: {name}")
+        return target
+
+    def _safe_writable_path(self, name):
+        path = self._safe_path(name)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        return path
+
+    def _cleanup_empty_dirs(self, dirpath):
+        base = os.path.realpath(self.workspace)
+        dirpath = os.path.realpath(dirpath)
+        if dirpath == base or not dirpath.startswith(base + os.sep):
+            return
+        try:
+            os.rmdir(dirpath)
+        except OSError:
+            return
+        self._cleanup_empty_dirs(os.path.dirname(dirpath))
+
     def delete_file(self, name):
-        os.remove(os.path.join(os.getcwd(), name))
+        path = self._safe_path(name)
+        os.remove(path)
+        self._cleanup_empty_dirs(os.path.dirname(path))
 
     def rename_file(self, old_name, new_name):
         with self._without_file_tracking():
-            os.rename(os.path.join(os.getcwd(), old_name), os.path.join(os.getcwd(), new_name))
+            old_path = self._safe_path(old_name)
+            new_path = self._safe_writable_path(new_name)
+            os.rename(old_path, new_path)
+            self._cleanup_empty_dirs(os.path.dirname(old_path))
 
     def update_file(self, name, content, binary=False):
         with self._without_file_tracking():
-            path = os.path.join(os.getcwd(), name)
+            path = self._safe_writable_path(name)
             if binary:
                 with open(path, "wb") as f:
                     f.write(base64.b64decode(content))
@@ -351,15 +379,17 @@ if __name__ == "{MODULE_NAME}":
         with self._without_file_tracking():
             inline_files = json.loads(inline_files)
             for f in inline_files:
-                with open(f, "w") as fd:
+                path = self._safe_writable_path(f)
+                with open(path, "w") as fd:
                     fd.write(inline_files[f])
                 self.callback("loading", data=dict(status="loaded", modules=[f]), contentType="application/json")
 
             href_files = json.loads(href_files)
             for f in href_files:
                 url = href_files[f]
+                path = self._safe_writable_path(f)
                 r = await pyfetch(url, stream=True)
-                with open(f, "wb") as fd:
+                with open(path, "wb") as fd:
                     fd.write(await r.bytes())
                 self.callback("loading", data=dict(status="loaded", modules=[f]), contentType="application/json")
 

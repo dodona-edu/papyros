@@ -1,5 +1,12 @@
 import { LogType, papyrosLog } from "./Logging";
 
+export function isValidFileName(name: string): boolean {
+    if (!name) return false;
+    if (name.startsWith("/") || name.endsWith("/")) return false;
+    const segments = name.split("/");
+    return segments.every((s) => s.length > 0 && s !== "." && s !== "..");
+}
+
 export function debounce<T extends (...args: any[]) => void>(fn: T, delay: number): T {
     let timer: ReturnType<typeof setTimeout> | undefined;
     return ((...args: Parameters<T>) => {

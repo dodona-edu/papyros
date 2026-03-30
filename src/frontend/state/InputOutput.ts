@@ -1,7 +1,7 @@
 import { State, stateProperty } from "@dodona/lit-state";
 import { BackendManager } from "../../communication/BackendManager";
 import { BackendEventType } from "../../communication/BackendEvent";
-import { parseData } from "../../util/Util";
+import { isValidFileName, parseData } from "../../util/Util";
 import { Papyros } from "./Papyros";
 import { RunState } from "./Runner";
 
@@ -188,7 +188,7 @@ export class InputOutput extends State {
     }
 
     public addFile(name: string, content: string = "", binary: boolean = false): boolean {
-        if (!name || this.files.some((f) => f.name === name)) {
+        if (!isValidFileName(name) || this.files.some((f) => f.name === name)) {
             return false;
         }
         this.files = [...this.files, { name, content, binary }];
@@ -202,7 +202,7 @@ export class InputOutput extends State {
 
     public renameFile(oldName: string, newName: string): boolean {
         if (
-            !newName ||
+            !isValidFileName(newName) ||
             newName === oldName ||
             !this.files.some((f) => f.name === oldName) ||
             this.files.some((f) => f.name === newName)
