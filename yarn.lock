@@ -18,12 +18,12 @@
     "@lezer/common" "^1.0.0"
 
 "@codemirror/commands@^6.3.1":
-  version "6.10.2"
-  resolved "https://registry.yarnpkg.com/@codemirror/commands/-/commands-6.10.2.tgz#338bf53ab146de7bb26da4a1d32c6a6ff4d36b39"
-  integrity sha512-vvX1fsih9HledO1c9zdotZYUZnE4xV0m6i3m25s5DIfXofuprk6cRcLUZvSk3CASUbwjQX21tOGbkY2BH8TpnQ==
+  version "6.10.3"
+  resolved "https://registry.yarnpkg.com/@codemirror/commands/-/commands-6.10.3.tgz#01877060befdec352e8300dec1f185489c300635"
+  integrity sha512-JFRiqhKu+bvSkDLI+rUhJwSxQxYb759W5GBezE8Uc8mHLqC9aV/9aTC7yJSqCtB3F00pylrLCwnyS91Ap5ej4Q==
   dependencies:
     "@codemirror/language" "^6.0.0"
-    "@codemirror/state" "^6.4.0"
+    "@codemirror/state" "^6.6.0"
     "@codemirror/view" "^6.27.0"
     "@lezer/common" "^1.1.0"
 
@@ -52,9 +52,9 @@
     "@lezer/python" "^1.1.4"
 
 "@codemirror/language@^6.0.0", "@codemirror/language@^6.6.0", "@codemirror/language@^6.8.0", "@codemirror/language@^6.9.3":
-  version "6.12.2"
-  resolved "https://registry.yarnpkg.com/@codemirror/language/-/language-6.12.2.tgz#7db5a46757411cf251e8f450474c05710c27d42c"
-  integrity sha512-jEPmz2nGGDxhRTg3lTpzmIyGKxz3Gp3SJES4b0nAuE5SWQoKdT5GoQ69cwMmFd+wvFUhYirtDTr0/DRHpQAyWg==
+  version "6.12.3"
+  resolved "https://registry.yarnpkg.com/@codemirror/language/-/language-6.12.3.tgz#0b220182973a4c19850b29f7dd82aec1bbae3d7e"
+  integrity sha512-QwCZW6Tt1siP37Jet9Tb02Zs81TQt6qQrZR2H+eGMcFsL1zMrk2/b9CLC7/9ieP1fjIUMgviLWMmgiHoJrj+ZA==
   dependencies:
     "@codemirror/state" "^6.0.0"
     "@codemirror/view" "^6.23.0"
@@ -81,19 +81,19 @@
     "@codemirror/view" "^6.37.0"
     crelt "^1.0.5"
 
-"@codemirror/state@^6.0.0", "@codemirror/state@^6.3.2", "@codemirror/state@^6.4.0", "@codemirror/state@^6.5.0":
-  version "6.5.4"
-  resolved "https://registry.yarnpkg.com/@codemirror/state/-/state-6.5.4.tgz#f5be4b8c0d2310180d5f15a9f641c21ca69faf19"
-  integrity sha512-8y7xqG/hpB53l25CIoit9/ngxdfoG+fx+V3SHBrinnhOtLvKHRyAJJuHzkWrR4YXXLX8eXBsejgAAxHUOdW1yw==
+"@codemirror/state@^6.0.0", "@codemirror/state@^6.3.2", "@codemirror/state@^6.6.0":
+  version "6.6.0"
+  resolved "https://registry.yarnpkg.com/@codemirror/state/-/state-6.6.0.tgz#b88dbdc14aea4ace3c6d67bb77fe28bb84e4394e"
+  integrity sha512-4nbvra5R5EtiCzr9BTHiTLc+MLXK2QGiAVYMyi8PkQd3SR+6ixar/Q/01Fa21TBIDOZXgeWV4WppsQolSreAPQ==
   dependencies:
     "@marijn/find-cluster-break" "^1.0.0"
 
 "@codemirror/view@^6.17.0", "@codemirror/view@^6.23.0", "@codemirror/view@^6.27.0", "@codemirror/view@^6.28.0", "@codemirror/view@^6.35.0", "@codemirror/view@^6.37.0":
-  version "6.39.16"
-  resolved "https://registry.yarnpkg.com/@codemirror/view/-/view-6.39.16.tgz#e9d876aba20b31df7858abd7c2a845319c70b302"
-  integrity sha512-m6S22fFpKtOWhq8HuhzsI1WzUP/hB9THbDj0Tl5KX4gbO6Y91hwBl7Yky33NdvB6IffuRFiBxf1R8kJMyXmA4Q==
+  version "6.41.0"
+  resolved "https://registry.yarnpkg.com/@codemirror/view/-/view-6.41.0.tgz#482cbcb5f8f90131908e5f9c0e2f4681e0684db0"
+  integrity sha512-6H/qadXsVuDY219Yljhohglve8xf4B8xJkVOEWfA5uiYKiTFppjqsvsfR5iPA0RbvRBoOyTZpbLIxe9+0UR8xA==
   dependencies:
-    "@codemirror/state" "^6.5.0"
+    "@codemirror/state" "^6.6.0"
     crelt "^1.0.6"
     style-mod "^4.1.0"
     w3c-keyname "^2.2.4"
