@@ -333,6 +333,11 @@ if __name__ == "{MODULE_NAME}":
     def delete_file(self, name):
         os.remove(os.path.join(os.getcwd(), name))
 
+    def update_file(self, name, content):
+        with self._without_file_tracking():
+            with open(os.path.join(os.getcwd(), name), "w", encoding="utf-8") as f:
+                f.write(content)
+
     async def provide_files(self, inline_files, href_files):
         with self._without_file_tracking():
             inline_files = json.loads(inline_files)

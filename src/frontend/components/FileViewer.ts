@@ -2,11 +2,17 @@ import { customElement, property } from "lit/decorators.js";
 import { PapyrosElement } from "./PapyrosElement";
 import { css, CSSResult, html, TemplateResult } from "lit";
 import { FileEntry } from "../state/InputOutput";
+import { debounce } from "../../util/Util";
+import "./code_mirror/FileEditor";
 
 @customElement("p-file-viewer")
 export class FileViewer extends PapyrosElement {
     @property({ type: Object })
     file: FileEntry | undefined = undefined;
+
+    private debouncedUpdateFile = debounce((name: string, content: string) => {
+        void this.papyros.runner.updateFile(name, content);
+    }, 300);
 
     static get styles(): CSSResult {
         return css`
@@ -17,13 +23,10 @@ export class FileViewer extends PapyrosElement {
                 overflow: auto;
             }
 
-            pre {
-                margin: 0;
-                padding: 1rem;
-                font-family: monospace;
-                white-space: pre-wrap;
-                word-break: break-all;
-                color: var(--md-sys-color-on-surface);
+            p-file-editor {
+                display: block;
+                width: 100%;
+                height: 100%;
             }
 
             .placeholder-container {
@@ -64,6 +67,14 @@ export class FileViewer extends PapyrosElement {
         setTimeout(() => URL.revokeObjectURL(url), 0);
     }
 
+    private onEditorChange(e: CustomEvent): void {
+        if (!this.file || this.papyros.debugger.active) return;
+        const name = this.file.name;
+        const content = e.detail as string;
+        this.papyros.io.updateFileContent(name, content);
+        this.debouncedUpdateFile(name, content);
+    }
+
     protected override render(): TemplateResult {
         if (!this.file) {
             return html``;
@@ -76,13 +87,14 @@ export class FileViewer extends PapyrosElement {
                 </div>
             `;
         }
-        if (this.file.content === "") {
-            return html`
-                <div class="placeholder-container">
-                    <span>${this.t("Papyros.files_empty")}</span>
-                </div>
-            `;
-        }
-        return html`<pre>${this.file.content}</pre>`;
+        const readonly = this.papyros.debugger.active;
+        return html`
+            <p-file-editor
+                .value=${this.file.content}
+                .readonly=${readonly}
+                .theme=${this.papyros.constants.CodeMirrorTheme}
+                @change=${this.onEditorChange}
+            ></p-file-editor>
+        `;
     }
 }
