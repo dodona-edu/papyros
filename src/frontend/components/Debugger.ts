@@ -8,6 +8,9 @@ export class Debugger extends PapyrosElement {
     static override get styles(): CSSResult {
         return css`
             :host {
+                display: block;
+                height: 100%;
+
                 /* Base / surface */
                 --tc-surface-color: var(--md-sys-color-surface-container);
                 --tc-on-surface-color: var(--md-sys-color-on-surface);
