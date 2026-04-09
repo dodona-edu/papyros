@@ -1,8 +1,10 @@
 import { customElement, property } from "lit/decorators.js";
 import { PapyrosElement } from "./PapyrosElement";
 import { css, CSSResult, html, TemplateResult } from "lit";
+import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { FileEntry } from "../state/InputOutput";
 import { debounce } from "../../util/Util";
+import type { FileEditor } from "./code_mirror/FileEditor";
 import "./code_mirror/FileEditor";
 
 @customElement("p-file-viewer")
@@ -10,8 +12,10 @@ export class FileViewer extends PapyrosElement {
     @property({ type: Object })
     file: FileEntry | undefined = undefined;
 
+    private editorRef: Ref<FileEditor> = createRef();
+
     private debouncedUpdateFile = debounce((name: string, content: string) => {
-        void this.papyros.runner.updateFile(name, content);
+        void this.papyros.runner.updateFile(name, content, false);
     }, 300);
 
     static get styles(): CSSResult {
@@ -64,14 +68,20 @@ export class FileViewer extends PapyrosElement {
         a.href = url;
         a.download = this.file.name;
         a.click();
-        setTimeout(() => URL.revokeObjectURL(url), 0);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    protected override updated(changedProperties: Map<PropertyKey, unknown>): void {
+        if (changedProperties.has("file") && this.file && !this.file.binary) {
+            this.editorRef.value?.focus();
+        }
     }
 
     private onEditorChange(e: CustomEvent): void {
         if (!this.file || this.papyros.debugger.active) return;
         const name = this.file.name;
         const content = e.detail as string;
-        this.papyros.io.updateFileContent(name, content);
+        this.papyros.io.updateFileContent(name, content, this.file.binary);
         this.debouncedUpdateFile(name, content);
     }
 
@@ -90,6 +100,7 @@ export class FileViewer extends PapyrosElement {
         const readonly = this.papyros.debugger.active;
         return html`
             <p-file-editor
+                ${ref(this.editorRef)}
                 .value=${this.file.content}
                 .readonly=${readonly}
                 .theme=${this.papyros.constants.CodeMirrorTheme}

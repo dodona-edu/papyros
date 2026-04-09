@@ -83,6 +83,10 @@ export class CodeMirrorEditor extends LitElement {
         this.initView();
     }
 
+    public focus(): void {
+        this.view?.focus();
+    }
+
     public override disconnectedCallback(): void {
         super.disconnectedCallback();
         this.view?.destroy();
