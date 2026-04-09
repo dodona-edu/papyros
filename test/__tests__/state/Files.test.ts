@@ -136,4 +136,99 @@ with open("editable.txt", "r") as f:
         await waitForPapyrosReady(papyros);
         expect(papyros.io.output[0].content).toBe("updated content");
     });
+
+    it("renameFile updates the file name in the files list", () => {
+        const papyros = new Papyros();
+        papyros.io.addFile("old.txt", "hello content");
+
+        const result = papyros.io.renameFile("old.txt", "new.txt");
+
+        expect(result).toBe(true);
+        expect(papyros.io.files.length).toBe(1);
+        expect(papyros.io.files[0].name).toBe("new.txt");
+        expect(papyros.io.files[0].content).toBe("hello content");
+    });
+
+    it("renameFile updates activeEditorTab when renaming the active file", () => {
+        const papyros = new Papyros();
+        papyros.io.addFile("old.txt", "");
+        expect(papyros.io.activeEditorTab).toBe("old.txt");
+
+        papyros.io.renameFile("old.txt", "new.txt");
+
+        expect(papyros.io.activeEditorTab).toBe("new.txt");
+    });
+
+    it("renameFile does not update activeEditorTab when renaming a non-active file", () => {
+        const papyros = new Papyros();
+        papyros.io.addFile("a.txt", "");
+        papyros.io.addFile("b.txt", "");
+        papyros.io.activeEditorTab = "b.txt";
+
+        papyros.io.renameFile("a.txt", "renamed.txt");
+
+        expect(papyros.io.activeEditorTab).toBe("b.txt");
+    });
+
+    it("renameFile returns false for empty new name", () => {
+        const papyros = new Papyros();
+        papyros.io.addFile("old.txt", "content");
+
+        const result = papyros.io.renameFile("old.txt", "");
+
+        expect(result).toBe(false);
+        expect(papyros.io.files[0].name).toBe("old.txt");
+    });
+
+    it("renameFile returns false when new name equals old name", () => {
+        const papyros = new Papyros();
+        papyros.io.addFile("same.txt", "content");
+
+        const result = papyros.io.renameFile("same.txt", "same.txt");
+
+        expect(result).toBe(false);
+    });
+
+    it("renameFile returns false when oldName does not exist", () => {
+        const papyros = new Papyros();
+        papyros.io.addFile("existing.txt", "content");
+
+        const result = papyros.io.renameFile("nonexistent.txt", "other.txt");
+
+        expect(result).toBe(false);
+        expect(papyros.io.files.length).toBe(1);
+        expect(papyros.io.files[0].name).toBe("existing.txt");
+    });
+
+    it("renameFile returns false when new name conflicts with existing file", () => {
+        const papyros = new Papyros();
+        papyros.io.addFile("a.txt", "aaa");
+        papyros.io.addFile("b.txt", "bbb");
+
+        const result = papyros.io.renameFile("a.txt", "b.txt");
+
+        expect(result).toBe(false);
+        expect(papyros.io.files.map((f) => f.name).sort()).toEqual(["a.txt", "b.txt"]);
+    });
+
+    it("runner.renameFile renames the file in the backend", async () => {
+        const papyros = new Papyros();
+        await papyros.launch();
+        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
+        await waitForInputReady();
+        await papyros.runner.provideFiles({ "old.txt": "renamed content" }, {});
+        await waitForFiles(papyros, 1);
+
+        papyros.io.renameFile("old.txt", "new.txt");
+        await papyros.runner.renameFile("old.txt", "new.txt");
+
+        papyros.runner.code = `
+with open("new.txt", "r") as f:
+    print(f.read(), end="")
+`;
+        await papyros.runner.start();
+        await waitForOutput(papyros);
+        await waitForPapyrosReady(papyros);
+        expect(papyros.io.output[0].content).toBe("renamed content");
+    });
 });

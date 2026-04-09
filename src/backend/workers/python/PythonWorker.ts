@@ -115,4 +115,8 @@ export class PythonWorker extends Backend<PyodideExtras> {
     public override async updateFile(name: string, content: string, binary: boolean): Promise<void> {
         await this.papyros?.update_file(name, content, binary);
     }
+
+    public override async renameFile(oldName: string, newName: string): Promise<void> {
+        await this.papyros?.rename_file(oldName, newName);
+    }
 }

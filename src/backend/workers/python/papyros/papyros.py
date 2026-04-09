@@ -333,6 +333,10 @@ if __name__ == "{MODULE_NAME}":
     def delete_file(self, name):
         os.remove(os.path.join(os.getcwd(), name))
 
+    def rename_file(self, old_name, new_name):
+        with self._without_file_tracking():
+            os.rename(os.path.join(os.getcwd(), old_name), os.path.join(os.getcwd(), new_name))
+
     def update_file(self, name, content, binary=False):
         with self._without_file_tracking():
             path = os.path.join(os.getcwd(), name)
