@@ -3,6 +3,7 @@ import { PapyrosElement } from "./PapyrosElement";
 import { css, CSSResult, html, TemplateResult } from "lit";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { inlineInputStyles } from "./shared-styles";
+import { isValidFileName } from "../../util/Util";
 
 @customElement("p-add-file-button")
 export class AddFileButton extends PapyrosElement {
@@ -59,7 +60,7 @@ export class AddFileButton extends PapyrosElement {
 
     private onAddInput(): void {
         const value = this.addInputRef.value?.value.trim() ?? "";
-        this.invalid = !value || this.papyros.io.files.some((f) => f.name === value);
+        this.invalid = !isValidFileName(value) || this.papyros.io.files.some((f) => f.name === value);
     }
 
     private onAddKeydown(e: KeyboardEvent): void {

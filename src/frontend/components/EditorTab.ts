@@ -4,6 +4,7 @@ import { css, CSSResult, html, TemplateResult } from "lit";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { FileEntry } from "../state/InputOutput";
 import { inlineInputStyles, tabButtonStyles } from "./shared-styles";
+import { isValidFileName } from "../../util/Util";
 
 @customElement("p-editor-tab")
 export class EditorTab extends PapyrosElement {
@@ -105,7 +106,9 @@ export class EditorTab extends PapyrosElement {
 
     private onRenameInput(): void {
         const value = this.renameInputRef.value?.value.trim() ?? "";
-        this.invalid = !value || (value !== this.file.name && this.papyros.io.files.some((f) => f.name === value));
+        this.invalid =
+            !isValidFileName(value) ||
+            (value !== this.file.name && this.papyros.io.files.some((f) => f.name === value));
     }
 
     private onRenameKeydown(e: KeyboardEvent): void {
