@@ -7,6 +7,23 @@ import { InputMode } from "./frontend/state/InputOutput";
 import { RunMode } from "./backend/Backend";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import { OutputType, FriendlyError } from "./frontend/state/InputOutput";
+import {
+    PapyrosError,
+    PapyrosLaunchError,
+    ServiceWorkerRegistrationError,
+    ServiceWorkerInputError,
+} from "./frontend/state/PapyrosErrors";
 
-export { Papyros, InputMode, RunMode, ProgrammingLanguage, OutputType, papyros };
+export {
+    Papyros,
+    InputMode,
+    RunMode,
+    ProgrammingLanguage,
+    OutputType,
+    papyros,
+    PapyrosError,
+    PapyrosLaunchError,
+    ServiceWorkerRegistrationError,
+    ServiceWorkerInputError,
+};
 export type { FriendlyError };
