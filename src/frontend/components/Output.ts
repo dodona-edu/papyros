@@ -97,7 +97,21 @@ export class Output extends PapyrosElement {
     }
 
     get renderedOutputs(): TemplateResult[] {
-        return this.outputs.map((o) => {
+        let outputsToRender = this.outputs;
+        if (this.papyros.debugger.active) {
+            // In debug mode, only show the last SVG image for progressive turtle rendering.
+            // Multiple SVG snapshots are emitted during debug (one per turtle state change),
+            // but only the latest one visible at the current frame should be displayed.
+            const lastSvgIdx = outputsToRender.findLastIndex(
+                (o) => o.type === OutputType.img && o.contentType?.includes("svg"),
+            );
+            if (lastSvgIdx >= 0) {
+                outputsToRender = outputsToRender.filter(
+                    (o, i) => !(o.type === OutputType.img && o.contentType?.includes("svg")) || i === lastSvgIdx,
+                );
+            }
+        }
+        return outputsToRender.map((o) => {
             if (o.type === OutputType.stdout) {
                 return html`${o.content}`;
             } else if (o.type === OutputType.img) {
