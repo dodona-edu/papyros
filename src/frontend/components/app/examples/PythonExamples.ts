@@ -117,6 +117,14 @@ with open("names.txt", "r") as in_file:
     for line in in_file:
         print(line.rstrip())
 `,
+    Turtle: `import turtle
+
+colors = ['red', 'orange', 'yellow', 'green', 'blue', 'purple']
+for i in range(360):
+    turtle.pencolor(colors[i % 6])
+    turtle.forward(i * 0.5)
+    turtle.left(59)
+`,
     Matplotlib: `import matplotlib.pyplot as plt
 import networkx as nx
 

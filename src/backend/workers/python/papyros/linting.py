@@ -9,7 +9,7 @@ from pylint.reporters.text import TextReporter
 
 
 PYLINT_RC_FILE = os.path.abspath("/tmp/papyros/pylint_config.rc")
-PYLINT_PLUGINS = "pylint_ast_checker"
+PYLINT_PLUGINS = "pylint_ast_checker,pylint_turtle_brain"
 
 def lint(code):
     # Use temporary file to prevent Astroid cache from running into issues

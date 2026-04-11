@@ -101,7 +101,8 @@ export class Output extends PapyrosElement {
             if (o.type === OutputType.stdout) {
                 return html`${o.content}`;
             } else if (o.type === OutputType.img) {
-                return html`<img src="data:${o.contentType}, ${o.content}"></img>`;
+                const mimeType = o.contentType?.replace(/^img\//, "image/") ?? "image/png";
+                return html`<img src="data:${mimeType},${o.content}"></img>`;
             } else if (o.type === OutputType.stderr) {
                 if (typeof o.content === "string") {
                     return html`<span class="error">${o.content}</span>`;

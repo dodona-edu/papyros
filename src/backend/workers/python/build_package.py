@@ -27,6 +27,9 @@ def create_package(package_name, dependencies, extra_deps):
     except Exception as e:
         # Always seems to result in a harmless permission denied error
         pass
+    # Bundle CPython's turtle.py (removed from Pyodide's stdlib, required by svg-turtle)
+    import turtle as turtle_mod
+    shutil.copy(turtle_mod.__file__, os.path.join(package_name, "turtle.py"))
     tar_name = f"{package_name}.tar.gz.load_by_url"
     if os.path.exists(tar_name):
         os.remove(tar_name)
@@ -45,4 +48,4 @@ def check_tar(tarname, out_dir="."):
 
 
 if __name__ == "__main__":
-    create_package("python_package", "python-runner friendly_traceback pylint>=4,<5 tomli typing-extensions json-tracer>=0.7.0", extra_deps="papyros")
+    create_package("python_package", "python-runner friendly_traceback pylint>=4,<5 tomli typing-extensions json-tracer>=0.7.0 svg-turtle", extra_deps="papyros")
