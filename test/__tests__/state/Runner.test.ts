@@ -49,6 +49,28 @@ const c = a + b;`;
         expect(papyros.runner.stateMessage).toMatch(/^Code interrupted after /);
     });
 
+    it("should be able to import re", async () => {
+        const papyros = new Papyros();
+        await papyros.launch();
+        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
+        papyros.runner.code = "import re\nprint(re.findall(r'\\d+', 'a1 b2 c3'))";
+        await papyros.runner.start();
+        await waitForPapyrosReady(papyros);
+        await waitForOutput(papyros);
+        expect(papyros.runner.state).toBe(RunState.Ready);
+        expect(papyros.runner.stateMessage).toMatch(/^Code executed in/);
+        expect(papyros.io.output[0].content).toBe("['1', '2', '3']\n");
+    });
+
+    it("should lint bare import re", async () => {
+        const papyros = new Papyros();
+        await papyros.launch();
+        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
+        papyros.runner.code = "import re\n";
+        const diagnostics = await papyros.runner.lintSource();
+        expect(Array.isArray(diagnostics)).toBe(true);
+    }, 60000);
+
     it("should be able to handle sleep", async () => {
         const papyros = new Papyros();
         await papyros.launch();
