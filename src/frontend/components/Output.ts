@@ -99,9 +99,7 @@ export class Output extends PapyrosElement {
     get renderedOutputs(): TemplateResult[] {
         let outputsToRender = this.outputs;
         if (this.papyros.debugger.active) {
-            // In debug mode, only show the last SVG image for progressive turtle rendering.
-            // Multiple SVG snapshots are emitted during debug (one per turtle state change),
-            // but only the latest one visible at the current frame should be displayed.
+            // Only show the latest SVG snapshot so the debugger slider shows progressive rendering.
             const lastSvgIdx = outputsToRender.findLastIndex(
                 (o) => o.type === OutputType.img && o.contentType?.includes("svg"),
             );
