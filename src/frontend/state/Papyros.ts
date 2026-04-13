@@ -8,6 +8,7 @@ import { BackendManager } from "../../communication/BackendManager";
 import { makeChannel } from "sync-message";
 import { I18n } from "./I18n";
 import { Test } from "./Test";
+import { PapyrosLaunchError, ServiceWorkerRegistrationError } from "./PapyrosErrors";
 
 export class Papyros extends State {
     readonly debugger: Debugger = new Debugger(this);
@@ -33,7 +34,9 @@ export class Papyros extends State {
             try {
                 await this.runner.launch();
             } catch (e) {
-                this.errorHandler(new Error("Error launching papyros after registering service worker", { cause: e }));
+                this.errorHandler(
+                    new PapyrosLaunchError("Error launching papyros after registering service worker", { cause: e }),
+                );
                 if (confirm(this.i18n.t("Papyros.launch_error"))) {
                     return this.launch();
                 }
@@ -68,7 +71,7 @@ export class Papyros extends State {
                 BackendManager.channel = makeChannel({ serviceWorker: { scope: "/" } })!;
                 await this.waitForActiveRegistration();
             } catch (e) {
-                this.errorHandler(new Error("Error registering service worker", { cause: e }));
+                this.errorHandler(new ServiceWorkerRegistrationError("Error registering service worker", { cause: e }));
                 return false;
             }
         } else {
