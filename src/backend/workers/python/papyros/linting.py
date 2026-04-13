@@ -7,32 +7,18 @@ from io import StringIO
 from pylint.lint import Run
 from pylint.reporters.text import TextReporter
 
-# Workaround for Pyodide + Python 3.12 + astroid 2.15.8: pylint hangs
-# indefinitely when analyzing code that imports `re` because astroid
-# recursively parses the stdlib `re` package. Short-circuit astroid's
-# module loading for `re` (and related stdlib modules) to return a
-# tiny synthetic module instead.
+# Workaround for Pyodide + astroid: pylint hangs indefinitely when astroid
+# tries to recursively parse imported modules' ASTs (e.g. re, pandas).
+# Since we run in a single-threaded WebAssembly environment, this causes an
+# infinite hang. We short-circuit ALL module resolution to return synthetic
+# empty modules. This preserves core linting (syntax errors, undefined
+# variables, unused imports, style checks, custom checkers) while only
+# losing type-inference-based checks on imported symbols.
 from astroid.manager import AstroidManager as _AstroidManager
 from astroid.builder import AstroidBuilder as _AstroidBuilder
 
-_BLOCKED_MODULES = {
-    "re",
-    "re._compiler",
-    "re._parser",
-    "re._constants",
-    "re._casefix",
-    "sre_compile",
-    "sre_parse",
-    "sre_constants",
-}
-
-_orig_ast_from_module_name = _AstroidManager.ast_from_module_name
-
 def _patched_ast_from_module_name(self, modname, context_file=None, use_cache=True):
-    if modname in _BLOCKED_MODULES:
-        # Return an empty synthetic module so astroid's inference short-circuits.
-        return _AstroidBuilder(self).string_build("", modname=modname)
-    return _orig_ast_from_module_name(self, modname, context_file=context_file, use_cache=use_cache)
+    return _AstroidBuilder(self).string_build("", modname=modname)
 
 _AstroidManager.ast_from_module_name = _patched_ast_from_module_name
 

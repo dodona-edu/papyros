@@ -71,6 +71,15 @@ const c = a + b;`;
         expect(Array.isArray(diagnostics)).toBe(true);
     }, 60000);
 
+    it("should lint code that uses pandas without hanging", async () => {
+        const papyros = new Papyros();
+        await papyros.launch();
+        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
+        papyros.runner.code = "import pandas as pd\ndf = pd.DataFrame({'a': [1, 2, 3]})\n";
+        const diagnostics = await papyros.runner.lintSource();
+        expect(Array.isArray(diagnostics)).toBe(true);
+    }, 60000);
+
     it("should be able to handle sleep", async () => {
         const papyros = new Papyros();
         await papyros.launch();
