@@ -7,20 +7,6 @@ from io import StringIO
 from pylint.lint import Run
 from pylint.reporters.text import TextReporter
 
-# Workaround for Pyodide + astroid: pylint hangs indefinitely when astroid
-# tries to recursively parse imported modules' ASTs (e.g. re, pandas).
-# Since we run in a single-threaded WebAssembly environment, this causes an
-# infinite hang. We short-circuit ALL module resolution to return synthetic
-# empty modules. This preserves core linting (syntax errors, undefined
-# variables, unused imports, style checks, custom checkers) while only
-# losing type-inference-based checks on imported symbols.
-from astroid.manager import AstroidManager as _AstroidManager
-from astroid.builder import AstroidBuilder as _AstroidBuilder
-
-def _patched_ast_from_module_name(self, modname, context_file=None, use_cache=True):
-    return _AstroidBuilder(self).string_build("", modname=modname)
-
-_AstroidManager.ast_from_module_name = _patched_ast_from_module_name
 
 PYLINT_RC_FILE = os.path.abspath("/tmp/papyros/pylint_config.rc")
 PYLINT_PLUGINS = "pylint_ast_checker"

@@ -305,21 +305,8 @@ if __name__ == "{MODULE_NAME}":
 
     def lint(self, code):
         with self._without_file_tracking():
-            # PyLint runs into an issue when trying to import its dependencies
-            # Temporarily overriding os.devnull solves this issue
-            TEMP_DEV_NULL = "/home/pyodide/__papyros_dev_null"
-            with open(TEMP_DEV_NULL, "w") as f:
-                pass
-            orig_dev_null = os.devnull
-            os.devnull = TEMP_DEV_NULL
-
             self.set_source_code(code)
             from .linting import lint
-            os.devnull = orig_dev_null
-            try:
-                os.remove(TEMP_DEV_NULL)
-            except OSError:
-                pass
             return lint(code)
 
     def has_doctests(self, code):
