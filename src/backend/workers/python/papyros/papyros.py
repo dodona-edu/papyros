@@ -49,6 +49,7 @@ class Papyros(python_runner.PyodideRunner):
         self._tracking_files = False
         self._original_open = builtins.open
         self._last_emitted_snapshot = None
+        self._last_emitted_turtle_svg = None
         self._install_open_tracking()
         self.limit = limit
         self.override_globals()
@@ -76,6 +77,7 @@ class Papyros(python_runner.PyodideRunner):
             elif event_type == "input":
                 return cb("input", data["prompt"])
             elif event_type == "sleep":
+                self._emit_turtle_snapshot()
                 return cb("sleep", data["seconds"]*1000, contentType="application/number")
             else:
                 return cb(event_type, data.get("data", ""), contentType=data.get("contentType"))
@@ -90,13 +92,23 @@ class Papyros(python_runner.PyodideRunner):
         self.override_matplotlib()
         self.override_turtle()
 
-    def _render_turtle(self):
+    def _emit_turtle_snapshot(self):
+        """Emit the current turtle drawing if it has changed since the last snapshot."""
         hook = getattr(self, '_turtle_hook', None)
-        if hook and hook.render:
-            try:
-                hook.render()
-            except Exception:
-                pass
+        if not hook or not hook.render:
+            return
+        try:
+            from svg_turtle import SvgTurtle
+            svg_string = SvgTurtle._pen.to_svg()
+            if svg_string and svg_string != self._last_emitted_turtle_svg:
+                self._last_emitted_turtle_svg = svg_string
+                img = base64.b64encode(svg_string.encode("utf-8")).decode("utf-8")
+                self.output("img", img, contentType="img/svg+xml;base64")
+        except Exception:
+            pass
+
+    def _render_turtle(self):
+        self._emit_turtle_snapshot()
 
     def override_turtle(self):
         if not hasattr(self, '_turtle_hook'):
@@ -221,6 +233,7 @@ class Papyros(python_runner.PyodideRunner):
         self._tracked_files.clear()
         self._tracking_files = True
         self._last_emitted_snapshot = None
+        self._last_emitted_turtle_svg = None
         with (
             redirect_stdout(python_runner.output.SysStream("output", self.output_buffer)),
             redirect_stderr(python_runner.output.SysStream("error", self.output_buffer)),
@@ -255,24 +268,11 @@ if __name__ == "{MODULE_NAME}":
                     self.callback("start", data="RunCode", contentType="text/plain")
                     if mode == "debug":
                         from tracer import JSONTracer
-                        _last_turtle_svg = [None]
 
                         def frame_callback(frame):
                             self._flush_open_files()
                             self._emit_created_files()
-                            # The hook fires lazily when user code runs `import turtle`, so the
-                            # pen only exists partway through the trace — check per frame.
-                            hook = getattr(self, '_turtle_hook', None)
-                            if hook and hook.render:
-                                try:
-                                    from svg_turtle import SvgTurtle
-                                    svg_string = SvgTurtle._pen.to_svg()
-                                    if svg_string and svg_string != _last_turtle_svg[0]:
-                                        _last_turtle_svg[0] = svg_string
-                                        img = base64.b64encode(svg_string.encode("utf-8")).decode("utf-8")
-                                        self.output("img", img, contentType="img/svg+xml;base64")
-                                except Exception:
-                                    pass
+                            self._emit_turtle_snapshot()
                             self.callback("frame", data=frame, contentType="application/json")
 
                         result = JSONTracer(frame_callback=frame_callback, module_name=MODULE_NAME).runscript(source_code)

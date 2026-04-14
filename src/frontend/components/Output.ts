@@ -98,16 +98,16 @@ export class Output extends PapyrosElement {
 
     get renderedOutputs(): TemplateResult[] {
         let outputsToRender = this.outputs;
-        if (this.papyros.debugger.active) {
-            // Only show the latest SVG snapshot so the debugger slider shows progressive rendering.
-            const lastSvgIdx = outputsToRender.findLastIndex(
-                (o) => o.type === OutputType.img && o.contentType?.includes("svg"),
+        // Only render the latest SVG snapshot — intermediate frames from sleep/debug are kept in
+        // the output array (so the debugger slider can step through them) but only the current
+        // one should be visible at any given time.
+        const lastSvgIdx = outputsToRender.findLastIndex(
+            (o) => o.type === OutputType.img && o.contentType?.includes("svg"),
+        );
+        if (lastSvgIdx >= 0) {
+            outputsToRender = outputsToRender.filter(
+                (o, i) => !(o.type === OutputType.img && o.contentType?.includes("svg")) || i === lastSvgIdx,
             );
-            if (lastSvgIdx >= 0) {
-                outputsToRender = outputsToRender.filter(
-                    (o, i) => !(o.type === OutputType.img && o.contentType?.includes("svg")) || i === lastSvgIdx,
-                );
-            }
         }
         return outputsToRender.map((o) => {
             if (o.type === OutputType.stdout) {

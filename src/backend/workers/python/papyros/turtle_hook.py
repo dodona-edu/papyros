@@ -1,4 +1,3 @@
-import base64
 import sys
 
 
@@ -58,17 +57,10 @@ class TurtleImportHook:
             SvgTurtle._screen = screen
             SvgTurtle._pen = PapyrosTurtle()
 
-            rendered = [False]
             papyros = self.papyros
 
             def render():
-                if rendered[0]:
-                    return
-                rendered[0] = True
-                svg_string = SvgTurtle._pen.to_svg()
-                if svg_string:
-                    img = base64.b64encode(svg_string.encode("utf-8")).decode("utf-8")
-                    papyros.output("img", img, contentType="img/svg+xml;base64")
+                papyros._emit_turtle_snapshot()
 
             turtle_mod.Turtle = PapyrosTurtle
             turtle_mod.done = render
