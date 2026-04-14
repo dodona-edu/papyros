@@ -24,6 +24,7 @@ export class AddFileButton extends PapyrosElement {
             .add-btn {
                 padding: 0.375rem 0.5rem;
                 border: none;
+                border-bottom: 2px solid var(--md-sys-color-outline-variant);
                 border-radius: 0.375rem 0.375rem 0 0;
                 cursor: pointer;
                 font-size: 1rem;
@@ -63,8 +64,19 @@ export class AddFileButton extends PapyrosElement {
         this.invalid = !isValidFileName(value) || this.papyros.io.files.some((f) => f.name === value);
     }
 
+    private onBlur(): void {
+        if (!this.adding) return;
+        const name = this.addInputRef.value?.value.trim() ?? "";
+        if (name.length === 0) {
+            this.cancelAdd();
+        } else {
+            this.confirmAdd();
+        }
+    }
+
     private onAddKeydown(e: KeyboardEvent): void {
         if (e.key === "Enter") {
+            e.preventDefault();
             this.confirmAdd();
         } else if (e.key === "Escape") {
             this.cancelAdd();
@@ -85,10 +97,15 @@ export class AddFileButton extends PapyrosElement {
                 placeholder=${this.t("Papyros.add_file_placeholder")}
                 @input=${this.onAddInput}
                 @keydown=${this.onAddKeydown}
-                @blur=${this.cancelAdd}
+                @blur=${this.onBlur}
             />`;
         }
-        return html`<button class="add-btn" aria-label=${this.t("Papyros.add_file")} @click=${this.startAdding}>
+        return html`<button
+            class="add-btn"
+            title=${this.t("Papyros.add_file")}
+            aria-label=${this.t("Papyros.add_file")}
+            @click=${this.startAdding}
+        >
             +
         </button>`;
     }
