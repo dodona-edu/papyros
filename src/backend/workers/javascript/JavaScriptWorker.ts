@@ -117,7 +117,7 @@ export class JavaScriptWorker extends Backend<SyncExtras> {
                 contentType: "text/plain",
                 data: "RunCode",
             });
-            result = await eval(code);
+            result = await (0, eval)(code);
         } catch (error: any) {
             // try to create a friendly traceback
             Error.captureStackTrace(error);
