@@ -160,7 +160,7 @@ class Papyros(python_runner.PyodideRunner):
                     pass
         self._tracked_files -= closed
 
-    def _emit_created_files(self, emit_empty=False):
+    def _emit_created_files(self):
         with self._without_file_tracking():
             cwd = os.getcwd()
             result = {}
@@ -186,11 +186,10 @@ class Papyros(python_runner.PyodideRunner):
             except Exception:
                 return
             snapshot = json.dumps(result, sort_keys=True)
-            if snapshot == self._last_emitted_snapshot and not emit_empty:
+            if snapshot == self._last_emitted_snapshot:
                 return
             self._last_emitted_snapshot = snapshot
-            if result or emit_empty:
-                self.callback("files", data=snapshot, contentType="text/json")
+            self.callback("files", data=snapshot, contentType="text/json")
 
     @contextmanager
     def _execute_context(self):
@@ -232,7 +231,7 @@ if __name__ == "{MODULE_NAME}":
                         from tracer import JSONTracer
                         def frame_callback(frame):
                             self._flush_open_files()
-                            self._emit_created_files(emit_empty=True)
+                            self._emit_created_files()
                             self.callback("frame", data=frame, contentType="application/json")
 
                         result = JSONTracer(frame_callback=frame_callback, module_name=MODULE_NAME).runscript(source_code)
