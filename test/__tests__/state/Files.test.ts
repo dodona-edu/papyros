@@ -1,7 +1,7 @@
 import { Papyros } from "../../../src/frontend/state/Papyros";
 import { expect, it, describe } from "vitest";
 import { ProgrammingLanguage } from "../../../src/ProgrammingLanguage";
-import { waitForFiles, waitForPapyrosReady, waitForInputReady, waitForOutput } from "../../helpers";
+import { waitForFiles, waitForPapyrosReady, waitForInputReady, waitForOutput, waitForAwaitingInput } from "../../helpers";
 import { isValidFileName } from "../../../src/util/Util";
 
 describe("isValidFileName", () => {
@@ -115,6 +115,47 @@ raise ValueError("intentional error")
         expect(papyros.io.files.length).toBe(1);
         expect(papyros.io.files[0].name).toBe("crash_test.txt");
         expect(papyros.io.files[0].content).toBe("before crash");
+    });
+
+    it("files from previous run persist while awaiting input in next run", async () => {
+        const papyros = new Papyros();
+        await papyros.launch();
+        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
+        papyros.runner.code = `open("persist.txt", "w").write("hello")`;
+        await waitForInputReady();
+        await papyros.runner.start();
+        await waitForFiles(papyros, 1);
+        expect(papyros.io.files.length).toBe(1);
+        expect(papyros.io.files[0].name).toBe("persist.txt");
+
+        papyros.runner.code = `x = input("name?")`;
+        await waitForPapyrosReady(papyros);
+        void papyros.runner.start();
+        await waitForAwaitingInput(papyros);
+        expect(papyros.io.files.length).toBe(1);
+        expect(papyros.io.files[0].name).toBe("persist.txt");
+
+        papyros.io.provideInput("test");
+        await waitForPapyrosReady(papyros);
+        expect(papyros.io.files.length).toBe(1);
+        expect(papyros.io.files[0].name).toBe("persist.txt");
+    });
+
+    it("files from previous run are cleared when next run deletes them", async () => {
+        const papyros = new Papyros();
+        await papyros.launch();
+        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
+        papyros.runner.code = `open("temp.txt", "w").write("hello")`;
+        await waitForInputReady();
+        await papyros.runner.start();
+        await waitForFiles(papyros, 1);
+        expect(papyros.io.files.length).toBe(1);
+        expect(papyros.io.files[0].name).toBe("temp.txt");
+
+        papyros.runner.code = `import os; os.remove("temp.txt")`;
+        await papyros.runner.start();
+        await waitForPapyrosReady(papyros);
+        expect(papyros.io.files.length).toBe(0);
     });
 
     it("updateFileContent updates the in-memory content of an existing file", async () => {

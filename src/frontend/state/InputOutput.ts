@@ -232,7 +232,6 @@ export class InputOutput extends State {
         this.output = [];
         this.prompt = "";
         this.awaitingInput = false;
-        this.files = [];
         this.activeEditorTab = CODE_TAB;
     }
 }
