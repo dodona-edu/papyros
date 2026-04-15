@@ -4,6 +4,7 @@ export const tabButtonStyles: CSSResult = css`
     button {
         padding: 0.375rem 0.75rem;
         border: none;
+        border-bottom: 2px solid var(--md-sys-color-outline-variant);
         border-radius: 0.375rem 0.375rem 0 0;
         cursor: pointer;
         font-size: 0.875rem;
@@ -18,6 +19,8 @@ export const tabButtonStyles: CSSResult = css`
     button.active {
         background-color: var(--md-sys-color-surface);
         color: var(--md-sys-color-on-surface);
+        font-weight: 600;
+        border-bottom: 2px solid var(--md-sys-color-primary);
     }
 
     button:hover:not(.active) {

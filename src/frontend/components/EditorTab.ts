@@ -45,10 +45,11 @@ export class EditorTab extends PapyrosElement {
                 opacity: 0.6;
             }
 
-            button:hover .rename-btn,
-            button:hover .close-btn,
-            button:focus-within .rename-btn,
-            button:focus-within .close-btn,
+            .rename-btn svg {
+                width: 0.75rem;
+                height: 0.75rem;
+            }
+
             button.active .rename-btn,
             button.active .close-btn {
                 display: inline-flex;
@@ -76,6 +77,7 @@ export class EditorTab extends PapyrosElement {
 
     private closeFile(e: Event): void {
         e.stopPropagation();
+        if (!confirm(this.t("Papyros.close_file_confirm"))) return;
         this.papyros.io.removeFile(this.file.name);
         void this.papyros.runner.deleteFile(this.file.name);
     }
@@ -187,14 +189,18 @@ export class EditorTab extends PapyrosElement {
                               class="rename-btn"
                               role="button"
                               tabindex="0"
+                              title=${this.t("Papyros.rename_file_tab")}
                               aria-label=${this.t("Papyros.rename_file_tab")}
                               @click=${this.onRenameClick}
                               @keydown=${this.onRenameBtnKeydown}
-                              >✎</span
-                          ><span
+                          >
+                              ${this.papyros.constants.icons.edit}
+                          </span>
+                          <span
                               class="close-btn"
                               role="button"
                               tabindex="0"
+                              title=${this.t("Papyros.close_file_tab")}
                               aria-label=${this.t("Papyros.close_file_tab")}
                               @click=${this.closeFile}
                               @keydown=${this.onCloseBtnKeydown}
