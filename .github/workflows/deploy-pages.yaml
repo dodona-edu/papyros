@@ -11,9 +11,6 @@ jobs:
       name: production
       url: https://docs.dodona.be/papyros/
     steps:
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.12'
       - name: Checkout branch
         uses: actions/checkout@v6
       - name: Clone main
@@ -28,10 +25,19 @@ jobs:
           node-version: 24.x
           cache: yarn
           cache-dependency-path: papyros/yarn.lock
-      - name: Install and build branch
+      - name: Install dependencies
         run: |
           cd papyros
           yarn install
+      - name: Resolve Pyodide Python version
+        id: pyver
+        run: echo "version=$(jq -r '.info.python' papyros/node_modules/pyodide/pyodide-lock.json)" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ steps.pyver.outputs.version }}
+      - name: Build branch
+        run: |
+          cd papyros
           yarn setup
           yarn build:app
           cd ..
