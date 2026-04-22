@@ -22,6 +22,12 @@ jobs:
           repository: dodona-edu/papyros
           path: papyros
           ref: main
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+          cache: yarn
+          cache-dependency-path: papyros/yarn.lock
       - name: Install and build branch
         run: |
           cd papyros
