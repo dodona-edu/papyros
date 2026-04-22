@@ -13,7 +13,7 @@ jobs:
     - name: Set up Node
       uses: actions/setup-node@v6
       with:
-        node-version: 20.x
+        node-version: 24.x
         cache: yarn
     - name: Install dependencies
       run: |
@@ -22,9 +22,19 @@ jobs:
     - name: Build service worker
       run: |
         yarn build:sw
+    - name: Resolve Pyodide Python version
+      id: pyver
+      run: |
+        PYVER=$(jq -r '.info.python' node_modules/pyodide/pyodide-lock.json)
+        TOOLVER=$(awk '/^python / {print $2}' .tool-versions)
+        if [ "$PYVER" != "$TOOLVER" ]; then
+          echo "::error::Python version drift: Pyodide ships $PYVER but .tool-versions pins $TOOLVER"
+          exit 1
+        fi
+        echo "version=$PYVER" >> "$GITHUB_OUTPUT"
     - uses: actions/setup-python@v6
       with:
-        python-version: '3.12'
+        python-version: ${{ steps.pyver.outputs.version }}
     - name: Build python backend
       run: |
         yarn setup
