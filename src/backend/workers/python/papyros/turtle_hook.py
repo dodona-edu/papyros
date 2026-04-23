@@ -65,8 +65,5 @@ class TurtleImportHook:
 
             self.render = render
             return turtle_mod
-        except ImportError:
-            self.render = None
-            return None
         finally:
             self._loading = False
