@@ -45,7 +45,8 @@ export function parseData(data: string, contentType?: string): any {
             }
             break;
         }
-        case "img": {
+        case "img":
+        case "image": {
             switch (specificType) {
                 case "png;base64":
                 case "svg+xml;base64": {

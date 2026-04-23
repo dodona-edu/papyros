@@ -21,10 +21,10 @@ turtle.done()`;
         await waitForPapyrosReady(papyros);
         await waitForOutput(papyros);
         expect(papyros.runner.state).toBe(RunState.Ready);
-        const imgOutputs = papyros.io.output.filter(o => o.type === OutputType.img);
-        expect(imgOutputs.length).toBeGreaterThan(0);
-        expect(imgOutputs[0].contentType).toBe("img/svg+xml;base64");
-        const decoded = atob(imgOutputs[0].content as string);
+        const turtleOutputs = papyros.io.output.filter(o => o.type === OutputType.turtle);
+        expect(turtleOutputs.length).toBeGreaterThan(0);
+        expect(turtleOutputs[0].contentType).toBe("image/svg+xml;base64");
+        const decoded = atob(turtleOutputs[0].content as string);
         expect(decoded).toContain("<svg");
     });
 
@@ -43,11 +43,11 @@ turtle.done()`;
         await papyros.runner.start();
         await waitForPapyrosReady(papyros);
         await waitForOutput(papyros, 2);
-        const imgOutputs = papyros.io.output.filter(o => o.type === OutputType.img);
-        expect(imgOutputs.length).toBeGreaterThanOrEqual(2);
+        const turtleOutputs = papyros.io.output.filter(o => o.type === OutputType.turtle);
+        expect(turtleOutputs.length).toBeGreaterThanOrEqual(2);
         // Each snapshot should be a valid base64-encoded SVG
-        for (const img of imgOutputs) {
-            expect(img.contentType).toBe("img/svg+xml;base64");
+        for (const img of turtleOutputs) {
+            expect(img.contentType).toBe("image/svg+xml;base64");
             expect(atob(img.content as string)).toContain("<svg");
         }
     });
@@ -63,9 +63,9 @@ turtle.done()`;
         await papyros.runner.start(RunMode.Debug);
         await waitForPapyrosReady(papyros);
         await waitForOutput(papyros);
-        const imgOutputs = papyros.io.output.filter(o => o.type === OutputType.img);
-        expect(imgOutputs.length).toBeGreaterThan(0);
-        expect(imgOutputs[0].contentType).toBe("img/svg+xml;base64");
-        expect(atob(imgOutputs[0].content as string)).toContain("<svg");
+        const turtleOutputs = papyros.io.output.filter(o => o.type === OutputType.turtle);
+        expect(turtleOutputs.length).toBeGreaterThan(0);
+        expect(turtleOutputs[0].contentType).toBe("image/svg+xml;base64");
+        expect(atob(turtleOutputs[0].content as string)).toContain("<svg");
     });
 });

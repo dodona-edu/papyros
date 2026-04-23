@@ -1,7 +1,8 @@
 import { customElement } from "lit/decorators.js";
 import { css, CSSResult, html, TemplateResult } from "lit";
-import { FriendlyError, OutputEntry, OutputType } from "../state/InputOutput";
+import { FriendlyError, OutputEntry, OutputType, OUTPUT_TAB, TURTLE_TAB } from "../state/InputOutput";
 import { PapyrosElement } from "./PapyrosElement";
+import { tabButtonStyles } from "./shared-styles";
 import "@material/web/icon/icon";
 
 @customElement("p-output")
@@ -11,8 +12,21 @@ export class Output extends PapyrosElement {
             :host {
                 width: 100%;
                 height: 100%;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .tabs {
+                display: flex;
+                flex-direction: row;
+                gap: 0.25rem;
+                flex-shrink: 0;
+                margin-bottom: 0.75rem;
+            }
+
+            .content {
+                flex: 1;
                 overflow: auto;
-                display: block;
             }
 
             img {
@@ -39,6 +53,8 @@ export class Output extends PapyrosElement {
             md-icon {
                 vertical-align: bottom;
             }
+
+            ${tabButtonStyles}
         `;
     }
 
@@ -65,7 +81,7 @@ export class Output extends PapyrosElement {
     get downloadOverflowUrl(): string {
         const blob = new Blob(
             this.overflow.map((o) => {
-                if (o.type === OutputType.img) {
+                if (o.type === OutputType.img || o.type === OutputType.turtle) {
                     return `[Image output of type ${o.contentType} omitted]\n`;
                 } else if (o.type === OutputType.stdout) {
                     return o.content as string;
@@ -97,22 +113,22 @@ export class Output extends PapyrosElement {
     }
 
     get renderedOutputs(): TemplateResult[] {
-        let outputsToRender = this.outputs;
-        // Only render the latest SVG snapshot — intermediate frames from sleep/debug are kept in
-        // the output array (so the debugger slider can step through them) but only the current
-        // one should be visible at any given time.
-        const lastSvgIdx = outputsToRender.findLastIndex(
-            (o) => o.type === OutputType.img && o.contentType?.includes("svg"),
-        );
-        if (lastSvgIdx >= 0) {
-            outputsToRender = outputsToRender.filter(
-                (o, i) => !(o.type === OutputType.img && o.contentType?.includes("svg")) || i === lastSvgIdx,
-            );
+        let outputsToRender: OutputEntry[];
+        const isTurtle = (o: OutputEntry): boolean => o.type === OutputType.turtle;
+        if (this.papyros.io.activeOutputTab === TURTLE_TAB) {
+            // Turtle tab: only the latest snapshot. Intermediate frames from sleep/debug
+            // are kept in the output array (so the debugger slider can step through them) but
+            // only the current one should be visible.
+            const lastIdx = this.outputs.findLastIndex(isTurtle);
+            outputsToRender = lastIdx >= 0 ? [this.outputs[lastIdx]] : [];
+        } else {
+            // Output tab: everything except turtle snapshots.
+            outputsToRender = this.outputs.filter((o) => !isTurtle(o));
         }
         return outputsToRender.map((o) => {
             if (o.type === OutputType.stdout) {
                 return html`${o.content}`;
-            } else if (o.type === OutputType.img) {
+            } else if (o.type === OutputType.img || o.type === OutputType.turtle) {
                 const mimeType = o.contentType?.replace(/^img\//, "image/") ?? "image/png";
                 return html`<img src="data:${mimeType},${o.content}"></img>`;
             } else if (o.type === OutputType.stderr) {
@@ -143,23 +159,56 @@ export class Output extends PapyrosElement {
         });
     }
 
-    protected override render(): TemplateResult {
-        if (this.outputs.length === 0) {
-            return html`<pre class="place-holder">${this.t("Papyros.output_placeholder")}</pre>`;
-        }
+    private get showTurtleTab(): boolean {
+        return this.papyros.io.hasTurtleOutput || this.papyros.io.activeOutputTab === TURTLE_TAB;
+    }
 
+    private renderTabs(): TemplateResult {
+        const activeTab = this.papyros.io.activeOutputTab;
         return html`
-            <pre>${this.renderedOutputs}</pre>
-            ${this.showOverflowWarning
-                ? html`
-                      <p>
-                          ${this.t("Papyros.output_overflow")}
-                          <a href="${this.downloadOverflowUrl}" download="papyros_output.txt">
-                              ${this.t("Papyros.output_overflow_download")}
-                          </a>
-                      </p>
-                  `
-                : html``}
+            <div class="tabs">
+                <button
+                    class=${activeTab === OUTPUT_TAB ? "active" : ""}
+                    @click=${() => this.papyros.io.selectOutputTab(OUTPUT_TAB)}
+                >
+                    ${this.t("Papyros.output_tab_output")}
+                </button>
+                ${this.showTurtleTab
+                    ? html`
+                          <button
+                              class=${activeTab === TURTLE_TAB ? "active" : ""}
+                              @click=${() => this.papyros.io.selectOutputTab(TURTLE_TAB)}
+                          >
+                              ${this.t("Papyros.output_tab_turtle")}
+                          </button>
+                      `
+                    : html``}
+            </div>
+        `;
+    }
+
+    protected override render(): TemplateResult {
+        const activeTab = this.papyros.io.activeOutputTab;
+        const rendered = this.renderedOutputs;
+        const showPlaceholder = activeTab === OUTPUT_TAB && rendered.length === 0;
+        const showOverflow = activeTab === OUTPUT_TAB && this.showOverflowWarning;
+        return html`
+            ${this.renderTabs()}
+            <div class="content">
+                ${showPlaceholder
+                    ? html`<pre class="place-holder">${this.t("Papyros.output_placeholder")}</pre>`
+                    : html`<pre>${rendered}</pre>`}
+                ${showOverflow
+                    ? html`
+                          <p>
+                              ${this.t("Papyros.output_overflow")}
+                              <a href="${this.downloadOverflowUrl}" download="papyros_output.txt">
+                                  ${this.t("Papyros.output_overflow_download")}
+                              </a>
+                          </p>
+                      `
+                    : html``}
+            </div>
         `;
     }
 }

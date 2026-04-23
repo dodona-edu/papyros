@@ -103,7 +103,7 @@ class Papyros(python_runner.PyodideRunner):
             if svg_string and svg_string != self._last_emitted_turtle_svg:
                 self._last_emitted_turtle_svg = svg_string
                 img = base64.b64encode(svg_string.encode("utf-8")).decode("utf-8")
-                self.output("img", img, contentType="img/svg+xml;base64")
+                self.callback("turtle", data=img, contentType="image/svg+xml;base64")
         except Exception:
             pass
 
