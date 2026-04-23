@@ -27,6 +27,7 @@ export class Output extends PapyrosElement {
             .content {
                 flex: 1;
                 overflow: auto;
+                container-type: size;
             }
 
             img {
@@ -34,6 +35,17 @@ export class Output extends PapyrosElement {
                 max-height: 300px;
                 display: block;
                 margin: 0.5rem 0;
+            }
+
+            img.turtle {
+                width: min(100cqw, 100cqh);
+                height: min(100cqw, 100cqh);
+                max-width: 100%;
+                max-height: 100%;
+                margin: 0;
+                box-sizing: border-box;
+                background-color: var(--md-sys-color-surface-container-lowest);
+                border: 1px solid var(--md-sys-color-outline-variant);
             }
 
             pre {
@@ -128,9 +140,12 @@ export class Output extends PapyrosElement {
         return outputsToRender.map((o) => {
             if (o.type === OutputType.stdout) {
                 return html`${o.content}`;
-            } else if (o.type === OutputType.img || o.type === OutputType.turtle) {
+            } else if (o.type === OutputType.img) {
                 const mimeType = o.contentType?.replace(/^img\//, "image/") ?? "image/png";
                 return html`<img src="data:${mimeType},${o.content}"></img>`;
+            } else if (o.type === OutputType.turtle) {
+                const mimeType = o.contentType ?? "image/svg+xml;base64";
+                return html`<img class="turtle" src="data:${mimeType},${o.content}"></img>`;
             } else if (o.type === OutputType.stderr) {
                 if (typeof o.content === "string") {
                     return html`<span class="error">${o.content}</span>`;
