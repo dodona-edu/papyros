@@ -21,13 +21,22 @@ export class Output extends PapyrosElement {
                 flex-direction: row;
                 gap: 0.25rem;
                 flex-shrink: 0;
-                margin-bottom: 0.75rem;
+                position: relative;
+                z-index: 1;
             }
 
             .content {
                 flex: 1;
                 overflow: auto;
                 container-type: size;
+                padding: 0.75rem;
+                background-color: var(--md-sys-color-surface-container-highest);
+            }
+
+            .content.turtle {
+                margin-top: -1px;
+                padding: 0;
+                background-color: transparent;
             }
 
             img {
@@ -44,7 +53,7 @@ export class Output extends PapyrosElement {
                 max-height: 100%;
                 margin: 0;
                 box-sizing: border-box;
-                background-color: var(--md-sys-color-surface-container-lowest);
+                background-color: var(--md-sys-color-surface-container-highest);
                 border: 1px solid var(--md-sys-color-outline-variant);
             }
 
@@ -209,7 +218,7 @@ export class Output extends PapyrosElement {
         const showOverflow = activeTab === OUTPUT_TAB && this.showOverflowWarning;
         return html`
             ${this.renderTabs()}
-            <div class="content">
+            <div class="content ${activeTab === TURTLE_TAB ? "turtle" : ""}">
                 ${showPlaceholder
                     ? html`<pre class="place-holder">${this.t("Papyros.output_placeholder")}</pre>`
                     : html`<pre>${rendered}</pre>`}
