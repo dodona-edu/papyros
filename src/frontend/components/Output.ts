@@ -47,7 +47,8 @@ export class Output extends PapyrosElement {
                 margin: 0.5rem 0;
             }
 
-            img.turtle {
+            img.turtle,
+            .turtle-placeholder {
                 width: min(100cqw, 100cqh);
                 height: min(100cqw, 100cqh);
                 max-width: 100%;
@@ -216,13 +217,16 @@ export class Output extends PapyrosElement {
         const activeTab = this.papyros.io.activeOutputTab;
         const rendered = this.renderedOutputs;
         const showPlaceholder = activeTab === OUTPUT_TAB && rendered.length === 0;
+        const showTurtlePlaceholder = activeTab === TURTLE_TAB && rendered.length === 0;
         const showOverflow = activeTab === OUTPUT_TAB && this.showOverflowWarning;
         return html`
             ${this.renderTabs()}
             <div class="content ${activeTab === TURTLE_TAB ? "turtle" : ""}">
                 ${showPlaceholder
                     ? html`<pre class="place-holder">${this.t("Papyros.output_placeholder")}</pre>`
-                    : html`<pre>${rendered}</pre>`}
+                    : showTurtlePlaceholder
+                      ? html`<div class="turtle-placeholder"></div>`
+                      : html`<pre>${rendered}</pre>`}
                 ${showOverflow
                     ? html`
                           <p>
