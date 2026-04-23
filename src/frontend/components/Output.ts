@@ -20,6 +20,7 @@ export class Output extends PapyrosElement {
                 display: flex;
                 flex-direction: row;
                 gap: 0.25rem;
+                padding-top: 0.25rem;
                 flex-shrink: 0;
                 position: relative;
                 z-index: 1;
