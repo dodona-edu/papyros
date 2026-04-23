@@ -36,16 +36,13 @@ class TurtleImportHook:
             from svg_turtle.canvas import Canvas
 
             if self._turtle_module is None:
-                # First import: svg_turtle stubs tkinter, then imports turtle
-                self._turtle_module = sys.modules.get('turtle')
-                if self._turtle_module is None:
-                    import turtle
-                    self._turtle_module = sys.modules['turtle']
+                # svg_turtle stubs tkinter as a side effect of import; must precede `import turtle`
+                import turtle
+                self._turtle_module = sys.modules['turtle']
 
             turtle_mod = self._turtle_module
             sys.modules['turtle'] = turtle_mod
 
-            # Fresh canvas and screen for this execution
             canvas = Canvas(400, 400)
             screen = SvgTurtle._Screen(canvas)
             screen.cv.config(bg="")
@@ -57,10 +54,8 @@ class TurtleImportHook:
             SvgTurtle._screen = screen
             SvgTurtle._pen = PapyrosTurtle()
 
-            papyros = self.papyros
-
             def render():
-                papyros._emit_turtle_snapshot()
+                self.papyros._emit_turtle_snapshot()
 
             turtle_mod.Turtle = PapyrosTurtle
             turtle_mod.done = render
@@ -70,7 +65,7 @@ class TurtleImportHook:
 
             self.render = render
             return turtle_mod
-        except Exception:
+        except ImportError:
             self.render = None
             return None
         finally:

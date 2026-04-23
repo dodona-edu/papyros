@@ -50,6 +50,7 @@ class Papyros(python_runner.PyodideRunner):
         self._original_open = builtins.open
         self._last_emitted_snapshot = None
         self._last_emitted_turtle_svg = None
+        self._turtle_hook = TurtleImportHook()
         self._install_open_tracking()
         self.limit = limit
         self.override_globals()
@@ -93,34 +94,21 @@ class Papyros(python_runner.PyodideRunner):
         self.override_turtle()
 
     def _emit_turtle_snapshot(self):
-        """Emit the current turtle drawing if it has changed since the last snapshot."""
-        hook = getattr(self, '_turtle_hook', None)
-        if not hook or not hook.render:
+        if not self._turtle_hook.render:
             return
-        try:
-            from svg_turtle import SvgTurtle
-            svg_string = SvgTurtle._pen.to_svg()
-            if svg_string and svg_string != self._last_emitted_turtle_svg:
-                self._last_emitted_turtle_svg = svg_string
-                img = base64.b64encode(svg_string.encode("utf-8")).decode("utf-8")
-                self.callback("turtle", data=img, contentType="image/svg+xml;base64")
-        except Exception:
-            pass
-
-    def _render_turtle(self):
-        self._emit_turtle_snapshot()
+        from svg_turtle import SvgTurtle
+        svg_string = SvgTurtle._pen.to_svg()
+        if svg_string and svg_string != self._last_emitted_turtle_svg:
+            self._last_emitted_turtle_svg = svg_string
+            img = base64.b64encode(svg_string.encode("utf-8")).decode("utf-8")
+            self.callback("turtle", data=img, contentType="image/svg+xml;base64")
 
     def override_turtle(self):
-        if not hasattr(self, '_turtle_hook'):
-            self._turtle_hook = TurtleImportHook()
-
         hook = self._turtle_hook
         hook.papyros = self
         hook.render = None
-
         # Remove turtle from sys.modules so the hook intercepts the next import
         sys.modules.pop('turtle', None)
-
         if hook not in sys.meta_path:
             sys.meta_path.insert(0, hook)
 
@@ -244,7 +232,7 @@ class Papyros(python_runner.PyodideRunner):
                 self.output("traceback", **self.serialize_traceback(e))
                 self._flush_open_files()
                 self._emit_created_files()
-                self._render_turtle()
+                self._emit_turtle_snapshot()
             finally:
                 self._tracking_files = False
         self.post_run()
@@ -282,7 +270,7 @@ if __name__ == "{MODULE_NAME}":
                         result = await result
                     self._flush_open_files()
                     self._emit_created_files()
-                    self._render_turtle()
+                    self._emit_turtle_snapshot()
                     self.callback("end", data="CodeFinished", contentType="text/plain")
                     return result
             except ModuleNotFoundError as mnf:
@@ -299,7 +287,7 @@ if __name__ == "{MODULE_NAME}":
                 # with a js_error containing the reason
                 js_error = str(getattr(e, "js_error", ""))
                 if isinstance(e, KeyboardInterrupt) or "KeyboardInterrupt" in js_error:
-                    self._render_turtle()
+                    self._emit_turtle_snapshot()
                     self.callback("interrupt", data="KeyboardInterrupt", contentType="text/plain")
                 else:
                     raise

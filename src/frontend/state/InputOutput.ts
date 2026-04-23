@@ -78,6 +78,8 @@ export class InputOutput extends State {
     @stateProperty
     output: OutputEntry[] = [];
     @stateProperty
+    hasTurtleOutput: boolean = false;
+    @stateProperty
     files: FileEntry[] = [];
     @stateProperty
     activeEditorTab: string = CODE_TAB;
@@ -180,6 +182,7 @@ export class InputOutput extends State {
     public logTurtle(imageData: string, contentType: string = "image/svg+xml;base64"): void {
         const isFirstSnapshot = !this.hasTurtleOutput;
         this.output = [...this.output, { type: OutputType.turtle, content: imageData, contentType }];
+        this.hasTurtleOutput = true;
         if (isFirstSnapshot && this.activeOutputTab === OUTPUT_TAB && !this.outputTabManuallySet) {
             this.activeOutputTab = TURTLE_TAB;
         }
@@ -188,10 +191,6 @@ export class InputOutput extends State {
     public selectOutputTab(tab: OutputTab): void {
         this.activeOutputTab = tab;
         this.outputTabManuallySet = true;
-    }
-
-    public get hasTurtleOutput(): boolean {
-        return this.output.some((o) => o.type === OutputType.turtle);
     }
 
     public logOutput(output: string): void {
@@ -265,6 +264,7 @@ export class InputOutput extends State {
     public reset(): void {
         this.inputs = [];
         this.output = [];
+        this.hasTurtleOutput = false;
         this.prompt = "";
         this.awaitingInput = false;
         this.activeEditorTab = CODE_TAB;

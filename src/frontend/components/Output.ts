@@ -137,16 +137,13 @@ export class Output extends PapyrosElement {
 
     get renderedOutputs(): TemplateResult[] {
         let outputsToRender: OutputEntry[];
-        const isTurtle = (o: OutputEntry): boolean => o.type === OutputType.turtle;
         if (this.papyros.io.activeOutputTab === TURTLE_TAB) {
-            // Turtle tab: only the latest snapshot. Intermediate frames from sleep/debug
-            // are kept in the output array (so the debugger slider can step through them) but
-            // only the current one should be visible.
-            const lastIdx = this.outputs.findLastIndex(isTurtle);
+            // Latest snapshot within this.outputs (which is sliced by the debugger's current
+            // step via maxOutputLength) — so stepping the debugger shows the drawing build up.
+            const lastIdx = this.outputs.findLastIndex((o) => o.type === OutputType.turtle);
             outputsToRender = lastIdx >= 0 ? [this.outputs[lastIdx]] : [];
         } else {
-            // Output tab: everything except turtle snapshots.
-            outputsToRender = this.outputs.filter((o) => !isTurtle(o));
+            outputsToRender = this.outputs.filter((o) => o.type !== OutputType.turtle);
         }
         return outputsToRender.map((o) => {
             if (o.type === OutputType.stdout) {
