@@ -4,6 +4,7 @@ import shutil
 import os
 import subprocess
 import sys
+import sysconfig
 
 def tarfile_filter(tar_info):
     name = tar_info.name
@@ -27,9 +28,10 @@ def create_package(package_name, dependencies, extra_deps):
     except Exception as e:
         # Always seems to result in a harmless permission denied error
         pass
-    # Bundle CPython's turtle.py (removed from Pyodide's stdlib, required by svg-turtle)
-    import turtle as turtle_mod
-    shutil.copy(turtle_mod.__file__, os.path.join(package_name, "turtle.py"))
+    # Bundle CPython's turtle.py (removed from Pyodide's stdlib, required by svg-turtle).
+    # Locate via sysconfig rather than `import turtle`, which would pull in tkinter.
+    turtle_src = os.path.join(sysconfig.get_path("stdlib"), "turtle.py")
+    shutil.copy(turtle_src, os.path.join(package_name, "turtle.py"))
     tar_name = f"{package_name}.tar.gz.load_by_url"
     if os.path.exists(tar_name):
         os.remove(tar_name)
