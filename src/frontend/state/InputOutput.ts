@@ -40,6 +40,7 @@ export enum OutputType {
     stdout = "stdout",
     stderr = "stderr",
     img = "img",
+    turtle = "turtle",
 }
 
 export type OutputEntry = {
@@ -61,6 +62,10 @@ export interface FileEntry {
 
 export const CODE_TAB = "code";
 
+export const OUTPUT_TAB = "output";
+export const TURTLE_TAB = "turtle";
+export type OutputTab = typeof OUTPUT_TAB | typeof TURTLE_TAB;
+
 export function parseFileEntries(data: string, contentType?: string): FileEntry[] {
     const parsed = parseData(data, contentType) as Record<string, { content: string; binary: boolean }>;
     return Object.entries(parsed).map(([name, { content, binary }]) => ({ name, content, binary }));
@@ -73,9 +78,15 @@ export class InputOutput extends State {
     @stateProperty
     output: OutputEntry[] = [];
     @stateProperty
+    hasTurtleOutput: boolean = false;
+    @stateProperty
     files: FileEntry[] = [];
     @stateProperty
     activeEditorTab: string = CODE_TAB;
+    @stateProperty
+    activeOutputTab: OutputTab = OUTPUT_TAB;
+    @stateProperty
+    outputTabManuallySet: boolean = false;
     @stateProperty
     prompt: string = "";
     @stateProperty
@@ -119,6 +130,10 @@ export class InputOutput extends State {
                 this.logOutput(data);
             }
         });
+        BackendManager.subscribe(BackendEventType.Turtle, (e) => {
+            const data = parseData(e.data, e.contentType);
+            this.logTurtle(data, e.contentType);
+        });
         BackendManager.subscribe(BackendEventType.Error, (e) => {
             const data = parseData(e.data, e.contentType);
             this.logError(data);
@@ -134,6 +149,11 @@ export class InputOutput extends State {
         });
         BackendManager.subscribe(BackendEventType.End, () => {
             this.awaitingInput = false;
+            // If the finished run produced no turtle output, drop the (stale) Turtle tab
+            // selection so the tab bar hides. A manual selection is preserved.
+            if (this.activeOutputTab === TURTLE_TAB && !this.hasTurtleOutput && !this.outputTabManuallySet) {
+                this.activeOutputTab = OUTPUT_TAB;
+            }
         });
         BackendManager.subscribe(BackendEventType.Files, (e) => {
             this.files = parseFileEntries(e.data, e.contentType);
@@ -157,6 +177,20 @@ export class InputOutput extends State {
 
     public logImage(imageData: string, contentType: string = "img/png"): void {
         this.output = [...this.output, { type: OutputType.img, content: imageData, contentType }];
+    }
+
+    public logTurtle(imageData: string, contentType: string = "image/svg+xml;base64"): void {
+        const isFirstSnapshot = !this.hasTurtleOutput;
+        this.output = [...this.output, { type: OutputType.turtle, content: imageData, contentType }];
+        this.hasTurtleOutput = true;
+        if (isFirstSnapshot && this.activeOutputTab === OUTPUT_TAB && !this.outputTabManuallySet) {
+            this.activeOutputTab = TURTLE_TAB;
+        }
+    }
+
+    public selectOutputTab(tab: OutputTab): void {
+        this.activeOutputTab = tab;
+        this.outputTabManuallySet = true;
     }
 
     public logOutput(output: string): void {
@@ -230,8 +264,12 @@ export class InputOutput extends State {
     public reset(): void {
         this.inputs = [];
         this.output = [];
+        this.hasTurtleOutput = false;
         this.prompt = "";
         this.awaitingInput = false;
         this.activeEditorTab = CODE_TAB;
+        // activeOutputTab is intentionally preserved across reruns: resetting it would make
+        // the tab bar flicker (Turtle → Output → Turtle) as a turtle rerun progresses. It is
+        // pruned back to OUTPUT_TAB on End when no turtle output was produced.
     }
 }

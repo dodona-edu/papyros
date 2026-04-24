@@ -79,6 +79,8 @@ export const ENGLISH_TRANSLATION = {
         files_download: "Download",
         files_binary: "Binary file",
         files_empty: "Empty file",
+        output_tab_output: "Output",
+        output_tab_turtle: "Turtle",
     },
     CodeMirror: {
         // @codemirror/search
@@ -175,6 +177,8 @@ export const DUTCH_TRANSLATION = {
         files_download: "Downloaden",
         files_binary: "Binair bestand",
         files_empty: "Leeg bestand",
+        output_tab_output: "Uitvoer",
+        output_tab_turtle: "Turtle",
     },
     CodeMirror: {
         // @codemirror/view

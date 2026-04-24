@@ -14,6 +14,7 @@ export enum BackendEventType {
     FrameChange = "frame-change",
     Stop = "stop",
     Files = "files",
+    Turtle = "turtle",
 }
 
 /**

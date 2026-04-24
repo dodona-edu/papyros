@@ -1,7 +1,8 @@
 import { customElement } from "lit/decorators.js";
 import { css, CSSResult, html, TemplateResult } from "lit";
-import { FriendlyError, OutputEntry, OutputType } from "../state/InputOutput";
+import { FriendlyError, OutputEntry, OutputType, OUTPUT_TAB, TURTLE_TAB } from "../state/InputOutput";
 import { PapyrosElement } from "./PapyrosElement";
+import { tabButtonStyles } from "./shared-styles";
 import "@material/web/icon/icon";
 
 @customElement("p-output")
@@ -11,8 +12,32 @@ export class Output extends PapyrosElement {
             :host {
                 width: 100%;
                 height: 100%;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .tabs {
+                display: flex;
+                flex-direction: row;
+                gap: 0.25rem;
+                padding-top: 0.25rem;
+                flex-shrink: 0;
+                position: relative;
+                z-index: 1;
+            }
+
+            .content {
+                flex: 1;
                 overflow: auto;
-                display: block;
+                container-type: size;
+                padding: 0.75rem;
+                background-color: var(--md-sys-color-surface-container-highest);
+            }
+
+            .content.turtle {
+                margin-top: -1px;
+                padding: 0;
+                background-color: transparent;
             }
 
             img {
@@ -20,6 +45,18 @@ export class Output extends PapyrosElement {
                 max-height: 300px;
                 display: block;
                 margin: 0.5rem 0;
+            }
+
+            img.turtle,
+            .turtle-placeholder {
+                width: min(100cqw, 100cqh);
+                height: min(100cqw, 100cqh);
+                max-width: 100%;
+                max-height: 100%;
+                margin: 0;
+                box-sizing: border-box;
+                background-color: var(--md-sys-color-surface-container-highest);
+                border: 1px solid var(--md-sys-color-outline-variant);
             }
 
             pre {
@@ -39,6 +76,8 @@ export class Output extends PapyrosElement {
             md-icon {
                 vertical-align: bottom;
             }
+
+            ${tabButtonStyles}
         `;
     }
 
@@ -65,7 +104,7 @@ export class Output extends PapyrosElement {
     get downloadOverflowUrl(): string {
         const blob = new Blob(
             this.overflow.map((o) => {
-                if (o.type === OutputType.img) {
+                if (o.type === OutputType.img || o.type === OutputType.turtle) {
                     return `[Image output of type ${o.contentType} omitted]\n`;
                 } else if (o.type === OutputType.stdout) {
                     return o.content as string;
@@ -97,11 +136,24 @@ export class Output extends PapyrosElement {
     }
 
     get renderedOutputs(): TemplateResult[] {
-        return this.outputs.map((o) => {
+        let outputsToRender: OutputEntry[];
+        if (this.papyros.io.activeOutputTab === TURTLE_TAB) {
+            // Latest snapshot within this.outputs (which is sliced by the debugger's current
+            // step via maxOutputLength) — so stepping the debugger shows the drawing build up.
+            const lastIdx = this.outputs.findLastIndex((o) => o.type === OutputType.turtle);
+            outputsToRender = lastIdx >= 0 ? [this.outputs[lastIdx]] : [];
+        } else {
+            outputsToRender = this.outputs.filter((o) => o.type !== OutputType.turtle);
+        }
+        return outputsToRender.map((o) => {
             if (o.type === OutputType.stdout) {
                 return html`${o.content}`;
             } else if (o.type === OutputType.img) {
-                return html`<img src="data:${o.contentType}, ${o.content}"></img>`;
+                const mimeType = o.contentType?.replace(/^img\//, "image/") ?? "image/png";
+                return html`<img src="data:${mimeType},${o.content}"></img>`;
+            } else if (o.type === OutputType.turtle) {
+                const mimeType = o.contentType ?? "image/svg+xml;base64";
+                return html`<img class="turtle" src="data:${mimeType},${o.content}"></img>`;
             } else if (o.type === OutputType.stderr) {
                 if (typeof o.content === "string") {
                     return html`<span class="error">${o.content}</span>`;
@@ -130,23 +182,59 @@ export class Output extends PapyrosElement {
         });
     }
 
-    protected override render(): TemplateResult {
-        if (this.outputs.length === 0) {
-            return html`<pre class="place-holder">${this.t("Papyros.output_placeholder")}</pre>`;
-        }
+    private get showTurtleTab(): boolean {
+        return this.papyros.io.hasTurtleOutput || this.papyros.io.activeOutputTab === TURTLE_TAB;
+    }
 
+    private renderTabs(): TemplateResult {
+        const activeTab = this.papyros.io.activeOutputTab;
         return html`
-            <pre>${this.renderedOutputs}</pre>
-            ${this.showOverflowWarning
-                ? html`
-                      <p>
-                          ${this.t("Papyros.output_overflow")}
-                          <a href="${this.downloadOverflowUrl}" download="papyros_output.txt">
-                              ${this.t("Papyros.output_overflow_download")}
-                          </a>
-                      </p>
-                  `
-                : html``}
+            <div class="tabs">
+                <button
+                    class=${activeTab === OUTPUT_TAB ? "active" : ""}
+                    @click=${() => this.papyros.io.selectOutputTab(OUTPUT_TAB)}
+                >
+                    ${this.t("Papyros.output_tab_output")}
+                </button>
+                ${this.showTurtleTab
+                    ? html`
+                          <button
+                              class=${activeTab === TURTLE_TAB ? "active" : ""}
+                              @click=${() => this.papyros.io.selectOutputTab(TURTLE_TAB)}
+                          >
+                              ${this.t("Papyros.output_tab_turtle")}
+                          </button>
+                      `
+                    : html``}
+            </div>
+        `;
+    }
+
+    protected override render(): TemplateResult {
+        const activeTab = this.papyros.io.activeOutputTab;
+        const rendered = this.renderedOutputs;
+        const showPlaceholder = activeTab === OUTPUT_TAB && rendered.length === 0;
+        const showTurtlePlaceholder = activeTab === TURTLE_TAB && rendered.length === 0;
+        const showOverflow = activeTab === OUTPUT_TAB && this.showOverflowWarning;
+        return html`
+            ${this.renderTabs()}
+            <div class="content ${activeTab === TURTLE_TAB ? "turtle" : ""}">
+                ${showPlaceholder
+                    ? html`<pre class="place-holder">${this.t("Papyros.output_placeholder")}</pre>`
+                    : showTurtlePlaceholder
+                      ? html`<div class="turtle-placeholder"></div>`
+                      : html`<pre>${rendered}</pre>`}
+                ${showOverflow
+                    ? html`
+                          <p>
+                              ${this.t("Papyros.output_overflow")}
+                              <a href="${this.downloadOverflowUrl}" download="papyros_output.txt">
+                                  ${this.t("Papyros.output_overflow_download")}
+                              </a>
+                          </p>
+                      `
+                    : html``}
+            </div>
         `;
     }
 }

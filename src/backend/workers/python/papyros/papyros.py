@@ -17,11 +17,13 @@ from contextlib import contextmanager, redirect_stdout, redirect_stderr
 from pyodide_worker_runner import install_imports
 from pyodide.ffi import JsException, create_proxy
 from .util import to_py
+from .turtle_hook import TurtleImportHook
 from pyodide.http import pyfetch
 from types import ModuleType
 
 SYS_RECURSION_LIMIT = 500
 MODULE_NAME = "sandbox"
+
 
 class Papyros(python_runner.PyodideRunner):
     def __init__(
@@ -47,6 +49,8 @@ class Papyros(python_runner.PyodideRunner):
         self._tracking_files = False
         self._original_open = builtins.open
         self._last_emitted_snapshot = None
+        self._last_emitted_turtle_svg = None
+        self._turtle_hook = TurtleImportHook()
         self._install_open_tracking()
         self.limit = limit
         self.override_globals()
@@ -74,6 +78,7 @@ class Papyros(python_runner.PyodideRunner):
             elif event_type == "input":
                 return cb("input", data["prompt"])
             elif event_type == "sleep":
+                self._emit_turtle_snapshot()
                 return cb("sleep", data["seconds"]*1000, contentType="application/number")
             else:
                 return cb(event_type, data.get("data", ""), contentType=data.get("contentType"))
@@ -86,6 +91,26 @@ class Papyros(python_runner.PyodideRunner):
         # Otherwise `import matplotlib` fails while assuming a browser backend
         os.environ["MPLBACKEND"] = "AGG"
         self.override_matplotlib()
+        self.override_turtle()
+
+    def _emit_turtle_snapshot(self):
+        if not self._turtle_hook.render:
+            return
+        from svg_turtle import SvgTurtle
+        svg_string = SvgTurtle._pen.to_svg()
+        if svg_string and svg_string != self._last_emitted_turtle_svg:
+            self._last_emitted_turtle_svg = svg_string
+            img = base64.b64encode(svg_string.encode("utf-8")).decode("utf-8")
+            self.callback("turtle", data=img, contentType="image/svg+xml;base64")
+
+    def override_turtle(self):
+        hook = self._turtle_hook
+        hook.papyros = self
+        hook.render = None
+        # Remove turtle from sys.modules so the hook intercepts the next import
+        sys.modules.pop('turtle', None)
+        if hook not in sys.meta_path:
+            sys.meta_path.insert(0, hook)
 
     def override_matplotlib(self):
         try:
@@ -196,6 +221,7 @@ class Papyros(python_runner.PyodideRunner):
         self._tracked_files.clear()
         self._tracking_files = True
         self._last_emitted_snapshot = None
+        self._last_emitted_turtle_svg = None
         with (
             redirect_stdout(python_runner.output.SysStream("output", self.output_buffer)),
             redirect_stderr(python_runner.output.SysStream("error", self.output_buffer)),
@@ -206,6 +232,7 @@ class Papyros(python_runner.PyodideRunner):
                 self.output("traceback", **self.serialize_traceback(e))
                 self._flush_open_files()
                 self._emit_created_files()
+                self._emit_turtle_snapshot()
             finally:
                 self._tracking_files = False
         self.post_run()
@@ -229,9 +256,11 @@ if __name__ == "{MODULE_NAME}":
                     self.callback("start", data="RunCode", contentType="text/plain")
                     if mode == "debug":
                         from tracer import JSONTracer
+
                         def frame_callback(frame):
                             self._flush_open_files()
                             self._emit_created_files()
+                            self._emit_turtle_snapshot()
                             self.callback("frame", data=frame, contentType="application/json")
 
                         result = JSONTracer(frame_callback=frame_callback, module_name=MODULE_NAME).runscript(source_code)
@@ -241,6 +270,7 @@ if __name__ == "{MODULE_NAME}":
                         result = await result
                     self._flush_open_files()
                     self._emit_created_files()
+                    self._emit_turtle_snapshot()
                     self.callback("end", data="CodeFinished", contentType="text/plain")
                     return result
             except ModuleNotFoundError as mnf:
@@ -257,6 +287,7 @@ if __name__ == "{MODULE_NAME}":
                 # with a js_error containing the reason
                 js_error = str(getattr(e, "js_error", ""))
                 if isinstance(e, KeyboardInterrupt) or "KeyboardInterrupt" in js_error:
+                    self._emit_turtle_snapshot()
                     self.callback("interrupt", data="KeyboardInterrupt", contentType="text/plain")
                 else:
                     raise
