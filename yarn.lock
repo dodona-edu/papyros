@@ -73,9 +73,9 @@
     crelt "^1.0.5"
 
 "@codemirror/search@^6.5.4":
-  version "6.6.0"
-  resolved "https://registry.yarnpkg.com/@codemirror/search/-/search-6.6.0.tgz#3b83a1e35391e1575a83a3b485e3f95263ddaa0b"
-  integrity sha512-koFuNXcDvyyotWcgOnZGmY7LZqEOXZaaxD/j6n18TCLx2/9HieZJ5H6hs1g8FiRxBD0DNfs0nXn17g872RmYdw==
+  version "6.7.0"
+  resolved "https://registry.yarnpkg.com/@codemirror/search/-/search-6.7.0.tgz#c6bea0ab0e882395d03a760b1a7d3959b1f3a4ac"
+  integrity sha512-ZvGm99wc/s2cITtMT15LFdn8aH/aS+V+DqyGq/N5ZlV5vWtH+nILvC2nw0zX7ByNoHHDZ2IxxdW38O0tc5nVHg==
   dependencies:
     "@codemirror/state" "^6.0.0"
     "@codemirror/view" "^6.37.0"
@@ -89,9 +89,9 @@
     "@marijn/find-cluster-break" "^1.0.0"
 
 "@codemirror/view@^6.17.0", "@codemirror/view@^6.23.0", "@codemirror/view@^6.27.0", "@codemirror/view@^6.28.0", "@codemirror/view@^6.35.0", "@codemirror/view@^6.37.0":
-  version "6.41.0"
-  resolved "https://registry.yarnpkg.com/@codemirror/view/-/view-6.41.0.tgz#482cbcb5f8f90131908e5f9c0e2f4681e0684db0"
-  integrity sha512-6H/qadXsVuDY219Yljhohglve8xf4B8xJkVOEWfA5uiYKiTFppjqsvsfR5iPA0RbvRBoOyTZpbLIxe9+0UR8xA==
+  version "6.41.1"
+  resolved "https://registry.yarnpkg.com/@codemirror/view/-/view-6.41.1.tgz#8ecb39af289e7d03df0f3fb6e3c9b1f8747839bf"
+  integrity sha512-ToDnWKbBnke+ZLrP6vgTTDScGi5H37YYuZGniQaBzxMVdtCxMrslsmtnOvbPZk4RX9bvkQqnWR/WS/35tJA0qg==
   dependencies:
     "@codemirror/state" "^6.6.0"
     crelt "^1.0.6"
