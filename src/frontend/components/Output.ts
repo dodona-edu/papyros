@@ -149,7 +149,7 @@ export class Output extends PapyrosElement {
             if (o.type === OutputType.stdout) {
                 return html`${o.content}`;
             } else if (o.type === OutputType.img) {
-                const mimeType = o.contentType?.replace(/^img\//, "image/") ?? "image/png";
+                const mimeType = o.contentType ?? "image/png";
                 return html`<img src="data:${mimeType},${o.content}"></img>`;
             } else if (o.type === OutputType.turtle) {
                 const mimeType = o.contentType ?? "image/svg+xml;base64";

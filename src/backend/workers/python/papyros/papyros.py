@@ -126,7 +126,7 @@ class Papyros(python_runner.PyodideRunner):
                 # encode to a base64 str
                 img = base64.b64encode(buf.read()).decode("utf-8")
                 matplotlib.pyplot.clf()
-                self.output("img", img, contentType="img/png;base64")
+                self.output("img", img, contentType="image/png;base64")
 
             matplotlib.pyplot.show = show
         except ModuleNotFoundError:

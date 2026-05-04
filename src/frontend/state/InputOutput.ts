@@ -124,7 +124,7 @@ export class InputOutput extends State {
         BackendManager.subscribe(BackendEventType.Start, () => this.reset());
         BackendManager.subscribe(BackendEventType.Output, (e) => {
             const data = parseData(e.data, e.contentType);
-            if (e.contentType && e.contentType.startsWith("img")) {
+            if (e.contentType && e.contentType.startsWith("image/")) {
                 this.logImage(data, e.contentType);
             } else {
                 this.logOutput(data);
@@ -175,7 +175,7 @@ export class InputOutput extends State {
         this.output = [...this.output, { type: OutputType.stderr, content: error }];
     }
 
-    public logImage(imageData: string, contentType: string = "img/png"): void {
+    public logImage(imageData: string, contentType: string = "image/png"): void {
         this.output = [...this.output, { type: OutputType.img, content: imageData, contentType }];
     }
 
