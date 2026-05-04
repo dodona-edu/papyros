@@ -17,7 +17,7 @@ export function debounce<T extends (...args: any[]) => void>(fn: T, delay: numbe
 
 /**
  * Parse the data contained within a PapyrosEvent using its contentType
- * Supported content types are: text/plain, text/json, img/png;base64
+ * Supported content types are: text/plain, text/json, image/png;base64
  * @param {string} data The data to parse
  * @param {string} contentType The content type of the data
  * @return {any} The parsed data
@@ -45,9 +45,10 @@ export function parseData(data: string, contentType?: string): any {
             }
             break;
         }
-        case "img": {
+        case "image": {
             switch (specificType) {
-                case "png;base64": {
+                case "png;base64":
+                case "svg+xml;base64": {
                     return data;
                 }
             }
