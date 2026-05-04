@@ -50,22 +50,9 @@ export class App extends PapyrosElement {
                 background-color: var(--md-sys-color-surface-container);
                 color: var(--md-sys-color-on-surface);
                 flex: 1;
-                overflow: auto;
+                overflow: hidden;
                 min-height: 0;
                 min-width: 0;
-            }
-
-            .stack {
-                display: flex;
-                flex-direction: column;
-                flex: 1;
-                gap: 1rem;
-                min-height: 0;
-                min-width: 0;
-            }
-
-            .stack > p-input {
-                flex: 0 0 auto;
             }
 
             .header {
@@ -175,10 +162,10 @@ export class App extends PapyrosElement {
                                 <p-code-runner .papyros=${this.papyros} class="container" slot="first">
                                     <p-example-picker .papyros=${this.papyros} slot="buttons"></p-example-picker>
                                 </p-code-runner>
-                                <div class="stack" slot="second">
-                                    <p-output .papyros=${this.papyros} class="container"></p-output>
-                                    <p-input .papyros=${this.papyros} class="container"></p-input>
-                                </div>
+                                <p-resize column .percentage=${80} slot="second">
+                                    <p-output .papyros=${this.papyros} class="container" slot="first"></p-output>
+                                    <p-input .papyros=${this.papyros} class="container" slot="second"></p-input>
+                                </p-resize>
                             </p-resize>
                             <p-debugger .papyros=${this.papyros} slot="second" class="container"></p-debugger>
                         </p-resize>
