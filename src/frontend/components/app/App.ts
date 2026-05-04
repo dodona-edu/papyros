@@ -82,7 +82,7 @@ export class App extends PapyrosElement {
                 min-width: 0;
                 min-height: 0;
             }
-            
+
             .max-width {
                 max-width: 1500px;
                 height: 100%;

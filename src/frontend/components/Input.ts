@@ -16,8 +16,8 @@ export class Input extends PapyrosElement {
                 gap: 0.5rem;
                 margin-top: 0.5rem;
             }
-            
-            :host{
+
+            :host {
                 display: flex;
                 flex-direction: column;
             }
