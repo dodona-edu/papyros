@@ -45,6 +45,7 @@ export class App extends PapyrosElement {
             }
 
             .container {
+                box-sizing: border-box;
                 padding: 1.5rem;
                 border-radius: 1rem;
                 background-color: var(--md-sys-color-surface-container);
