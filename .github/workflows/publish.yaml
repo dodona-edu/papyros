@@ -12,16 +12,21 @@ jobs:
   build-and-publish:
     needs: [test]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-      - name: Install and Build 🔧
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+          cache: yarn
+          registry-url: 'https://registry.npmjs.org'
+      - name: Install and Build
         run: |
-          yarn install
+          yarn install --frozen-lockfile
           yarn build:lib
       - name: Publish @dodona/papyros to NPM
-        uses: JS-DevTools/npm-publish@v4
-        with:
-          token: ${{ secrets.NPM_AUTH_TOKEN }}
-          check-version: true
-          access: public
+        run: npm publish --provenance --access public
