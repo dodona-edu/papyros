@@ -47,14 +47,21 @@ export class Output extends PapyrosElement {
                 margin: 0.5rem 0;
             }
 
-            img.turtle,
-            .turtle-placeholder {
-                width: min(100cqw, 100cqh);
-                height: min(100cqw, 100cqh);
-                max-width: 100%;
-                max-height: 100%;
+            img.turtle {
+                max-width: 100cqw;
+                max-height: 100cqh;
                 margin: 0;
                 box-sizing: border-box;
+                background-color: var(--md-sys-color-surface-container-highest);
+                border: 1px solid var(--md-sys-color-outline-variant);
+            }
+
+            .turtle-placeholder {
+                width: 400px;
+                height: 400px;
+                max-width: 100cqw;
+                max-height: 100cqh;
+                margin: 0;
                 background-color: var(--md-sys-color-surface-container-highest);
                 border: 1px solid var(--md-sys-color-outline-variant);
             }
