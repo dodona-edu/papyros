@@ -57,11 +57,32 @@ class TurtleImportHook:
             def render():
                 self.papyros._emit_turtle_snapshot()
 
+            def setup(width=400, height=400, startx=None, starty=None):
+                # Mirror stdlib turtle: floats in (0, 1] are a fraction of the
+                # screen. Papyros has no real screen, so resolve fractions
+                # against a 1000px reference.
+                def resolve(value):
+                    if isinstance(value, float) and 0 < value <= 1:
+                        return int(value * 1000)
+                    v = int(value)
+                    if v <= 0:
+                        raise ValueError(f"turtle.setup() requires positive dimensions, got {value!r}")
+                    return v
+                w = resolve(width)
+                h = resolve(height)
+                canvas.options['width'] = w
+                canvas.options['height'] = h
+                canvas.options['scrollregion'] = (-w // 2, -h // 2, w // 2, h // 2)
+                screen.canvwidth = w
+                screen.canvheight = h
+
             turtle_mod.Turtle = PapyrosTurtle
             turtle_mod.done = render
             turtle_mod.mainloop = render
             turtle_mod.exitonclick = render
             turtle_mod.bye = render
+            turtle_mod.setup = setup
+            screen.setup = lambda width=400, height=400, startx=None, starty=None: setup(width, height)
 
             self.render = render
             return turtle_mod
