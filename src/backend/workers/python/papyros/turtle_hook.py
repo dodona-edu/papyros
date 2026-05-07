@@ -68,8 +68,13 @@ class TurtleImportHook:
                     if v <= 0:
                         raise ValueError(f"turtle.setup() requires positive dimensions, got {value!r}")
                     return v
-                canvas.options['width'] = resolve(width)
-                canvas.options['height'] = resolve(height)
+                w = resolve(width)
+                h = resolve(height)
+                canvas.options['width'] = w
+                canvas.options['height'] = h
+                canvas.options['scrollregion'] = (-w // 2, -h // 2, w // 2, h // 2)
+                screen.canvwidth = w
+                screen.canvheight = h
 
             turtle_mod.Turtle = PapyrosTurtle
             turtle_mod.done = render
