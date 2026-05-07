@@ -77,6 +77,7 @@ class TurtleImportHook:
             turtle_mod.exitonclick = render
             turtle_mod.bye = render
             turtle_mod.setup = setup
+            screen.setup = lambda width=400, height=400, startx=None, starty=None: setup(width, height)
 
             self.render = render
             return turtle_mod
