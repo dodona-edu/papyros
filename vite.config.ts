@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import { playwright } from "@vitest/browser-playwright";
+import browserslistToEsbuild from "browserslist-to-esbuild";
 
 export default defineConfig({
     oxc: {
@@ -7,6 +8,9 @@ export default defineConfig({
             "import-attributes": true,
             "import-assertions": true,
         },
+    },
+    build: {
+        target: browserslistToEsbuild(),
     },
     worker: {
         format: "es",

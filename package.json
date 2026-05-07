@@ -34,6 +34,8 @@
     "@types/serviceworker": "^0.0.196",
     "@vitest/browser": "^4.0.6",
     "@vitest/browser-playwright": "^4.0.6",
+    "browserslist": "^4.28.2",
+    "browserslist-to-esbuild": "^2.1.1",
     "eslint": "^10.0.2",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-lit": "^2.1.1",
