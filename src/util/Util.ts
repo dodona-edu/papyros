@@ -7,6 +7,28 @@ export function isValidFileName(name: string): boolean {
     return segments.every((s) => s.length > 0 && s !== "." && s !== "..");
 }
 
+const TEXT_MIME_PATTERNS = ["text/", "application/json", "application/xml", "application/javascript"];
+
+export function isTextMimeType(mime: string | null | undefined): boolean {
+    if (!mime) {
+        // No MIME type — assume text
+        return true;
+    }
+    // Strip parameters like "; charset=utf-8" before matching
+    const base = mime.split(";")[0].trim().toLowerCase();
+    return TEXT_MIME_PATTERNS.some((prefix) => base.startsWith(prefix));
+}
+
+export function arrayBufferToBase64(buffer: ArrayBuffer): string {
+    const bytes = new Uint8Array(buffer);
+    const CHUNK = 8192;
+    const chunks: string[] = [];
+    for (let i = 0; i < bytes.length; i += CHUNK) {
+        chunks.push(String.fromCharCode(...bytes.subarray(i, i + CHUNK)));
+    }
+    return btoa(chunks.join(""));
+}
+
 export function debounce<T extends (...args: any[]) => void>(fn: T, delay: number): T {
     let timer: ReturnType<typeof setTimeout> | undefined;
     return ((...args: Parameters<T>) => {

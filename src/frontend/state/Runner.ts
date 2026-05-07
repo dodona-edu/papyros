@@ -3,7 +3,7 @@ import { SyncClient } from "comsync";
 import { Backend, RunMode, WorkerDiagnostic } from "../../backend/Backend";
 import { BackendEvent, BackendEventType } from "../../communication/BackendEvent";
 import { BackendManager } from "../../communication/BackendManager";
-import { parseData } from "../../util/Util";
+import { arrayBufferToBase64, isTextMimeType, isValidFileName, parseData } from "../../util/Util";
 import { State, stateProperty } from "@dodona/lit-state";
 import { Papyros } from "./Papyros";
 import { ProgrammingLanguage } from "../../ProgrammingLanguage";
@@ -291,6 +291,44 @@ export class Runner extends State {
     public async renameFile(oldName: string, newName: string): Promise<void> {
         const backend = await this.backend;
         await backend.workerProxy.renameFile(oldName, newName);
+    }
+
+    public upsertFile(name: string, content: string, binary: boolean): void {
+        this.papyros.io.upsertFile(name, content, binary);
+        void this.updateFile(name, content, binary);
+    }
+
+    public async fetchAndAddUrl(rawUrl: string): Promise<void> {
+        try {
+            const url = new URL(rawUrl);
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status} ${response.statusText}`);
+            }
+            const name = this.filenameFromUrl(url);
+            const contentType = response.headers.get("Content-Type");
+            if (isTextMimeType(contentType)) {
+                this.upsertFile(name, await response.text(), false);
+            } else {
+                this.upsertFile(name, arrayBufferToBase64(await response.arrayBuffer()), true);
+            }
+        } catch (err) {
+            console.warn("Failed to fetch dropped URL:", rawUrl, err);
+            alert(this.papyros.i18n.t("Papyros.url_fetch_error", { url: rawUrl }));
+        }
+    }
+
+    private filenameFromUrl(url: URL): string {
+        const segments = url.pathname.split("/").filter((s) => s.length > 0);
+        let candidate = segments[segments.length - 1] ?? "";
+        try {
+            candidate = decodeURIComponent(candidate);
+        } catch {
+            // Leave as-is if decoding fails
+        }
+        if (isValidFileName(candidate)) return candidate;
+        if (isValidFileName(url.hostname)) return url.hostname;
+        return "download";
     }
 
     public async provideFiles(inlinedFiles: Record<string, string>, hrefFiles: Record<string, string>): Promise<void> {
