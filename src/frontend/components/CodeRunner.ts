@@ -3,34 +3,12 @@ import { PapyrosElement } from "./PapyrosElement";
 import { css, CSSResult, html, TemplateResult } from "lit";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { CODE_TAB } from "../state/InputOutput";
-import { isValidFileName } from "../../util/Util";
+import { arrayBufferToBase64, isTextMimeType } from "../../util/Util";
 import "./code_runner/Code";
 import "./code_runner/RunState";
 import "./code_runner/ButtonLint";
 import "./EditorTabs";
 import "./FileViewer";
-
-const TEXT_MIME_PATTERNS = ["text/", "application/json", "application/xml", "application/javascript"];
-
-function isTextMimeType(mime: string | null | undefined): boolean {
-    if (!mime) {
-        // No MIME type — assume text
-        return true;
-    }
-    // Strip parameters like "; charset=utf-8" before matching
-    const base = mime.split(";")[0].trim().toLowerCase();
-    return TEXT_MIME_PATTERNS.some((prefix) => base.startsWith(prefix));
-}
-
-function arrayBufferToBase64(buffer: ArrayBuffer): string {
-    const bytes = new Uint8Array(buffer);
-    const CHUNK = 8192;
-    const chunks: string[] = [];
-    for (let i = 0; i < bytes.length; i += CHUNK) {
-        chunks.push(String.fromCharCode(...bytes.subarray(i, i + CHUNK)));
-    }
-    return btoa(chunks.join(""));
-}
 
 @customElement("p-code-runner")
 export class CodeRunner extends PapyrosElement {
@@ -139,61 +117,23 @@ export class CodeRunner extends PapyrosElement {
                 .map((line) => line.trim())
                 .filter((line) => line && !line.startsWith("#"));
             for (const url of urls) {
-                void this.fetchAndAddUrl(url);
+                void this.papyros.runner.fetchAndAddUrl(url);
             }
         }
     };
-
-    private upsertFile(name: string, content: string, binary: boolean): void {
-        this.papyros.io.upsertFile(name, content, binary);
-        void this.papyros.runner.updateFile(name, content, binary);
-    }
 
     private readAndAddFile(file: File): void {
         const reader = new FileReader();
         if (isTextMimeType(file.type)) {
             reader.onload = (): void => {
-                this.upsertFile(file.name, reader.result as string, false);
+                this.papyros.runner.upsertFile(file.name, reader.result as string, false);
             };
             reader.readAsText(file);
         } else {
             reader.onload = (): void => {
-                this.upsertFile(file.name, arrayBufferToBase64(reader.result as ArrayBuffer), true);
+                this.papyros.runner.upsertFile(file.name, arrayBufferToBase64(reader.result as ArrayBuffer), true);
             };
             reader.readAsArrayBuffer(file);
-        }
-    }
-
-    private filenameFromUrl(url: URL): string {
-        const segments = url.pathname.split("/").filter((s) => s.length > 0);
-        let candidate = segments[segments.length - 1] ?? "";
-        try {
-            candidate = decodeURIComponent(candidate);
-        } catch {
-            // Leave as-is if decoding fails
-        }
-        if (isValidFileName(candidate)) return candidate;
-        if (isValidFileName(url.hostname)) return url.hostname;
-        return "download";
-    }
-
-    private async fetchAndAddUrl(rawUrl: string): Promise<void> {
-        try {
-            const url = new URL(rawUrl);
-            const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status} ${response.statusText}`);
-            }
-            const name = this.filenameFromUrl(url);
-            const contentType = response.headers.get("Content-Type");
-            if (isTextMimeType(contentType)) {
-                this.upsertFile(name, await response.text(), false);
-            } else {
-                this.upsertFile(name, arrayBufferToBase64(await response.arrayBuffer()), true);
-            }
-        } catch (err) {
-            console.warn("Failed to fetch dropped URL:", rawUrl, err);
-            alert(this.t("Papyros.url_fetch_error", { url: rawUrl }));
         }
     }
 
