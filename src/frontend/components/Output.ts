@@ -168,18 +168,17 @@ export class Output extends PapyrosElement {
                     const errorObject = o.content as FriendlyError;
                     const errorHTML = [
                         // an array to avoid unintentional spaces/newlines
-                        html`<md-icon title="${errorObject.info}"> ${this.papyros.constants.icons.help} </md-icon>
-                            ${errorObject.name} traceback:
-                            <md-icon title="${errorObject.traceback}">
-                                ${this.papyros.constants.icons.info}
-                            </md-icon> `,
-                        html`<span class="where">${errorObject.where?.trim()}</span> `,
+                        html`<md-icon title="${errorObject.info}">${this.papyros.constants.icons.help}</md-icon
+                            >${errorObject.name} traceback:`,
+                        "\n",
+                        html`<md-icon title="${errorObject.traceback}">${this.papyros.constants.icons.info}</md-icon>`,
+                        html`<span class="where">${errorObject.where?.trim()}</span>`,
                     ];
                     if (errorObject.what) {
-                        errorHTML.push(html`<span class="what">${errorObject.what.trim()}</span> `);
+                        errorHTML.push("\n", html`<span class="what">${errorObject.what.trim()}</span>`);
                     }
                     if (errorObject.why) {
-                        errorHTML.push(html`<span class="why">${errorObject.why.trim()}</span> `);
+                        errorHTML.push("\n", html`<span class="why">${errorObject.why.trim()}</span>`);
                     }
                     return html`<span class="error">${errorHTML}</span>`;
                 }
