@@ -308,6 +308,8 @@ if __name__ == "{MODULE_NAME}":
         tb = fr.info.get("shortened_traceback", "")
         info = fr.info.get("generic", "")
         why = fr.info.get("cause", "")
+        if why.startswith("No information is known about this exception."):
+            why = ""
         what = fr.info.get("message", "")
 
         name = type(exc).__name__
