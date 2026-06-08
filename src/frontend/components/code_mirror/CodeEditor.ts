@@ -21,7 +21,7 @@ import {
     completionKeymap,
 } from "@codemirror/autocomplete";
 import { highlightSelectionMatches, searchKeymap } from "@codemirror/search";
-import { linter, lintGutter, lintKeymap } from "@codemirror/lint";
+import { linter, lintGutter, lintKeymap, forceLinting } from "@codemirror/lint";
 import { css, CSSResult } from "lit";
 import { javascript } from "@codemirror/lang-javascript";
 import { python } from "@codemirror/lang-python";
@@ -35,8 +35,13 @@ import {
     testLineExtension,
 } from "./Extensions";
 import readOnlyRangesExtension from "codemirror-readonly-ranges";
+import { BackendManager } from "../../../communication/BackendManager";
+import { BackendEventType } from "../../../communication/BackendEvent";
+import { parseData } from "../../../util/Util";
 
 const tabCompletionKeyMap = [{ key: "Tab", run: acceptCompletion }];
+// Dispatched to ask the linter to re-run without a document change (see needsRefresh).
+const forceLintEffect = StateEffect.define<null>();
 const languageExtensions: Record<ProgrammingLanguage, LanguageSupport> = {
     JavaScript: javascript(),
     Python: python(),
@@ -88,6 +93,25 @@ export class CodeEditor extends CodeMirrorEditor {
             debugging: value ? debugLineExtension : [highlightActiveLineGutter(), lintGutter(), highlightActiveLine()],
         });
         this.readonly = value;
+    }
+
+    private reLintOnLoaded = (e: { data: string; contentType?: string }): void => {
+        // The linter resolves imports against the packages installed in the worker,
+        // so code linted while a package is still downloading is wrongly flagged as
+        // "unable to import X". The editor does not re-lint on its own, so when a
+        // package finishes installing, force a re-lint to clear those stale errors.
+        const loadingData = parseData(e.data, e.contentType);
+        if (loadingData.status === "loaded" && this.view) {
+            // forceLinting only runs an already-scheduled lint, so first dispatch
+            // forceLintEffect to schedule one (via the linter's needsRefresh).
+            this.view.dispatch({ effects: forceLintEffect.of(null) });
+            forceLinting(this.view);
+        }
+    };
+
+    public override connectedCallback(): void {
+        super.connectedCallback();
+        BackendManager.subscribe(BackendEventType.Loading, this.reLintOnLoaded);
     }
 
     set debugLine(value: number | undefined) {
@@ -181,6 +205,12 @@ export class CodeEditor extends CodeMirrorEditor {
                     const to = Math.min(toLine.from + d.endColumnNr, toLine.to);
                     return { ...d, from: from, to: to };
                 });
+            }, {
+                // Re-lint when we dispatch forceLintEffect, even though the document
+                // hasn't changed (e.g. after a package finishes installing).
+                needsRefresh: update => update.transactions.some(
+                    tr => tr.effects.some(e => e.is(forceLintEffect))
+                ),
             }),
         });
     }
