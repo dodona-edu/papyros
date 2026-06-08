@@ -31,6 +31,7 @@ export class Output extends PapyrosElement {
                 overflow: auto;
                 container-type: size;
                 padding: 0.75rem;
+                border-radius: 0.5rem;
                 background-color: var(--md-sys-color-surface-container-highest);
             }
 
