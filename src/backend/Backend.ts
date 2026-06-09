@@ -74,9 +74,11 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
     /**
      * Initialize the backend by doing all setup-related work
      * @param {function(BackendEvent):void} onEvent Callback for when events occur
+     * @param {string|undefined} pyodideAssetURL Optional location where pyodide assets can be fetched from if the backend needs it
      * @return {Promise<void>} Promise of launching
      */
-    public async launch(onEvent: (e: BackendEvent) => void): Promise<void> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public async launch(onEvent: (e: BackendEvent) => void, pyodideAssetURL: string | undefined): Promise<void> {
         this.onEvent = (e: BackendEvent) => {
             onEvent(e);
             if (e.type === BackendEventType.Sleep) {
