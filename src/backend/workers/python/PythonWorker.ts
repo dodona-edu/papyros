@@ -1,6 +1,6 @@
 import { Backend, RunMode, WorkerDiagnostic } from "../../Backend";
 import { BackendEvent } from "../../../communication/BackendEvent";
-import { PyodideInterface } from "pyodide";
+import { loadPyodide, PyodideInterface } from "pyodide";
 import { PyProxy } from "pyodide/ffi";
 import { pyodideExpose, PyodideExtras, loadPyodideAndPackage } from "pyodide-worker-runner";
 
@@ -34,13 +34,16 @@ export class PythonWorker extends Backend<PyodideExtras> {
         return pyodideExpose;
     }
 
-    private static async getPyodide(): Promise<PyodideInterface> {
-        return await loadPyodideAndPackage({ url: pythonPackageUrl, format: ".tgz" });
+    private static async getPyodide(indexURL: string | undefined): Promise<PyodideInterface> {
+        if (indexURL === undefined) {
+            return await loadPyodideAndPackage({ url: pythonPackageUrl, format: ".tgz" });
+        }
+        return await loadPyodideAndPackage({ url: pythonPackageUrl, format: ".tgz" }, () => loadPyodide({ indexURL }));
     }
 
-    public async launch(onEvent: (e: BackendEvent) => void): Promise<void> {
-        await super.launch(onEvent);
-        this.pyodide = await PythonWorker.getPyodide();
+    public async launch(onEvent: (e: BackendEvent) => void, pyodideAssetURL: string | undefined): Promise<void> {
+        await super.launch(onEvent, pyodideAssetURL);
+        this.pyodide = await PythonWorker.getPyodide(pyodideAssetURL);
         // Python calls our function with a PyProxy dict or a Js Map,
         // These must be converted to a PapyrosEvent (JS Object) to allow message passing
         this.papyros = this.pyodide.pyimport("papyros").Papyros.callKwargs({

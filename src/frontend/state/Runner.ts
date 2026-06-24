@@ -52,6 +52,10 @@ export class Runner extends State {
             this.launch();
         }
     }
+
+    @stateProperty
+    pyodideAssetURL: string | undefined = undefined;
+
     /**
      * The backend that executes the code asynchronously
      */
@@ -182,7 +186,10 @@ export class Runner extends State {
         this.backend = new Promise(async (resolve) => {
             const workerProxy = backend.workerProxy;
             // Allow passing messages between worker and main thread
-            await workerProxy.launch(proxy((e: BackendEvent) => BackendManager.publish(e)));
+            await workerProxy.launch(
+                proxy((e: BackendEvent) => BackendManager.publish(e)),
+                this.pyodideAssetURL,
+            );
             this.updateRunModes();
             return resolve(backend);
         });
