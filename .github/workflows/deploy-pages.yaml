@@ -12,9 +12,9 @@ jobs:
       url: https://docs.dodona.be/papyros/
     steps:
       - name: Checkout branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Clone main
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: dodona-edu/papyros
           path: papyros
