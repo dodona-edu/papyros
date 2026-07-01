@@ -99,9 +99,9 @@
     w3c-keyname "^2.2.4"
 
 "@dodona/lit-state@^1.1.1":
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/@dodona/lit-state/-/lit-state-1.1.1.tgz#6d9814c20dcfc47cafca9b785d7ad7eb40c15db4"
-  integrity sha512-VeilJ3Vz1wvMJRgSNgggaMPuqDlQUQ3H1LAXD/shdANBG2mRXRcjdpvAR5mWcT2ubF4ZOckbYVeN8sPUspjBUQ==
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/@dodona/lit-state/-/lit-state-1.2.0.tgz#bf0bc499926381579dc26f595c6b5d8681134421"
+  integrity sha512-YcYH8f0YeCTVkC+dTO5Tmx4Po8EnasNy+pCoyfzC9+C/DneF6H93/fa4oHosfVPWfU0jOUipah0Buq7MOd3/ow==
   dependencies:
     lit "^3.3.1"
 
