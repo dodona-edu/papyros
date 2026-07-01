@@ -43,9 +43,11 @@ export class Input extends PapyrosElement {
 
     protected override render(): TemplateResult {
         return html`
-            ${this.mode === InputMode.batch
-                ? html`<p-batch-input .papyros=${this.papyros}></p-batch-input>`
-                : html`<p-interactive-input .papyros=${this.papyros}></p-interactive-input>`}
+            ${
+                this.mode === InputMode.batch
+                    ? html`<p-batch-input .papyros=${this.papyros}></p-batch-input>`
+                    : html`<p-interactive-input .papyros=${this.papyros}></p-interactive-input>`
+            }
             <label>
                 <md-switch .selected=${this.mode === InputMode.batch} @change=${() => this.toggleMode()}></md-switch>
                 ${this.t(`Papyros.switch_input_mode_to.${this.otherMode}`)}

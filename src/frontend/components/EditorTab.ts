@@ -183,29 +183,31 @@ export class EditorTab extends PapyrosElement {
                 @auxclick=${this.onAuxClick}
             >
                 ${this.file.name}
-                ${debugActive
-                    ? ""
-                    : html`<span
-                              class="rename-btn"
-                              role="button"
-                              tabindex="0"
-                              title=${this.t("Papyros.rename_file_tab")}
-                              aria-label=${this.t("Papyros.rename_file_tab")}
-                              @click=${this.onRenameClick}
-                              @keydown=${this.onRenameBtnKeydown}
-                          >
-                              ${this.papyros.constants.icons.edit}
-                          </span>
-                          <span
-                              class="close-btn"
-                              role="button"
-                              tabindex="0"
-                              title=${this.t("Papyros.close_file_tab")}
-                              aria-label=${this.t("Papyros.close_file_tab")}
-                              @click=${this.closeFile}
-                              @keydown=${this.onCloseBtnKeydown}
-                              >×</span
-                          >`}
+                ${
+                    debugActive
+                        ? ""
+                        : html`<span
+                                  class="rename-btn"
+                                  role="button"
+                                  tabindex="0"
+                                  title=${this.t("Papyros.rename_file_tab")}
+                                  aria-label=${this.t("Papyros.rename_file_tab")}
+                                  @click=${this.onRenameClick}
+                                  @keydown=${this.onRenameBtnKeydown}
+                              >
+                                  ${this.papyros.constants.icons.edit}
+                              </span>
+                              <span
+                                  class="close-btn"
+                                  role="button"
+                                  tabindex="0"
+                                  title=${this.t("Papyros.close_file_tab")}
+                                  aria-label=${this.t("Papyros.close_file_tab")}
+                                  @click=${this.closeFile}
+                                  @keydown=${this.onCloseBtnKeydown}
+                                  >×</span
+                              >`
+                }
             </button>
         `;
     }
