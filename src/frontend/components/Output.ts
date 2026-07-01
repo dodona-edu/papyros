@@ -202,16 +202,18 @@ export class Output extends PapyrosElement {
                 >
                     ${this.t("Papyros.output_tab_output")}
                 </button>
-                ${this.showTurtleTab
-                    ? html`
-                          <button
-                              class=${activeTab === TURTLE_TAB ? "active" : ""}
-                              @click=${() => this.papyros.io.selectOutputTab(TURTLE_TAB)}
-                          >
-                              ${this.t("Papyros.output_tab_turtle")}
-                          </button>
-                      `
-                    : html``}
+                ${
+                    this.showTurtleTab
+                        ? html`
+                              <button
+                                  class=${activeTab === TURTLE_TAB ? "active" : ""}
+                                  @click=${() => this.papyros.io.selectOutputTab(TURTLE_TAB)}
+                              >
+                                  ${this.t("Papyros.output_tab_turtle")}
+                              </button>
+                          `
+                        : html``
+                }
             </div>
         `;
     }
@@ -225,21 +227,25 @@ export class Output extends PapyrosElement {
         return html`
             ${this.renderTabs()}
             <div class="content ${activeTab === TURTLE_TAB ? "turtle" : ""}">
-                ${showPlaceholder
-                    ? html`<pre class="place-holder">${this.t("Papyros.output_placeholder")}</pre>`
-                    : showTurtlePlaceholder
-                      ? html`<div class="turtle-placeholder"></div>`
-                      : html`<pre>${rendered}</pre>`}
-                ${showOverflow
-                    ? html`
-                          <p>
-                              ${this.t("Papyros.output_overflow")}
-                              <a href="${this.downloadOverflowUrl}" download="papyros_output.txt">
-                                  ${this.t("Papyros.output_overflow_download")}
-                              </a>
-                          </p>
-                      `
-                    : html``}
+                ${
+                    showPlaceholder
+                        ? html`<pre class="place-holder">${this.t("Papyros.output_placeholder")}</pre>`
+                        : showTurtlePlaceholder
+                          ? html`<div class="turtle-placeholder"></div>`
+                          : html`<pre>${rendered}</pre>`
+                }
+                ${
+                    showOverflow
+                        ? html`
+                              <p>
+                                  ${this.t("Papyros.output_overflow")}
+                                  <a href="${this.downloadOverflowUrl}" download="papyros_output.txt">
+                                      ${this.t("Papyros.output_overflow_download")}
+                                  </a>
+                              </p>
+                          `
+                        : html``
+                }
             </div>
         `;
     }

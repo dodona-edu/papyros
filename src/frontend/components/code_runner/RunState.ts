@@ -24,9 +24,11 @@ export class RunStateEl extends PapyrosElement {
         if (!this.papyros.runner.stateMessage) return html``;
 
         return html`
-            ${this.papyros.runner.state === RunState.Ready
-                ? ""
-                : html` <md-circular-progress indeterminate></md-circular-progress> `}
+            ${
+                this.papyros.runner.state === RunState.Ready
+                    ? ""
+                    : html` <md-circular-progress indeterminate></md-circular-progress> `
+            }
             ${this.papyros.runner.stateMessage}
         `;
     }

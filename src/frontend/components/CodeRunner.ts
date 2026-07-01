@@ -146,12 +146,16 @@ export class CodeRunner extends PapyrosElement {
             <div ${ref(this.dropZoneRef)} class="drop-zone ${this.dragOver ? "drag-over" : ""}">
                 <p-editor-tabs .papyros=${this.papyros} .files=${files}></p-editor-tabs>
                 <div class="editor">
-                    ${activeTab === CODE_TAB
-                        ? html`<p-code .papyros=${this.papyros}></p-code>`
-                        : html`<p-file-viewer .papyros=${this.papyros} .file=${activeFile}></p-file-viewer>`}
-                    ${this.papyros.runner.stateMessage
-                        ? html`<p-run-state .papyros=${this.papyros}></p-run-state>`
-                        : ""}
+                    ${
+                        activeTab === CODE_TAB
+                            ? html`<p-code .papyros=${this.papyros}></p-code>`
+                            : html`<p-file-viewer .papyros=${this.papyros} .file=${activeFile}></p-file-viewer>`
+                    }
+                    ${
+                        this.papyros.runner.stateMessage
+                            ? html`<p-run-state .papyros=${this.papyros}></p-run-state>`
+                            : ""
+                    }
                 </div>
                 <p-button-lint .papyros=${this.papyros}>
                     <slot name="buttons"></slot>
