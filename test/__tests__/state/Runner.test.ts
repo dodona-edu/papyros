@@ -71,13 +71,35 @@ const c = a + b;`;
         expect(Array.isArray(diagnostics)).toBe(true);
     }, 60000);
 
-    it("should lint code that uses pandas without hanging", async () => {
+    it("should lint code that uses pandas without hanging or a false import-error", async () => {
         const papyros = new Papyros();
         await papyros.launch();
         papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
         papyros.runner.code = "import pandas as pd\ndf = pd.DataFrame({'a': [1, 2, 3]})\n";
         const diagnostics = await papyros.runner.lintSource();
         expect(Array.isArray(diagnostics)).toBe(true);
+        // pandas is installed before linting, so it must not be flagged as unimportable
+        expect(diagnostics.some(d => /import-error|Unable to import/.test(d.message))).toBe(false);
+    }, 60000);
+
+    it("should report an import-error for a genuinely missing module", async () => {
+        const papyros = new Papyros();
+        await papyros.launch();
+        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
+        papyros.runner.code = "import this_module_truly_does_not_exist_xyz\n";
+        const diagnostics = await papyros.runner.lintSource();
+        expect(diagnostics.some(d => /import-error|Unable to import/.test(d.message))).toBe(true);
+    }, 60000);
+
+    it("should not flag stdlib modules astroid cannot build (os) as unimportable", async () => {
+        // astroid can't build `os` under Emscripten (it pulls in the posix built-in),
+        // which used to surface as a false "Unable to import 'os'".
+        const papyros = new Papyros();
+        await papyros.launch();
+        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
+        papyros.runner.code = "import os\nfrom os import getcwd\nprint(os.getcwd(), getcwd())\n";
+        const diagnostics = await papyros.runner.lintSource();
+        expect(diagnostics.some(d => /import-error|Unable to import|No name '.*' in module 'os'/.test(d.message))).toBe(false);
     }, 60000);
 
     it("should be able to handle sleep", async () => {

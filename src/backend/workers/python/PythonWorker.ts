@@ -61,18 +61,25 @@ export class PythonWorker extends Backend<PyodideExtras> {
     }
 
     /**
-     * Helper method to install imports and prevent race conditions with double downloading
+     * Helper method to install imports and prevent race conditions with double downloading.
+     * Installs are serialized (chained) so concurrent calls don't download the same
+     * package twice, but every call still installs the imports for ITS OWN code.
+     * A single shared promise must not be reused across calls: otherwise a call could
+     * ride on an install started for different code (e.g. the editor's empty initial
+     * buffer while it is still linting the real code), leaving its own imports
+     * uninstalled and producing a spurious "unable to import X" lint error.
      * @param {string} code The code containing import statements
      */
     private async installImports(code: string): Promise<void> {
-        if (this.installPromise == null) {
-            this.installPromise = this.papyros?.install_imports.callKwargs({
+        const install = (): Promise<void> | undefined =>
+            this.papyros?.install_imports.callKwargs({
                 source_code: code,
                 ignore_missing: true,
             });
-        }
+        // Chain onto any in-flight install (ignoring its outcome) so this call's
+        // imports are installed after it, without concurrent double-downloads.
+        this.installPromise = (this.installPromise ?? Promise.resolve()).then(install, install);
         await this.installPromise;
-        this.installPromise = null;
     }
 
     public override runModes(code: string): Array<RunMode> {
