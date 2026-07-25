@@ -73,8 +73,12 @@ export class Papyros extends State {
                 return false;
             }
             try {
-                await navigator.serviceWorker.register(this.serviceWorkerName, { scope: "/" });
-                BackendManager.channel = makeChannel({ serviceWorker: { scope: "/" } })!;
+                const registration = await navigator.serviceWorker.register(this.serviceWorkerName, { scope: "/" });
+                // The channel's scope becomes the base of a synchronous XHR inside the worker;
+                // a relative scope resolves against the worker's own base URL, which is opaque
+                // in a worker bootstrapped from a blob (see BackendManager.setWorkerUrl), so
+                // registration.scope (an absolute URL) is used instead
+                BackendManager.channel = makeChannel({ serviceWorker: { scope: registration.scope } })!;
                 await this.waitForActiveRegistration();
             } catch (e) {
                 this.errorHandler(new ServiceWorkerRegistrationError("Error registering service worker", { cause: e }));
