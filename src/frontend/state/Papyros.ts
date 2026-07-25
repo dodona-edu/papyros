@@ -9,6 +9,7 @@ import { makeChannel } from "sync-message";
 import { I18n } from "./I18n";
 import { Test } from "./Test";
 import { PapyrosLaunchError, ServiceWorkerRegistrationError } from "./PapyrosErrors";
+import { ProgrammingLanguage } from "../../ProgrammingLanguage";
 
 export class Papyros extends State {
     readonly debugger: Debugger = new Debugger(this);
@@ -52,6 +53,11 @@ export class Papyros extends State {
      */
     public setErrorHandler(handler: (error: Error) => void): void {
         this.errorHandler = handler;
+    }
+
+    /** @see BackendManager.setWorkerUrl */
+    public setWorkerUrl(language: ProgrammingLanguage, url: string | URL): void {
+        BackendManager.setWorkerUrl(language, url);
     }
 
     /**
