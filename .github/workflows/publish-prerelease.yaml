@@ -1,0 +1,44 @@
+name: Publish pre-release on NPM
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Pre-release version to publish (e.g. 4.8.0-rc.1)'
+        required: true
+        type: string
+      dist_tag:
+        description: 'npm dist-tag to publish under'
+        required: true
+        default: 'next'
+        type: string
+
+jobs:
+  test:
+    uses: ./.github/workflows/test.yaml
+    secrets: inherit
+  verify:
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ inputs.version }}
+      DIST_TAG: ${{ inputs.dist_tag }}
+    steps:
+      - name: Verify inputs
+        run: |
+          if ! [[ "$VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)-[0-9A-Za-z.-]+$ ]]; then
+            echo "::error::$VERSION is not a pre-release version (x.y.z-suffix); releases go through the tag-driven publish workflow"
+            exit 1
+          fi
+          if [ "$DIST_TAG" = "latest" ]; then
+            echo "::error::Refusing to publish a pre-release to the latest dist-tag"
+            exit 1
+          fi
+  publish:
+    needs: [test, verify]
+    uses: ./.github/workflows/npm-publish.yaml
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      version: ${{ inputs.version }}
+      dist_tag: ${{ inputs.dist_tag }}

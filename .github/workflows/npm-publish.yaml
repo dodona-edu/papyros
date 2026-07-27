@@ -1,0 +1,43 @@
+name: Build and publish on NPM
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version to write to package.json before building; empty publishes the committed version'
+        type: string
+        required: false
+        default: ''
+      dist_tag:
+        description: 'npm dist-tag to publish under'
+        type: string
+        required: false
+        default: 'latest'
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      VERSION: ${{ inputs.version }}
+      DIST_TAG: ${{ inputs.dist_tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+          cache: yarn
+          registry-url: 'https://registry.npmjs.org'
+      - name: Install and Build
+        run: |
+          yarn install --frozen-lockfile
+          if [ -n "$VERSION" ]; then
+            npm version "$VERSION" --no-git-tag-version
+          fi
+          yarn build:lib
+      - name: Publish @dodona/papyros to NPM
+        run: npm publish --provenance --access public --tag "$DIST_TAG"
