@@ -4,9 +4,10 @@ import "./frontend/components/CodeRunner";
 import "./frontend/components/Debugger";
 import { Papyros, papyros } from "./frontend/state/Papyros";
 import { InputMode } from "./frontend/state/InputOutput";
-import { RunMode } from "./backend/Backend";
+import { RunMode, WorkerDiagnostic } from "./backend/Backend";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
-import { OutputType, FriendlyError } from "./frontend/state/InputOutput";
+import { OutputType, FriendlyError, OutputEntry } from "./frontend/state/InputOutput";
+import { RunState } from "./frontend/state/Runner";
 import {
     PapyrosError,
     PapyrosLaunchError,
@@ -18,6 +19,7 @@ export {
     Papyros,
     InputMode,
     RunMode,
+    RunState,
     ProgrammingLanguage,
     OutputType,
     papyros,
@@ -26,4 +28,4 @@ export {
     ServiceWorkerRegistrationError,
     ServiceWorkerInputError,
 };
-export type { FriendlyError };
+export type { FriendlyError, OutputEntry, WorkerDiagnostic };
