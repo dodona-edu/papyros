@@ -1,6 +1,6 @@
 import { customElement, state } from "lit/decorators.js";
 import { PapyrosElement } from "./PapyrosElement";
-import { css, CSSResult, html, TemplateResult } from "lit";
+import { css, CSSResult, html, PropertyValues, TemplateResult } from "lit";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { CODE_TAB } from "../state/InputOutput";
 import { arrayBufferToBase64, isTextMimeType } from "../../util/Util";
@@ -65,6 +65,16 @@ export class CodeRunner extends PapyrosElement {
                 background-color: var(--md-sys-color-surface-container);
             }
         `;
+    }
+
+    /**
+     * Reflect backend readiness on the host, so surrounding pages can style or
+     * wait on it. Reading the state here keeps it inside the update cycle the
+     * StateController records, so the host re-renders when it flips.
+     */
+    protected override update(changedProperties: PropertyValues): void {
+        this.toggleAttribute("backend-ready", this.papyros.runner.backendReady);
+        super.update(changedProperties);
     }
 
     protected override firstUpdated(): void {

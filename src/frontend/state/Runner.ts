@@ -62,6 +62,13 @@ export class Runner extends State {
     @stateProperty
     public backend: Promise<SyncClient<Backend>>;
     /**
+     * Whether the backend has finished loading and can execute code.
+     * Runs may be started before this is true: they are queued until the
+     * backend is up, so the run state is Ready while it is still loading.
+     */
+    @stateProperty
+    public backendReady: boolean = false;
+    /**
      * Current state of the program
      */
     @stateProperty
@@ -180,6 +187,7 @@ export class Runner extends State {
      */
     public async launch(): Promise<void> {
         this.setState(RunState.Loading);
+        this.backendReady = false;
         const backend = BackendManager.getBackend(this.programmingLanguage);
         // Use a Promise to immediately enable running while downloading
         // eslint-disable-next-line no-async-promise-executor
@@ -191,6 +199,7 @@ export class Runner extends State {
                 this.pyodideAssetURL,
             );
             this.updateRunModes();
+            this.backendReady = true;
             return resolve(backend);
         });
         this.setState(RunState.Ready);
