@@ -105,12 +105,12 @@
   dependencies:
     lit "^3.3.1"
 
-"@dodona/trace-component@1.4.1":
-  version "1.4.1"
-  resolved "https://registry.yarnpkg.com/@dodona/trace-component/-/trace-component-1.4.1.tgz#9b7139b587e18de71e2982a5299f3a988f25e1bc"
-  integrity sha512-EyHI8EvynNcxoP6k1qImmrMxy2tLYAJp8pjxZBiTL8dwpm6MLwAXnchTwVMPegAcPbubgFTwubrS7WHqlQlT+A==
+"@dodona/trace-component@1.4.2":
+  version "1.4.2"
+  resolved "https://registry.yarnpkg.com/@dodona/trace-component/-/trace-component-1.4.2.tgz#b5ac12c0e3e9327191ac0ccf4a3fbd178790eadc"
+  integrity sha512-84pGj5ePOPnxzpWjDHLysXzwgVpu7lqPokRatMq//1XlJg5O9OB/oNVlFn1U2OSC8hr7o1Ostj1MDlaSF0EZvw==
   dependencies:
-    lit "^3.3.2"
+    lit "^3.3.3"
 
 "@emnapi/core@1.11.1":
   version "1.11.1"
@@ -1425,7 +1425,7 @@ lit-html@^3.3.0:
   dependencies:
     "@types/trusted-types" "^2.0.2"
 
-"lit@^2.8.0 || ^3.0.0", lit@^3.3.1, lit@^3.3.2:
+"lit@^2.8.0 || ^3.0.0", lit@^3.3.1, lit@^3.3.3:
   version "3.3.3"
   resolved "https://registry.yarnpkg.com/lit/-/lit-3.3.3.tgz#93579885e51a20a772c68482a34706fe1636e8f0"
   integrity sha512-fycuvZg/hkpozL00lm1pEJH5nN/lr9ZXd6mJI2HSN4+Bzc+LDNdEApJ6HFbPkdFNHLvOplIIuJvxkS4XUxqirw==
