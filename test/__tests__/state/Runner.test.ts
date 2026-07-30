@@ -21,6 +21,39 @@ const c = a + b;`;
         expect(papyros.runner.stateMessage).toMatch(/^Code executed in/);
     });
 
+    it("only reports the backend as ready once it has loaded", async () => {
+        const papyros = new Papyros();
+        await papyros.launch();
+        papyros.runner.programmingLanguage = ProgrammingLanguage.JavaScript;
+
+        // Runs are queued while the backend loads, so the run state is Ready first
+        expect(papyros.runner.state).toBe(RunState.Ready);
+        expect(papyros.runner.backendReady).toBe(false);
+
+        await papyros.runner.backend;
+        expect(papyros.runner.backendReady).toBe(true);
+    });
+
+    it("does not report a superseded launch as ready", async () => {
+        const papyros = new Papyros();
+        await papyros.launch();
+
+        papyros.runner.programmingLanguage = ProgrammingLanguage.JavaScript;
+        const superseded = papyros.runner.backend;
+        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
+        const current = papyros.runner.backend;
+
+        let currentLoaded = false;
+        current.then(() => (currentLoaded = true));
+
+        // Only the current backend may flip the flag, whichever finishes first
+        await superseded;
+        expect(papyros.runner.backendReady).toBe(currentLoaded);
+
+        await current;
+        expect(papyros.runner.backendReady).toBe(true);
+    });
+
     it("should run code that raises an error", async () => {
         const papyros = new Papyros();
         await papyros.launch();

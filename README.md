@@ -133,6 +133,7 @@ The codebase organized into clear layers:
 
 A [CodeMirror 6](https://codemirror.net/6/) editor to edit, run, and debug code.
 Additional buttons can be added via the `.buttons` slot.
+Reflects a `backend-ready` attribute once the backend has finished loading, so surrounding pages can style or wait on it.
 
 #### `<p-input>`
 
@@ -156,6 +157,7 @@ A `Papyros` instance contains multiple logical parts:
 * `papyros.i18n`: translations (extend or override as needed).
 * `papyros.io`: input/output handling. Subscribe to `awaitingInput` to supply input when needed.
 * `papyros.runner`: code, execution state, programming language. Run code with `papyros.runner.start()`.
+  Subscribe to `backendReady` to know when the backend has loaded; runs started before that are queued.
 * `papyros.test`: test code (appended to the code document).
 
 ---
