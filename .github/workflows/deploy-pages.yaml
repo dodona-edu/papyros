@@ -32,7 +32,7 @@ jobs:
       - name: Resolve Pyodide Python version
         id: pyver
         run: echo "version=$(jq -r '.info.python' papyros/node_modules/pyodide/pyodide-lock.json)" >> "$GITHUB_OUTPUT"
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ steps.pyver.outputs.version }}
       - name: Build branch
