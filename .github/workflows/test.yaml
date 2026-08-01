@@ -32,7 +32,7 @@ jobs:
           exit 1
         fi
         echo "version=$PYVER" >> "$GITHUB_OUTPUT"
-    - uses: actions/setup-python@v6
+    - uses: actions/setup-python@v7
       with:
         python-version: ${{ steps.pyver.outputs.version }}
     - name: Build python backend
