@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { InterruptError, SyncClient } from "../../../src/sync/SyncClient";
+import { SyncClient } from "../../../src/sync/SyncClient";
+import { InterruptError } from "../../../src/sync/errors";
 import { makeServiceWorkerChannel } from "../../../src/sync/channel";
 
 function idleClient(): SyncClient {

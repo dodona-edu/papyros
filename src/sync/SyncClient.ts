@@ -1,22 +1,19 @@
 /**
- * Vendored from comsync (https://github.com/alexmojaki/comsync).
+ * Vendored from comsync (https://github.com/alexmojaki/comsync) and
+ * pyodide-worker-runner (https://github.com/alexmojaki/pyodide-worker-runner).
  * Copyright (c) 2022 Alex Hall. MIT licensed, see THIRD-PARTY-NOTICES.md.
  */
-import { Channel, readMessage, uuidv4, writeMessage } from "./channel";
+import { Channel, uuidv4, writeMessage } from "./channel";
+import { InterruptError } from "./errors";
+import { makeMessageId, SyncMessageCallback } from "./expose";
 import * as Comlink from "comlink";
 
-export class InterruptError extends Error {
-    // To avoid having to use instanceof
-    public readonly type = "InterruptError";
-    public readonly name = this.type;
-}
-
-export class NoChannelError extends Error {
-    // To avoid having to use instanceof
-    public readonly type = "NoChannelError";
-    public readonly name = this.type;
-}
-
+/**
+ * Drives a worker whose methods were wrapped with `expose`, from the main thread.
+ *
+ * A worker blocked on input cannot answer Comlink messages, so every decision here is
+ * made from state tracked on this side. Asking the worker would deadlock whenever it is busy.
+ */
 export class SyncClient<T = any> {
     public interrupter?: () => void;
     public state: "idle" | "running" | "awaitingMessage" | "sleeping" = "idle";
@@ -46,6 +43,10 @@ export class SyncClient<T = any> {
         this._start();
     }
 
+    /**
+     * Stop the running call. A worker blocked on input or sleep is told through the channel,
+     * anything else needs the interrupt buffer, and without one the worker is replaced.
+     */
     public async interrupt(): Promise<void> {
         if (this.state === "idle") {
             return;
@@ -93,11 +94,19 @@ export class SyncClient<T = any> {
             }
         };
 
+        const interruptBuffer = this._makeInterruptBuffer();
+
         this._interruptPromise = new Promise((resolve, reject) => (this._interruptRejector = reject));
 
         try {
             return await Promise.race([
-                proxyMethod(this.channel, Comlink.proxy(syncMessageCallback), this._messageIdBase, ...args),
+                proxyMethod(
+                    this.channel,
+                    Comlink.proxy(syncMessageCallback),
+                    this._messageIdBase,
+                    interruptBuffer,
+                    ...args,
+                ),
                 this._interruptPromise,
             ]);
         } finally {
@@ -133,6 +142,21 @@ export class SyncClient<T = any> {
         delete this._worker;
     }
 
+    /**
+     * Pyodide can only raise KeyboardInterrupt through a shared buffer, which needs COOP/COEP.
+     * Without one, `interrupt` falls back to replacing the worker.
+     */
+    private _makeInterruptBuffer(): Int32Array | null {
+        if (typeof SharedArrayBuffer === "undefined") {
+            return null;
+        }
+        const buffer = new Int32Array(new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT));
+        this.interrupter = (): void => {
+            buffer[0] = 2;
+        };
+        return buffer;
+    }
+
     private async _writeMessage(message: any): Promise<void> {
         this.state = "running";
         const messageId = makeMessageId(this._messageIdBase!, this._messageIdSeq);
@@ -152,68 +176,4 @@ export class SyncClient<T = any> {
         delete this._awaitingMessageResolve;
         delete this._messageIdBase;
     }
-}
-
-export interface SyncExtras {
-    channel: Channel | null;
-    readMessage: () => any;
-    syncSleep: (ms: number) => void;
-}
-
-type SyncMessageCallbackStatus = "init" | "reading" | "sleeping" | "slept";
-type SyncMessageCallback = (status: SyncMessageCallbackStatus) => void;
-
-export function syncExpose<T extends any[], R>(
-    func: (extras: SyncExtras, ...args: T) => R,
-): (
-    channel: Channel | null,
-    syncMessageCallback: SyncMessageCallback,
-    messageIdBase: string,
-    ...args: T
-) => Promise<R> {
-    return async function (
-        channel: Channel | null,
-        syncMessageCallback: SyncMessageCallback,
-        messageIdBase: string,
-        ...args: T
-    ): Promise<R> {
-        await syncMessageCallback("init");
-        let messageIdSeq = 0;
-
-        function fullSyncMessageCallback(status: "reading" | "sleeping", options?: { timeout: number }): any {
-            if (!channel) {
-                throw new NoChannelError();
-            }
-            syncMessageCallback(status);
-            const messageId = makeMessageId(messageIdBase, ++messageIdSeq);
-            const response = readMessage(channel, messageId, options);
-            if (response) {
-                const { message, interrupted } = response;
-                if (interrupted) {
-                    throw new InterruptError();
-                }
-                return message;
-            } else if (status === "sleeping") {
-                syncMessageCallback("slept");
-            }
-        }
-
-        const extras: SyncExtras = {
-            channel,
-            readMessage(): any {
-                return fullSyncMessageCallback("reading");
-            },
-            syncSleep(ms: number): void {
-                if (!(ms > 0)) {
-                    return;
-                }
-                fullSyncMessageCallback("sleeping", { timeout: ms });
-            },
-        };
-        return func(extras, ...args);
-    };
-}
-
-function makeMessageId(base: string, seq: number): string {
-    return `${base}-${seq}`;
 }

@@ -4,7 +4,6 @@ import { BackendEvent, BackendEventType } from "./BackendEvent";
 import { LogType, papyrosLog } from "../util/Logging";
 import { Channel } from "../sync/channel";
 import { SyncClient } from "../sync/SyncClient";
-import { PyodideClient } from "../sync/pyodide";
 /**
  * Callback type definition for subscribers
  * @param {BackendEvent} e The published event
@@ -124,7 +123,7 @@ export abstract class BackendManager {
         BackendManager.registerBackend(
             ProgrammingLanguage.Python,
             () =>
-                new PyodideClient<Backend>(
+                new SyncClient<Backend>(
                     () =>
                         new Worker(new URL("../backend/workers/python/worker", import.meta.url), {
                             type: "module",
