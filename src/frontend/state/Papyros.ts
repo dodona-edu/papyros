@@ -65,10 +65,19 @@ export class Papyros extends State {
         BackendManager.setWorkerUrl(language, url);
     }
 
+    /**
+     * Whether registering the service worker can wait until a backend proves it needs one.
+     *
+     * This mirrors how Pyodide detects stack switching, which accepts the older Suspender
+     * shape as well as Suspending. It is only a hint: the worker's own probe decides the
+     * transport, so being wrong here costs at most one service worker nobody uses.
+     */
     private canDeferChannel(): boolean {
+        const wasm = WebAssembly as { Suspending?: unknown; Suspender?: unknown };
+        const stackSwitching = wasm.Suspending !== undefined || wasm.Suspender !== undefined;
         return (
             typeof SharedArrayBuffer === "undefined" &&
-            typeof (WebAssembly as { Suspending?: unknown }).Suspending === "function" &&
+            stackSwitching &&
             this.runner.allowJspi &&
             this.runner.programmingLanguage === ProgrammingLanguage.Python
         );
@@ -93,6 +102,11 @@ export class Papyros extends State {
             return BackendManager.channel;
         }
         if (!this.serviceWorkerName || !("serviceWorker" in navigator)) {
+            this.errorHandler(
+                new ServiceWorkerRegistrationError("No service worker available to handle input", {
+                    cause: new Error(`serviceWorkerName=${this.serviceWorkerName}`),
+                }),
+            );
             return null;
         }
         try {

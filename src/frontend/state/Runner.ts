@@ -229,9 +229,12 @@ export class Runner extends State {
             // This backend blocks on the channel, so it needs one to exist before it runs.
             // Registration may not have happened yet: Papyros defers it when the browser
             // can suspend the wasm stack, since Python then never touches it.
+            // A failure here is reported by ensureChannel and leaves the channel null, so
+            // running code still works and only reading input fails.
             await this.papyros.ensureChannel();
-            backend.channel = BackendManager.channel;
         }
+        // Assign either way, so a client that switched to JSPI drops a channel it no longer uses
+        backend.channel = BackendManager.channel;
         if (launchId === this.launchId) {
             this.updateRunModes();
             this.backendReady = true;
