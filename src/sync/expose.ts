@@ -19,9 +19,13 @@ export interface SyncExtras {
     readMessage: () => any;
     syncSleep: (ms: number) => void;
     /**
-     * Tell the client that the backend started or stopped waiting on the main thread.
-     * The sync helpers above do this themselves; a backend that blocks another way
-     * (JSPI stack switching) has to report it so the client state machine stays correct.
+     * Tell the client the backend has started waiting on the main thread ("reading" or
+     * "sleeping"), or that a sleep ran to completion ("slept"). There is no counterpart
+     * for input: the client already knows it answered, and moves itself back to running.
+     *
+     * The sync helpers above report this themselves. A backend that blocks another way
+     * (JSPI stack switching) has to report it, or the client state machine will not know
+     * it is waiting and will interrupt by replacing the worker instead of answering.
      */
     reportStatus: (status: Exclude<SyncMessageCallbackStatus, "init">) => void;
 }
