@@ -1,5 +1,5 @@
 import { BackendEvent, BackendEventType } from "../communication/BackendEvent";
-import { syncExpose, SyncExtras } from "comsync";
+import { syncExpose, SyncExtras } from "../sync/SyncClient";
 import { BackendEventQueue } from "../communication/BackendEventQueue";
 
 export interface WorkerDiagnostic {

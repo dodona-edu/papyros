@@ -1,4 +1,4 @@
-import { SyncExtras } from "comsync";
+import { SyncExtras } from "../../src/sync/SyncClient";
 import { Backend, WorkerDiagnostic } from "../../src/backend/Backend";
 import { BackendEventType } from "../../src/communication/BackendEvent";
 import { vi } from "vitest";
