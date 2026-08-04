@@ -3,7 +3,13 @@ import { Papyros } from "../../../src/frontend/state/Papyros";
 import { ProgrammingLanguage } from "../../../src/ProgrammingLanguage";
 import { RunMode } from "../../../src/backend/Backend";
 import { RunState } from "../../../src/frontend/state/Runner";
-import { waitForAwaitingInput, waitForInputReady, waitForOutput, waitForPapyrosReady } from "../../helpers";
+import {
+    waitForAwaitingInput,
+    waitForInputReady,
+    waitForOutput,
+    waitForPapyrosReady,
+    waitForRunning,
+} from "../../helpers";
 import { NonExceptionFrame } from "@dodona/trace-component/dist/trace_types";
 
 async function pythonPapyros(allowJspi: boolean = true): Promise<Papyros> {
@@ -111,14 +117,18 @@ describe.sequential("JSPI input transport", () => {
         papyros.runner.code = "while True:\n    pass";
         const backendBefore = papyros.runner.backend;
         const runPromise = papyros.runner.start();
-        await new Promise((r) => setTimeout(r, 3000));
-        expect(papyros.runner.state).toBe(RunState.Running);
-        await papyros.runner.stop();
-        await runPromise;
+        try {
+            // Pyodide startup dominates on CI, so wait for the loop rather than guessing a delay
+            await waitForRunning(papyros);
+        } finally {
+            // Never leave the shared backend spinning, it would hang every later test
+            await papyros.runner.stop();
+            await runPromise;
+        }
         await waitForPapyrosReady(papyros, 10000);
         expect(papyros.runner.stateMessage).toMatch(/^Code interrupted after/);
         expect(papyros.runner.backend).not.toBe(backendBefore);
-    });
+    }, 180000);
 });
 
 describe.sequential("channel input transport", () => {
@@ -136,7 +146,7 @@ describe.sequential("channel input transport", () => {
         await waitForPapyrosReady(papyros);
         expect(papyros.io.output[0].content).toBe("hello channel");
         unsubscribe();
-    });
+    }, 180000);
 
     it("still interrupts a waiting input when JSPI is disabled", async () => {
         const papyros = await pythonPapyros(false);
@@ -148,5 +158,5 @@ describe.sequential("channel input transport", () => {
         await runPromise;
         await waitForPapyrosReady(papyros, 10000);
         expect(papyros.runner.stateMessage).toMatch(/^Code interrupted after/);
-    });
+    }, 180000);
 });

@@ -32,6 +32,16 @@ export async function waitForInputReady(timeout = 2000): Promise<void> {
     }
 }
 
+export async function waitForRunning(papyros: Papyros, timeout = 60000): Promise<void> {
+    const start = Date.now();
+    while (papyros.runner.state !== RunState.Running) {
+        if (Date.now() - start > timeout) {
+            throw new Error(`Timeout waiting for runner to run, still ${papyros.runner.state}`);
+        }
+        await new Promise(r => setTimeout(r, 10));
+    }
+}
+
 export async function waitForAwaitingInput(papyros: Papyros, timeout: number = 5000): Promise<void> {
     const start = Date.now();
     while (!papyros.io.awaitingInput) {
