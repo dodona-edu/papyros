@@ -16,6 +16,15 @@ PYLINT_MSG_TEMPLATE = "{msg_id}:{line}:{column}:{end_line}:{end_column}:{categor
 SYNTAX_ERROR_ID = "E0001"
 # Pylint reports parse errors as "Parsing failed: '<message> (<file name>, line <nr>)'"
 SYNTAX_ERROR_MESSAGE = re.compile(r"^Parsing failed: '(?P<message>.*) \(.*, line \d+\)'$")
+# CodeMirror only renders these four severities, so map Pylint's categories onto them
+SEVERITIES = {
+    "fatal": "error",
+    "error": "error",
+    "warning": "warning",
+    "refactor": "info",
+    "convention": "info",
+    "info": "info",
+}
 
 def lint(code):
     # Use temporary file to prevent Astroid cache from running into issues
@@ -39,8 +48,8 @@ def process_pylint_output(linting_output):
         parts = line.rstrip().split(":", 6)
         if len(parts) != 7:
             continue
-        msg_id, line_nr, column_nr, end_line, end_column, severity, message = parts
-        if not line_nr.isdigit() or not column_nr.isdigit():
+        msg_id, line_nr, column_nr, end_line, end_column, category, message = parts
+        if not line_nr.isdigit() or not column_nr.isdigit() or category not in SEVERITIES:
             continue
         if msg_id == SYNTAX_ERROR_ID:
             # Unwrap the parse error to hide the name of the temporary file we linted
@@ -54,7 +63,7 @@ def process_pylint_output(linting_output):
             "columnNr": column_nr,
             "endLineNr": int(end_line) if end_line else line_nr,
             "endColumnNr": int(end_column) if end_column else column_nr,
-            "severity": severity,
+            "severity": SEVERITIES[category],
             "message": message
         })
     return diagnostics
