@@ -60,6 +60,10 @@ describe("channel construction", () => {
         expect(makeChannel()).toMatchObject({ type: "serviceWorker", baseUrl: `/${BASE_URL_SUFFIX}` });
     });
 
+    it("treats a scope without a trailing slash as a directory", () => {
+        expect(makeServiceWorkerChannel({ scope: "/papyros" }).baseUrl).toBe(`/papyros/${BASE_URL_SUFFIX}`);
+    });
+
     it("honours a custom scope and timeout", () => {
         const channel = makeServiceWorkerChannel({ scope: "/papyros/", timeout: 1234 });
         expect(channel).toEqual({

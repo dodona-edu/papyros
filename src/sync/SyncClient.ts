@@ -129,6 +129,12 @@ export class SyncClient<T = any> {
                 this._awaitingMessageResolve = resolve;
             });
             delete this._awaitingMessageResolve;
+
+            // The call can end while the write is queued, which wakes it without any
+            // reader left to hand the message to
+            if (!this._messageIdBase) {
+                throw new Error("No active call to send a message to.");
+            }
         }
 
         await this._writeMessage({ message });
@@ -173,7 +179,10 @@ export class SyncClient<T = any> {
         this.state = "idle";
         delete this._interruptPromise;
         delete this._interruptRejector;
-        delete this._awaitingMessageResolve;
         delete this._messageIdBase;
+        // Wake a queued writeMessage so it fails fast rather than waiting forever
+        const awaitingMessageResolve = this._awaitingMessageResolve;
+        delete this._awaitingMessageResolve;
+        awaitingMessageResolve?.();
     }
 }

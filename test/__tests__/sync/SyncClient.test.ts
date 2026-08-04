@@ -48,6 +48,17 @@ describe("SyncClient", () => {
         client.terminate();
     });
 
+    it("fails a queued write instead of hanging when the call ends first", async () => {
+        const client = idleClient();
+        const call = client.call(() => new Promise(() => undefined));
+        await Promise.resolve();
+        // Not waiting for input yet, so the write queues behind the reading status
+        const write = client.writeMessage("typed while still running");
+        client.terminate();
+        await expect(call).rejects.toBeInstanceOf(InterruptError);
+        await expect(write).rejects.toThrow("No active call to send a message to.");
+    });
+
     it("rejects the in-flight call with an InterruptError when terminated", async () => {
         const client = idleClient();
         const call = client.call(() => new Promise(() => undefined));

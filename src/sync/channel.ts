@@ -246,7 +246,8 @@ export function makeAtomicsChannel({ bufferSize }: AtomicsChannelOptions = {}): 
 }
 
 export function makeServiceWorkerChannel(options: ServiceWorkerChannelOptions = {}): ServiceWorkerChannel {
-    const baseUrl = (options.scope || "/") + BASE_URL_SUFFIX;
+    const scope = options.scope || "/";
+    const baseUrl = (scope.endsWith("/") ? scope : scope + "/") + BASE_URL_SUFFIX;
     return { type: "serviceWorker", baseUrl, timeout: options.timeout || 5000 };
 }
 
