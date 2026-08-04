@@ -82,7 +82,7 @@ need the channel, so a Python scratchpad on a browser with JSPI never registers 
 flowchart TD
     launch["papyros.launch()"] --> sab{"SharedArrayBuffer?<br/>(COOP/COEP set)"}
     sab -- yes --> atomics["Build atomics channel now"]
-    sab -- no --> maybe{"WebAssembly.Suspending<br/>and language is Python?"}
+    sab -- no --> maybe{"Stack switching in this browser,<br/>allowJspi, and language is Python?"}
     maybe -- no --> reg["Register service worker now,<br/>fatal if it fails"]
     maybe -- yes --> defer["Defer: no channel yet"]
 
@@ -96,10 +96,21 @@ flowchart TD
     late --> channel["Channel: input and sleep block<br/>on Atomics.wait or a sync XHR"]
 ```
 
-The probe runs inside the worker after Pyodide has loaded, which is why the decision cannot be
-made up front: the main thread can see that the browser has the feature, but not that this
-Pyodide build and calling convention will actually suspend. Deferring registration is what lets
-the answer arrive late without having registered a service worker just in case.
+"Stack switching in this browser" is `WebAssembly.Suspending` or the older
+`WebAssembly.Suspender`, matching how Pyodide itself detects it. That test is only a hint,
+so getting it wrong costs at most one service worker nobody uses: the probe inside the worker
+is what actually selects the transport.
+
+The probe runs after Pyodide has loaded, which is why the decision cannot be made up front. The
+main thread can see that the browser has the feature, but not that the Pyodide build being
+served and the calling convention used will actually suspend. `run_sync` is
+[documented as experimental](https://pyodide.org/en/stable/usage/api/python-api/ffi.html), and
+`can_run_sync()` is the supported way to ask, so Papyros asks rather than assumes. Deferring
+registration is what lets the answer arrive late without having registered a service worker
+just in case.
+
+If a backend needs the channel and it cannot be created, the error is passed to
+`papyros.errorHandler` and the channel stays null. Code still runs; only reading input fails.
 
 Interrupting is a separate axis. A program waiting on input or sleeping is always interrupted
 cheaply, whichever transport it uses. A program in a busy loop needs Pyodide's interrupt buffer,

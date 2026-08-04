@@ -5,8 +5,10 @@ import { BackendManager } from "../../../src/communication/BackendManager";
 import { waitForInputReady, waitForOutput, waitForPapyrosReady } from "../../helpers";
 
 /**
- * BackendManager.channel is static and shared, so clear it to observe what a launch
- * actually needed rather than what an earlier test left behind.
+ * BackendManager.channel is static and shared, and BackendManager caches one client per
+ * language, so clear the channel to observe what a launch actually needed rather than what an
+ * earlier test left behind. Runner.launch assigns backend.channel on every launch, including
+ * setting it back to null, so the cached client cannot carry a stale channel into these tests.
  */
 describe.sequential("lazy channel setup", () => {
     beforeEach(() => {
