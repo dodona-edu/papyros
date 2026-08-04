@@ -17,7 +17,13 @@ export interface PackageOptions {
 }
 
 const RETRIES = 3;
+const RETRY_BASE_DELAY = 1000;
 
+/**
+ * Retry on failure with exponential backoff, matching what p-retry did by default.
+ * The failure this absorbs is a transient network error, so retrying without a delay
+ * would just fail four times against the same blip.
+ */
 async function withRetries<T>(fn: () => Promise<T>): Promise<T> {
     let lastError: unknown;
     for (let attempt = 0; attempt <= RETRIES; attempt++) {
@@ -25,6 +31,9 @@ async function withRetries<T>(fn: () => Promise<T>): Promise<T> {
             return await fn();
         } catch (e) {
             lastError = e;
+            if (attempt < RETRIES) {
+                await new Promise((resolve) => setTimeout(resolve, RETRY_BASE_DELAY * 2 ** attempt));
+            }
         }
     }
     throw lastError;
