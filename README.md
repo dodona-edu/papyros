@@ -48,9 +48,10 @@ worker cannot normally do. Papyros has three ways to achieve it and picks one pe
 #### JSPI (no setup needed)
 
 Where the browser supports WebAssembly stack switching, Pyodide suspends the wasm stack and
-resumes when a promise settles. Nothing to configure, and no channel is involved. Chrome 137+
-and Firefox 153+ take this path. It applies to Python only: the JavaScript backend runs user
-code with no wasm on the stack, so nothing can suspend it.
+resumes when a promise settles. Nothing to configure, and no channel is involved. Chrome 137+,
+Firefox 153+ and Safari 27+ take this path, so the channels below are for older browsers. It
+applies to Python only: the JavaScript backend runs user code with no wasm on the stack, so
+nothing can suspend it, and it always uses a channel.
 
 Set `papyros.runner.allowJspi = false` to force one of the channels below, for instance to
 work around a browser whose stack switching misbehaves.
