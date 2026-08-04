@@ -35,8 +35,12 @@ export class PythonWorker extends Backend {
         return await loadPyodideAndPackage({ url: pythonPackageUrl, format: ".tgz" }, () => loadPyodide({ indexURL }));
     }
 
-    public async launch(onEvent: (e: BackendEvent) => void, pyodideAssetURL: string | undefined): Promise<void> {
-        await super.launch(onEvent, pyodideAssetURL);
+    public async launch(
+        onEvent: (e: BackendEvent) => void,
+        pyodideAssetURL: string | undefined,
+        allowJspi: boolean = true,
+    ): Promise<void> {
+        await super.launch(onEvent, pyodideAssetURL, allowJspi);
         this.pyodide = await PythonWorker.getPyodide(pyodideAssetURL);
         // Python calls our function with a PyProxy dict or a Js Map,
         // These must be converted to a PapyrosEvent (JS Object) to allow message passing
@@ -52,6 +56,36 @@ export class PythonWorker extends Backend {
         });
         // preload micropip to allow installing packages
         await (this.pyodide as any).loadPackage("micropip");
+        this.jspi = allowJspi && (await PythonWorker.detectJspi(this.pyodide));
+    }
+
+    /**
+     * Whether Pyodide can suspend the wasm stack here, so input() can await a promise
+     * instead of blocking on the channel.
+     *
+     * can_run_sync() is asked from inside an async def entered through a plain PyProxy
+     * call, which is exactly how run_async is invoked. That covers browser support,
+     * Pyodide build support and the calling convention in one go, and it fails closed:
+     * anything unexpected leaves the channel transport in place.
+     * @param {PyodideInterface} pyodide The loaded interpreter
+     * @return {Promise<boolean>} Whether stack switching is available
+     */
+    private static async detectJspi(pyodide: PyodideInterface): Promise<boolean> {
+        const probe = pyodide.runPython(
+            [
+                "async def __papyros_jspi_probe():",
+                "    from pyodide.ffi import can_run_sync",
+                "    return can_run_sync()",
+                "__papyros_jspi_probe",
+            ].join("\n"),
+        );
+        try {
+            return (await probe()) === true;
+        } catch {
+            return false;
+        } finally {
+            probe.destroy();
+        }
     }
 
     /**
