@@ -17,6 +17,9 @@ async function pythonPapyros(allowJspi: boolean = true): Promise<Papyros> {
     papyros.runner.allowJspi = allowJspi;
     await papyros.launch();
     papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
+    // BackendManager caches one client per language, so let this launch settle before
+    // the test uses it rather than racing whatever a previous test left in flight
+    await papyros.runner.backend;
     return papyros;
 }
 
@@ -128,6 +131,9 @@ describe.sequential("JSPI input transport", () => {
         await waitForPapyrosReady(papyros, 10000);
         expect(papyros.runner.stateMessage).toMatch(/^Code interrupted after/);
         expect(papyros.runner.backend).not.toBe(backendBefore);
+        // Interrupting terminated the worker, and the relaunch is not awaited by start().
+        // Drain it, or it races the next test's launch on the same cached client.
+        await papyros.runner.backend;
     }, 180000);
 });
 
