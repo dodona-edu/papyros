@@ -149,6 +149,17 @@ print
         expect(diagnostics[0].message).toBe("Statement seems to have no effect");
     });
 
+    it("should show syntax errors", async () => {
+        const papyros = new Papyros();
+        await papyros.launch();
+        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
+        papyros.runner.code = `print 'hello'
+`;
+        const diagnostics = await papyros.runner.lintSource();
+        expect(diagnostics.length).toBe(1);
+        expect(diagnostics[0].message).toBe("Missing parentheses in call to 'print'. Did you mean print(...)?");
+    });
+
     it("should run doctests", async () => {
         const papyros = new Papyros();
         await papyros.launch();
