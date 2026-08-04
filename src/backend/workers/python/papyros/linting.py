@@ -51,13 +51,16 @@ def process_pylint_output(linting_output):
         msg_id, line_nr, column_nr, end_line, end_column, category, message = parts
         if not line_nr.isdigit() or not column_nr.isdigit() or category not in SEVERITIES:
             continue
+        line_nr = int(line_nr)
+        column_nr = int(column_nr)
         if msg_id == SYNTAX_ERROR_ID:
             # Unwrap the parse error to hide the name of the temporary file we linted
             match = SYNTAX_ERROR_MESSAGE.match(message)
             if match:
                 message = match.group("message")
-        line_nr = int(line_nr)
-        column_nr = int(column_nr)
+            # Parse errors carry the 1-based offset of the SyntaxError they come from,
+            # while every other message reports a 0-based column
+            column_nr = max(column_nr - 1, 0)
         diagnostics.append({
             "lineNr": line_nr,
             "columnNr": column_nr,

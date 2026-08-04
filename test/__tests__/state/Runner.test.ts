@@ -158,6 +158,8 @@ print
         const diagnostics = await papyros.runner.lintSource();
         expect(diagnostics.length).toBe(1);
         expect(diagnostics[0].message).toBe("Missing parentheses in call to 'print'. Did you mean print(...)?");
+        // The error is reported on the p of print, not after it
+        expect(diagnostics[0].columnNr).toBe(0);
     });
 
     it("should report style issues as info", async () => {
