@@ -43,7 +43,7 @@ export abstract class BackendManager {
     private static halted: boolean;
     /**
      * The channel used to communicate with the SyncClients
-     * Assigned by Papyros.configureInput before any backend is created
+     * Assigned by Papyros once a backend turns out to need one
      */
     public static channel: Channel | null = null;
 

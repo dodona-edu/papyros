@@ -42,8 +42,18 @@ yarn add @dodona/papyros
 
 ### Setup input handling
 
-Running interactive programs in the browser requires special handling of synchronous input.
-Papyros supports two approaches:
+`input()` and `time.sleep()` have to block a worker until the main thread answers, which a
+worker cannot normally do. Papyros has three ways to achieve it and picks one per backend.
+
+#### JSPI (no setup needed)
+
+Where the browser supports WebAssembly stack switching, Pyodide suspends the wasm stack and
+resumes when a promise settles. Nothing to configure, and no channel is involved. Chrome 137+
+and Firefox 153+ take this path. It applies to Python only: the JavaScript backend runs user
+code with no wasm on the stack, so nothing can suspend it.
+
+Set `papyros.runner.allowJspi = false` to force one of the channels below, for instance to
+work around a browser whose stack switching misbehaves.
 
 #### COOP/COEP headers
 Add the following HTTP headers to your server responses:
@@ -62,6 +72,39 @@ If you cannot set these headers, you can use a service worker to handle input.
 We provide a compiled and minified version of the `InputServiceWorker` in the `dist` folder.
 You need to serve this file from the root of your domain (i.e. `/input-sw.js`).
 You can then register the service worker in your application before launching: `papyros.serviceWorkerName = 'input-sw.js';`.
+
+Registration is lazy. Papyros only registers the service worker once a backend turns out to
+need the channel, so a Python scratchpad on a browser with JSPI never registers one at all.
+
+#### How a backend picks its transport
+
+```mermaid
+flowchart TD
+    launch["papyros.launch()"] --> sab{"SharedArrayBuffer?<br/>(COOP/COEP set)"}
+    sab -- yes --> atomics["Build atomics channel now"]
+    sab -- no --> maybe{"WebAssembly.Suspending<br/>and language is Python?"}
+    maybe -- no --> reg["Register service worker now,<br/>fatal if it fails"]
+    maybe -- yes --> defer["Defer: no channel yet"]
+
+    atomics --> worker
+    reg --> worker
+    defer --> worker["Start worker,<br/>load Pyodide"]
+
+    worker --> probe{"can_run_sync()<br/>inside an async def?"}
+    probe -- yes --> jspi["JSPI: input and sleep<br/>suspend on a promise"]
+    probe -- no --> late["Register service worker now<br/>if there is still no channel"]
+    late --> channel["Channel: input and sleep block<br/>on Atomics.wait or a sync XHR"]
+```
+
+The probe runs inside the worker after Pyodide has loaded, which is why the decision cannot be
+made up front: the main thread can see that the browser has the feature, but not that this
+Pyodide build and calling convention will actually suspend. Deferring registration is what lets
+the answer arrive late without having registered a service worker just in case.
+
+Interrupting is a separate axis. A program waiting on input or sleeping is always interrupted
+cheaply, whichever transport it uses. A program in a busy loop needs Pyodide's interrupt buffer,
+which needs `SharedArrayBuffer`; without one, stopping it replaces the worker and reloads the
+interpreter. JSPI does not change that.
 
 ---
 

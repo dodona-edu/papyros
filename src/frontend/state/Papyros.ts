@@ -5,11 +5,11 @@ import { InputOutput } from "./InputOutput";
 import { Constants } from "./Constants";
 import { Examples } from "./Examples";
 import { BackendManager } from "../../communication/BackendManager";
-import { makeChannel } from "../../sync/channel";
+import { Channel, makeChannel } from "../../sync/channel";
+import { ProgrammingLanguage } from "../../ProgrammingLanguage";
 import { I18n } from "./I18n";
 import { Test } from "./Test";
 import { PapyrosLaunchError, ServiceWorkerRegistrationError } from "./PapyrosErrors";
-import { ProgrammingLanguage } from "../../ProgrammingLanguage";
 
 export class Papyros extends State {
     readonly debugger: Debugger = new Debugger(this);
@@ -25,11 +25,16 @@ export class Papyros extends State {
     serviceWorkerName: string = "InputServiceWorker.js";
 
     /**
+     * In flight channel setup, so concurrent callers register the service worker once
+     */
+    private channelPromise?: Promise<Channel | null>;
+
+    /**
      * Launch this instance of Papyros, making it ready to run code
      * @return {Promise<Papyros>} Promise of launching, chainable
      */
     public async launch(): Promise<Papyros> {
-        if (!(await this.configureInput())) {
+        if (!this.canDeferChannel() && !(await this.ensureChannel())) {
             alert(this.i18n.t("Papyros.service_worker_error"));
         } else {
             try {
@@ -60,34 +65,51 @@ export class Papyros extends State {
         BackendManager.setWorkerUrl(language, url);
     }
 
+    private canDeferChannel(): boolean {
+        return (
+            typeof SharedArrayBuffer === "undefined" &&
+            typeof (WebAssembly as { Suspending?: unknown }).Suspending === "function" &&
+            this.runner.allowJspi &&
+            this.runner.programmingLanguage === ProgrammingLanguage.Python
+        );
+    }
+
     /**
-     * Configure how user input is handled within Papyros
-     * By default, we will try to use SharedArrayBuffers
-     * If this option is not available, the optional arguments in the channelOptions config are used
-     * They are needed to register a service worker to handle communication between threads
-     * @return {Promise<boolean>} Promise of configuring input
+     * Make sure a channel exists, registering the input service worker if that is what it takes.
+     * Idempotent, and safe to call from several places at once.
+     * @return {Promise<boolean>} Whether a channel is available
      */
-    private async configureInput(): Promise<boolean> {
-        if (typeof SharedArrayBuffer === "undefined") {
-            if (!this.serviceWorkerName || !("serviceWorker" in navigator)) {
-                return false;
-            }
-            try {
-                const registration = await navigator.serviceWorker.register(this.serviceWorkerName, { scope: "/" });
-                // The channel's scope becomes the base of a synchronous XHR inside the worker;
-                // a relative scope resolves against the worker's own base URL, which is opaque
-                // in a worker bootstrapped from a blob (see BackendManager.setWorkerUrl), so
-                // registration.scope (an absolute URL) is used instead
-                BackendManager.channel = makeChannel({ serviceWorker: { scope: registration.scope } })!;
-                await this.waitForActiveRegistration();
-            } catch (e) {
-                this.errorHandler(new ServiceWorkerRegistrationError("Error registering service worker", { cause: e }));
-                return false;
-            }
-        } else {
-            BackendManager.channel = makeChannel({ atomics: {} })!;
+    public async ensureChannel(): Promise<boolean> {
+        if (BackendManager.channel) {
+            return true;
         }
-        return true;
+        this.channelPromise ??= this.createChannel();
+        return (await this.channelPromise) !== null;
+    }
+
+    private async createChannel(): Promise<Channel | null> {
+        if (typeof SharedArrayBuffer !== "undefined") {
+            BackendManager.channel = makeChannel({ atomics: {} })!;
+            return BackendManager.channel;
+        }
+        if (!this.serviceWorkerName || !("serviceWorker" in navigator)) {
+            return null;
+        }
+        try {
+            const registration = await navigator.serviceWorker.register(this.serviceWorkerName, { scope: "/" });
+            await this.waitForActiveRegistration();
+            // The channel's scope becomes the base of a synchronous XHR inside the worker;
+            // a relative scope resolves against the worker's own base URL, which is opaque
+            // in a worker bootstrapped from a blob (see BackendManager.setWorkerUrl), so
+            // registration.scope (an absolute URL) is used instead
+            BackendManager.channel = makeChannel({ serviceWorker: { scope: registration.scope } })!;
+            return BackendManager.channel;
+        } catch (e) {
+            this.errorHandler(new ServiceWorkerRegistrationError("Error registering service worker", { cause: e }));
+            // Allow a later backend to try again rather than caching the failure forever
+            this.channelPromise = undefined;
+            return null;
+        }
     }
 
     private async waitForActiveRegistration(timeout: number = 5000): Promise<void> {
