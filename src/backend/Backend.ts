@@ -49,7 +49,8 @@ export abstract class Backend {
      */
     protected jspi = false;
     /**
-     * The main thread answer this backend is currently suspended on, if any
+     * Settles the promise this backend is suspended on while it waits for the main
+     * thread to answer, if it is waiting at all
      */
     private pending?: { resolve: (value: any) => void; reject: (reason: unknown) => void };
     /**
