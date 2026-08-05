@@ -1,5 +1,6 @@
 # Ensure pylint can find the plugin files
 import os
+import re
 import sys
 from tempfile import NamedTemporaryFile
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -10,6 +11,20 @@ from pylint.reporters.text import TextReporter
 
 PYLINT_RC_FILE = os.path.abspath("/tmp/papyros/pylint_config.rc")
 PYLINT_PLUGINS = "pylint_ast_checker,pylint_turtle_brain"
+# The path is omitted as it is the only field that can contain a colon itself
+PYLINT_MSG_TEMPLATE = "{msg_id}:{line}:{column}:{end_line}:{end_column}:{category}:{msg}"
+SYNTAX_ERROR_ID = "E0001"
+# Pylint reports parse errors as "Parsing failed: '<message> (<file name>, line <nr>)'"
+SYNTAX_ERROR_MESSAGE = re.compile(r"^Parsing failed: '(?P<message>.*) \(.*, line \d+\)'$")
+# CodeMirror only renders these four severities, so map Pylint's categories onto them
+SEVERITIES = {
+    "fatal": "error",
+    "error": "error",
+    "warning": "warning",
+    "refactor": "info",
+    "convention": "info",
+    "info": "info",
+}
 
 def lint(code):
     # Use temporary file to prevent Astroid cache from running into issues
@@ -21,7 +36,7 @@ def lint(code):
             "-j", "1", # ensure no parallellism is used as we don't have such resources in a worker
             "--rcfile", PYLINT_RC_FILE,
             "--load-plugins", PYLINT_PLUGINS,
-            "--msg-template", "{path}:{line}:{column}:{end_line}:{end_column}:{category}:{msg}",
+            "--msg-template", PYLINT_MSG_TEMPLATE,
             tmpf.name], reporter=TextReporter(pylint_output), exit=False)
 
     return process_pylint_output(pylint_output.getvalue())
@@ -29,20 +44,29 @@ def lint(code):
 def process_pylint_output(linting_output):
     diagnostics = []
     for line in linting_output.split("\n"):
-        line: str = line.rstrip()
-        # {path}:{line}:{column}:{end_line}:{end_column}:{category}:{msg}
-        if line.count(":") == 6:
-            _, line_nr, column_nr, end_line, end_column, severity, message = line.rstrip().split(":")
-            line_nr = int(line_nr)
-            column_nr = int(column_nr)
-            # If Pylint doesn't know the exact cause, just omit it
-            message = message.replace("(<unknown>, ", "(")
-            diagnostics.append({
-                "lineNr": line_nr,
-                "columnNr": column_nr,
-                "endLineNr": int(end_line) if end_line else line_nr,
-                "endColumnNr": int(end_column) if end_column else column_nr,
-                "severity": severity,
-                 "message": message
-            })
+        # The message can contain colons itself, so only split off the fields in front of it
+        parts = line.rstrip().split(":", 6)
+        if len(parts) != 7:
+            continue
+        msg_id, line_nr, column_nr, end_line, end_column, category, message = parts
+        if not line_nr.isdigit() or not column_nr.isdigit() or category not in SEVERITIES:
+            continue
+        line_nr = int(line_nr)
+        column_nr = int(column_nr)
+        if msg_id == SYNTAX_ERROR_ID:
+            # Unwrap the parse error to hide the name of the temporary file we linted
+            match = SYNTAX_ERROR_MESSAGE.match(message)
+            if match:
+                message = match.group("message")
+            # Parse errors carry the 1-based offset of the SyntaxError they come from,
+            # while every other message reports a 0-based column
+            column_nr = max(column_nr - 1, 0)
+        diagnostics.append({
+            "lineNr": line_nr,
+            "columnNr": column_nr,
+            "endLineNr": int(end_line) if end_line else line_nr,
+            "endColumnNr": int(end_column) if end_column else column_nr,
+            "severity": SEVERITIES[category],
+            "message": message
+        })
     return diagnostics
