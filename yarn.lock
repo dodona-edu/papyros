@@ -105,10 +105,10 @@
   dependencies:
     lit "^3.3.1"
 
-"@dodona/trace-component@1.4.2":
-  version "1.4.2"
-  resolved "https://registry.yarnpkg.com/@dodona/trace-component/-/trace-component-1.4.2.tgz#b5ac12c0e3e9327191ac0ccf4a3fbd178790eadc"
-  integrity sha512-84pGj5ePOPnxzpWjDHLysXzwgVpu7lqPokRatMq//1XlJg5O9OB/oNVlFn1U2OSC8hr7o1Ostj1MDlaSF0EZvw==
+"@dodona/trace-component@1.5.0":
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/@dodona/trace-component/-/trace-component-1.5.0.tgz#416d292369bada5c7109d856c18aaa58e86733d2"
+  integrity sha512-ueBNuNeP1E6oAh4KKXzfypH2SkECbevzumN7HlK7U07OJuFSkvy2uJY6L3cUE6eF28AFfjHba7eCp96KHilwZQ==
   dependencies:
     lit "^3.3.3"
 
