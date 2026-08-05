@@ -49,7 +49,6 @@ class Papyros(python_runner.PyodideRunner):
         self._tracking_files = False
         self._original_open = builtins.open
         self._last_emitted_snapshot = None
-        self._last_emitted_turtle_svg = None
         self._turtle_hook = TurtleImportHook()
         self._install_open_tracking()
         self.limit = limit
@@ -95,19 +94,21 @@ class Papyros(python_runner.PyodideRunner):
         self.override_turtle()
 
     def _emit_turtle_snapshot(self):
-        if not self._turtle_hook.render:
+        hook = self._turtle_hook
+        if not hook.render or hook.svg_stream is None:
             return
-        from svg_turtle import SvgTurtle
-        svg_string = SvgTurtle._pen.to_svg()
-        if svg_string and svg_string != self._last_emitted_turtle_svg:
-            self._last_emitted_turtle_svg = svg_string
-            img = base64.b64encode(svg_string.encode("utf-8")).decode("utf-8")
-            self.callback("turtle", data=img, contentType="image/svg+xml;base64")
+        # Only the canvas items that changed since the previous snapshot are
+        # rendered and sent; the frontend replays the patches. Re-rendering the
+        # whole drawing here is what made debugging turtle programs quadratic.
+        patch = hook.svg_stream.patch()
+        if patch is not None:
+            self.callback("turtle", data=json.dumps(patch), contentType="text/json")
 
     def override_turtle(self):
         hook = self._turtle_hook
         hook.papyros = self
         hook.render = None
+        hook.svg_stream = None
         # Remove turtle from sys.modules so the hook intercepts the next import
         sys.modules.pop('turtle', None)
         if hook not in sys.meta_path:
@@ -222,7 +223,6 @@ class Papyros(python_runner.PyodideRunner):
         self._tracked_files.clear()
         self._tracking_files = True
         self._last_emitted_snapshot = None
-        self._last_emitted_turtle_svg = None
         with (
             redirect_stdout(python_runner.output.SysStream("output", self.output_buffer)),
             redirect_stderr(python_runner.output.SysStream("error", self.output_buffer)),

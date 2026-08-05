@@ -5,6 +5,7 @@ import { isValidFileName, parseData } from "../../util/Util";
 import { Papyros } from "./Papyros";
 import { RunState } from "./Runner";
 import { ServiceWorkerInputError } from "./PapyrosErrors";
+import { TurtlePatch } from "./TurtleSvg";
 
 /**
  * Shape of Error objects that are easy to interpret
@@ -45,7 +46,7 @@ export enum OutputType {
 
 export type OutputEntry = {
     type: OutputType;
-    content: string | FriendlyError;
+    content: string | FriendlyError | TurtlePatch;
     contentType?: string;
 };
 
@@ -131,8 +132,7 @@ export class InputOutput extends State {
             }
         });
         BackendManager.subscribe(BackendEventType.Turtle, (e) => {
-            const data = parseData(e.data, e.contentType);
-            this.logTurtle(data, e.contentType);
+            this.logTurtle(parseData(e.data, e.contentType));
         });
         BackendManager.subscribe(BackendEventType.Error, (e) => {
             const data = parseData(e.data, e.contentType);
@@ -179,9 +179,9 @@ export class InputOutput extends State {
         this.output = [...this.output, { type: OutputType.img, content: imageData, contentType }];
     }
 
-    public logTurtle(imageData: string, contentType: string = "image/svg+xml;base64"): void {
+    public logTurtle(patch: TurtlePatch): void {
         const isFirstSnapshot = !this.hasTurtleOutput;
-        this.output = [...this.output, { type: OutputType.turtle, content: imageData, contentType }];
+        this.output = [...this.output, { type: OutputType.turtle, content: patch }];
         this.hasTurtleOutput = true;
         if (isFirstSnapshot && this.activeOutputTab === OUTPUT_TAB && !this.outputTabManuallySet) {
             this.activeOutputTab = TURTLE_TAB;
