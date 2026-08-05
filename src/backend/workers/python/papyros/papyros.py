@@ -47,7 +47,6 @@ class Papyros(python_runner.PyodideRunner):
         os.chdir(self.workspace)
         self._tracked_files = set()
         self._tracking_files = False
-        self._files_opened = False
         self._original_open = builtins.open
         self._last_emitted_snapshot = None
         self._last_emitted_turtle_svg = None
@@ -162,7 +161,6 @@ class Papyros(python_runner.PyodideRunner):
             f = papyros._original_open(*args, **kwargs)
             if papyros._tracking_files:
                 papyros._tracked_files.add(f)
-                papyros._files_opened = True
             return f
 
         builtins.open = tracked_open
@@ -223,7 +221,6 @@ class Papyros(python_runner.PyodideRunner):
     def _execute_context(self):
         self._tracked_files.clear()
         self._tracking_files = True
-        self._files_opened = False
         self._last_emitted_snapshot = None
         self._last_emitted_turtle_svg = None
         with (
@@ -262,14 +259,18 @@ if __name__ == "{MODULE_NAME}":
                         from tracer import JSONTracer
 
                         def frame_callback(frame):
-                            self._flush_open_files()
                             # Walking and re-reading the whole workspace on every
-                            # frame is wasteful for programs that never open a
-                            # file: emit the initial state once, after that only
-                            # re-walk when the program has opened a file. Files
-                            # changed without builtins.open (e.g. os.rename) still
-                            # show up through the end-of-run emission.
-                            if self._files_opened or self._last_emitted_snapshot is None:
+                            # frame is wasteful for programs that never touch a
+                            # file. _tracked_files holds every file opened since
+                            # the last flush plus any still-open handle (a closed
+                            # file is only dropped by the flush below), so when it
+                            # is empty the workspace cannot have changed since the
+                            # previous frame. Files changed without builtins.open
+                            # (e.g. os.rename) still show up through the
+                            # end-of-run emission.
+                            workspace_may_have_changed = bool(self._tracked_files)
+                            self._flush_open_files()
+                            if workspace_may_have_changed or self._last_emitted_snapshot is None:
                                 self._emit_created_files()
                             self._emit_turtle_snapshot()
                             self.callback("frame", data=frame, contentType="application/json")
