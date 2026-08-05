@@ -60,7 +60,12 @@ jobs:
         with:
           node-version: 24.x
           cache: yarn
-          registry-url: 'https://registry.npmjs.org'
+          # No registry-url: it writes an .npmrc with an _authToken referencing
+          # the NODE_AUTH_TOKEN env var, which yarn crashes on when unset (and
+          # setup-node v7 runs yarn for cache resolution before exporting a
+          # placeholder). Auth is npm trusted publishing: the CLI exchanges the
+          # workflow's OIDC id-token and injects the resulting npm token itself,
+          # and the registry defaults to registry.npmjs.org.
       - name: Install and Build
         run: |
           yarn install --frozen-lockfile
