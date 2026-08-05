@@ -1,5 +1,7 @@
 import sys
 
+from .turtle_svg import TrackedCanvas, TurtleSvgStream
+
 
 class TurtleImportHook:
     """Import hook that lazily sets up SVG-based turtle graphics.
@@ -14,6 +16,7 @@ class TurtleImportHook:
     def __init__(self):
         self.papyros = None
         self.render = None
+        self.svg_stream = None
         self._loading = False
         self._turtle_module = None
 
@@ -33,7 +36,6 @@ class TurtleImportHook:
         self._loading = True
         try:
             from svg_turtle import SvgTurtle
-            from svg_turtle.canvas import Canvas
 
             if self._turtle_module is None:
                 # svg_turtle stubs tkinter as a side effect of import; must precede `import turtle`
@@ -43,7 +45,8 @@ class TurtleImportHook:
             turtle_mod = self._turtle_module
             sys.modules['turtle'] = turtle_mod
 
-            canvas = Canvas(400, 400)
+            canvas = TrackedCanvas(400, 400)
+            self.svg_stream = TurtleSvgStream(canvas)
             screen = SvgTurtle._Screen(canvas)
             screen.cv.config(bg="")
 

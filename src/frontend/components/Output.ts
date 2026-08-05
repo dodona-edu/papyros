@@ -3,6 +3,7 @@ import { css, CSSResult, html, TemplateResult } from "lit";
 import { FriendlyError, OutputEntry, OutputType, OUTPUT_TAB, TURTLE_TAB } from "../state/InputOutput";
 import { PapyrosElement } from "./PapyrosElement";
 import { tabButtonStyles } from "./shared-styles";
+import { TurtlePatch, TurtleSvgBuilder } from "../state/TurtleSvg";
 import "@material/web/icon/icon";
 
 @customElement("p-output")
@@ -88,6 +89,9 @@ export class Output extends PapyrosElement {
         `;
     }
 
+    /** Replays the turtle patches; kept across renders so following a run stays incremental. */
+    private turtleSvg = new TurtleSvgBuilder();
+
     private get maxOutputLength(): number {
         if (this.papyros.debugger.active && this.papyros.debugger.debugOutputs !== undefined) {
             return this.papyros.debugger.debugOutputs;
@@ -143,24 +147,25 @@ export class Output extends PapyrosElement {
     }
 
     get renderedOutputs(): TemplateResult[] {
-        let outputsToRender: OutputEntry[];
         if (this.papyros.io.activeOutputTab === TURTLE_TAB) {
-            // Latest snapshot within this.outputs (which is sliced by the debugger's current
-            // step via maxOutputLength) — so stepping the debugger shows the drawing build up.
-            const lastIdx = this.outputs.findLastIndex((o) => o.type === OutputType.turtle);
-            outputsToRender = lastIdx >= 0 ? [this.outputs[lastIdx]] : [];
-        } else {
-            outputsToRender = this.outputs.filter((o) => o.type !== OutputType.turtle);
+            // Replay every patch within this.outputs (which is sliced by the debugger's
+            // current step via maxOutputLength) — so stepping the debugger shows the
+            // drawing build up.
+            const patches = this.outputs
+                .filter((o) => o.type === OutputType.turtle)
+                .map((o) => o.content as TurtlePatch);
+            const svg = this.turtleSvg.build(patches);
+            return svg === undefined
+                ? []
+                : [html`<img class="turtle" src="data:image/svg+xml,${encodeURIComponent(svg)}"></img>`];
         }
+        const outputsToRender: OutputEntry[] = this.outputs.filter((o) => o.type !== OutputType.turtle);
         return outputsToRender.map((o) => {
             if (o.type === OutputType.stdout) {
                 return html`${o.content}`;
             } else if (o.type === OutputType.img) {
                 const mimeType = o.contentType ?? "image/png";
-                return html`<img src="data:${mimeType},${o.content}"></img>`;
-            } else if (o.type === OutputType.turtle) {
-                const mimeType = o.contentType ?? "image/svg+xml;base64";
-                return html`<img class="turtle" src="data:${mimeType},${o.content}"></img>`;
+                return html`<img src="data:${mimeType},${o.content as string}"></img>`;
             } else if (o.type === OutputType.stderr) {
                 if (typeof o.content === "string") {
                     return html`<span class="error">${o.content}</span>`;
