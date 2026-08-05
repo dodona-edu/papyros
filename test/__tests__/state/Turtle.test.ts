@@ -140,6 +140,27 @@ turtle.done()`;
         expect(turtleSvg(papyros)).toContain("<svg");
     });
 
+    it("re-sends the document when setup() runs mid-debug", async () => {
+        const papyros = new Papyros();
+        await papyros.launch();
+        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
+        // Frames are snapshotted from the moment turtle is imported, so by the
+        // time setup() runs the 400x400 document has already been streamed and
+        // the resize must invalidate it (and every fragment's coordinates).
+        papyros.runner.code = `import turtle
+t = turtle.Turtle()
+t.forward(50)
+turtle.setup(800, 600)
+t.forward(50)
+turtle.done()`;
+        await papyros.runner.start(RunMode.Debug);
+        await waitForPapyrosReady(papyros);
+        await waitForOutput(papyros);
+        const svg = turtleSvg(papyros);
+        expect(svg).toMatch(/width="800"/);
+        expect(svg).toMatch(/height="600"/);
+    });
+
     it("streams a debug session incrementally instead of a document per frame", async () => {
         const papyros = new Papyros();
         await papyros.launch();

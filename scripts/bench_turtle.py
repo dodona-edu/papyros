@@ -89,7 +89,7 @@ def load_worker_package():
         sys.exit(f"missing {os.path.relpath(PACKAGE, REPO)} — run `yarn setup` first")
     target = tempfile.mkdtemp(prefix="papyros-bench-")
     with tarfile.open(PACKAGE) as tar:
-        tar.extractall(target)
+        tar.extractall(target, filter="data")
     sys.path.insert(0, target)
 
 

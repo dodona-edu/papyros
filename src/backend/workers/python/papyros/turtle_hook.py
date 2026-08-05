@@ -73,9 +73,10 @@ class TurtleImportHook:
                     return v
                 w = resolve(width)
                 h = resolve(height)
-                canvas.options['width'] = w
-                canvas.options['height'] = h
-                canvas.options['scrollregion'] = (-w // 2, -h // 2, w // 2, h // 2)
+                # Through config() rather than canvas.options directly, so the
+                # TrackedCanvas re-renders everything for the new dimensions.
+                canvas.config(width=w, height=h,
+                              scrollregion=(-w // 2, -h // 2, w // 2, h // 2))
                 screen.canvwidth = w
                 screen.canvheight = h
 
