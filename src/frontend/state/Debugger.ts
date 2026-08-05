@@ -12,7 +12,20 @@ export type FrameState = {
 };
 
 export class Debugger extends State {
+    /**
+     * Streamed frames are buffered and flushed to the reactive properties in
+     * batches: one array reassignment per flush instead of one per frame.
+     * Per-frame spreads are quadratic over a debug run and re-render the
+     * trace component at frame rate. Flushing happens on a short timer while
+     * frames stream in, and synchronously when the run ends, errors or is
+     * interrupted, so a finished run is always fully visible.
+     */
+    private static readonly FLUSH_INTERVAL_MS = 50;
+
     private papyros: Papyros;
+    private pendingFrames: Frame[] = [];
+    private pendingFrameStates: FrameState[] = [];
+    private flushTimer: ReturnType<typeof setTimeout> | undefined = undefined;
     @stateProperty
     private frameStates: FrameState[] = [];
     @stateProperty
@@ -61,21 +74,46 @@ export class Debugger extends State {
         BackendManager.subscribe(BackendEventType.Frame, (e) => {
             this.activeFrame ??= 0;
             const frame = JSON.parse(e.data);
-            const frameState = {
+            this.pendingFrames.push(frame);
+            this.pendingFrameStates.push({
                 line: frame.line,
                 outputs: this.papyros.io.output.length,
                 inputs: this.papyros.io.inputs.length,
                 files: this.fileHistory.length,
-            };
-            this.frameStates = [...this.frameStates, frameState];
-            this.trace = [...this.trace, frame];
-            if (this.frameStates.length >= this.papyros.constants.maxDebugFrames) {
+            });
+            if (this.frameStates.length + this.pendingFrameStates.length >= this.papyros.constants.maxDebugFrames) {
+                this.flushFrames();
                 this.papyros.runner.stop();
+            } else {
+                this.flushTimer ??= setTimeout(() => this.flushFrames(), Debugger.FLUSH_INTERVAL_MS);
             }
         });
+        BackendManager.subscribe(BackendEventType.End, () => this.flushFrames());
+        BackendManager.subscribe(BackendEventType.Error, () => this.flushFrames());
+        BackendManager.subscribe(BackendEventType.Interrupt, () => this.flushFrames());
+    }
+
+    private flushFrames(): void {
+        if (this.flushTimer !== undefined) {
+            clearTimeout(this.flushTimer);
+            this.flushTimer = undefined;
+        }
+        if (this.pendingFrames.length === 0) {
+            return;
+        }
+        this.trace = this.trace.concat(this.pendingFrames);
+        this.frameStates = this.frameStates.concat(this.pendingFrameStates);
+        this.pendingFrames = [];
+        this.pendingFrameStates = [];
     }
 
     public reset(): void {
+        if (this.flushTimer !== undefined) {
+            clearTimeout(this.flushTimer);
+            this.flushTimer = undefined;
+        }
+        this.pendingFrames = [];
+        this.pendingFrameStates = [];
         this.frameStates = [];
         this.currentOutputs = 0;
         this.currentInputs = 0;

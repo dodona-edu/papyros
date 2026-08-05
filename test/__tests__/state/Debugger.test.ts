@@ -83,6 +83,31 @@ z = 1 + 2`;
         expect(papyros.debugger.debugFiles).toEqual([]);
     });
 
+    it("batches frame updates but delivers the complete trace", async () => {
+        const papyros = new Papyros();
+        await papyros.launch();
+        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
+        papyros.runner.code = `total = 0
+for i in range(50):
+    total += i`;
+        let traceUpdates = 0;
+        const unsubscribe = papyros.debugger.subscribe(() => traceUpdates++, "trace");
+        await papyros.runner.start(RunMode.Debug);
+        await waitForPapyrosReady(papyros);
+        unsubscribe();
+
+        // 50 iterations of a 2-line loop body: > 100 frames
+        expect(papyros.debugger.trace.length).toBeGreaterThan(100);
+        // frames arrive batched: far fewer reactive updates than frames
+        expect(traceUpdates).toBeLessThan(papyros.debugger.trace.length / 2);
+        // the last frame is the loop's final state
+        const last = papyros.debugger.trace[papyros.debugger.trace.length - 1] as NonExceptionFrame;
+        expect(last.globals.total).toBe(1225);
+        // frameStates stayed in sync with the trace
+        papyros.debugger.activeFrame = papyros.debugger.trace.length - 1;
+        expect(papyros.debugger.debugLine).toBe(last.line);
+    });
+
     it("resets when deactivated", async () => {
         const papyros = new Papyros();
         await papyros.launch();
