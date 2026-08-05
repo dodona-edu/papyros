@@ -21,13 +21,17 @@ def tarfile_filter(tar_info):
 def create_package(package_name, dependencies, extra_deps):
     shutil.rmtree(package_name, ignore_errors=True)
     install_dependencies(dependencies.split(" "), package_name)
+    dest_dir = os.path.join(package_name, extra_deps)
+    shutil.rmtree(dest_dir, ignore_errors=True)
     try:
-        dest_dir = os.path.join(package_name, extra_deps)
-        shutil.rmtree(dest_dir, ignore_errors=True)
         shutil.copytree(extra_deps, dest_dir)
-    except Exception as e:
-        # Always seems to result in a harmless permission denied error
+    except shutil.Error:
+        # copytree raises if copying file metadata (e.g. macOS xattrs) fails
+        # on any entry, even when every file's contents copied fine; the
+        # check below is what actually decides if the copy succeeded
         pass
+    if not os.path.isdir(dest_dir) or not os.listdir(dest_dir):
+        raise RuntimeError(f"failed to copy {extra_deps!r} into {dest_dir!r}")
     # Bundle CPython's turtle.py (removed from Pyodide's stdlib, required by svg-turtle).
     # Locate via sysconfig rather than `import turtle`, which would pull in tkinter.
     turtle_src = os.path.join(sysconfig.get_path("stdlib"), "turtle.py")
@@ -43,11 +47,6 @@ def install_dependencies(packages, out_dir):
     if not isinstance(packages, list):
         packages = [packages]
     subprocess.check_call([sys.executable, "-m", "pip", "install", "-t", out_dir, *packages])
-
-def check_tar(tarname, out_dir="."):
-    with open(tarname, "rb") as t:
-        shutil.unpack_archive(tarname, out_dir, 'gztar')
-
 
 if __name__ == "__main__":
     create_package("python_package", "python-runner friendly_traceback pylint>=4,<5 tomli typing-extensions dodona-json-tracer>=1.0.0 svg-turtle", extra_deps="papyros")
