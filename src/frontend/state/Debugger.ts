@@ -3,6 +3,7 @@ import { BackendEventType } from "../../communication/BackendEvent";
 import { Frame } from "@dodona/trace-component/dist/trace_types";
 import { State, stateProperty } from "@dodona/lit-state";
 import { Papyros } from "./Papyros";
+import { RunState } from "./Runner";
 import { CODE_TAB, FileEntry, parseFileEntries } from "./InputOutput";
 export type FrameState = {
     line: number;
@@ -84,6 +85,11 @@ export class Debugger extends State {
             if (this.frameStates.length + this.pendingFrameStates.length >= this.papyros.constants.maxDebugFrames) {
                 this.flushFrames();
                 this.papyros.runner.stop();
+            } else if (this.papyros.runner.state === RunState.Ready) {
+                // frame delivery is not ordered with respect to the run's
+                // end: stragglers arriving after the run must not wait for
+                // the timer, the trace should be complete as soon as they land
+                this.flushFrames();
             } else {
                 this.flushTimer ??= setTimeout(() => this.flushFrames(), Debugger.FLUSH_INTERVAL_MS);
             }
