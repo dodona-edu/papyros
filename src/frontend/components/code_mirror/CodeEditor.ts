@@ -77,7 +77,8 @@ export class CodeEditor extends CodeMirrorEditor {
             }
 
             .papyros-icon-link {
-                font-size: 16px;
+                display: inline-flex;
+                vertical-align: middle;
                 padding: 0 4px;
                 cursor: pointer;
             }
