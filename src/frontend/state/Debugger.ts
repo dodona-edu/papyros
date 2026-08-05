@@ -3,7 +3,6 @@ import { BackendEventType } from "../../communication/BackendEvent";
 import { Frame } from "@dodona/trace-component/dist/trace_types";
 import { State, stateProperty } from "@dodona/lit-state";
 import { Papyros } from "./Papyros";
-import { RunState } from "./Runner";
 import { CODE_TAB, FileEntry, parseFileEntries } from "./InputOutput";
 export type FrameState = {
     line: number;
@@ -27,6 +26,7 @@ export class Debugger extends State {
     private pendingFrames: Frame[] = [];
     private pendingFrameStates: FrameState[] = [];
     private flushTimer: ReturnType<typeof setTimeout> | undefined = undefined;
+    private runActive: boolean = false;
     @stateProperty
     private frameStates: FrameState[] = [];
     @stateProperty
@@ -65,6 +65,7 @@ export class Debugger extends State {
         this.reset();
 
         BackendManager.subscribe(BackendEventType.Start, () => {
+            this.runActive = true;
             this.reset();
         });
         BackendManager.subscribe(BackendEventType.Files, (e) => {
@@ -85,7 +86,7 @@ export class Debugger extends State {
             if (this.frameStates.length + this.pendingFrameStates.length >= this.papyros.constants.maxDebugFrames) {
                 this.flushFrames();
                 this.papyros.runner.stop();
-            } else if (this.papyros.runner.state === RunState.Ready) {
+            } else if (!this.runActive) {
                 // frame delivery is not ordered with respect to the run's
                 // end: stragglers arriving after the run must not wait for
                 // the timer, the trace should be complete as soon as they land
@@ -94,9 +95,12 @@ export class Debugger extends State {
                 this.flushTimer ??= setTimeout(() => this.flushFrames(), Debugger.FLUSH_INTERVAL_MS);
             }
         });
-        BackendManager.subscribe(BackendEventType.End, () => this.flushFrames());
-        BackendManager.subscribe(BackendEventType.Error, () => this.flushFrames());
-        BackendManager.subscribe(BackendEventType.Interrupt, () => this.flushFrames());
+        for (const type of [BackendEventType.End, BackendEventType.Error, BackendEventType.Interrupt]) {
+            BackendManager.subscribe(type, () => {
+                this.runActive = false;
+                this.flushFrames();
+            });
+        }
     }
 
     private flushFrames(): void {

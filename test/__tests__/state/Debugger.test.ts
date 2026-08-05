@@ -19,6 +19,7 @@ print(z)`;
         expect(papyros.debugger.active).toBe(true);
         await runPromise;
         await waitForOutput(papyros);
+        await waitForPapyrosReady(papyros);
         expect(papyros.debugger.trace.length).toBeGreaterThan(0);
         expect(papyros.debugger.active).toBe(true);
         expect(papyros.debugger.trace[0].line).toBe(1);
@@ -38,6 +39,7 @@ z = 1 + 2`;
         await waitForInputReady();
         await papyros.runner.start(RunMode.Debug);
         await waitForOutput(papyros);
+        await waitForPapyrosReady(papyros);
 
         const firstNOutputs = (n: number): string => "".concat(
             ...papyros.io.output
@@ -118,6 +120,7 @@ z = x + y
 print(z)`;
         await papyros.runner.start(RunMode.Debug);
         await waitForOutput(papyros);
+        await waitForPapyrosReady(papyros);
         expect(papyros.debugger.trace.length).toBeGreaterThan(0);
         papyros.debugger.active = false;
         expect(papyros.debugger.trace.length).toBe(0);
