@@ -259,8 +259,19 @@ if __name__ == "{MODULE_NAME}":
                         from tracer import JSONTracer
 
                         def frame_callback(frame):
+                            # Walking and re-reading the whole workspace on every
+                            # frame is wasteful for programs that never touch a
+                            # file. _tracked_files holds every file opened since
+                            # the last flush plus any still-open handle (a closed
+                            # file is only dropped by the flush below), so when it
+                            # is empty the workspace cannot have changed since the
+                            # previous frame. Files changed without builtins.open
+                            # (e.g. os.rename) still show up through the
+                            # end-of-run emission.
+                            workspace_may_have_changed = bool(self._tracked_files)
                             self._flush_open_files()
-                            self._emit_created_files()
+                            if workspace_may_have_changed or self._last_emitted_snapshot is None:
+                                self._emit_created_files()
                             self._emit_turtle_snapshot()
                             self.callback("frame", data=frame, contentType="application/json")
 
