@@ -1,4 +1,4 @@
-import { SyncExtras } from "../../src/sync/SyncClient";
+import { SyncExtras } from "../../src/sync/expose";
 import { Backend, WorkerDiagnostic } from "../../src/backend/Backend";
 import { BackendEventType } from "../../src/communication/BackendEvent";
 import { vi } from "vitest";
@@ -7,14 +7,14 @@ import { vi } from "vitest";
  * Implementation of a JavaScript backend for Papyros
  * by using eval and overriding some builtins
  */
-export class MockBackend extends Backend<SyncExtras> {
+export class MockBackend extends Backend {
     constructor() {
         super();
         this.runCode = vi.fn(this.runCode);
         this.lintCode = vi.fn(this.lintCode);
     }
 
-    protected syncExpose() {
+    protected expose() {
         return (f: any) => f;
     }
 

@@ -2,7 +2,8 @@ import { Backend, RunMode, WorkerDiagnostic } from "../../Backend";
 import { BackendEvent } from "../../../communication/BackendEvent";
 import { loadPyodide, PyodideInterface } from "pyodide";
 import { PyProxy } from "pyodide/ffi";
-import { pyodideExpose, PyodideExtras, loadPyodideAndPackage } from "../../../sync/pyodide";
+import { loadPyodideAndPackage } from "../../../sync/pyodide";
+import { SyncExtras } from "../../../sync/expose";
 
 const pythonPackageUrl = new URL("./python_package.tar.gz.load_by_url", import.meta.url).href;
 
@@ -10,7 +11,7 @@ const pythonPackageUrl = new URL("./python_package.tar.gz.load_by_url", import.m
  * Implementation of a Python backend for Papyros
  * Powered by Pyodide (https://pyodide.org/)
  */
-export class PythonWorker extends Backend<PyodideExtras> {
+export class PythonWorker extends Backend {
     private pyodide: PyodideInterface;
     private papyros: PyProxy | undefined;
     /**
@@ -25,13 +26,6 @@ export class PythonWorker extends Backend<PyodideExtras> {
 
     private static convert(data: any): any {
         return data.toJs ? data.toJs({ dict_converter: Object.fromEntries }) : data;
-    }
-
-    /**
-     * @return {any} Function to expose a method with Pyodide support
-     */
-    protected override syncExpose(): any {
-        return pyodideExpose;
     }
 
     private static async getPyodide(indexURL: string | undefined): Promise<PyodideInterface> {
@@ -91,7 +85,7 @@ export class PythonWorker extends Backend<PyodideExtras> {
         return modes;
     }
 
-    public override async runCode(extras: PyodideExtras, code: string, mode = "exec"): Promise<any> {
+    public override async runCode(extras: SyncExtras, code: string, mode = "exec"): Promise<any> {
         this.extras = extras;
         if (extras.interruptBuffer) {
             this.pyodide.setInterruptBuffer(extras.interruptBuffer);
