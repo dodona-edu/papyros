@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 # clean directory
 rm -rf dist
