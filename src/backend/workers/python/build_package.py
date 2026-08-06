@@ -63,4 +63,4 @@ def install_dependencies(packages, out_dir):
     subprocess.check_call([sys.executable, "-m", "pip", "install", "-t", out_dir, *packages])
 
 if __name__ == "__main__":
-    create_package("python_package", "python-runner friendly_traceback pylint>=4,<5 tomli typing-extensions dodona-json-tracer>=1.0.0 svg-turtle", extra_deps="papyros")
+    create_package("python_package", "python-runner friendly_traceback pylint>=4,<5 tomli typing-extensions dodona-json-tracer>=1.1.0 svg-turtle", extra_deps="papyros")

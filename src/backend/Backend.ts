@@ -106,9 +106,10 @@ export abstract class Backend {
      * @param {SyncExtras} extras Helper properties to run code
      * @param {string} code The code to run
      * @param {string} mode The mode to run the code in
+     * @param {number} maxSteps Upper bound on the number of debug frames a backend should produce, if it supports one
      * @return {Promise<void>} Promise of execution
      */
-    public abstract runCode(extras: SyncExtras, code: string, mode?: string): Promise<void>;
+    public abstract runCode(extras: SyncExtras, code: string, mode?: string, maxSteps?: number): Promise<void>;
 
     /**
      * Generate linting suggestions for the given code

@@ -85,7 +85,7 @@ export class PythonWorker extends Backend {
         return modes;
     }
 
-    public override async runCode(extras: SyncExtras, code: string, mode = "exec"): Promise<any> {
+    public override async runCode(extras: SyncExtras, code: string, mode = "exec", maxSteps?: number): Promise<any> {
         this.extras = extras;
         if (extras.interruptBuffer) {
             this.pyodide.setInterruptBuffer(extras.interruptBuffer);
@@ -94,6 +94,7 @@ export class PythonWorker extends Backend {
         return await this.papyros?.run_async.callKwargs({
             source_code: code,
             mode: mode,
+            max_steps: maxSteps,
         });
     }
 
