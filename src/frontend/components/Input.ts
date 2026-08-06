@@ -18,13 +18,14 @@ export class Input extends PapyrosElement {
             }
 
             :host {
-                width: 100%;
-                height: fit-content;
-                display: block;
+                display: flex;
+                flex-direction: column;
             }
 
             p-batch-input {
-                height: 200px;
+                flex: 1;
+                min-height: 0;
+                overflow: auto;
             }
         `;
     }
