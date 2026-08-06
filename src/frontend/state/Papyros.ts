@@ -5,7 +5,7 @@ import { InputOutput } from "./InputOutput";
 import { Constants } from "./Constants";
 import { Examples } from "./Examples";
 import { BackendManager } from "../../communication/BackendManager";
-import { makeChannel } from "sync-message";
+import { makeChannel } from "../../sync/channel";
 import { I18n } from "./I18n";
 import { Test } from "./Test";
 import { PapyrosLaunchError, ServiceWorkerRegistrationError } from "./PapyrosErrors";

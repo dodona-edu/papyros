@@ -1,5 +1,5 @@
 import { proxy } from "comlink";
-import { SyncClient } from "comsync";
+import { SyncClient } from "../../sync/SyncClient";
 import { Backend, RunMode, WorkerDiagnostic } from "../../backend/Backend";
 import { BackendEvent, BackendEventType } from "../../communication/BackendEvent";
 import { BackendManager } from "../../communication/BackendManager";

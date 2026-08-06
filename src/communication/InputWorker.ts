@@ -1,4 +1,4 @@
-import { serviceWorkerFetchListener } from "sync-message";
+import { serviceWorkerFetchListener } from "../sync/channel";
 
 /**
  * Class that is used in a service worker to allow synchronous communication

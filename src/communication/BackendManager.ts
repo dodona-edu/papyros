@@ -2,9 +2,8 @@ import { Backend } from "../backend/Backend";
 import { ProgrammingLanguage } from "../ProgrammingLanguage";
 import { BackendEvent, BackendEventType } from "./BackendEvent";
 import { LogType, papyrosLog } from "../util/Logging";
-import { Channel, makeChannel } from "sync-message";
-import { SyncClient } from "comsync";
-import { PyodideClient } from "pyodide-worker-runner";
+import { Channel } from "../sync/channel";
+import { SyncClient } from "../sync/SyncClient";
 /**
  * Callback type definition for subscribers
  * @param {BackendEvent} e The published event
@@ -35,8 +34,9 @@ export abstract class BackendManager {
     private static halted: boolean;
     /**
      * The channel used to communicate with the SyncClients
+     * Assigned by Papyros.configureInput before any backend is created
      */
-    public static channel: Channel;
+    public static channel: Channel | null = null;
 
     /**
      * @param {ProgrammingLanguage} language The language to support
@@ -117,14 +117,13 @@ export abstract class BackendManager {
      * Initialise the fields and setup the maps
      */
     static {
-        BackendManager.channel = makeChannel()!;
         BackendManager.createBackendMap = new Map();
         BackendManager.backendMap = new Map();
         BackendManager.subscriberMap = new Map();
         BackendManager.registerBackend(
             ProgrammingLanguage.Python,
             () =>
-                new PyodideClient<Backend>(
+                new SyncClient<Backend>(
                     () =>
                         new Worker(new URL("../backend/workers/python/worker", import.meta.url), {
                             type: "module",

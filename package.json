@@ -18,12 +18,9 @@
     "@material/web": "^2.4.0",
     "codemirror-readonly-ranges": "^0.1.0-alpha.2",
     "comlink": "^4.4.1",
-    "comsync": "^0.0.9",
     "lit": "^3.3.1",
     "node-polyglot": "^2.6.0",
-    "pyodide": "^314.0.0",
-    "pyodide-worker-runner": "1.4.0",
-    "sync-message": "^0.0.12"
+    "pyodide": "^314.0.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

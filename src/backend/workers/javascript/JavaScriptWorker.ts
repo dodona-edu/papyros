@@ -1,13 +1,13 @@
 import { Backend, WorkerDiagnostic } from "../../Backend";
 import { CompletionResult } from "@codemirror/autocomplete";
 import { BackendEventType } from "../../../communication/BackendEvent";
-import { SyncExtras } from "comsync";
+import { SyncExtras } from "../../../sync/expose";
 
 /**
  * Implementation of a JavaScript backend for Papyros
  * by using eval and overriding some builtins
  */
-export class JavaScriptWorker extends Backend<SyncExtras> {
+export class JavaScriptWorker extends Backend {
     /**
      * Convert varargs to a string, similar to how the console does it
      * @param {any[]} args The values to join into a string

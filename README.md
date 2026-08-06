@@ -43,7 +43,7 @@ yarn add @dodona/papyros
 ### Setup input handling
 
 Running interactive programs in the browser requires special handling of synchronous input.
-Papyros supports two approaches (via [`sync-message`](https://github.com/alexmojaki/sync-message)):
+Papyros supports two approaches:
 
 #### COOP/COEP headers
 Add the following HTTP headers to your server responses:
@@ -126,6 +126,8 @@ The codebase organized into clear layers:
 * `frontend`: all browser-side code
     * `state`: state management (e.g. execution state, debugger, input/output)
     * `components`: visualization of that state, as Lit web components
+* `sync`: synchronous communication between the main thread and the workers, so that Python
+  `input()` and `time.sleep()` can block a worker until the main thread answers
 
 ### Components
 
@@ -184,3 +186,11 @@ yarn build:lib
 # Publish to npm
 yarn publish
 ```
+
+## Third-party code
+
+`src/sync/` and `src/backend/workers/python/pyodide_worker_runner.py` are vendored from
+[sync-message](https://github.com/alexmojaki/sync-message),
+[comsync](https://github.com/alexmojaki/comsync) and
+[pyodide-worker-runner](https://github.com/alexmojaki/pyodide-worker-runner),
+all MIT licensed and copyright (c) 2022 Alex Hall. See [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
