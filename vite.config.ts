@@ -24,8 +24,9 @@ export default defineConfig({
         },
         testTimeout: 100000, // loading pyodide can take a while
         sequence: {
-            concurrent: false, // disable running tests in parallel
+            // tests within a file share the static BackendManager, so they cannot overlap
+            concurrent: false,
         },
-        fileParallelism: false, // disable running tests in parallel
+        maxWorkers: 4, // launching pyodide is CPU-bound, more workers do not help
     },
 });

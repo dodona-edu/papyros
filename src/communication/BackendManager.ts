@@ -1,7 +1,6 @@
 import { Backend } from "../backend/Backend";
 import { ProgrammingLanguage } from "../ProgrammingLanguage";
 import { BackendEvent, BackendEventType } from "./BackendEvent";
-import { LogType, papyrosLog } from "../util/Logging";
 import { Channel } from "../sync/channel";
 import { SyncClient } from "../sync/SyncClient";
 /**
@@ -97,7 +96,6 @@ export abstract class BackendManager {
      * @param {BackendEventType} e The event to publish
      */
     public static publish(e: BackendEvent): void {
-        papyrosLog(LogType.Debug, "Publishing event: ", e);
         if (e.type === BackendEventType.Start) {
             BackendManager.halted = false;
         }
