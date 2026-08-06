@@ -3,6 +3,16 @@ import { customElement } from "lit/decorators.js";
 import { EditorView, ViewUpdate, placeholder } from "@codemirror/view";
 import { Compartment, EditorState, Extension, StateEffect } from "@codemirror/state";
 
+// Keep gutters out of native text selection: with drawSelection() active the
+// browser's own selection is invisible over the code, so a page-wide select-all
+// would highlight (and copy) only the line numbers.
+const gutterSelectionTheme = EditorView.theme({
+    ".cm-gutters": {
+        userSelect: "none",
+        "-webkit-user-select": "none",
+    },
+});
+
 @customElement("p-code-mirror-editor")
 export class CodeMirrorEditor extends LitElement {
     private __value: string = "";
@@ -20,15 +30,17 @@ export class CodeMirrorEditor extends LitElement {
     }
 
     public set readonly(readonly: boolean) {
+        // EditorState.readOnly instead of EditorView.editable: the view stays
+        // focusable, so keyboard selection (e.g. cmd+a) keeps working.
         this.configure({
-            editable: EditorView.editable.of(!readonly),
+            readonly: EditorState.readOnly.of(readonly),
         });
         this.__readonly = readonly;
     }
 
     protected dispatchChange(): void {
         if (!this.view) return;
-        this.configure({ editable: EditorView.editable.of(false) });
+        this.configure({ readonly: EditorState.readOnly.of(true) });
         this.view.dispatch({
             changes: {
                 from: 0,
@@ -36,7 +48,7 @@ export class CodeMirrorEditor extends LitElement {
                 insert: this.__value,
             },
         });
-        this.configure({ editable: EditorView.editable.of(!this.__readonly) });
+        this.configure({ readonly: EditorState.readOnly.of(this.__readonly) });
     }
 
     public get value(): string {
@@ -64,6 +76,7 @@ export class CodeMirrorEditor extends LitElement {
                 doc: this.__value,
                 extensions: [
                     EditorView.updateListener.of(this.onViewUpdate.bind(this)),
+                    gutterSelectionTheme,
                     [...this.compartments.keys().map((k) => this.compartments.get(k)!.of([]))],
                 ],
             }),

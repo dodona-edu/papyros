@@ -29,9 +29,9 @@ export const ENGLISH_TRANSLATION = {
             en: "English",
             nl: "Nederlands",
         },
-        switch_input_mode_to: {
-            interactive: "Switch to interactive mode",
-            batch: "Switch to batch input",
+        input_modes: {
+            interactive: "Interactive input",
+            batch: "Input in advance",
         },
         enter: "Enter",
         examples: "Examples",
@@ -115,9 +115,9 @@ export const DUTCH_TRANSLATION = {
             en: "English",
             nl: "Nederlands",
         },
-        switch_input_mode_to: {
-            interactive: "Wisselen naar interactieve invoer",
-            batch: "Geef invoer vooraf in",
+        input_modes: {
+            interactive: "Interactieve invoer",
+            batch: "Invoer vooraf ingeven",
         },
         enter: "Enter",
         examples: "Voorbeelden",

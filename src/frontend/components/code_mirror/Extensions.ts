@@ -138,6 +138,14 @@ export const [testLineExtension, setTestLines, testLineState] = lineEffectExtens
     gutterClass: "",
 });
 
+// Inline SVGs instead of unicode glyphs (🖉, ⨯), which many system fonts lack.
+const EDIT_ICON_SVG =
+    '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">' +
+    '<path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z"/></svg>';
+const REMOVE_ICON_SVG =
+    '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">' +
+    '<path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg>';
+
 export function testCodeWidgetExtension(
     translations: { description: string; edit: string; remove: string },
     handleEdit: () => void,
@@ -155,18 +163,22 @@ export function testCodeWidgetExtension(
             const buttons = document.createElement("div");
             buttons.classList.add("papyros-test-code-buttons");
 
-            const editButton = document.createElement("a");
+            const editButton = document.createElement("button");
+            editButton.type = "button";
             editButton.classList.add("papyros-icon-link");
-            editButton.innerHTML = "🖉";
+            editButton.innerHTML = EDIT_ICON_SVG;
             editButton.addEventListener("click", handleEdit);
             editButton.title = translations.edit;
+            editButton.setAttribute("aria-label", translations.edit);
             buttons.appendChild(editButton);
 
-            const deleteButton = document.createElement("a");
+            const deleteButton = document.createElement("button");
+            deleteButton.type = "button";
             deleteButton.classList.add("papyros-icon-link");
-            deleteButton.innerHTML = "⨯";
+            deleteButton.innerHTML = REMOVE_ICON_SVG;
             deleteButton.addEventListener("click", handleRemove);
             deleteButton.title = translations.remove;
+            deleteButton.setAttribute("aria-label", translations.remove);
             buttons.appendChild(deleteButton);
 
             element.appendChild(buttons);

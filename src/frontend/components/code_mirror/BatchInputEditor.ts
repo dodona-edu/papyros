@@ -1,6 +1,7 @@
 import { customElement, property } from "lit/decorators.js";
 import { CodeMirrorEditor } from "./CodeMirrorEditor";
-import { EditorView, keymap } from "@codemirror/view";
+import { keymap } from "@codemirror/view";
+import { EditorState } from "@codemirror/state";
 import { css, CSSResult } from "lit";
 import { defaultKeymap } from "@codemirror/commands";
 import { setUsedLines, usedLineExtension } from "./Extensions";
@@ -27,7 +28,7 @@ export class BatchInputEditor extends CodeMirrorEditor {
     @property({ type: Boolean })
     set readOnly(value: boolean) {
         this.configure({
-            debugging: value ? EditorView.editable.of(false) : [],
+            debugging: value ? EditorState.readOnly.of(true) : [],
         });
     }
 
