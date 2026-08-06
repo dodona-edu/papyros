@@ -1,5 +1,5 @@
 import { BackendEvent, BackendEventType } from "../communication/BackendEvent";
-import { syncExpose, SyncExtras } from "comsync";
+import { expose, SyncExtras } from "../sync/expose";
 import { BackendEventQueue } from "../communication/BackendEventQueue";
 
 export interface WorkerDiagnostic {
@@ -36,12 +36,12 @@ export enum RunMode {
     Doctest = "doctest",
 }
 
-export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
+export abstract class Backend {
     /**
      * SyncExtras object that grants access to helpful methods
      * for synchronous operations
      */
-    protected extras: Extras;
+    protected extras: SyncExtras;
     /**
      * Callback to handle events published by this Backend
      */
@@ -56,19 +56,19 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
      * Synchronously exposing methods should be done here
      */
     constructor() {
-        this.extras = {} as Extras;
+        this.extras = {} as SyncExtras;
         this.onEvent = () => {
             // Empty, initialized in launch
         };
-        this.runCode = this.syncExpose()(this.runCode.bind(this));
+        this.runCode = this.expose()(this.runCode.bind(this));
         this.queue = {} as BackendEventQueue;
     }
 
     /**
-     * @return {any} The function to expose methods for Comsync to allow interrupting
+     * @return {any} The wrapper that lets SyncClient drive exposed methods
      */
-    protected syncExpose(): any {
-        return syncExpose;
+    protected expose(): any {
+        return expose;
     }
 
     /**
@@ -103,12 +103,12 @@ export abstract class Backend<Extras extends SyncExtras = SyncExtras> {
 
     /**
      * Executes the given code
-     * @param {Extras} extras Helper properties to run code
+     * @param {SyncExtras} extras Helper properties to run code
      * @param {string} code The code to run
      * @param {string} mode The mode to run the code in
      * @return {Promise<void>} Promise of execution
      */
-    public abstract runCode(extras: Extras, code: string, mode?: string): Promise<void>;
+    public abstract runCode(extras: SyncExtras, code: string, mode?: string): Promise<void>;
 
     /**
      * Generate linting suggestions for the given code

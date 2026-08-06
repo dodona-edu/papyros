@@ -32,6 +32,8 @@ def create_package(package_name, dependencies, extra_deps):
     # Locate via sysconfig rather than `import turtle`, which would pull in tkinter.
     turtle_src = os.path.join(sysconfig.get_path("stdlib"), "turtle.py")
     shutil.copy(turtle_src, os.path.join(package_name, "turtle.py"))
+    # Vendored from pyodide-worker-runner, provides install_imports used by papyros.py
+    shutil.copy("pyodide_worker_runner.py", os.path.join(package_name, "pyodide_worker_runner.py"))
     tar_name = f"{package_name}.tar.gz.load_by_url"
     if os.path.exists(tar_name):
         os.remove(tar_name)

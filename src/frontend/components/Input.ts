@@ -3,20 +3,14 @@ import { css, CSSResult, html, TemplateResult } from "lit";
 import "./input/BatchInput";
 import "./input/InteractiveInput";
 import { PapyrosElement } from "./PapyrosElement";
-import "@material/web/switch/switch";
+import "@material/web/labs/segmentedbuttonset/outlined-segmented-button-set";
+import "@material/web/labs/segmentedbutton/outlined-segmented-button";
 import { InputMode } from "../state/InputOutput";
 
 @customElement("p-input")
 export class Input extends PapyrosElement {
     static get styles(): CSSResult {
         return css`
-            label {
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-                margin-top: 0.5rem;
-            }
-
             :host {
                 width: 100%;
                 height: fit-content;
@@ -26,6 +20,21 @@ export class Input extends PapyrosElement {
             p-batch-input {
                 height: 200px;
             }
+
+            md-outlined-segmented-button-set {
+                margin-top: 0.5rem;
+                --md-outlined-segmented-button-selected-container-color: var(--md-sys-color-primary-container);
+                --md-outlined-segmented-button-selected-label-text-color: var(--md-sys-color-on-primary-container);
+                --md-outlined-segmented-button-selected-hover-label-text-color: var(
+                    --md-sys-color-on-primary-container
+                );
+                --md-outlined-segmented-button-selected-focus-label-text-color: var(
+                    --md-sys-color-on-primary-container
+                );
+                --md-outlined-segmented-button-selected-pressed-label-text-color: var(
+                    --md-sys-color-on-primary-container
+                );
+            }
         `;
     }
 
@@ -33,12 +42,9 @@ export class Input extends PapyrosElement {
         return this.papyros.io.inputMode;
     }
 
-    get otherMode(): InputMode {
-        return this.mode === InputMode.batch ? InputMode.interactive : InputMode.batch;
-    }
-
-    toggleMode(): void {
-        this.papyros.io.inputMode = this.otherMode;
+    private selectMode(e: CustomEvent<{ index: number; selected: boolean }>): void {
+        if (!e.detail.selected) return;
+        this.papyros.io.inputMode = e.detail.index === 0 ? InputMode.interactive : InputMode.batch;
     }
 
     protected override render(): TemplateResult {
@@ -48,10 +54,18 @@ export class Input extends PapyrosElement {
                     ? html`<p-batch-input .papyros=${this.papyros}></p-batch-input>`
                     : html`<p-interactive-input .papyros=${this.papyros}></p-interactive-input>`
             }
-            <label>
-                <md-switch .selected=${this.mode === InputMode.batch} @change=${() => this.toggleMode()}></md-switch>
-                ${this.t(`Papyros.switch_input_mode_to.${this.otherMode}`)}
-            </label>
+            <md-outlined-segmented-button-set @segmented-button-set-selection=${this.selectMode}>
+                <md-outlined-segmented-button
+                    no-checkmark
+                    label=${this.t("Papyros.input_modes.interactive")}
+                    ?selected=${this.mode === InputMode.interactive}
+                ></md-outlined-segmented-button>
+                <md-outlined-segmented-button
+                    no-checkmark
+                    label=${this.t("Papyros.input_modes.batch")}
+                    ?selected=${this.mode === InputMode.batch}
+                ></md-outlined-segmented-button>
+            </md-outlined-segmented-button-set>
         `;
     }
 }
