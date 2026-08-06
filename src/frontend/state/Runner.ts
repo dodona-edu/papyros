@@ -17,6 +17,7 @@ export enum RunState {
     AwaitingInput = "awaiting_input",
     Stopping = "stopping",
     Ready = "ready",
+    Error = "error",
 }
 
 /**
@@ -194,22 +195,31 @@ export class Runner extends State {
         this.backendReady = false;
         const launchId = ++this.launchId;
         const backend = BackendManager.getBackend(this.programmingLanguage);
-        // Use a Promise to immediately enable running while downloading
-        // eslint-disable-next-line no-async-promise-executor
-        this.backend = new Promise(async (resolve) => {
-            const workerProxy = backend.workerProxy;
-            // Allow passing messages between worker and main thread
-            await workerProxy.launch(
-                proxy((e: BackendEvent) => BackendManager.publish(e)),
-                this.pyodideAssetURL,
-            );
-            if (launchId === this.launchId) {
-                this.updateRunModes();
-                this.backendReady = true;
-            }
-            return resolve(backend);
-        });
+        // Expose the promise before it settles so runs can already be queued while downloading
+        const backendLaunched = this.launchBackend(backend, launchId);
+        this.backend = backendLaunched;
         this.setState(RunState.Ready);
+        try {
+            await backendLaunched;
+        } catch (error) {
+            if (launchId === this.launchId) {
+                this.setState(RunState.Error);
+            }
+            throw error;
+        }
+    }
+
+    private async launchBackend(backend: SyncClient<Backend>, launchId: number): Promise<SyncClient<Backend>> {
+        // Allow passing messages between worker and main thread
+        await backend.workerProxy.launch(
+            proxy((e: BackendEvent) => BackendManager.publish(e)),
+            this.pyodideAssetURL,
+        );
+        if (launchId === this.launchId) {
+            this.updateRunModes();
+            this.backendReady = true;
+        }
+        return backend;
     }
 
     /**
@@ -446,12 +456,15 @@ export class Runner extends State {
         );
     }
     private updateRunModes(): void {
-        this.backend.then(async (backend) => {
-            const proxy = backend.workerProxy;
+        // Launch failures surface through launch(), so only they are swallowed here
+        this.backend
+            .catch(() => undefined)
+            .then(async (backend) => {
+                const proxy = backend?.workerProxy;
 
-            if (proxy) {
-                this.runModes = await proxy.runModes(this.effectiveCode);
-            }
-        });
+                if (proxy) {
+                    this.runModes = await proxy.runModes(this.effectiveCode);
+                }
+            });
     }
 }

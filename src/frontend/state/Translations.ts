@@ -23,6 +23,7 @@ export const ENGLISH_TRANSLATION = {
             loading: "Loading",
             awaiting_input: "Awaiting input",
             ready: "",
+            error: "Failed to load",
         },
         programming_language: "Programming language",
         locales: {
@@ -107,6 +108,7 @@ export const DUTCH_TRANSLATION = {
             loading: "Aan het laden",
             awaiting_input: "Aan het wachten op invoer",
             ready: "",
+            error: "Laden mislukt",
         },
         finished: "Code uitgevoerd in %{time} s",
         interrupted: "Code onderbroken na %{time} s",

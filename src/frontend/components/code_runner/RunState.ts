@@ -25,7 +25,7 @@ export class RunStateEl extends PapyrosElement {
 
         return html`
             ${
-                this.papyros.runner.state === RunState.Ready
+                [RunState.Ready, RunState.Error].includes(this.papyros.runner.state)
                     ? ""
                     : html` <md-circular-progress indeterminate></md-circular-progress> `
             }
