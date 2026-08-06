@@ -456,16 +456,15 @@ export class Runner extends State {
         );
     }
     private updateRunModes(): void {
+        // Launch failures surface through launch(), so only they are swallowed here
         this.backend
+            .catch(() => undefined)
             .then(async (backend) => {
-                const proxy = backend.workerProxy;
+                const proxy = backend?.workerProxy;
 
                 if (proxy) {
                     this.runModes = await proxy.runModes(this.effectiveCode);
                 }
-            })
-            .catch(() => {
-                // Launch failures surface through launch()
             });
     }
 }

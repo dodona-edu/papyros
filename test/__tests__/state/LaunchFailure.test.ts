@@ -7,19 +7,24 @@ import { PapyrosLaunchError } from "../../../src/frontend/state/PapyrosErrors";
 
 // Fails fast instead of letting a regression hit the suite timeout
 function withTimeout<T>(promise: Promise<T>, ms: number, what: string): Promise<T> {
-    return Promise.race([
-        promise,
-        new Promise<T>((_, reject) => setTimeout(() => reject(new Error(`${what} did not settle within ${ms} ms`)), ms)),
-    ]);
+    let timer: ReturnType<typeof setTimeout>;
+    const timeout = new Promise<T>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`${what} did not settle within ${ms} ms`)), ms);
+    });
+    return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 }
 
 describe("Papyros launch failure", () => {
     it("surfaces a failed backend launch instead of hanging", async () => {
-        BackendManager.registerBackend(ProgrammingLanguage.Python, () => ({
-            workerProxy: {
-                launch: () => Promise.reject(new Error("worker failed to start")),
-            },
-        }) as any);
+        BackendManager.registerBackend(
+            ProgrammingLanguage.Python,
+            () =>
+                ({
+                    workerProxy: {
+                        launch: () => Promise.reject(new Error("worker failed to start")),
+                    },
+                }) as any,
+        );
         vi.spyOn(window, "confirm").mockReturnValue(false);
 
         const papyros = new Papyros();
@@ -36,7 +41,8 @@ describe("Papyros launch failure", () => {
         expect(papyros.runner.backendReady).toBe(false);
 
         // Callers awaiting the backend must reject instead of waiting forever
-        await expect(withTimeout(papyros.runner.backend, 2000, "runner.backend"))
-            .rejects.toThrow("worker failed to start");
+        await expect(withTimeout(papyros.runner.backend, 2000, "runner.backend")).rejects.toThrow(
+            "worker failed to start",
+        );
     });
 });
