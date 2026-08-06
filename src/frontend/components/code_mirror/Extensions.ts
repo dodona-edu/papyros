@@ -163,18 +163,22 @@ export function testCodeWidgetExtension(
             const buttons = document.createElement("div");
             buttons.classList.add("papyros-test-code-buttons");
 
-            const editButton = document.createElement("a");
+            const editButton = document.createElement("button");
+            editButton.type = "button";
             editButton.classList.add("papyros-icon-link");
             editButton.innerHTML = EDIT_ICON_SVG;
             editButton.addEventListener("click", handleEdit);
             editButton.title = translations.edit;
+            editButton.setAttribute("aria-label", translations.edit);
             buttons.appendChild(editButton);
 
-            const deleteButton = document.createElement("a");
+            const deleteButton = document.createElement("button");
+            deleteButton.type = "button";
             deleteButton.classList.add("papyros-icon-link");
             deleteButton.innerHTML = REMOVE_ICON_SVG;
             deleteButton.addEventListener("click", handleRemove);
             deleteButton.title = translations.remove;
+            deleteButton.setAttribute("aria-label", translations.remove);
             buttons.appendChild(deleteButton);
 
             element.appendChild(buttons);

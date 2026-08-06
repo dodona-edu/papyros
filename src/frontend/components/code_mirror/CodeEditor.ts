@@ -81,6 +81,9 @@ export class CodeEditor extends CodeMirrorEditor {
                 vertical-align: middle;
                 padding: 0 4px;
                 cursor: pointer;
+                border: none;
+                background: none;
+                color: inherit;
             }
 
             .papyros-icon-link:hover {
