@@ -93,7 +93,7 @@ export abstract class BackendManager {
 
     /**
      * Publish an event, notifying all listeners for its type
-     * @param {BackendEventType} e The event to publish
+     * @param {BackendEvent} e The event to publish
      */
     public static publish(e: BackendEvent): void {
         if (e.type === BackendEventType.Start) {
