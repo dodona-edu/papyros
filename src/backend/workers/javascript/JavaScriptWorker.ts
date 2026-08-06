@@ -1,7 +1,7 @@
 import { Backend, WorkerDiagnostic } from "../../Backend";
 import { CompletionResult } from "@codemirror/autocomplete";
 import { BackendEventType } from "../../../communication/BackendEvent";
-import { SyncExtras } from "comsync";
+import { SyncExtras } from "../../../sync/SyncClient";
 
 /**
  * Implementation of a JavaScript backend for Papyros

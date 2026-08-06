@@ -2,7 +2,7 @@ import { Backend, RunMode, WorkerDiagnostic } from "../../Backend";
 import { BackendEvent } from "../../../communication/BackendEvent";
 import { loadPyodide, PyodideInterface } from "pyodide";
 import { PyProxy } from "pyodide/ffi";
-import { pyodideExpose, PyodideExtras, loadPyodideAndPackage } from "pyodide-worker-runner";
+import { pyodideExpose, PyodideExtras, loadPyodideAndPackage } from "../../../sync/pyodide";
 
 const pythonPackageUrl = new URL("./python_package.tar.gz.load_by_url", import.meta.url).href;
 
