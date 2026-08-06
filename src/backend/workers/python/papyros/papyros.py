@@ -7,6 +7,7 @@ import sys
 import json
 import base64
 import doctest
+import inspect
 import re
 import python_runner
 import friendly_traceback
@@ -275,7 +276,12 @@ if __name__ == "{MODULE_NAME}":
                             self._emit_turtle_snapshot()
                             self.callback("frame", data=frame, contentType="application/json")
 
-                        result = JSONTracer(frame_callback=frame_callback, module_name=MODULE_NAME).runscript(source_code)
+                        # older pinned tracer versions don't accept frame_format;
+                        # only request delta frames once the installed tracer supports it
+                        tracer_kwargs = {"frame_callback": frame_callback, "module_name": MODULE_NAME}
+                        if "frame_format" in inspect.signature(JSONTracer.__init__).parameters:
+                            tracer_kwargs["frame_format"] = "delta"
+                        result = JSONTracer(**tracer_kwargs).runscript(source_code)
                     else:
                         result = self.execute(code_obj, mode)
                     while isinstance(result, Awaitable):
