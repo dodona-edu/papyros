@@ -4,6 +4,7 @@ import { Frame } from "@dodona/trace-component/dist/trace_types";
 import { State, stateProperty } from "@dodona/lit-state";
 import { Papyros } from "./Papyros";
 import { CODE_TAB, FileEntry, parseFileEntries } from "./InputOutput";
+import { materializeFrame } from "./DebuggerFrames";
 export type FrameState = {
     line: number;
     outputs: number;
@@ -25,6 +26,7 @@ export class Debugger extends State {
     private papyros: Papyros;
     private pendingFrames: Frame[] = [];
     private pendingFrameStates: FrameState[] = [];
+    private lastMaterializedFrame: Frame | undefined = undefined;
     private flushTimer: ReturnType<typeof setTimeout> | undefined = undefined;
     private runActive: boolean = false;
     @stateProperty
@@ -75,7 +77,8 @@ export class Debugger extends State {
         });
         BackendManager.subscribe(BackendEventType.Frame, (e) => {
             this.activeFrame ??= 0;
-            const frame = JSON.parse(e.data);
+            const frame = materializeFrame(this.lastMaterializedFrame, JSON.parse(e.data));
+            this.lastMaterializedFrame = frame;
             this.pendingFrames.push(frame);
             this.pendingFrameStates.push({
                 line: frame.line,
@@ -124,6 +127,7 @@ export class Debugger extends State {
         }
         this.pendingFrames = [];
         this.pendingFrameStates = [];
+        this.lastMaterializedFrame = undefined;
         this.frameStates = [];
         this.currentOutputs = 0;
         this.currentInputs = 0;
