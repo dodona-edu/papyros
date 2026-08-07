@@ -48,6 +48,18 @@ describe("JavaScriptWorker", () => {
         expect(errorEvent(events)).toBeUndefined();
     });
 
+    it("logs values JSON cannot represent without crashing", async () => {
+        const events = await run("console.log(10n, Symbol('tag'), true);");
+        expect(outputText(events)).toBe("10 Symbol(tag) true\n");
+        expect(errorEvent(events)).toBeUndefined();
+    });
+
+    it("logs functions by their source", async () => {
+        const events = await run("console.log(function foo() {});");
+        expect(outputText(events)).toContain("foo");
+        expect(errorEvent(events)).toBeUndefined();
+    });
+
     it("keeps the original stack trace of a thrown Error", async () => {
         const events = await run("function fail() { throw new Error('boom'); }\nfail();");
         const error = errorEvent(events);
@@ -69,5 +81,12 @@ describe("JavaScriptWorker", () => {
         const error = errorEvent(events);
         expect(error).toBeTruthy();
         expect(error!.data.what).toBe("oops");
+    });
+
+    it("reports a clean error when throwing a bigint", async () => {
+        const events = await run("throw 10n;");
+        const error = errorEvent(events);
+        expect(error).toBeTruthy();
+        expect(error!.data.what).toBe("10");
     });
 });

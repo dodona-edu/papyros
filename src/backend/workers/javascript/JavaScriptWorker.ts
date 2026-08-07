@@ -33,7 +33,9 @@ export class JavaScriptWorker extends Backend {
                     }
                     return aString;
                 } else {
-                    return JSON.stringify(a);
+                    // bigint, symbol, function and boolean: JSON.stringify throws
+                    // on a bigint and returns undefined for a symbol or function
+                    return String(a);
                 }
             })
             .join(" ");
