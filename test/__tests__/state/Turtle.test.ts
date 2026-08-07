@@ -1,11 +1,11 @@
-import {describe, expect, it} from "vitest";
+import {describe, expect, it, beforeAll, beforeEach, afterAll} from "vitest";
 import {Papyros} from "../../../src/frontend/state/Papyros";
 import {ProgrammingLanguage} from "../../../src/ProgrammingLanguage";
 import {RunState} from "../../../src/frontend/state/Runner";
 import {RunMode} from "../../../src/backend/Backend";
 import {OutputType} from "../../../src/frontend/state/InputOutput";
 import {buildTurtleSvg, TurtlePatch} from "../../../src/frontend/state/TurtleSvg";
-import {waitForOutput, waitForPapyrosReady} from "../../helpers";
+import {launchPapyros, settlePapyros, waitForOutput, waitForPapyrosReady} from "../../helpers";
 
 /**
  * The drawing is streamed as incremental patches, so the document a user sees
@@ -21,11 +21,21 @@ function turtleSvg(papyros: Papyros): string {
     return svg!;
 }
 
-describe("Turtle", () => {
+// One Pyodide boot for the whole file: the tests share a Python instance
+describe.sequential("Turtle", () => {
+    let papyros: Papyros;
+
+    beforeAll(async () => {
+        papyros = await launchPapyros(ProgrammingLanguage.Python);
+    }, 180000);
+
+    beforeEach(async () => {
+        await settlePapyros(papyros);
+    });
+
+    afterAll(() => papyros.dispose());
+
     it("can load turtle and generate an SVG image", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
         papyros.runner.code = `import turtle
 t = turtle.Turtle()
 t.forward(100)
@@ -43,9 +53,6 @@ turtle.done()`;
     });
 
     it("emits incremental snapshots on sleep", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
         papyros.runner.code = `import turtle
 import time
 t = turtle.Turtle()
@@ -70,9 +77,6 @@ turtle.done()`;
     });
 
     it("honors turtle.setup() canvas dimensions", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
         papyros.runner.code = `import turtle
 turtle.setup(800, 400)
 turtle.forward(100)
@@ -86,9 +90,6 @@ turtle.done()`;
     });
 
     it("treats fractional setup() values as fractions of a 1000px reference", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
         // setup(0.5, 0.25) should resolve to 500x250, mirroring stdlib turtle's
         // "fraction of the screen" semantics rather than collapsing to int(0.x) == 0.
         papyros.runner.code = `import turtle
@@ -104,9 +105,6 @@ turtle.done()`;
     });
 
     it("honors Screen().setup() and recenters the origin", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
         // Drawing a zero-length stroke at the turtle's home (0, 0) emits a polyline
         // whose coords reveal the canvas-pixel origin. With setup(1000, 1000) the
         // origin should sit at the canvas center (500.5, 500.5), not the default 200.5.
@@ -126,9 +124,6 @@ turtle.done()`;
     });
 
     it("emits turtle image in debug mode", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
         papyros.runner.code = `import turtle
 t = turtle.Turtle()
 t.forward(100)
@@ -141,9 +136,6 @@ turtle.done()`;
     });
 
     it("re-sends the document when setup() runs mid-debug", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
         // Frames are snapshotted from the moment turtle is imported, so by the
         // time setup() runs the 400x400 document has already been streamed and
         // the resize must invalidate it (and every fragment's coordinates).
@@ -162,9 +154,6 @@ turtle.done()`;
     });
 
     it("streams a debug session incrementally instead of a document per frame", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
         // Enough drawing that re-sending the whole document per frame would show up:
         // this used to cost one full SVG (plus base64) for every debug frame.
         // The pen is lifted between strokes so each one is its own canvas item;
