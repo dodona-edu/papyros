@@ -11,8 +11,6 @@ export enum BackendEventType {
     Interrupt = "interrupt",
     Loading = "loading",
     Frame = "frame",
-    FrameChange = "frame-change",
-    Stop = "stop",
     Files = "files",
     Turtle = "turtle",
 }

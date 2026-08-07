@@ -159,6 +159,14 @@ Each expects a `papyros` state instance, but defaults to the global `papyros`.
 <p-output></p-output>
 ```
 
+### Multiple instances
+
+The global `papyros` is just a default instance. Every `new Papyros()` owns its own event
+bus, backend workers and input channel, so several instances can run code on the same page
+at the same time, even in the same language. The one service worker registration a page can
+have is shared between them. Call `papyros.dispose()` to terminate an instance's workers
+when it is removed from the page.
+
 ---
 
 ## Theming
@@ -210,6 +218,7 @@ A `Papyros` instance contains multiple logical parts:
 
 * `papyros.constants`: general settings, constants, and themes (can be overridden).
 * `papyros.debugger`: debug frames and currently active frame.
+* `papyros.events`: the event bus delivering backend events (output, errors, frames, ...) to this instance's state.
 * `papyros.examples`: available code examples.
 * `papyros.i18n`: translations (extend or override as needed).
 * `papyros.io`: input/output handling. Subscribe to `awaitingInput` to supply input when needed.

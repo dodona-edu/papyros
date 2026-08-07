@@ -1,4 +1,3 @@
-import { BackendManager } from "../../communication/BackendManager";
 import { BackendEventType } from "../../communication/BackendEvent";
 import { Frame } from "@dodona/trace-component/dist/trace_types";
 import { State, stateProperty } from "@dodona/lit-state";
@@ -66,16 +65,12 @@ export class Debugger extends State {
         this.papyros = papyros;
         this.reset();
 
-        BackendManager.subscribe(BackendEventType.Start, () => {
-            this.runActive = true;
-            this.reset();
-        });
-        BackendManager.subscribe(BackendEventType.Files, (e) => {
+        this.papyros.events.subscribe(BackendEventType.Files, (e) => {
             if (this._active) {
                 this.fileHistory = [...this.fileHistory, parseFileEntries(e.data, e.contentType)];
             }
         });
-        BackendManager.subscribe(BackendEventType.Frame, (e) => {
+        this.papyros.events.subscribe(BackendEventType.Frame, (e) => {
             this.activeFrame ??= 0;
             const frame = materializeFrame(this.lastMaterializedFrame, JSON.parse(e.data));
             this.lastMaterializedFrame = frame;
@@ -101,11 +96,25 @@ export class Debugger extends State {
             }
         });
         for (const type of [BackendEventType.End, BackendEventType.Error, BackendEventType.Interrupt]) {
-            BackendManager.subscribe(type, () => {
-                this.runActive = false;
-                this.flushFrames();
-            });
+            this.papyros.events.subscribe(type, () => this.onRunEnd());
         }
+    }
+
+    /**
+     * Called by the Runner when a run begins
+     */
+    public onRunStart(): void {
+        this.runActive = true;
+        this.reset();
+    }
+
+    /**
+     * Called when a run stops producing frames: directly by the Runner on stop or
+     * failure, and through the bus when the worker reports the run over
+     */
+    public onRunEnd(): void {
+        this.runActive = false;
+        this.flushFrames();
     }
 
     private flushFrames(): void {

@@ -169,17 +169,68 @@ export class Runner extends State {
      */
     private papyros: Papyros;
 
+    /**
+     * The live backend client per language, owned by this instance
+     */
+    private clients: Map<ProgrammingLanguage, SyncClient<Backend>> = new Map();
+    /**
+     * Per-instance factory overrides, so tests can inject a backend without
+     * touching the static registry shared by every instance
+     */
+    private backendCreators: Map<ProgrammingLanguage, () => SyncClient<Backend>> = new Map();
+    /**
+     * Tracks which workers have completed their launch call, so relaunching a live
+     * client is free. Keyed by the Worker itself: an interrupt that replaces the
+     * worker automatically invalidates the entry.
+     */
+    private launched: WeakMap<object, Promise<void>> = new WeakMap();
+
     constructor(papyros: Papyros) {
         super();
         this.papyros = papyros;
         this.backend = Promise.resolve({} as SyncClient<Backend>);
 
-        BackendManager.subscribe(BackendEventType.Input, () => this.setState(RunState.AwaitingInput));
-        BackendManager.subscribe(BackendEventType.Loading, (e) => this.onLoad(e));
-        BackendManager.subscribe(BackendEventType.Start, (e) => this.onStart(e));
-        BackendManager.subscribe(BackendEventType.End, (e) => this.onEnd(e));
-        BackendManager.subscribe(BackendEventType.Error, () => this.onError());
-        BackendManager.subscribe(BackendEventType.Stop, () => this.stop());
+        this.papyros.events.subscribe(BackendEventType.Input, () => this.setState(RunState.AwaitingInput));
+        this.papyros.events.subscribe(BackendEventType.Loading, (e) => this.onLoad(e));
+        this.papyros.events.subscribe(BackendEventType.Start, (e) => this.onStart(e));
+        this.papyros.events.subscribe(BackendEventType.End, (e) => this.onEnd(e));
+        this.papyros.events.subscribe(BackendEventType.Error, () => this.onError());
+    }
+
+    /**
+     * Use a custom backend for the given language on this instance only
+     * @param {ProgrammingLanguage} language The language to override
+     * @param {Function} backendCreator The constructor for a SyncClient
+     */
+    public registerBackend(language: ProgrammingLanguage, backendCreator: () => SyncClient<Backend>): void {
+        this.backendCreators.set(language, backendCreator);
+        this.clients.delete(language);
+    }
+
+    private getClient(language: ProgrammingLanguage): SyncClient<Backend> {
+        let client = this.clients.get(language);
+        if (!client) {
+            const create = this.backendCreators.get(language);
+            client = create ? create() : BackendManager.createBackend(language);
+            this.clients.set(language, client);
+        }
+        return client;
+    }
+
+    /**
+     * Terminate every worker this instance started and abandon in flight launches
+     */
+    public dispose(): void {
+        this.launchId++;
+        this.backendReady = false;
+        for (const client of this.clients.values()) {
+            try {
+                client.terminate();
+            } catch {
+                // An injected or never-started client has no worker to terminate
+            }
+        }
+        this.clients.clear();
     }
 
     /**
@@ -202,7 +253,7 @@ export class Runner extends State {
         this.setState(RunState.Loading);
         this.backendReady = false;
         const launchId = ++this.launchId;
-        const backend = BackendManager.getBackend(this.programmingLanguage);
+        const backend = this.getClient(this.programmingLanguage);
         // Expose the promise before it settles so runs can already be queued while downloading
         const backendLaunched = this.launchBackend(backend, launchId);
         this.backend = backendLaunched;
@@ -218,13 +269,29 @@ export class Runner extends State {
     }
 
     private async launchBackend(backend: SyncClient<Backend>, launchId: number): Promise<SyncClient<Backend>> {
-        // Allow passing messages between worker and main thread
-        await backend.workerProxy.launch(
-            proxy((e: BackendEvent) => BackendManager.publish(e)),
-            this.pyodideAssetURL,
-            this.allowJspi,
-        );
-        backend.usesPromiseTransport = await backend.workerProxy.usesJspi();
+        // An injected test double has no worker, so fall back to keying on the client
+        const worker: object = backend.worker ?? backend;
+        let launched = this.launched.get(worker);
+        if (!launched) {
+            // Allow passing messages between worker and main thread
+            launched = backend.workerProxy
+                .launch(
+                    proxy((e: BackendEvent) => this.papyros.events.publish(e)),
+                    this.pyodideAssetURL,
+                    this.allowJspi,
+                )
+                .then(async () => {
+                    backend.usesPromiseTransport = await backend.workerProxy.usesJspi();
+                });
+            this.launched.set(worker, launched);
+        }
+        try {
+            await launched;
+        } catch (error) {
+            // Let a retry attempt the launch again instead of replaying this failure
+            this.launched.delete(worker);
+            throw error;
+        }
         if (!backend.usesPromiseTransport) {
             // This backend blocks on the channel, so it needs one to exist before it runs.
             // Registration may not have happened yet: Papyros defers it when the browser
@@ -234,7 +301,7 @@ export class Runner extends State {
             await this.papyros.ensureChannel();
         }
         // Assign either way, so a client that switched to JSPI drops a channel it no longer uses
-        backend.channel = BackendManager.channel;
+        backend.channel = this.papyros.channel;
         if (launchId === this.launchId) {
             this.updateRunModes();
             this.backendReady = true;
@@ -254,11 +321,8 @@ export class Runner extends State {
         this.setState(RunState.Loading);
         // Ensure we go back to Loading after finishing any remaining installs
         this.previousState = RunState.Loading;
-        BackendManager.publish({
-            type: BackendEventType.Start,
-            data: "StartClicked",
-            contentType: "text/plain",
-        });
+        this.papyros.io.reset();
+        this.papyros.debugger.onRunStart();
         let interrupted = false;
         let terminated = false;
         const backend = await this.backend;
@@ -277,15 +341,12 @@ export class Runner extends State {
                 terminated = true;
             } else {
                 this.papyros.io.logError(error);
-                BackendManager.publish({
-                    type: BackendEventType.End,
-                    data: "RunError",
-                    contentType: "text/plain",
-                });
+                this.papyros.io.onRunEnd();
+                this.papyros.debugger.onRunEnd();
             }
         } finally {
             if (this.state === RunState.Stopping) {
-                // Was interrupted, End message already published
+                // stop() already closed the input prompt and flushed the debugger
                 interrupted = true;
             }
             if (terminated) {
@@ -308,11 +369,8 @@ export class Runner extends State {
      */
     public async stop(): Promise<void> {
         this.setState(RunState.Stopping);
-        BackendManager.publish({
-            type: BackendEventType.End,
-            data: "User cancelled run",
-            contentType: "text/plain",
-        });
+        this.papyros.io.onRunEnd();
+        this.papyros.debugger.onRunEnd();
         const backend = await this.backend;
         await backend.interrupt();
 
@@ -394,7 +452,7 @@ export class Runner extends State {
         if (fileNames.length === 0) {
             return;
         }
-        BackendManager.publish({
+        this.onLoad({
             type: BackendEventType.Loading,
             data: JSON.stringify({
                 modules: fileNames,

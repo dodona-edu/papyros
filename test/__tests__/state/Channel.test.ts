@@ -1,20 +1,13 @@
-import { describe, expect, it, beforeEach } from "vitest";
+import { describe, expect, it } from "vitest";
 import { Papyros } from "../../../src/frontend/state/Papyros";
 import { ProgrammingLanguage } from "../../../src/ProgrammingLanguage";
-import { BackendManager } from "../../../src/communication/BackendManager";
 import { waitForInputReady, waitForOutput, waitForPapyrosReady } from "../../helpers";
 
 /**
- * BackendManager.channel is static and shared, and BackendManager caches one client per
- * language, so clear the channel to observe what a launch actually needed rather than what an
- * earlier test left behind. Runner.launch assigns backend.channel on every launch, including
- * setting it back to null, so the cached client cannot carry a stale channel into these tests.
+ * The channel and the backend clients are owned by the instance, so a fresh Papyros
+ * per test observes what its own launch actually needed.
  */
 describe.sequential("lazy channel setup", () => {
-    beforeEach(() => {
-        BackendManager.channel = null;
-    });
-
     it("does not build a channel for python when the stack can be suspended", async () => {
         const papyros = new Papyros();
         await papyros.launch();
@@ -22,7 +15,7 @@ describe.sequential("lazy channel setup", () => {
         const backend = await papyros.runner.backend;
 
         expect(backend.usesPromiseTransport).toBe(true);
-        expect(BackendManager.channel).toBeNull();
+        expect(papyros.channel).toBeNull();
         expect(backend.channel).toBeNull();
     }, 180000);
 
@@ -34,8 +27,8 @@ describe.sequential("lazy channel setup", () => {
         const backend = await papyros.runner.backend;
 
         expect(backend.usesPromiseTransport).toBe(false);
-        expect(BackendManager.channel).not.toBeNull();
-        expect(backend.channel).toBe(BackendManager.channel);
+        expect(papyros.channel).not.toBeNull();
+        expect(backend.channel).toBe(papyros.channel);
     }, 180000);
 
     it("builds a channel when javascript is selected, and input still works", async () => {
@@ -45,7 +38,7 @@ describe.sequential("lazy channel setup", () => {
         const backend = await papyros.runner.backend;
 
         expect(backend.usesPromiseTransport).toBe(false);
-        expect(BackendManager.channel).not.toBeNull();
+        expect(papyros.channel).not.toBeNull();
 
         papyros.runner.code = 'console.log("hello", prompt("name?"));';
         await waitForInputReady();

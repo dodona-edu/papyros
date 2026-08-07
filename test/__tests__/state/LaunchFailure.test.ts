@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { Papyros } from "../../../src/frontend/state/Papyros";
 import { ProgrammingLanguage } from "../../../src/ProgrammingLanguage";
-import { BackendManager } from "../../../src/communication/BackendManager";
 import { RunState } from "../../../src/frontend/state/Runner";
 import { PapyrosLaunchError } from "../../../src/frontend/state/PapyrosErrors";
 
@@ -16,7 +15,10 @@ function withTimeout<T>(promise: Promise<T>, ms: number, what: string): Promise<
 
 describe("Papyros launch failure", () => {
     it("surfaces a failed backend launch instead of hanging", async () => {
-        BackendManager.registerBackend(
+        vi.spyOn(window, "confirm").mockReturnValue(false);
+
+        const papyros = new Papyros();
+        papyros.runner.registerBackend(
             ProgrammingLanguage.Python,
             () =>
                 ({
@@ -25,9 +27,6 @@ describe("Papyros launch failure", () => {
                     },
                 }) as any,
         );
-        vi.spyOn(window, "confirm").mockReturnValue(false);
-
-        const papyros = new Papyros();
         const errorHandler = vi.fn();
         papyros.setErrorHandler(errorHandler);
 
