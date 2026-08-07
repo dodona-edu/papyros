@@ -31,6 +31,9 @@ export type DeltaFrame = {
  * @return {Frame} The full frame
  */
 export function materializeFrame(previous: Frame | undefined, parsed: unknown): Frame {
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+        throw new PapyrosError("Received a frame that is not an object");
+    }
     const raw = parsed as Record<string, unknown>;
     if (raw.delta !== true) {
         return raw as Frame;

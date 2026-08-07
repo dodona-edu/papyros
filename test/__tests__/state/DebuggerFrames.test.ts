@@ -23,6 +23,15 @@ describe("materializeFrame", () => {
         expect(materialized).toEqual(frame);
     });
 
+    it.each([
+        ["null", null],
+        ["an array", []],
+        ["a number", 5],
+        ["a string", "frame"],
+    ])("throws when the parsed frame is %s", (_label, parsed) => {
+        expect(() => materializeFrame(fullFrame(), parsed)).toThrow(PapyrosError);
+    });
+
     it("throws when a delta frame has no previous frame", () => {
         const delta = {
             delta: true,
