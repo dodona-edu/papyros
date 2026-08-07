@@ -16,6 +16,11 @@ import * as Comlink from "comlink";
  */
 export class SyncClient<T = any> {
     public interrupter?: () => void;
+    /**
+     * Whether the worker suspends on a promise instead of reading from the channel.
+     * Set from the worker's own probe after launching; delivery routes accordingly.
+     */
+    public usesPromiseTransport = false;
     public state: "idle" | "running" | "awaitingMessage" | "sleeping" = "idle";
     private _worker?: Worker;
     private _workerProxy?: Comlink.Remote<T>;
@@ -165,6 +170,11 @@ export class SyncClient<T = any> {
 
     private async _writeMessage(message: any): Promise<void> {
         this.state = "running";
+        if (this.usesPromiseTransport) {
+            const proxy = this._workerProxy as any;
+            await (message.interrupted ? proxy.interruptMessage() : proxy.receiveMessage(message.message));
+            return;
+        }
         const messageId = makeMessageId(this._messageIdBase!, this._messageIdSeq);
         await writeMessage(this.channel!, message, messageId);
     }

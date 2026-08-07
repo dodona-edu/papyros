@@ -18,6 +18,16 @@ export interface SyncExtras {
     interruptBuffer: Int32Array | null;
     readMessage: () => any;
     syncSleep: (ms: number) => void;
+    /**
+     * Tell the client the backend has started waiting on the main thread ("reading" or
+     * "sleeping"), or that a sleep ran to completion ("slept"). There is no counterpart
+     * for input: the client already knows it answered, and moves itself back to running.
+     *
+     * The sync helpers above report this themselves. A backend that blocks another way
+     * (JSPI stack switching) has to report it, or the client state machine will not know
+     * it is waiting and will interrupt by replacing the worker instead of answering.
+     */
+    reportStatus: (status: Exclude<SyncMessageCallbackStatus, "init">) => void;
 }
 
 export type SyncMessageCallbackStatus = "init" | "reading" | "sleeping" | "slept";
@@ -71,6 +81,7 @@ export function expose<T extends any[], R>(
         const extras: SyncExtras = {
             channel,
             interruptBuffer,
+            reportStatus: syncMessageCallback,
             readMessage(): any {
                 return block("reading");
             },

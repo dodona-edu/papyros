@@ -56,6 +56,15 @@ class Papyros(python_runner.PyodideRunner):
         self.set_event_callback(callback)
 
     def set_event_callback(self, event_callback):
+        def unwrap(result):
+            # With the JSPI transport the callback answers with a promise instead of a
+            # value, so suspend the wasm stack until it settles. run_sync re-raises a
+            # rejection, which python_runner maps onto KeyboardInterrupt.
+            if hasattr(result, "then"):
+                from pyodide.ffi import run_sync
+                return run_sync(result)
+            return result
+
         def runner_callback(event_type, data):
             def cb(typ, dat, contentType=None, **kwargs):
                 return event_callback(dict(type=typ, data=dat, contentType=contentType or "text/plain", **kwargs))
@@ -76,10 +85,10 @@ class Papyros(python_runner.PyodideRunner):
                         cb("output", data, contentType=part.get("contentType"))
             elif event_type == "input":
                 self._emit_turtle_snapshot()
-                return cb("input", data["prompt"])
+                return unwrap(cb("input", data["prompt"]))
             elif event_type == "sleep":
                 self._emit_turtle_snapshot()
-                return cb("sleep", data["seconds"]*1000, contentType="application/number")
+                return unwrap(cb("sleep", data["seconds"]*1000, contentType="application/number"))
             else:
                 return cb(event_type, data.get("data", ""), contentType=data.get("contentType"))
 

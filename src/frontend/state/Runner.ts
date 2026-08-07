@@ -58,6 +58,14 @@ export class Runner extends State {
     pyodideAssetURL: string | undefined = undefined;
 
     /**
+     * Whether Python may use JSPI stack switching for input and sleep where the browser
+     * supports it. Set to false to force the service worker or SharedArrayBuffer channel,
+     * for instance to work around a browser whose stack switching misbehaves.
+     */
+    @stateProperty
+    allowJspi: boolean = true;
+
+    /**
      * The backend that executes the code asynchronously
      */
     @stateProperty
@@ -214,7 +222,9 @@ export class Runner extends State {
         await backend.workerProxy.launch(
             proxy((e: BackendEvent) => BackendManager.publish(e)),
             this.pyodideAssetURL,
+            this.allowJspi,
         );
+        backend.usesPromiseTransport = await backend.workerProxy.usesJspi();
         if (launchId === this.launchId) {
             this.updateRunModes();
             this.backendReady = true;
