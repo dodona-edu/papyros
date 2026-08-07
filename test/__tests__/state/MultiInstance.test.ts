@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { Papyros } from "../../../src/frontend/state/Papyros";
 import { ProgrammingLanguage } from "../../../src/ProgrammingLanguage";
 import { BackendEventType } from "../../../src/communication/BackendEvent";
-import { waitForInputReady, waitForOutput, waitForPapyrosReady } from "../../helpers";
+import { waitForInputReady, waitForOutput, waitForPapyrosReady, waitForRunning } from "../../helpers";
 
 async function javascriptPapyros(): Promise<Papyros> {
     const papyros = new Papyros();
@@ -73,6 +73,20 @@ describe.sequential("multiple Papyros instances", () => {
         expect(second.io.output).toEqual([]);
         first.dispose();
         second.dispose();
+    }, 180000);
+
+    it("do not relaunch a worker that is disposed during an active run", async () => {
+        const papyros = await javascriptPapyros();
+        papyros.runner.code = "while (true) {}";
+        const runPromise = papyros.runner.start();
+        await waitForRunning(papyros);
+
+        // Terminating the busy worker fails the run as interrupted, which used to
+        // make start() boot a replacement worker for the freshly disposed instance
+        papyros.dispose();
+        await runPromise;
+
+        expect(papyros.runner.backendReady).toBe(false);
     }, 180000);
 
     it("keep working after another instance is disposed", async () => {

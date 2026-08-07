@@ -184,6 +184,11 @@ export class Runner extends State {
      * worker automatically invalidates the entry.
      */
     private launched: WeakMap<object, Promise<void>> = new WeakMap();
+    /**
+     * Whether dispose() ran. Disposing during an active run makes that run fail as
+     * interrupted, which normally relaunches the worker; this suppresses it.
+     */
+    private disposed: boolean = false;
 
     constructor(papyros: Papyros) {
         super();
@@ -218,9 +223,11 @@ export class Runner extends State {
     }
 
     /**
-     * Terminate every worker this instance started and abandon in flight launches
+     * Terminate every worker this instance started and abandon in flight launches.
+     * The runner cannot launch again afterwards.
      */
     public dispose(): void {
+        this.disposed = true;
         this.launchId++;
         this.backendReady = false;
         for (const client of this.clients.values()) {
@@ -250,6 +257,11 @@ export class Runner extends State {
      * Start the backend to enable running code
      */
     public async launch(): Promise<void> {
+        if (this.disposed) {
+            // Terminating a worker mid-run fails that run as interrupted, which
+            // would relaunch the worker here and leak what dispose() just released
+            return;
+        }
         this.setState(RunState.Loading);
         this.backendReady = false;
         const launchId = ++this.launchId;
