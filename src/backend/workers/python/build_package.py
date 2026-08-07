@@ -29,9 +29,9 @@ def relative_files(root):
             found.add(os.path.relpath(os.path.join(dir_path, file_name), root))
     return found
 
-def create_package(package_name, dependencies, extra_deps):
+def create_package(package_name, extra_deps):
     shutil.rmtree(package_name, ignore_errors=True)
-    install_dependencies(dependencies.split(" "), package_name)
+    install_dependencies(package_name)
     dest_dir = os.path.join(package_name, extra_deps)
     shutil.rmtree(dest_dir, ignore_errors=True)
     try:
@@ -57,10 +57,9 @@ def create_package(package_name, dependencies, extra_deps):
         tar.add(package_name, arcname="", recursive=True, filter=tarfile_filter)
     shutil.rmtree(package_name)
 
-def install_dependencies(packages, out_dir):
-    if not isinstance(packages, list):
-        packages = [packages]
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "-t", out_dir, *packages])
+def install_dependencies(out_dir):
+    requirements = os.path.join(os.path.dirname(os.path.abspath(__file__)), "requirements.txt")
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "-t", out_dir, "-r", requirements])
 
 if __name__ == "__main__":
-    create_package("python_package", "python-runner friendly_traceback pylint>=4,<5 tomli typing-extensions dodona-json-tracer>=1.0.0 svg-turtle", extra_deps="papyros")
+    create_package("python_package", extra_deps="papyros")

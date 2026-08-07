@@ -30,3 +30,12 @@ updates:
   open-pull-requests-limit: 98
   labels:
     - "dependencies"
+- package-ecosystem: pip
+  directory: "/src/backend/workers/python"
+  schedule:
+    interval: monthly
+    time: "13:00"
+    timezone: Europe/Brussels
+  open-pull-requests-limit: 98
+  labels:
+    - "dependencies"
