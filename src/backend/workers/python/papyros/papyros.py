@@ -7,7 +7,6 @@ import sys
 import json
 import base64
 import doctest
-import inspect
 import re
 import python_runner
 import friendly_traceback
@@ -250,7 +249,7 @@ if __name__ == "{MODULE_NAME}":
 """
         return super().pre_run(source_code, mode=mode, top_level_await=top_level_await)
 
-    async def run_async(self, source_code, mode="exec", top_level_await=True):
+    async def run_async(self, source_code, mode="exec", top_level_await=True, max_steps=None):
         with self._execute_context():
             try:
                 code_obj = self.pre_run(source_code, mode=mode, top_level_await=top_level_await)
@@ -276,11 +275,10 @@ if __name__ == "{MODULE_NAME}":
                             self._emit_turtle_snapshot()
                             self.callback("frame", data=frame, contentType="application/json")
 
-                        # older pinned tracer versions don't accept frame_format;
-                        # only request delta frames once the installed tracer supports it
-                        tracer_kwargs = {"frame_callback": frame_callback, "module_name": MODULE_NAME}
-                        if "frame_format" in inspect.signature(JSONTracer.__init__).parameters:
-                            tracer_kwargs["frame_format"] = "delta"
+                        tracer_kwargs = {"frame_callback": frame_callback, "module_name": MODULE_NAME,
+                                         "frame_format": "delta"}
+                        if max_steps is not None:
+                            tracer_kwargs["max_steps"] = max_steps
                         result = JSONTracer(**tracer_kwargs).runscript(source_code)
                     else:
                         result = self.execute(code_obj, mode)
@@ -299,7 +297,7 @@ if __name__ == "{MODULE_NAME}":
                 except:
                     # If the module is truly not findable, raise the error again
                     raise mnf
-                return await self.run_async(source_code, mode=mode, top_level_await=top_level_await)
+                return await self.run_async(source_code, mode=mode, top_level_await=top_level_await, max_steps=max_steps)
             except BaseException as e:
                 # Sometimes KeyboardInterrupt is caught by Pyodide and raised as a PythonError
                 # with a js_error containing the reason

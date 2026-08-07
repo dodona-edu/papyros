@@ -86,7 +86,9 @@ export class Debugger extends State {
                 inputs: this.papyros.io.inputs.length,
                 files: this.fileHistory.length,
             });
-            if (this.frameStates.length + this.pendingFrameStates.length >= this.papyros.constants.maxDebugFrames) {
+            // the tracer stops itself at maxDebugFrames, so this only fires for
+            // a tracer that streams past its step budget
+            if (this.frameStates.length + this.pendingFrameStates.length > this.papyros.constants.maxDebugFrames) {
                 this.flushFrames();
                 this.papyros.runner.stop();
             } else if (!this.runActive) {

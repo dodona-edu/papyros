@@ -244,7 +244,12 @@ export class Runner extends State {
         const backend = await this.backend;
         this.runStartTime = new Date().getTime();
         try {
-            await backend.call(backend.workerProxy.runCode, this.effectiveCode, mode);
+            await backend.call(
+                backend.workerProxy.runCode,
+                this.effectiveCode,
+                mode,
+                this.papyros.constants.maxDebugFrames,
+            );
         } catch (error: any) {
             if (error.type === "InterruptError") {
                 // Error signaling forceful interrupt

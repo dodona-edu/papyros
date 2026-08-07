@@ -2,6 +2,7 @@ import {describe, it, expect} from "vitest";
 import {ProgrammingLanguage} from "../../../src/ProgrammingLanguage";
 import {Papyros} from "../../../src/frontend/state/Papyros";
 import {RunMode} from "../../../src/backend/Backend";
+import {RunState} from "../../../src/frontend/state/Runner";
 import {NonExceptionFrame} from "@dodona/trace-component/dist/trace_types";
 import {waitForInputReady, waitForOutput, waitForPapyrosReady} from "../../helpers";
 
@@ -108,6 +109,24 @@ for i in range(50):
         // frameStates stayed in sync with the trace
         papyros.debugger.activeFrame = papyros.debugger.trace.length - 1;
         expect(papyros.debugger.debugLine).toBe(last.line);
+    });
+
+    it("caps a debug run at maxDebugFrames without stalling", async () => {
+        const papyros = new Papyros();
+        await papyros.launch();
+        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
+        papyros.constants.maxDebugFrames = 5;
+        papyros.runner.code = `total = 0
+for i in range(50):
+    total += i`;
+        await papyros.runner.start(RunMode.Debug);
+        await waitForPapyrosReady(papyros);
+
+        // The tracer stops at the frame budget on its own, so the run finishes
+        // normally rather than being interrupted by the frontend
+        expect(papyros.runner.state).toBe(RunState.Ready);
+        expect(papyros.runner.stateMessage).toMatch(/^Code executed in/);
+        expect(papyros.debugger.trace.length).toBe(5);
     });
 
     it("resets when deactivated", async () => {
