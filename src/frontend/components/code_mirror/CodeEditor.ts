@@ -35,8 +35,8 @@ import {
     testLineExtension,
 } from "./Extensions";
 import readOnlyRangesExtension from "codemirror-readonly-ranges";
-import { BackendManager } from "../../../communication/BackendManager";
 import { BackendEvent, BackendEventType } from "../../../communication/BackendEvent";
+import { Papyros } from "../../state/Papyros";
 import { parseData } from "../../../util/Util";
 
 const tabCompletionKeyMap = [{ key: "Tab", run: acceptCompletion }];
@@ -113,9 +113,35 @@ export class CodeEditor extends CodeMirrorEditor {
         }
     };
 
+    private _papyros: Papyros | undefined;
+    private unsubscribeRelint: (() => void) | undefined;
+
+    /**
+     * The instance whose backend this editor lints against, used to re-lint
+     * when that backend finishes installing a package
+     */
+    set papyros(value: Papyros | undefined) {
+        this.unsubscribeRelint?.();
+        this.unsubscribeRelint = undefined;
+        this._papyros = value;
+        if (this.isConnected) {
+            this.subscribeRelint();
+        }
+    }
+
+    private subscribeRelint(): void {
+        this.unsubscribeRelint ??= this._papyros?.events.subscribe(BackendEventType.Loading, this.reLintOnLoaded);
+    }
+
     public override connectedCallback(): void {
         super.connectedCallback();
-        BackendManager.subscribe(BackendEventType.Loading, this.reLintOnLoaded);
+        this.subscribeRelint();
+    }
+
+    public override disconnectedCallback(): void {
+        super.disconnectedCallback();
+        this.unsubscribeRelint?.();
+        this.unsubscribeRelint = undefined;
     }
 
     set debugLine(value: number | undefined) {
