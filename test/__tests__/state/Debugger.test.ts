@@ -1,16 +1,31 @@
-import {describe, it, expect} from "vitest";
+import {describe, it, expect, beforeAll, beforeEach, afterAll} from "vitest";
 import {ProgrammingLanguage} from "../../../src/ProgrammingLanguage";
 import {Papyros} from "../../../src/frontend/state/Papyros";
 import {RunMode} from "../../../src/backend/Backend";
 import {RunState} from "../../../src/frontend/state/Runner";
 import {NonExceptionFrame} from "@dodona/trace-component/dist/trace_types";
-import {waitForInputReady, waitForOutput, waitForPapyrosReady} from "../../helpers";
+import {launchPapyros, settlePapyros, waitForInputReady, waitForOutput, waitForPapyrosReady, wipeWorkspace} from "../../helpers";
 
+// One Pyodide boot for the whole file: the tests share a Python instance. The frame
+// history records a file snapshot per run, so the workspace is wiped between tests.
 describe.sequential("Debugger", () => {
+    let papyros: Papyros;
+    let defaultMaxDebugFrames: number;
+
+    beforeAll(async () => {
+        papyros = await launchPapyros(ProgrammingLanguage.Python);
+        defaultMaxDebugFrames = papyros.constants.maxDebugFrames;
+    }, 180000);
+
+    beforeEach(async () => {
+        await settlePapyros(papyros);
+        papyros.constants.maxDebugFrames = defaultMaxDebugFrames;
+        await wipeWorkspace(papyros);
+    });
+
+    afterAll(() => papyros.dispose());
+
     it("can run in debug mode", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
         papyros.runner.code = `x = 1
 y = 2
 z = x + y
@@ -29,15 +44,12 @@ print(z)`;
     });
 
     it("keep track of used inputs and outputs", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
         papyros.runner.code = `print("hello")
 input("input: ")
 print("world")
 z = 1 + 2`;
         const unsubscribe = papyros.io.subscribe(() => papyros.io.awaitingInput ? papyros.io.provideInput("foo") : "", "awaitingInput");
-        await waitForInputReady();
+        await waitForInputReady(papyros);
         await papyros.runner.start(RunMode.Debug);
         await waitForOutput(papyros);
         // waitForOutput returns on the first output, but the assertions below need every frame
@@ -64,9 +76,6 @@ z = 1 + 2`;
     });
 
     it("shows correct files per debug frame", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
         papyros.runner.code = `x = 1\nwith open('test.txt', 'w') as f:\n    f.write('hello')\ny = 2`;
         await papyros.runner.start(RunMode.Debug);
         await waitForPapyrosReady(papyros);
@@ -88,9 +97,6 @@ z = 1 + 2`;
     });
 
     it("batches frame updates but delivers the complete trace", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
         papyros.runner.code = `total = 0
 for i in range(50):
     total += i`;
@@ -113,9 +119,6 @@ for i in range(50):
     });
 
     it("caps a debug run at maxDebugFrames without stalling", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
         papyros.constants.maxDebugFrames = 5;
         papyros.runner.code = `total = 0
 for i in range(50):
@@ -131,9 +134,6 @@ for i in range(50):
     });
 
     it("resets when deactivated", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
         papyros.runner.code = `x = 1
 y = 2
 z = x + y

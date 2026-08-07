@@ -1,66 +1,75 @@
-import {describe, expect, it} from "vitest";
+import {describe, expect, it, beforeAll, beforeEach, afterAll} from "vitest";
 import {Papyros} from "../../../src/frontend/state/Papyros";
 import {ProgrammingLanguage} from "../../../src/ProgrammingLanguage";
 import {RunState} from "../../../src/frontend/state/Runner";
 import {RunMode} from "../../../src/backend/Backend";
-import {waitForOutput, waitForPapyrosReady} from "../../helpers";
+import {launchPapyros, settlePapyros, waitForOutput, waitForPapyrosReady} from "../../helpers";
 import {FriendlyError} from "../../../src/frontend/state/InputOutput";
 
-describe("Runner", () => {
+// One Pyodide boot for the whole file: instances are isolated now, so the suite
+// shares a single Python instance and settles it between tests.
+describe.sequential("Runner", () => {
+    let papyros: Papyros;
+
+    beforeAll(async () => {
+        papyros = await launchPapyros(ProgrammingLanguage.Python);
+    }, 180000);
+
+    beforeEach(async () => {
+        await settlePapyros(papyros, ProgrammingLanguage.Python);
+    });
+
+    afterAll(() => papyros.dispose());
+
     it("should run code", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.JavaScript;
-        papyros.runner.code = `const a = 1;
+        const jsPapyros = await launchPapyros(ProgrammingLanguage.JavaScript);
+        jsPapyros.runner.code = `const a = 1;
 const b = 7;
 const c = a + b;`;
-        expect(papyros.runner.state).toBe(RunState.Ready);
-        expect(papyros.runner.stateMessage).toBe("");
-        await papyros.runner.start();
-        await waitForPapyrosReady(papyros);
-        expect(papyros.runner.stateMessage).toMatch(/^Code executed in/);
+        expect(jsPapyros.runner.state).toBe(RunState.Ready);
+        expect(jsPapyros.runner.stateMessage).toBe("");
+        await jsPapyros.runner.start();
+        await waitForPapyrosReady(jsPapyros);
+        expect(jsPapyros.runner.stateMessage).toMatch(/^Code executed in/);
+        jsPapyros.dispose();
     });
 
     it("only reports the backend as ready once it has loaded", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.JavaScript;
+        const jsPapyros = new Papyros();
+        jsPapyros.runner.programmingLanguage = ProgrammingLanguage.JavaScript;
 
         // Runs are queued while the backend loads, so the run state is Ready first
-        expect(papyros.runner.state).toBe(RunState.Ready);
-        expect(papyros.runner.backendReady).toBe(false);
+        expect(jsPapyros.runner.state).toBe(RunState.Ready);
+        expect(jsPapyros.runner.backendReady).toBe(false);
 
-        await papyros.runner.backend;
-        expect(papyros.runner.backendReady).toBe(true);
+        await jsPapyros.runner.backend;
+        expect(jsPapyros.runner.backendReady).toBe(true);
+        jsPapyros.dispose();
     });
 
     it("does not report a superseded launch as ready", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-
-        papyros.runner.programmingLanguage = ProgrammingLanguage.JavaScript;
-        const superseded = papyros.runner.backend;
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
-        const current = papyros.runner.backend;
+        // A fresh instance, so the current Python launch is a real boot that is
+        // still in flight when the superseded JavaScript one settles
+        const racePapyros = new Papyros();
+        racePapyros.runner.programmingLanguage = ProgrammingLanguage.JavaScript;
+        const superseded = racePapyros.runner.backend;
+        racePapyros.runner.programmingLanguage = ProgrammingLanguage.Python;
+        const current = racePapyros.runner.backend;
 
         let currentLoaded = false;
         current.then(() => (currentLoaded = true));
 
         // Only the current backend may flip the flag, whichever finishes first
         await superseded;
-        expect(papyros.runner.backendReady).toBe(currentLoaded);
+        expect(racePapyros.runner.backendReady).toBe(currentLoaded);
 
         await current;
-        expect(papyros.runner.backendReady).toBe(true);
-    });
+        expect(racePapyros.runner.backendReady).toBe(true);
+        racePapyros.dispose();
+    }, 180000);
 
     it("should run code that raises an error", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
         papyros.runner.code = "raise ValueError(\"test\")\n";
-        expect(papyros.runner.state).toBe(RunState.Ready);
-        expect(papyros.runner.stateMessage).toBe("");
         await papyros.runner.start();
         await waitForPapyrosReady(papyros);
         await waitForOutput(papyros);
@@ -69,23 +78,22 @@ const c = a + b;`;
     });
 
     it("should be able to interrupt code", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.JavaScript;
-        papyros.runner.code = "while(true) {}";
-        const runPromise = papyros.runner.start();
+        // Interrupting a busy loop replaces the worker, so use a throwaway instance
+        const jsPapyros = await launchPapyros(ProgrammingLanguage.JavaScript);
+        jsPapyros.runner.code = "while(true) {}";
+        const runPromise = jsPapyros.runner.start();
         await new Promise(r => setTimeout(r, 100));
-        expect(papyros.runner.state).toBe(RunState.Running);
-        await papyros.runner.stop();
+        expect(jsPapyros.runner.state).toBe(RunState.Running);
+        await jsPapyros.runner.stop();
         await runPromise;
-        expect(papyros.runner.state).toBe(RunState.Ready);
-        expect(papyros.runner.stateMessage).toMatch(/^Code interrupted after /);
+        expect(jsPapyros.runner.state).toBe(RunState.Ready);
+        expect(jsPapyros.runner.stateMessage).toMatch(/^Code interrupted after /);
+        // The relaunch started by stop() is not awaited by start(); drain it
+        await jsPapyros.runner.backend;
+        jsPapyros.dispose();
     });
 
     it("should be able to import re", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
         papyros.runner.code = "import re\nprint(re.findall(r'\\d+', 'a1 b2 c3'))";
         await papyros.runner.start();
         await waitForPapyrosReady(papyros);
@@ -96,18 +104,12 @@ const c = a + b;`;
     });
 
     it("should lint bare import re", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
         papyros.runner.code = "import re\n";
         const diagnostics = await papyros.runner.lintSource();
         expect(Array.isArray(diagnostics)).toBe(true);
     }, 60000);
 
     it("should lint code that uses pandas without hanging or a false import-error", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
         papyros.runner.code = "import pandas as pd\ndf = pd.DataFrame({'a': [1, 2, 3]})\n";
         const diagnostics = await papyros.runner.lintSource();
         expect(Array.isArray(diagnostics)).toBe(true);
@@ -116,9 +118,6 @@ const c = a + b;`;
     }, 60000);
 
     it("should report an import-error for a genuinely missing module", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
         papyros.runner.code = "import this_module_truly_does_not_exist_xyz\n";
         const diagnostics = await papyros.runner.lintSource();
         expect(diagnostics.some((d) => /import-error|Unable to import/.test(d.message))).toBe(true);
@@ -127,9 +126,6 @@ const c = a + b;`;
     it("should not flag stdlib modules astroid cannot build (os) as unimportable", async () => {
         // astroid can't build `os` under Emscripten (it pulls in the posix built-in),
         // which used to surface as a false "Unable to import 'os'".
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
         papyros.runner.code = "import os\nfrom os import getcwd\nprint(os.getcwd(), getcwd())\n";
         const diagnostics = await papyros.runner.lintSource();
         expect(
@@ -138,18 +134,12 @@ const c = a + b;`;
     }, 60000);
 
     it("should report a wrong name imported from a stubbed stdlib module (os)", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
         papyros.runner.code = "from os import asdfjasdlf\n";
         const diagnostics = await papyros.runner.lintSource();
         expect(diagnostics.some((d) => /No name 'asdfjasdlf' in module 'os'/.test(d.message))).toBe(true);
     }, 60000);
 
     it("should be able to handle sleep", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
         papyros.runner.code = "import time\ntime.sleep(2)";
         await papyros.runner.start();
         await waitForPapyrosReady(papyros);
@@ -158,20 +148,16 @@ const c = a + b;`;
     });
 
     it("should be able to load python packages", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
         papyros.runner.code = "import numpy as np\nprint(np.arange(10))";
         await papyros.runner.start();
         await waitForOutput(papyros);
         await waitForPapyrosReady(papyros);
-        expect(papyros.io.output[0].content).toBe("[0 1 2 3 4 5 6 7 8 9]");
+        // Whether the line arrives in one output event or split around the newline
+        // depends on how the queue flushes, so compare the trimmed content
+        expect((papyros.io.output[0].content as string).trim()).toBe("[0 1 2 3 4 5 6 7 8 9]");
     });
 
     it("should show lint errors", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python
         papyros.runner.code = `
 x = 1
 y = 2
@@ -183,9 +169,6 @@ print
     });
 
     it("should show syntax errors", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
         papyros.runner.code = `print 'hello'
 `;
         const diagnostics = await papyros.runner.lintSource();
@@ -196,9 +179,6 @@ print
     });
 
     it("should report style issues as info", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
         papyros.runner.code = `def foo():
     return 1
 `;
@@ -208,9 +188,6 @@ print
     });
 
     it("should run doctests", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python
         papyros.runner.code = `"""
 >>> 1 + 1
 2
@@ -228,9 +205,6 @@ print
     });
 
     it("can work with provided files in python", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
         await papyros.runner.provideFiles({"test.txt": "Hello from file!"}, {"readme.md": "https://raw.githubusercontent.com/dodona-edu/papyros/refs/heads/main/README.md"});
         papyros.runner.code = `
 with open("test.txt", "r") as f:

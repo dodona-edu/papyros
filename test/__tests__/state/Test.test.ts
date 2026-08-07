@@ -1,9 +1,9 @@
 import {test, expect} from "vitest";
 import {Papyros} from "../../../src/frontend/state/Papyros";
 
+// These tests only exercise code/testCode string state, so nothing is launched
 test("testcode is appended to the end of the code", async () => {
     const papyros = new Papyros();
-    await papyros.launch();
     papyros.runner.code = `1
 2
 3`;
@@ -21,7 +21,6 @@ test("testcode is appended to the end of the code", async () => {
 
 test("editTestCode leaves code as normal code", async () => {
     const papyros = new Papyros();
-    await papyros.launch();
     papyros.runner.code = "foo";
     papyros.test.testCode = "bar";
     expect(papyros.runner.effectiveCode).toBe(`foo
@@ -36,7 +35,6 @@ bar`);
 
 test("setting effectiveCode correctly passes changes through to code", async () => {
     const papyros = new Papyros();
-    await papyros.launch();
     papyros.runner.code = "foo";
     papyros.test.testCode = "bar";
     expect(papyros.runner.effectiveCode).toBe(`foo

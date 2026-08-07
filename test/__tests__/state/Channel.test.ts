@@ -41,7 +41,7 @@ describe.sequential("lazy channel setup", () => {
         expect(papyros.channel).not.toBeNull();
 
         papyros.runner.code = 'console.log("hello", prompt("name?"));';
-        await waitForInputReady();
+        await waitForInputReady(papyros);
         const unsubscribe = papyros.io.subscribe(
             () => (papyros.io.awaitingInput ? papyros.io.provideInput("channel") : ""),
             "awaitingInput",
