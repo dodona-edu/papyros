@@ -464,12 +464,14 @@ export class Runner extends State {
         if (fileNames.length === 0) {
             return;
         }
+        // parseData hands application/json data over as-is, so it must be the object
         this.onLoad({
             type: BackendEventType.Loading,
-            data: JSON.stringify({
+            data: {
                 modules: fileNames,
                 status: "loading",
-            }),
+            },
+            contentType: "application/json",
         });
 
         const backend = await this.backend;
