@@ -30,7 +30,8 @@ export default defineConfig({
         },
         testTimeout: 100000, // loading pyodide can take a while
         sequence: {
-            // tests within a file share the static BackendManager, so they cannot overlap
+            // Papyros instances are isolated now, but tests within a file still share
+            // the page, its window mocks and the CPU that boots Pyodide
             concurrent: false,
         },
         maxWorkers: 4, // launching pyodide is CPU-bound, more workers do not help

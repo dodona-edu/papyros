@@ -17,8 +17,7 @@ async function pythonPapyros(allowJspi: boolean = true): Promise<Papyros> {
     papyros.runner.allowJspi = allowJspi;
     await papyros.launch();
     papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
-    // BackendManager caches one client per language, so let this launch settle before
-    // the test uses it rather than racing whatever a previous test left in flight
+    // Let the launch settle before the test uses the client
     await papyros.runner.backend;
     return papyros;
 }
@@ -124,7 +123,7 @@ describe.sequential("JSPI input transport", () => {
             // Pyodide startup dominates on CI, so wait for the loop rather than guessing a delay
             await waitForRunning(papyros);
         } finally {
-            // Never leave the shared backend spinning, it would hang every later test
+            // Never leave a worker spinning, it would slow down every later test
             await papyros.runner.stop();
             await runPromise;
         }
@@ -132,7 +131,7 @@ describe.sequential("JSPI input transport", () => {
         expect(papyros.runner.stateMessage).toMatch(/^Code interrupted after/);
         expect(papyros.runner.backend).not.toBe(backendBefore);
         // Interrupting terminated the worker, and the relaunch is not awaited by start().
-        // Drain it, or it races the next test's launch on the same cached client.
+        // Drain it, so the test does not finish with a launch still in flight.
         await papyros.runner.backend;
     }, 180000);
 });

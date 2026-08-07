@@ -17,6 +17,7 @@ export class Code extends PapyrosElement {
     protected override render(): TemplateResult {
         return html`
             <p-code-editor
+                .papyros=${this.papyros}
                 .testLineCount=${this.papyros.test.testLineCount}
                 .programmingLanguage=${this.papyros.runner.programmingLanguage}
                 .debug=${this.papyros.debugger.active}
