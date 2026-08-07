@@ -70,11 +70,10 @@ jobs:
         run: npm publish --provenance --access public --tag "$DIST_TAG"
   release:
     needs: [verify, publish]
+    if: needs.verify.outputs.prerelease == 'false'
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    env:
-      PRERELEASE: ${{ needs.verify.outputs.prerelease }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -82,8 +81,4 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if [ "$PRERELEASE" = "true" ]; then
-            gh release create "$GITHUB_REF_NAME" --generate-notes --verify-tag --prerelease
-          else
-            gh release create "$GITHUB_REF_NAME" --generate-notes --verify-tag
-          fi
+          gh release create "$GITHUB_REF_NAME" --generate-notes --verify-tag

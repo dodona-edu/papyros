@@ -13,6 +13,9 @@ import { State } from "@dodona/lit-state";
 import "@material/web/iconbutton/icon-button";
 import "@material/web/icon/icon";
 import { ThemeOption } from "../../state/Constants";
+import { ProgrammingLanguage } from "../../../ProgrammingLanguage";
+import { JAVASCRIPT_EXAMPLES } from "./examples/JavaScriptExamples";
+import { PYTHON_EXAMPLES } from "./examples/PythonExamples";
 
 @customElement("p-app")
 export class App extends PapyrosElement {
@@ -124,6 +127,8 @@ export class App extends PapyrosElement {
 
     public override connectedCallback(): void {
         super.connectedCallback();
+        this.papyros.examples.setExamples(ProgrammingLanguage.JavaScript, JAVASCRIPT_EXAMPLES);
+        this.papyros.examples.setExamples(ProgrammingLanguage.Python, PYTHON_EXAMPLES);
         this.initializeLocalStorageProperty(this.papyros.i18n, "locale");
         this.initializeLocalStorageProperty(this.papyros.runner, "code");
         this.initializeLocalStorageProperty(this.papyros.runner, "programmingLanguage");

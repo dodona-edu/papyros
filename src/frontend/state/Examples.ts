@@ -1,8 +1,6 @@
 import { State, StateMap, stateProperty } from "@dodona/lit-state";
 import { ProgrammingLanguage } from "../../ProgrammingLanguage";
 import { Papyros } from "./Papyros";
-import { JAVASCRIPT_EXAMPLES } from "../components/app/examples/JavaScriptExamples";
-import { PYTHON_EXAMPLES } from "../components/app/examples/PythonExamples";
 
 export class Examples extends State {
     papyros: Papyros;
@@ -12,8 +10,6 @@ export class Examples extends State {
     constructor(papyros: Papyros) {
         super();
         this.papyros = papyros;
-        this.setExamples(ProgrammingLanguage.JavaScript, JAVASCRIPT_EXAMPLES);
-        this.setExamples(ProgrammingLanguage.Python, PYTHON_EXAMPLES);
     }
 
     public setExamples(language: ProgrammingLanguage, examples: Record<string, string>): void {

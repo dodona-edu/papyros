@@ -16,21 +16,26 @@ export class JavaScriptWorker extends Backend {
     private static stringify(...args: any[]): string {
         const asString = args
             .map((a) => {
-                if (Array.isArray(a)) {
+                if (a === null || a === undefined) {
+                    return String(a);
+                } else if (Array.isArray(a)) {
                     return JSON.stringify(a);
                 } else if (typeof a === "string") {
                     return a;
                 } else if (typeof a === "number") {
                     return a + "";
-                } else if (typeof a === "object" && "toString" in a) {
-                    let aString = (a as any).toString();
+                } else if (typeof a === "object") {
+                    // objects with no prototype (eg. Object.create(null)) have no toString
+                    let aString = typeof a.toString === "function" ? a.toString() : JSON.stringify(a);
                     if (aString === "[object Object]") {
                         // useless toString, so use JSON
                         aString = JSON.stringify(a);
                     }
                     return aString;
                 } else {
-                    return JSON.stringify(args);
+                    // bigint, symbol, function and boolean: JSON.stringify throws
+                    // on a bigint and returns undefined for a symbol or function
+                    return String(a);
                 }
             })
             .join(" ");
@@ -118,14 +123,18 @@ export class JavaScriptWorker extends Backend {
                 data: "RunCode",
             });
             result = await (0, eval)(code);
-        } catch (error: any) {
-            // try to create a friendly traceback
-            Error.captureStackTrace(error);
+        } catch (thrown: any) {
+            // normalize non-Error throwables (eg. throw null / throw "oops") into a real error
+            const error = thrown instanceof Error ? thrown : new Error(JavaScriptWorker.stringify(thrown));
+            // stack is missing on some engines and captureStackTrace is V8-only; never clobber a real stack
+            if (!error.stack && typeof Error.captureStackTrace === "function") {
+                Error.captureStackTrace(error);
+            }
             result = await this.onEvent({
                 type: BackendEventType.Error,
                 contentType: "application/json",
                 data: {
-                    name: error.constructor.name,
+                    name: error.name,
                     what: error.message,
                     traceback: error.stack,
                 },

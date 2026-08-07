@@ -51,6 +51,18 @@ export const ENGLISH_TRANSLATION = {
             title: "Drag the slider to walk through your code.",
             text_1: "This window shows how your program works step by step. Explore to see how your program builds and stores information.",
             text_2: "You can also use the %{previous} and %{next} buttons to go to the previous or next step. The %{first} and %{last} buttons can be used to directly jump to the first or last step respectively.",
+            exception_title: "The debugger crashed",
+            // Accessible names: announced by screen readers, never shown on screen.
+            picker_label: "Execution steps",
+            slider_label: "Execution step",
+            step_of: "Step %{step} of %{total}",
+            first_step: "First step",
+            previous_step: "Previous step",
+            next_step: "Next step",
+            last_step: "Last step",
+            current_step: "Current step",
+            call_stack: "Call stack",
+            heap_objects: "Heap objects",
         },
         editor: {
             test_code: {
@@ -138,6 +150,18 @@ export const DUTCH_TRANSLATION = {
             title: "Verken je code stap voor stap",
             text_1: "Dit venster toont de werking van je programma in detail. Ontdek hoe je programma informatie opbouwt en bewaart.",
             text_2: "Gebruik de schuifbalk om door je code te wandelen. Je kan ook de %{previous} en %{next} knoppen gebruiken om naar de vorige of volgende stap te gaan. De %{first} en %{last} knoppen kunnen gebruikt worden om direct naar de eerste of laatste stap te gaan.",
+            exception_title: "De debugger is vastgelopen",
+            // Toegankelijkheidslabels: worden voorgelezen door schermlezers, nooit getoond.
+            picker_label: "Uitvoeringsstappen",
+            slider_label: "Uitvoeringsstap",
+            step_of: "Stap %{step} van %{total}",
+            first_step: "Eerste stap",
+            previous_step: "Vorige stap",
+            next_step: "Volgende stap",
+            last_step: "Laatste stap",
+            current_step: "Huidige stap",
+            call_stack: "Call stack",
+            heap_objects: "Objecten op de heap",
         },
         editor: {
             test_code: {
