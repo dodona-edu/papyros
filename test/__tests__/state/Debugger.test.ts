@@ -122,11 +122,10 @@ for i in range(50):
         await papyros.runner.start(RunMode.Debug);
         await waitForPapyrosReady(papyros);
 
-        // The tracer keeps producing frames past the cap (no max_steps support
-        // yet), so the frontend forcibly stops the run; it must still settle
-        // cleanly instead of getting stuck in a stopping state
+        // The tracer stops at the frame budget on its own, so the run finishes
+        // normally rather than being interrupted by the frontend
         expect(papyros.runner.state).toBe(RunState.Ready);
-        expect(papyros.runner.stateMessage).toMatch(/^Code interrupted after/);
+        expect(papyros.runner.stateMessage).toMatch(/^Code executed in/);
         expect(papyros.debugger.trace.length).toBe(5);
     });
 
