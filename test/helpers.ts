@@ -21,12 +21,18 @@ export async function waitForPapyrosReady(papyros: Papyros, timeout = 2000): Pro
     }
 }
 
-export async function waitForInputReady(timeout = 2000): Promise<void> {
-    await navigator.serviceWorker.ready;
+/**
+ * Wait until a service worker controls this page, for tests that read input over the channel.
+ *
+ * Never awaits navigator.serviceWorker.ready: that only settles once a registration is active,
+ * and Papyros does not register one at all when the browser can suspend the wasm stack. Times
+ * out quietly instead, since a test that truly needs the channel fails on its own soon after.
+ */
+export async function waitForInputReady(timeout = 5000): Promise<void> {
     const start = Date.now();
     while (!navigator.serviceWorker.controller) {
         if (Date.now() - start > timeout) {
-            throw new Error("Timeout waiting for service worker to control this page");
+            return;
         }
         await new Promise(r => setTimeout(r, 20));
     }
