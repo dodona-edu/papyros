@@ -50,6 +50,7 @@ export const ENGLISH_TRANSLATION = {
             title: "Drag the slider to walk through your code.",
             text_1: "This window shows how your program works step by step. Explore to see how your program builds and stores information.",
             text_2: "You can also use the %{previous} and %{next} buttons to go to the previous or next step. The %{first} and %{last} buttons can be used to directly jump to the first or last step respectively.",
+            exception_title: "The debugger crashed",
             // Accessible names: announced by screen readers, never shown on screen.
             picker_label: "Execution steps",
             slider_label: "Execution step",
@@ -147,6 +148,7 @@ export const DUTCH_TRANSLATION = {
             title: "Verken je code stap voor stap",
             text_1: "Dit venster toont de werking van je programma in detail. Ontdek hoe je programma informatie opbouwt en bewaart.",
             text_2: "Gebruik de schuifbalk om door je code te wandelen. Je kan ook de %{previous} en %{next} knoppen gebruiken om naar de vorige of volgende stap te gaan. De %{first} en %{last} knoppen kunnen gebruikt worden om direct naar de eerste of laatste stap te gaan.",
+            exception_title: "De debugger is vastgelopen",
             // Toegankelijkheidslabels: worden voorgelezen door schermlezers, nooit getoond.
             picker_label: "Uitvoeringsstappen",
             slider_label: "Uitvoeringsstap",
