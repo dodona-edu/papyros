@@ -7,7 +7,6 @@ import sys
 import json
 import base64
 import doctest
-import inspect
 import re
 import python_runner
 import friendly_traceback
@@ -276,13 +275,9 @@ if __name__ == "{MODULE_NAME}":
                             self._emit_turtle_snapshot()
                             self.callback("frame", data=frame, contentType="application/json")
 
-                        # older pinned tracer versions don't accept frame_format/max_steps;
-                        # only request them once the installed tracer supports it
-                        tracer_kwargs = {"frame_callback": frame_callback, "module_name": MODULE_NAME}
-                        tracer_params = inspect.signature(JSONTracer.__init__).parameters
-                        if "frame_format" in tracer_params:
-                            tracer_kwargs["frame_format"] = "delta"
-                        if max_steps is not None and "max_steps" in tracer_params:
+                        tracer_kwargs = {"frame_callback": frame_callback, "module_name": MODULE_NAME,
+                                         "frame_format": "delta"}
+                        if max_steps is not None:
                             tracer_kwargs["max_steps"] = max_steps
                         result = JSONTracer(**tracer_kwargs).runscript(source_code)
                     else:
