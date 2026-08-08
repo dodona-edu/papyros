@@ -40,6 +40,7 @@ z = 1 + 2`;
         await waitForInputReady();
         await papyros.runner.start(RunMode.Debug);
         await waitForOutput(papyros);
+        // waitForOutput returns on the first output, but the assertions below need every frame
         await waitForPapyrosReady(papyros);
 
         const firstNOutputs = (n: number): string => "".concat(
