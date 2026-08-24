@@ -182,11 +182,20 @@ describe.sequential("channel input transport", () => {
         const papyros = await pythonPapyros(false);
         papyros.runner.code = "x = input('never answered')\nprint(x)";
         await waitForInputReady();
+        const backendBefore = papyros.runner.backend;
         const runPromise = papyros.runner.start();
         await waitForAwaitingInput(papyros);
         await papyros.runner.stop();
         await runPromise;
         await waitForPapyrosReady(papyros, 10000);
         expect(papyros.runner.stateMessage).toMatch(/^Code interrupted after/);
+        // The channel answers the reader too, so this survives just like the JSPI path
+        expect(papyros.runner.backend).toBe(backendBefore);
+        expect(papyros.io.output.every((o) => o.type !== "stderr")).toBe(true);
+
+        papyros.runner.code = "print('alive')";
+        await papyros.runner.start();
+        await waitForOutput(papyros);
+        expect(papyros.io.output[0].content).toBe("alive\n");
     }, 180000);
 });
