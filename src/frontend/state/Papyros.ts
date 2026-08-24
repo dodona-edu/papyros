@@ -5,13 +5,23 @@ import { InputOutput } from "./InputOutput";
 import { Constants } from "./Constants";
 import { Examples } from "./Examples";
 import { BackendManager } from "../../communication/BackendManager";
+import { EventBus } from "../../communication/EventBus";
 import { Channel, makeChannel } from "../../sync/channel";
 import { ProgrammingLanguage } from "../../ProgrammingLanguage";
 import { I18n } from "./I18n";
 import { Test } from "./Test";
 import { PapyrosLaunchError, ServiceWorkerRegistrationError } from "./PapyrosErrors";
 
+/**
+ * In flight service worker registrations, shared between instances: a page can only
+ * have one registration per scope anyway, so instances wait on the same promise
+ * instead of racing the browser. Failed registrations are removed so they can retry.
+ */
+const serviceWorkerRegistrations: Map<string, Promise<ServiceWorkerRegistration>> = new Map();
+
 export class Papyros extends State {
+    // The bus is declared first so the states below can subscribe to it while constructing
+    readonly events: EventBus = new EventBus();
     readonly debugger: Debugger = new Debugger(this);
     readonly runner: Runner = new Runner(this);
     readonly io: InputOutput = new InputOutput(this);
@@ -25,7 +35,12 @@ export class Papyros extends State {
     serviceWorkerName: string = "InputServiceWorker.js";
 
     /**
-     * In flight channel setup, so concurrent callers register the service worker once
+     * The channel this instance's backends read their input from, when they need one
+     */
+    public channel: Channel | null = null;
+
+    /**
+     * In flight channel setup, so concurrent callers build the channel once
      */
     private channelPromise?: Promise<Channel | null>;
 
@@ -49,6 +64,16 @@ export class Papyros extends State {
             }
         }
         return this;
+    }
+
+    /**
+     * Release the resources held by this instance: its workers are terminated and
+     * in flight launches are abandoned. The instance cannot run code afterwards.
+     */
+    public dispose(): void {
+        this.runner.dispose();
+        // Drops any pending frame flush timer
+        this.debugger.reset();
     }
 
     /**
@@ -89,7 +114,7 @@ export class Papyros extends State {
      * @return {Promise<boolean>} Whether a channel is available
      */
     public async ensureChannel(): Promise<boolean> {
-        if (BackendManager.channel) {
+        if (this.channel) {
             return true;
         }
         this.channelPromise ??= this.createChannel();
@@ -98,8 +123,8 @@ export class Papyros extends State {
 
     private async createChannel(): Promise<Channel | null> {
         if (typeof SharedArrayBuffer !== "undefined") {
-            BackendManager.channel = makeChannel({ atomics: {} })!;
-            return BackendManager.channel;
+            this.channel = makeChannel({ atomics: {} })!;
+            return this.channel;
         }
         if (!this.serviceWorkerName || !("serviceWorker" in navigator)) {
             this.errorHandler(
@@ -110,20 +135,32 @@ export class Papyros extends State {
             return null;
         }
         try {
-            const registration = await navigator.serviceWorker.register(this.serviceWorkerName, { scope: "/" });
-            await this.waitForActiveRegistration();
+            const registration = await this.registerServiceWorker();
             // The channel's scope becomes the base of a synchronous XHR inside the worker;
             // a relative scope resolves against the worker's own base URL, which is opaque
             // in a worker bootstrapped from a blob (see BackendManager.setWorkerUrl), so
             // registration.scope (an absolute URL) is used instead
-            BackendManager.channel = makeChannel({ serviceWorker: { scope: registration.scope } })!;
-            return BackendManager.channel;
+            this.channel = makeChannel({ serviceWorker: { scope: registration.scope } })!;
+            return this.channel;
         } catch (e) {
             this.errorHandler(new ServiceWorkerRegistrationError("Error registering service worker", { cause: e }));
             // Allow a later backend to try again rather than caching the failure forever
             this.channelPromise = undefined;
             return null;
         }
+    }
+
+    private registerServiceWorker(): Promise<ServiceWorkerRegistration> {
+        let registration = serviceWorkerRegistrations.get(this.serviceWorkerName);
+        if (!registration) {
+            registration = navigator.serviceWorker.register(this.serviceWorkerName, { scope: "/" }).then(async (r) => {
+                await this.waitForActiveRegistration();
+                return r;
+            });
+            registration.catch(() => serviceWorkerRegistrations.delete(this.serviceWorkerName));
+            serviceWorkerRegistrations.set(this.serviceWorkerName, registration);
+        }
+        return registration;
     }
 
     private async waitForActiveRegistration(timeout: number = 5000): Promise<void> {

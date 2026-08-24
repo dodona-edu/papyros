@@ -1,5 +1,4 @@
 import { State, stateProperty } from "@dodona/lit-state";
-import { BackendManager } from "../../communication/BackendManager";
 import { BackendEventType } from "../../communication/BackendEvent";
 import { isValidFileName, parseData } from "../../util/Util";
 import { Papyros } from "./Papyros";
@@ -122,8 +121,7 @@ export class InputOutput extends State {
         super();
         this.papyros = papyros;
         this.reset();
-        BackendManager.subscribe(BackendEventType.Start, () => this.reset());
-        BackendManager.subscribe(BackendEventType.Output, (e) => {
+        this.papyros.events.subscribe(BackendEventType.Output, (e) => {
             const data = parseData(e.data, e.contentType);
             if (e.contentType && e.contentType.startsWith("image/")) {
                 this.logImage(data, e.contentType);
@@ -131,14 +129,14 @@ export class InputOutput extends State {
                 this.logOutput(data);
             }
         });
-        BackendManager.subscribe(BackendEventType.Turtle, (e) => {
+        this.papyros.events.subscribe(BackendEventType.Turtle, (e) => {
             this.logTurtle(parseData(e.data, e.contentType));
         });
-        BackendManager.subscribe(BackendEventType.Error, (e) => {
+        this.papyros.events.subscribe(BackendEventType.Error, (e) => {
             const data = parseData(e.data, e.contentType);
             this.logError(data);
         });
-        BackendManager.subscribe(BackendEventType.Input, (e) => {
+        this.papyros.events.subscribe(BackendEventType.Input, (e) => {
             if (this.nextBufferedLine !== undefined && this.inputMode === InputMode.batch) {
                 this.provideInput(this.nextBufferedLine);
                 return;
@@ -147,17 +145,23 @@ export class InputOutput extends State {
             this.prompt = e.data || "";
             this.awaitingInput = true;
         });
-        BackendManager.subscribe(BackendEventType.End, () => {
-            this.awaitingInput = false;
-            // If the finished run produced no turtle output, drop the (stale) Turtle tab
-            // selection so the tab bar hides. A manual selection is preserved.
-            if (this.activeOutputTab === TURTLE_TAB && !this.hasTurtleOutput && !this.outputTabManuallySet) {
-                this.activeOutputTab = OUTPUT_TAB;
-            }
-        });
-        BackendManager.subscribe(BackendEventType.Files, (e) => {
+        this.papyros.events.subscribe(BackendEventType.End, () => this.onRunEnd());
+        this.papyros.events.subscribe(BackendEventType.Files, (e) => {
             this.files = parseFileEntries(e.data, e.contentType);
         });
+    }
+
+    /**
+     * Close the input prompt when a run stops producing events, whether it finished,
+     * failed or was interrupted
+     */
+    public onRunEnd(): void {
+        this.awaitingInput = false;
+        // If the finished run produced no turtle output, drop the (stale) Turtle tab
+        // selection so the tab bar hides. A manual selection is preserved.
+        if (this.activeOutputTab === TURTLE_TAB && !this.hasTurtleOutput && !this.outputTabManuallySet) {
+            this.activeOutputTab = OUTPUT_TAB;
+        }
     }
 
     public logError(error: FriendlyError | string): void {
