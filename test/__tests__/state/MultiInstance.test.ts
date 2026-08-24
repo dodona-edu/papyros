@@ -40,7 +40,7 @@ describe.sequential("multiple Papyros instances", () => {
 
         first.runner.code = 'console.log("first", prompt("name?"));';
         second.runner.code = 'console.log("second", prompt("name?"));';
-        await waitForInputReady();
+        await waitForInputReady(first);
         const unsubFirst = first.io.subscribe(
             () => (first.io.awaitingInput ? first.io.provideInput("one") : ""),
             "awaitingInput",

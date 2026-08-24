@@ -1,9 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, beforeAll, beforeEach, afterAll } from "vitest";
 import { Papyros } from "../../../src/frontend/state/Papyros";
 import { ProgrammingLanguage } from "../../../src/ProgrammingLanguage";
 import { RunMode } from "../../../src/backend/Backend";
 import { RunState } from "../../../src/frontend/state/Runner";
 import {
+    launchPapyros,
+    settlePapyros,
     waitForAwaitingInput,
     waitForInputReady,
     waitForOutput,
@@ -13,16 +15,6 @@ import {
 } from "../../helpers";
 import { NonExceptionFrame } from "@dodona/trace-component/dist/trace_types";
 
-async function pythonPapyros(allowJspi: boolean = true): Promise<Papyros> {
-    const papyros = new Papyros();
-    papyros.runner.allowJspi = allowJspi;
-    await papyros.launch();
-    papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
-    // Let the launch settle before the test uses the client
-    await papyros.runner.backend;
-    return papyros;
-}
-
 function answerInput(papyros: Papyros, value: string): () => void {
     return papyros.io.subscribe(
         () => (papyros.io.awaitingInput ? papyros.io.provideInput(value) : ""),
@@ -30,27 +22,37 @@ function answerInput(papyros: Papyros, value: string): () => void {
     );
 }
 
+// One Pyodide boot per describe block: the tests share a Python instance
 describe.sequential("JSPI input transport", () => {
+    let papyros: Papyros;
+
+    beforeAll(async () => {
+        papyros = await launchPapyros(ProgrammingLanguage.Python);
+    }, 180000);
+
+    beforeEach(async () => {
+        await settlePapyros(papyros);
+    });
+
+    afterAll(() => papyros.dispose());
+
     it("is used by the python backend on a browser that supports stack switching", async () => {
-        const papyros = await pythonPapyros();
         const backend = await papyros.runner.backend;
         expect(await backend.workerProxy.usesJspi()).toBe(true);
         expect(backend.usesPromiseTransport).toBe(true);
     });
 
     it("is never used by the javascript backend", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.JavaScript;
-        const backend = await papyros.runner.backend;
+        const jsPapyros = await launchPapyros(ProgrammingLanguage.JavaScript);
+        const backend = await jsPapyros.runner.backend;
         expect(await backend.workerProxy.usesJspi()).toBe(false);
         expect(backend.usesPromiseTransport).toBe(false);
+        jsPapyros.dispose();
     });
 
     it("reads input without touching the channel", async () => {
-        const papyros = await pythonPapyros();
         papyros.runner.code = "print('hello ' + input('name?'))";
-        await waitForInputReady();
+        await waitForInputReady(papyros);
         const unsubscribe = answerInput(papyros, "jspi");
         await papyros.runner.start();
         await waitForOutput(papyros);
@@ -60,9 +62,8 @@ describe.sequential("JSPI input transport", () => {
     });
 
     it("reads repeated input in a loop", async () => {
-        const papyros = await pythonPapyros();
         papyros.runner.code = "total = 0\nfor _ in range(3):\n    total += int(input())\nprint(total)";
-        await waitForInputReady();
+        await waitForInputReady(papyros);
         const unsubscribe = answerInput(papyros, "7");
         await papyros.runner.start();
         await waitForOutput(papyros);
@@ -72,7 +73,6 @@ describe.sequential("JSPI input transport", () => {
     });
 
     it("sleeps for the requested duration", async () => {
-        const papyros = await pythonPapyros();
         papyros.runner.code = "import time\ntime.sleep(2)";
         await papyros.runner.start();
         await waitForPapyrosReady(papyros);
@@ -81,10 +81,9 @@ describe.sequential("JSPI input transport", () => {
     });
 
     it("keeps tracing frames across a suspended input in debug mode", async () => {
-        const papyros = await pythonPapyros();
         papyros.runner.code = 'print("hello")\nx = input("input: ")\nprint("world " + x)\nz = 1 + 2';
         const unsubscribe = answerInput(papyros, "foo");
-        await waitForInputReady();
+        await waitForInputReady(papyros);
         await papyros.runner.start(RunMode.Debug);
         await waitForOutput(papyros);
         await waitForPapyrosReady(papyros);
@@ -95,9 +94,8 @@ describe.sequential("JSPI input transport", () => {
     });
 
     it("interrupts a waiting input without replacing the worker", async () => {
-        const papyros = await pythonPapyros();
         papyros.runner.code = "x = input('never answered')\nprint(x)";
-        await waitForInputReady();
+        await waitForInputReady(papyros);
         const backendBefore = papyros.runner.backend;
         const runPromise = papyros.runner.start();
         await waitForAwaitingInput(papyros);
@@ -116,7 +114,6 @@ describe.sequential("JSPI input transport", () => {
     });
 
     it("interrupts a sleep without replacing the worker", async () => {
-        const papyros = await pythonPapyros();
         papyros.runner.code = "import time\ntime.sleep(60)\nprint('never')";
         const backendBefore = papyros.runner.backend;
         const runPromise = papyros.runner.start();
@@ -136,10 +133,9 @@ describe.sequential("JSPI input transport", () => {
         await papyros.runner.start();
         await waitForOutput(papyros);
         expect(papyros.io.output[0].content).toBe("alive\n");
-    }, 180000);
+    });
 
     it("still replaces the worker to interrupt a busy loop", async () => {
-        const papyros = await pythonPapyros();
         papyros.runner.code = "while True:\n    pass";
         const backendBefore = papyros.runner.backend;
         const runPromise = papyros.runner.start();
@@ -161,14 +157,25 @@ describe.sequential("JSPI input transport", () => {
 });
 
 describe.sequential("channel input transport", () => {
+    let papyros: Papyros;
+
+    beforeAll(async () => {
+        papyros = await launchPapyros(ProgrammingLanguage.Python, { allowJspi: false });
+    }, 180000);
+
+    beforeEach(async () => {
+        await settlePapyros(papyros);
+    });
+
+    afterAll(() => papyros.dispose());
+
     it("still reads input when JSPI is disabled", async () => {
-        const papyros = await pythonPapyros(false);
         const backend = await papyros.runner.backend;
         expect(await backend.workerProxy.usesJspi()).toBe(false);
         expect(backend.usesPromiseTransport).toBe(false);
 
         papyros.runner.code = "print('hello ' + input('name?'))";
-        await waitForInputReady();
+        await waitForInputReady(papyros);
         const unsubscribe = answerInput(papyros, "channel");
         await papyros.runner.start();
         await waitForOutput(papyros);
@@ -178,9 +185,8 @@ describe.sequential("channel input transport", () => {
     }, 180000);
 
     it("still interrupts a waiting input when JSPI is disabled", async () => {
-        const papyros = await pythonPapyros(false);
         papyros.runner.code = "x = input('never answered')\nprint(x)";
-        await waitForInputReady();
+        await waitForInputReady(papyros);
         const backendBefore = papyros.runner.backend;
         const runPromise = papyros.runner.start();
         await waitForAwaitingInput(papyros);

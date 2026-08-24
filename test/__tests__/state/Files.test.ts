@@ -1,7 +1,7 @@
 import { Papyros } from "../../../src/frontend/state/Papyros";
-import { expect, it, describe } from "vitest";
+import { expect, it, describe, beforeAll, beforeEach, afterAll } from "vitest";
 import { ProgrammingLanguage } from "../../../src/ProgrammingLanguage";
-import { waitForFiles, waitForPapyrosReady, waitForInputReady, waitForOutput, waitForAwaitingInput } from "../../helpers";
+import { launchPapyros, settlePapyros, waitForFiles, waitForPapyrosReady, waitForInputReady, waitForOutput, waitForAwaitingInput, wipeWorkspace } from "../../helpers";
 import { isValidFileName } from "../../../src/util/Util";
 
 describe("isValidFileName", () => {
@@ -16,13 +16,28 @@ describe("isValidFileName", () => {
         });
 });
 
+// One Pyodide boot for the whole file: the tests that execute code share a Python
+// instance whose workspace is wiped between tests, since the emitted file snapshots
+// cover everything in the workspace. The pure state tests below keep their own
+// unlaunched instances.
 describe.sequential("Files", () => {
+    let papyros: Papyros;
+
+    beforeAll(async () => {
+        papyros = await launchPapyros(ProgrammingLanguage.Python);
+    }, 180000);
+
+    beforeEach(async () => {
+        await settlePapyros(papyros);
+        await wipeWorkspace(papyros);
+        papyros.io.files = [];
+    });
+
+    afterAll(() => papyros.dispose());
+
     it("writing a single file emits it", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
         papyros.runner.code = `open("test.txt", "w").write("hello")`;
-        await waitForInputReady();
+        await waitForInputReady(papyros);
         await papyros.runner.start();
         await waitForFiles(papyros, 1);
         expect(papyros.io.files.length).toBe(1);
@@ -32,14 +47,11 @@ describe.sequential("Files", () => {
     });
 
     it("writing multiple files emits all of them", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
         papyros.runner.code = `
 open("a.txt", "w").write("aaa")
 open("b.txt", "w").write("bbb")
 `;
-        await waitForInputReady();
+        await waitForInputReady(papyros);
         await papyros.runner.start();
         await waitForFiles(papyros, 2);
         expect(papyros.io.files.length).toBe(2);
@@ -48,26 +60,20 @@ open("b.txt", "w").write("bbb")
     });
 
     it("no files written means empty files list", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
         papyros.runner.code = `print("hello")`;
-        await waitForInputReady();
+        await waitForInputReady(papyros);
         await papyros.runner.start();
         await waitForPapyrosReady(papyros);
         expect(papyros.io.files.length).toBe(0);
     });
 
     it("writing a file in a subdirectory emits it with relative path", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
         papyros.runner.code = `
 import os
 os.makedirs("subdir", exist_ok=True)
 open("subdir/nested.txt", "w").write("nested content")
 `;
-        await waitForInputReady();
+        await waitForInputReady(papyros);
         await papyros.runner.start();
         await waitForFiles(papyros, 1);
         expect(papyros.io.files.length).toBe(1);
@@ -77,10 +83,7 @@ open("subdir/nested.txt", "w").write("nested content")
     });
 
     it("provided inline files appear before code execution", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
-        await waitForInputReady();
+        await waitForInputReady(papyros);
         await papyros.runner.provideFiles({ "provided.txt": "provided content" }, {});
         await waitForFiles(papyros, 1);
         expect(papyros.io.files.length).toBe(1);
@@ -90,10 +93,7 @@ open("subdir/nested.txt", "w").write("nested content")
     });
 
     it("multiple provided inline files all appear before code execution", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
-        await waitForInputReady();
+        await waitForInputReady(papyros);
         await papyros.runner.provideFiles({ "a.txt": "aaa", "b.txt": "bbb" }, {});
         await waitForFiles(papyros, 2);
         expect(papyros.io.files.length).toBe(2);
@@ -102,14 +102,11 @@ open("subdir/nested.txt", "w").write("nested content")
     });
 
     it("file written before crash still appears", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
         papyros.runner.code = `
 open("crash_test.txt", "w").write("before crash")
 raise ValueError("intentional error")
 `;
-        await waitForInputReady();
+        await waitForInputReady(papyros);
         await papyros.runner.start();
         await waitForFiles(papyros, 1);
         expect(papyros.io.files.length).toBe(1);
@@ -118,11 +115,8 @@ raise ValueError("intentional error")
     });
 
     it("files from previous run persist while awaiting input in next run", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
         papyros.runner.code = `open("persist.txt", "w").write("hello")`;
-        await waitForInputReady();
+        await waitForInputReady(papyros);
         await papyros.runner.start();
         await waitForFiles(papyros, 1);
         expect(papyros.io.files.length).toBe(1);
@@ -142,11 +136,8 @@ raise ValueError("intentional error")
     });
 
     it("files from previous run are cleared when next run deletes them", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
         papyros.runner.code = `open("temp.txt", "w").write("hello")`;
-        await waitForInputReady();
+        await waitForInputReady(papyros);
         await papyros.runner.start();
         await waitForFiles(papyros, 1);
         expect(papyros.io.files.length).toBe(1);
@@ -159,10 +150,7 @@ raise ValueError("intentional error")
     });
 
     it("updateFileContent updates the in-memory content of an existing file", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
-        await waitForInputReady();
+        await waitForInputReady(papyros);
         await papyros.runner.provideFiles({ "editable.txt": "original content" }, {});
         await waitForFiles(papyros, 1);
 
@@ -172,10 +160,7 @@ raise ValueError("intentional error")
     });
 
     it("runner.updateFile updates the file content in the backend", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
-        await waitForInputReady();
+        await waitForInputReady(papyros);
         await papyros.runner.provideFiles({ "editable.txt": "original content" }, {});
         await waitForFiles(papyros, 1);
 
@@ -303,10 +288,7 @@ with open("editable.txt", "r") as f:
     });
 
     it("runner.updateFile creates intermediate directories in backend", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
-        await waitForInputReady();
+        await waitForInputReady(papyros);
 
         papyros.io.addFile("subdir/new.txt");
         await papyros.runner.updateFile("subdir/new.txt", "subdir content", false);
@@ -322,10 +304,7 @@ with open("subdir/new.txt", "r") as f:
     });
 
     it("runner.renameFile into subdirectory works in backend", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
-        await waitForInputReady();
+        await waitForInputReady(papyros);
         await papyros.runner.provideFiles({ "flat.txt": "moved content" }, {});
         await waitForFiles(papyros, 1);
 
@@ -343,10 +322,7 @@ with open("subdir/flat.txt", "r") as f:
     });
 
     it("runner.renameFile cleans up empty source directory", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
-        await waitForInputReady();
+        await waitForInputReady(papyros);
         await papyros.runner.provideFiles({ "subdir/file.txt": "content" }, {});
         await waitForFiles(papyros, 1);
 
@@ -364,10 +340,7 @@ print(os.path.exists("subdir"), end="")
     });
 
     it("runner.renameFile renames the file in the backend", async () => {
-        const papyros = new Papyros();
-        await papyros.launch();
-        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
-        await waitForInputReady();
+        await waitForInputReady(papyros);
         await papyros.runner.provideFiles({ "old.txt": "renamed content" }, {});
         await waitForFiles(papyros, 1);
 
