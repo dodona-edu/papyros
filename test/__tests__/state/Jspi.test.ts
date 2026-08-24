@@ -9,6 +9,7 @@ import {
     waitForOutput,
     waitForPapyrosReady,
     waitForRunning,
+    waitForSleeping,
 } from "../../helpers";
 import { NonExceptionFrame } from "@dodona/trace-component/dist/trace_types";
 
@@ -114,6 +115,29 @@ describe.sequential("JSPI input transport", () => {
         await waitForOutput(papyros);
         expect(papyros.io.output[0].content).toBe("alive\n");
     });
+
+    it("interrupts a sleep without replacing the worker", async () => {
+        const papyros = await pythonPapyros();
+        papyros.runner.code = "import time\ntime.sleep(60)\nprint('never')";
+        const backendBefore = papyros.runner.backend;
+        const runPromise = papyros.runner.start();
+        await waitForSleeping(papyros);
+        const stopStart = Date.now();
+        await papyros.runner.stop();
+        await runPromise;
+        await waitForPapyrosReady(papyros, 10000);
+        // Cancelling the timer is the point: waiting it out would take a minute
+        expect(Date.now() - stopStart).toBeLessThan(5000);
+        expect(papyros.runner.stateMessage).toMatch(/^Code interrupted after/);
+        expect(papyros.runner.backend).toBe(backendBefore);
+        expect(papyros.io.output.every((o) => o.type !== "stderr")).toBe(true);
+
+        // The same interpreter must still be usable, no relaunch needed
+        papyros.runner.code = "print('alive')";
+        await papyros.runner.start();
+        await waitForOutput(papyros);
+        expect(papyros.io.output[0].content).toBe("alive\n");
+    }, 180000);
 
     it("still replaces the worker to interrupt a busy loop", async () => {
         const papyros = await pythonPapyros();
