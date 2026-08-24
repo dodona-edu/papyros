@@ -15,6 +15,12 @@ export default defineConfig({
     worker: {
         format: "es",
     },
+    // pyodide is only imported from the worker entry, which the dependency scan does not crawl.
+    // Without this it is discovered once the first Python test starts a worker, and the reload
+    // that follows restarts tests midway through a run.
+    optimizeDeps: {
+        include: ["pyodide"],
+    },
     test: {
         browser: {
             enabled: true,
