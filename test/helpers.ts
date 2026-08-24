@@ -32,6 +32,16 @@ export async function waitForInputReady(timeout = 2000): Promise<void> {
     }
 }
 
+export async function waitForRunning(papyros: Papyros, timeout = 60000): Promise<void> {
+    const start = Date.now();
+    while (papyros.runner.state !== RunState.Running) {
+        if (Date.now() - start > timeout) {
+            throw new Error(`Timeout waiting for runner to run, still ${papyros.runner.state}`);
+        }
+        await new Promise(r => setTimeout(r, 10));
+    }
+}
+
 export async function waitForAwaitingInput(papyros: Papyros, timeout: number = 5000): Promise<void> {
     const start = Date.now();
     while (!papyros.io.awaitingInput) {
@@ -47,6 +57,16 @@ export async function waitForFiles(papyros: Papyros, count: number = 1, timeout 
     while (papyros.io.files.length < count) {
         if (Date.now() - start > timeout) {
             throw new Error(`Timeout waiting for ${count} files`);
+        }
+        await new Promise(r => setTimeout(r, 10));
+    }
+}
+
+export async function waitForSleeping(papyros: Papyros, timeout = 60000): Promise<void> {
+    const start = Date.now();
+    while ((await papyros.runner.backend).state !== "sleeping") {
+        if (Date.now() - start > timeout) {
+            throw new Error("Timeout waiting for the backend to sleep");
         }
         await new Promise(r => setTimeout(r, 10));
     }

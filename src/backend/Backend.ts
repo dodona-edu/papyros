@@ -1,5 +1,6 @@
 import { BackendEvent, BackendEventType } from "../communication/BackendEvent";
 import { expose, SyncExtras } from "../sync/expose";
+import { InterruptError } from "../sync/errors";
 import { BackendEventQueue } from "../communication/BackendEventQueue";
 
 export interface WorkerDiagnostic {
@@ -43,6 +44,16 @@ export abstract class Backend {
      */
     protected extras: SyncExtras;
     /**
+     * Whether input and sleep suspend the wasm stack (JSPI) instead of blocking on the channel.
+     * Only Pyodide can do this, and only where the browser supports stack switching.
+     */
+    protected jspi = false;
+    /**
+     * Settles the promise this backend is suspended on while it waits for the main
+     * thread to answer, if it is waiting at all
+     */
+    private pending?: { resolve: (value: any) => void; reject: (reason: unknown) => void };
+    /**
      * Callback to handle events published by this Backend
      */
     protected onEvent: (e: BackendEvent) => any;
@@ -75,20 +86,100 @@ export abstract class Backend {
      * Initialize the backend by doing all setup-related work
      * @param {function(BackendEvent):void} onEvent Callback for when events occur
      * @param {string|undefined} pyodideAssetURL Optional location where pyodide assets can be fetched from if the backend needs it
+     * @param {boolean} allowJspi Whether the backend may suspend the wasm stack instead of using the channel
      * @return {Promise<void>} Promise of launching
      */
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    public async launch(onEvent: (e: BackendEvent) => void, pyodideAssetURL: string | undefined): Promise<void> {
+    public async launch(
+        onEvent: (e: BackendEvent) => void,
+        pyodideAssetURL: string | undefined,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        allowJspi: boolean = true,
+    ): Promise<void> {
         this.onEvent = (e: BackendEvent) => {
             onEvent(e);
             if (e.type === BackendEventType.Sleep) {
-                return this.extras.syncSleep(e.data);
+                return this.jspi ? this.suspendForSleep(e.data) : this.extras.syncSleep(e.data);
             } else if (e.type === BackendEventType.Input) {
-                return this.extras.readMessage();
+                return this.jspi ? this.suspendForInput() : this.extras.readMessage();
             }
         };
         this.queue = new BackendEventQueue(this.onEvent.bind(this));
         return Promise.resolve();
+    }
+
+    /**
+     * Whether this backend expects input to be delivered by resolving a promise
+     * instead of by writing to the channel. Read once by the client after launching.
+     * @return {boolean} Whether the JSPI transport is in use
+     */
+    public usesJspi(): boolean {
+        return this.jspi;
+    }
+
+    /**
+     * Answer the main thread question this backend is suspended on
+     * @param {any} message The value to resume with
+     * @return {boolean} Whether the backend was waiting for it
+     */
+    public receiveMessage(message: any): boolean {
+        const pending = this.pending;
+        if (!pending) {
+            return false;
+        }
+        this.pending = undefined;
+        pending.resolve(message);
+        return true;
+    }
+
+    /**
+     * Abort the main thread question this backend is suspended on.
+     * python_runner maps the rejection onto a KeyboardInterrupt, so the worker survives.
+     * @return {boolean} Whether the backend was waiting
+     */
+    public interruptMessage(): boolean {
+        const pending = this.pending;
+        if (!pending) {
+            return false;
+        }
+        this.pending = undefined;
+        pending.reject(new InterruptError());
+        return true;
+    }
+
+    /**
+     * Suspend until the main thread provides input
+     * @return {Promise<string>} The value the user entered
+     */
+    private suspendForInput(): Promise<string> {
+        this.extras.reportStatus("reading");
+        return new Promise<string>((resolve, reject) => {
+            this.pending = { resolve, reject };
+        });
+    }
+
+    /**
+     * Suspend for the requested duration, remaining interruptible throughout
+     * @param {number} ms How long to sleep
+     * @return {Promise<void>} Resolves once the time has passed
+     */
+    private suspendForSleep(ms: number): Promise<void> {
+        this.extras.reportStatus("sleeping");
+        return new Promise<void>((resolve, reject) => {
+            const timer = setTimeout(() => {
+                this.pending = undefined;
+                this.extras.reportStatus("slept");
+                resolve();
+            }, ms);
+            const settle = (finish: () => void): void => {
+                clearTimeout(timer);
+                this.extras.reportStatus("slept");
+                finish();
+            };
+            this.pending = {
+                resolve: () => settle(resolve),
+                reject: (reason: unknown) => settle(() => reject(reason)),
+            };
+        });
     }
 
     /**
