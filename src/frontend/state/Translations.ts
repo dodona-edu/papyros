@@ -4,10 +4,6 @@
  * enforces both.
  */
 
-// Both the phrase key CodeEditor looks up and its own English value, so the sentence
-// is written once.
-export const ESCAPE_HINT = "Press Escape followed by Tab to leave the code editor.";
-
 export const ENGLISH_TRANSLATION = {
     Papyros: {
         Papyros: "Papyros",
@@ -92,7 +88,8 @@ export const ENGLISH_TRANSLATION = {
     },
     CodeMirror: {
         // Papyros
-        [ESCAPE_HINT]: ESCAPE_HINT,
+        "Press Escape followed by Tab to leave the code editor.":
+            "Press Escape followed by Tab to leave the code editor.",
         // @codemirror/search
         "Go to line": "Go to line",
         go: "OK",
@@ -193,7 +190,8 @@ export const DUTCH_TRANSLATION = {
     },
     CodeMirror: {
         // Papyros
-        [ESCAPE_HINT]: "Druk op Escape en daarna Tab om de code-editor te verlaten.",
+        "Press Escape followed by Tab to leave the code editor.":
+            "Druk op Escape en daarna Tab om de code-editor te verlaten.",
         // @codemirror/view
         "Control character": "Controlekarakter",
         // @codemirror/fold

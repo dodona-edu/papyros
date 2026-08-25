@@ -37,7 +37,6 @@ import {
 import readOnlyRangesExtension from "codemirror-readonly-ranges";
 import { BackendEvent, BackendEventType } from "../../../communication/BackendEvent";
 import { Papyros } from "../../state/Papyros";
-import { ESCAPE_HINT } from "../../state/Translations";
 import { parseData } from "../../../util/Util";
 
 const tabCompletionKeyMap = [{ key: "Tab", run: acceptCompletion }];
@@ -142,7 +141,9 @@ export class CodeEditor extends CodeMirrorEditor {
 
     private updateEscapeHint(): void {
         if (this.escapeHintElement && this.view) {
-            this.escapeHintElement.textContent = this.view.state.phrase(ESCAPE_HINT);
+            this.escapeHintElement.textContent = this.view.state.phrase(
+                "Press Escape followed by Tab to leave the code editor.",
+            );
         }
     }
 
