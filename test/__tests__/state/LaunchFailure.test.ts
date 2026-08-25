@@ -3,6 +3,8 @@ import { Papyros } from "../../../src/frontend/state/Papyros";
 import { ProgrammingLanguage } from "../../../src/ProgrammingLanguage";
 import { RunState } from "../../../src/frontend/state/Runner";
 import { PapyrosLaunchError } from "../../../src/frontend/state/PapyrosErrors";
+// eslint-disable-next-line jest/no-mocks-import
+import { MockBackend } from "../../__mocks__/MockBackend";
 
 // Fails fast instead of letting a regression hit the suite timeout
 function withTimeout<T>(promise: Promise<T>, ms: number, what: string): Promise<T> {
@@ -43,5 +45,44 @@ describe("Papyros launch failure", () => {
         await expect(withTimeout(papyros.runner.backend, 2000, "runner.backend")).rejects.toThrow(
             "worker failed to start",
         );
+    });
+
+    it("launches a fresh backend after a failed one", async () => {
+        vi.spyOn(window, "confirm").mockReturnValue(false);
+
+        const terminate = vi.fn();
+        const creator = vi
+            .fn()
+            .mockImplementationOnce(
+                () =>
+                    ({
+                        workerProxy: {
+                            launch: () => Promise.reject(new Error("worker failed to start")),
+                        },
+                        terminate,
+                    }) as any,
+            )
+            .mockImplementationOnce(() => ({ workerProxy: new MockBackend() }) as any);
+
+        const papyros = new Papyros();
+        papyros.runner.registerBackend(ProgrammingLanguage.Python, creator);
+        papyros.setErrorHandler(vi.fn());
+
+        await withTimeout(papyros.launch(), 2000, "Papyros.launch()");
+
+        expect(creator).toHaveBeenCalledOnce();
+        expect(terminate).toHaveBeenCalledOnce();
+        expect(papyros.runner.state).toBe(RunState.Error);
+        expect(papyros.runner.backendReady).toBe(false);
+
+        // A longer budget than the failed launch: this one reaches ensureChannel, which may
+        // register the input service worker
+        await withTimeout(papyros.runner.launch(), 10000, "runner.launch() retry");
+
+        expect(creator).toHaveBeenCalledTimes(2);
+        expect(papyros.runner.state).toBe(RunState.Ready);
+        expect(papyros.runner.backendReady).toBe(true);
+
+        papyros.dispose();
     });
 });
