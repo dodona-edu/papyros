@@ -40,6 +40,11 @@ import { Papyros } from "../../state/Papyros";
 import { parseData } from "../../../util/Util";
 
 const tabCompletionKeyMap = [{ key: "Tab", run: acceptCompletion }];
+// This editor binds Tab to indentation, so Tab no longer moves focus out of it and the way
+// out is CodeMirror's Escape-then-Tab. WCAG 2.1.2 asks that people are advised of such an
+// exit, and aria-describedby only resolves ids in the described element's own tree, so the
+// hint has to sit in this shadow root next to .cm-content.
+const ESCAPE_HINT_ID = "escape-hint";
 // Dispatched to ask the linter to re-run without a document change (see needsRefresh).
 const forceLintEffect = StateEffect.define<null>();
 const languageExtensions: Record<ProgrammingLanguage, LanguageSupport> = {
@@ -89,6 +94,18 @@ export class CodeEditor extends CodeMirrorEditor {
             .papyros-icon-link:hover {
                 color: var(--md-sys-color-primary);
             }
+
+            #escape-hint {
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                padding: 0;
+                margin: -1px;
+                overflow: hidden;
+                clip-path: inset(50%);
+                white-space: nowrap;
+                border: 0;
+            }
         `;
     }
 
@@ -115,6 +132,20 @@ export class CodeEditor extends CodeMirrorEditor {
 
     private _papyros: Papyros | undefined;
     private unsubscribeRelint: (() => void) | undefined;
+    private escapeHintElement: HTMLElement | undefined;
+
+    override set translations(translations: Record<string, string>) {
+        super.translations = translations;
+        this.updateEscapeHint();
+    }
+
+    private updateEscapeHint(): void {
+        if (this.escapeHintElement && this.view) {
+            this.escapeHintElement.textContent = this.view.state.phrase(
+                "Press Escape followed by Tab to leave the code editor.",
+            );
+        }
+    }
 
     /**
      * The instance whose backend this editor lints against, used to re-lint
@@ -136,12 +167,19 @@ export class CodeEditor extends CodeMirrorEditor {
     public override connectedCallback(): void {
         super.connectedCallback();
         this.subscribeRelint();
+
+        this.escapeHintElement = document.createElement("span");
+        this.escapeHintElement.id = ESCAPE_HINT_ID;
+        this.shadowRoot!.appendChild(this.escapeHintElement);
+        this.updateEscapeHint();
     }
 
     public override disconnectedCallback(): void {
         super.disconnectedCallback();
         this.unsubscribeRelint?.();
         this.unsubscribeRelint = undefined;
+        this.escapeHintElement?.remove();
+        this.escapeHintElement = undefined;
     }
 
     set debugLine(value: number | undefined) {
@@ -282,6 +320,7 @@ export class CodeEditor extends CodeMirrorEditor {
                     ...lintKeymap,
                     indentWithTab,
                 ]),
+                EditorView.contentAttributes.of({ "aria-describedby": ESCAPE_HINT_ID }),
             ],
             debugging: [highlightActiveLineGutter(), lintGutter(), highlightActiveLine()],
         });
