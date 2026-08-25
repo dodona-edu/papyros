@@ -85,4 +85,53 @@ describe("Papyros launch failure", () => {
 
         papyros.dispose();
     });
+    it("cleans up a failed launch that a language switch superseded", async () => {
+        vi.spyOn(window, "confirm").mockReturnValue(false);
+
+        const terminate = vi.fn();
+        let failLaunch: (error: Error) => void;
+        const working = (): any =>
+            ({
+                workerProxy: {
+                    launch: () => Promise.resolve(),
+                    usesJspi: () => Promise.resolve(true),
+                    runModes: () => Promise.resolve([]),
+                },
+            }) as any;
+        const pythonCreator = vi
+            .fn()
+            .mockImplementationOnce(
+                () =>
+                    ({
+                        workerProxy: {
+                            launch: () =>
+                                new Promise((_, reject) => {
+                                    failLaunch = reject;
+                                }),
+                        },
+                        terminate,
+                    }) as any,
+            )
+            .mockImplementationOnce(working);
+
+        const papyros = new Papyros();
+        papyros.setErrorHandler(vi.fn());
+        papyros.runner.registerBackend(ProgrammingLanguage.Python, pythonCreator);
+        papyros.runner.registerBackend(ProgrammingLanguage.JavaScript, working);
+
+        // A Python launch still in flight, superseded by a switch to JavaScript
+        const first = papyros.runner.launch().catch(() => undefined);
+        papyros.runner.programmingLanguage = ProgrammingLanguage.JavaScript;
+        failLaunch!(new Error("worker failed to start"));
+        await withTimeout(first, 2000, "superseded runner.launch()");
+
+        expect(terminate).toHaveBeenCalledOnce();
+
+        // Switching back must not hand out the worker whose module map cached the failure
+        papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
+
+        expect(pythonCreator).toHaveBeenCalledTimes(2);
+
+        papyros.dispose();
+    });
 });

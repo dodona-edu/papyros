@@ -307,10 +307,12 @@ export class Runner extends State {
         } catch (error) {
             // Let a retry attempt the launch again instead of replaying this failure
             this.launched.delete(worker);
-            if (launchId === this.launchId) {
+            if (this.clients.get(language) === backend) {
                 // The module map of the failed worker keeps the failed import, so retrying in
                 // it fails the same way: drop the client so the next launch spawns a fresh
-                // worker. A superseded launch must leave the newer client alone.
+                // worker. Keyed on the client rather than on launchId, so a launch a language
+                // switch superseded is cleaned up too, while a client already replaced for this
+                // language is left alone.
                 this.clients.delete(language);
                 try {
                     backend.terminate();
