@@ -265,9 +265,10 @@ export class Runner extends State {
         this.setState(RunState.Loading);
         this.backendReady = false;
         const launchId = ++this.launchId;
-        const backend = this.getClient(this.programmingLanguage);
+        const language = this.programmingLanguage;
+        const backend = this.getClient(language);
         // Expose the promise before it settles so runs can already be queued while downloading
-        const backendLaunched = this.launchBackend(backend, launchId);
+        const backendLaunched = this.launchBackend(language, backend, launchId);
         this.backend = backendLaunched;
         this.setState(RunState.Ready);
         try {
@@ -280,7 +281,11 @@ export class Runner extends State {
         }
     }
 
-    private async launchBackend(backend: SyncClient<Backend>, launchId: number): Promise<SyncClient<Backend>> {
+    private async launchBackend(
+        language: ProgrammingLanguage,
+        backend: SyncClient<Backend>,
+        launchId: number,
+    ): Promise<SyncClient<Backend>> {
         // An injected test double has no worker, so fall back to keying on the client
         const worker: object = backend.worker ?? backend;
         let launched = this.launched.get(worker);
@@ -302,6 +307,19 @@ export class Runner extends State {
         } catch (error) {
             // Let a retry attempt the launch again instead of replaying this failure
             this.launched.delete(worker);
+            if (this.clients.get(language) === backend) {
+                // The module map of the failed worker keeps the failed import, so retrying in
+                // it fails the same way: drop the client so the next launch spawns a fresh
+                // worker. Keyed on the client rather than on launchId, so a launch a language
+                // switch superseded is cleaned up too, while a client already replaced for this
+                // language is left alone.
+                this.clients.delete(language);
+                try {
+                    backend.terminate();
+                } catch {
+                    // An injected or never-started client has no worker to terminate
+                }
+            }
             throw error;
         }
         if (!backend.usesPromiseTransport) {
