@@ -237,7 +237,7 @@ class Papyros(python_runner.PyodideRunner):
         self._last_emitted_snapshot = None
         with (
             redirect_stdout(python_runner.output.SysStream("output", self.output_buffer)),
-            redirect_stderr(python_runner.output.SysStream("error", self.output_buffer)),
+            redirect_stderr(python_runner.output.SysStream("stderr", self.output_buffer)),
         ):
             try:
                 yield
