@@ -52,7 +52,7 @@ export abstract class Backend {
      * Settles the promise this backend is suspended on while it waits for the main
      * thread to answer, if it is waiting at all
      */
-    private pending?: { resolve: (value: any) => void; reject: (reason: unknown) => void };
+    private pending?: { resolve: (value: any) => void };
     /**
      * Callback to handle events published by this Backend
      */
@@ -132,8 +132,10 @@ export abstract class Backend {
     }
 
     /**
-     * Abort the main thread question this backend is suspended on.
-     * python_runner maps the rejection onto a KeyboardInterrupt, so the worker survives.
+     * Abort the main thread question this backend is suspended on. The answer is an
+     * InterruptError value, which the Python side raises as KeyboardInterrupt so the
+     * worker survives. Pyodide prints a rejected promise's error to the program's
+     * stderr, so the promise must not reject.
      * @return {boolean} Whether the backend was waiting
      */
     public interruptMessage(): boolean {
@@ -142,7 +144,7 @@ export abstract class Backend {
             return false;
         }
         this.pending = undefined;
-        pending.reject(new InterruptError());
+        pending.resolve(new InterruptError());
         return true;
     }
 
@@ -150,10 +152,10 @@ export abstract class Backend {
      * Suspend until the main thread provides input
      * @return {Promise<string>} The value the user entered
      */
-    private suspendForInput(): Promise<string> {
+    private suspendForInput(): Promise<string | InterruptError> {
         this.extras.reportStatus("reading");
-        return new Promise<string>((resolve, reject) => {
-            this.pending = { resolve, reject };
+        return new Promise<string | InterruptError>((resolve) => {
+            this.pending = { resolve };
         });
     }
 
@@ -162,22 +164,20 @@ export abstract class Backend {
      * @param {number} ms How long to sleep
      * @return {Promise<void>} Resolves once the time has passed
      */
-    private suspendForSleep(ms: number): Promise<void> {
+    private suspendForSleep(ms: number): Promise<void | InterruptError> {
         this.extras.reportStatus("sleeping");
-        return new Promise<void>((resolve, reject) => {
+        return new Promise<void | InterruptError>((resolve) => {
             const timer = setTimeout(() => {
                 this.pending = undefined;
                 this.extras.reportStatus("slept");
                 resolve();
             }, ms);
-            const settle = (finish: () => void): void => {
-                clearTimeout(timer);
-                this.extras.reportStatus("slept");
-                finish();
-            };
             this.pending = {
-                resolve: () => settle(resolve),
-                reject: (reason: unknown) => settle(() => reject(reason)),
+                resolve: (value: void | InterruptError) => {
+                    clearTimeout(timer);
+                    this.extras.reportStatus("slept");
+                    resolve(value);
+                },
             };
         });
     }
