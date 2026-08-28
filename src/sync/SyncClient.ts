@@ -155,8 +155,10 @@ export class SyncClient<T = any> {
 
     public terminate(): void {
         this._interruptRejector?.(new InterruptError("Worker terminated"));
-        this._workerProxy![Comlink.releaseProxy]();
-        this._worker!.terminate();
+        // A client that was already terminated has nothing left to release, so
+        // terminating it again is a no-op rather than an error
+        this._workerProxy?.[Comlink.releaseProxy]();
+        this._worker?.terminate();
         delete this._workerProxy;
         delete this._worker;
     }
