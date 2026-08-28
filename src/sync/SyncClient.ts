@@ -67,6 +67,14 @@ export class SyncClient<T = any> {
             return;
         }
 
+        this.restart();
+    }
+
+    /**
+     * Replace the worker with a fresh one, dropping everything the old one held.
+     * This client keeps its identity, so callers holding it stay valid.
+     */
+    public restart(): void {
         this.terminate();
         this._start();
     }

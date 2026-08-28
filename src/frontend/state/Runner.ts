@@ -35,6 +35,26 @@ export interface LoadingData {
 }
 
 /**
+ * Signatures of errors that leave the runtime unable to run or lint anything
+ * afterwards: its heap is exhausted, or a trap aborted it. The WebAssembly heap
+ * only ever grows, so nothing short of a fresh worker recovers from these.
+ */
+const UNUSABLE_RUNTIME_SIGNATURES = [
+    "memoryerror",
+    "out of bounds memory access",
+    "memory access out of bounds",
+    "could not allocate memory",
+    "call_indirect to a null table entry",
+    "null function",
+    "aborted(",
+];
+
+function isRuntimeUnusable(error: any): boolean {
+    const description = `${error?.type ?? ""} ${error?.message ?? error ?? ""}`.toLowerCase();
+    return UNUSABLE_RUNTIME_SIGNATURES.some((signature) => description.includes(signature));
+}
+
+/**
  * Helper component to manage and visualize the current RunState
  */
 export class Runner extends State {
@@ -155,7 +175,18 @@ export class Runner extends State {
         if (!proxy) {
             return [];
         }
-        return await proxy.lintCode(this.code);
+        try {
+            return await proxy.lintCode(this.code);
+        } catch (error: any) {
+            // The editor lints in the background on every edit, and CodeMirror turns a
+            // rejected linter into an uncaught window error. Report it and show no
+            // diagnostics instead.
+            this.papyros.errorHandler(error);
+            if (isRuntimeUnusable(error)) {
+                await this.recoverRuntime();
+            }
+            return [];
+        }
     }
 
     /**
@@ -189,6 +220,11 @@ export class Runner extends State {
      * interrupted, which normally relaunches the worker; this suppresses it.
      */
     private disposed: boolean = false;
+    /**
+     * Whether a runtime is already being replaced. Every lint that lands while the
+     * old one is still exhausted fails too, and each failure asks for a recovery.
+     */
+    private recovering: boolean = false;
 
     constructor(papyros: Papyros) {
         super();
@@ -281,6 +317,46 @@ export class Runner extends State {
         }
     }
 
+    /**
+     * Replace a runtime that can no longer run or lint code, and put the files it
+     * held back into the fresh one.
+     */
+    private async recoverRuntime(): Promise<void> {
+        if (this.disposed || this.recovering) {
+            return;
+        }
+        this.recovering = true;
+        try {
+            const client = this.clients.get(this.programmingLanguage);
+            try {
+                client?.restart();
+            } catch {
+                // An injected or never-started client has no worker to replace
+            }
+            await this.launch();
+            await this.restoreWorkspace();
+        } catch (error: any) {
+            this.papyros.errorHandler(error);
+        } finally {
+            this.recovering = false;
+        }
+    }
+
+    /**
+     * Write the files back into a freshly started worker, which comes up with an
+     * empty filesystem while the editor still shows them.
+     */
+    private async restoreWorkspace(): Promise<void> {
+        const files = this.papyros.io.files;
+        if (files.length === 0) {
+            return;
+        }
+        const backend = await this.backend;
+        for (const file of files) {
+            await backend.workerProxy.updateFile(file.name, file.content, file.binary);
+        }
+    }
+
     private async launchBackend(
         language: ProgrammingLanguage,
         backend: SyncClient<Backend>,
@@ -355,6 +431,7 @@ export class Runner extends State {
         this.papyros.debugger.onRunStart();
         let interrupted = false;
         let terminated = false;
+        let unusable = false;
         const backend = await this.backend;
         this.runStartTime = new Date().getTime();
         try {
@@ -373,13 +450,16 @@ export class Runner extends State {
                 this.papyros.io.logError(error);
                 this.papyros.io.onRunEnd();
                 this.papyros.debugger.onRunEnd();
+                unusable = isRuntimeUnusable(error);
             }
         } finally {
             if (this.state === RunState.Stopping) {
                 // stop() already closed the input prompt and flushed the debugger
                 interrupted = true;
             }
-            if (terminated) {
+            if (unusable) {
+                await this.recoverRuntime();
+            } else if (terminated) {
                 await this.launch();
             }
             if (interrupted || terminated) {
