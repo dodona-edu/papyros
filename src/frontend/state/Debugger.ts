@@ -113,7 +113,7 @@ export class Debugger extends State {
                 this.flushTimer ??= setTimeout(() => this.flushFrames(), Debugger.FLUSH_INTERVAL_MS);
             }
         });
-        for (const type of [BackendEventType.End, BackendEventType.Error, BackendEventType.Interrupt]) {
+        for (const type of [BackendEventType.End, BackendEventType.Interrupt]) {
             this.papyros.events.subscribe(type, () => this.onRunEnd());
         }
     }

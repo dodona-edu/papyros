@@ -199,7 +199,6 @@ export class Runner extends State {
         this.papyros.events.subscribe(BackendEventType.Loading, (e) => this.onLoad(e));
         this.papyros.events.subscribe(BackendEventType.Start, (e) => this.onStart(e));
         this.papyros.events.subscribe(BackendEventType.End, (e) => this.onEnd(e));
-        this.papyros.events.subscribe(BackendEventType.Error, () => this.onError());
     }
 
     /**
@@ -373,6 +372,7 @@ export class Runner extends State {
                 this.papyros.io.logError(error);
                 this.papyros.io.onRunEnd();
                 this.papyros.debugger.onRunEnd();
+                this.onFinished();
             }
         } finally {
             if (this.state === RunState.Stopping) {
@@ -557,14 +557,15 @@ export class Runner extends State {
     private onEnd(e: BackendEvent): void {
         const endData = parseData(e.data, e.contentType) as string;
         if (endData.includes("CodeFinished")) {
-            this.setState(
-                RunState.Ready,
-                this.papyros.i18n.t("Papyros.finished", { time: (new Date().getTime() - this.runStartTime) / 1000 }),
-            );
+            this.onFinished();
         }
     }
 
-    private onError(): void {
+    /**
+     * The run is over, whether the program completed or raised: the worker
+     * sends an end event either way, error events only carry output
+     */
+    private onFinished(): void {
         this.setState(
             RunState.Ready,
             this.papyros.i18n.t("Papyros.finished", { time: (new Date().getTime() - this.runStartTime) / 1000 }),
