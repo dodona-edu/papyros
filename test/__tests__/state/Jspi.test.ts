@@ -104,7 +104,8 @@ describe.sequential("JSPI input transport", () => {
         await waitForPapyrosReady(papyros, 10000);
         expect(papyros.runner.stateMessage).toMatch(/^Code interrupted after/);
         expect(papyros.runner.backend).toBe(backendBefore);
-        expect(papyros.io.output.every((o) => o.type !== "stderr")).toBe(true);
+        // Nothing leaks into the program's output, not even Pyodide's own report
+        expect(papyros.io.output).toEqual([]);
 
         // The same interpreter must still be usable, no relaunch needed
         papyros.runner.code = "print('alive')";
@@ -126,7 +127,8 @@ describe.sequential("JSPI input transport", () => {
         expect(Date.now() - stopStart).toBeLessThan(5000);
         expect(papyros.runner.stateMessage).toMatch(/^Code interrupted after/);
         expect(papyros.runner.backend).toBe(backendBefore);
-        expect(papyros.io.output.every((o) => o.type !== "stderr")).toBe(true);
+        // Nothing leaks into the program's output, not even Pyodide's own report
+        expect(papyros.io.output).toEqual([]);
 
         // The same interpreter must still be usable, no relaunch needed
         papyros.runner.code = "print('alive')";

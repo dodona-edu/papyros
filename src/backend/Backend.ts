@@ -1,7 +1,11 @@
 import { BackendEvent, BackendEventType } from "../communication/BackendEvent";
 import { expose, SyncExtras } from "../sync/expose";
-import { InterruptError } from "../sync/errors";
 import { BackendEventQueue } from "../communication/BackendEventQueue";
+
+/**
+ * Answer handed to a suspended input or sleep when it is interrupted
+ */
+const INTERRUPTED = { type: "InterruptError" };
 
 export interface WorkerDiagnostic {
     /**
@@ -49,10 +53,10 @@ export abstract class Backend {
      */
     protected jspi = false;
     /**
-     * Settles the promise this backend is suspended on while it waits for the main
-     * thread to answer, if it is waiting at all
+     * Resumes this backend while it is suspended waiting for the main thread to
+     * answer, if it is waiting at all
      */
-    private pending?: { resolve: (value: any) => void; reject: (reason: unknown) => void };
+    private pending?: (value: any) => void;
     /**
      * Callback to handle events published by this Backend
      */
@@ -127,13 +131,15 @@ export abstract class Backend {
             return false;
         }
         this.pending = undefined;
-        pending.resolve(message);
+        pending(message);
         return true;
     }
 
     /**
-     * Abort the main thread question this backend is suspended on.
-     * python_runner maps the rejection onto a KeyboardInterrupt, so the worker survives.
+     * Abort the main thread question this backend is suspended on. The backend resumes
+     * with an interrupt marker and raises KeyboardInterrupt itself, so the worker survives.
+     * Rejecting the promise instead would make Pyodide print the rejection into the
+     * program's output.
      * @return {boolean} Whether the backend was waiting
      */
     public interruptMessage(): boolean {
@@ -142,7 +148,7 @@ export abstract class Backend {
             return false;
         }
         this.pending = undefined;
-        pending.reject(new InterruptError());
+        pending(INTERRUPTED);
         return true;
     }
 
@@ -152,8 +158,8 @@ export abstract class Backend {
      */
     private suspendForInput(): Promise<string> {
         this.extras.reportStatus("reading");
-        return new Promise<string>((resolve, reject) => {
-            this.pending = { resolve, reject };
+        return new Promise<string>((resolve) => {
+            this.pending = resolve;
         });
     }
 
@@ -162,22 +168,18 @@ export abstract class Backend {
      * @param {number} ms How long to sleep
      * @return {Promise<void>} Resolves once the time has passed
      */
-    private suspendForSleep(ms: number): Promise<void> {
+    private suspendForSleep(ms: number): Promise<unknown> {
         this.extras.reportStatus("sleeping");
-        return new Promise<void>((resolve, reject) => {
+        return new Promise<unknown>((resolve) => {
             const timer = setTimeout(() => {
                 this.pending = undefined;
                 this.extras.reportStatus("slept");
-                resolve();
+                resolve(undefined);
             }, ms);
-            const settle = (finish: () => void): void => {
+            this.pending = (value) => {
                 clearTimeout(timer);
                 this.extras.reportStatus("slept");
-                finish();
-            };
-            this.pending = {
-                resolve: () => settle(resolve),
-                reject: (reason: unknown) => settle(() => reject(reason)),
+                resolve(value);
             };
         });
     }
