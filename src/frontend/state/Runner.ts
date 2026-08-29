@@ -36,17 +36,25 @@ export interface LoadingData {
 
 /**
  * Signatures of errors that leave the runtime unable to run or lint anything
- * afterwards: its heap is exhausted, or a trap aborted it. The WebAssembly heap
+ * afterwards: its heap is exhausted, a trap aborted it, or Pyodide already
+ * declared it dead after a trap that surfaced elsewhere. The WebAssembly heap
  * only ever grows, so nothing short of a fresh worker recovers from these.
+ * Trap wording differs per engine (V8, JavaScriptCore, SpiderMonkey).
  */
 const UNUSABLE_RUNTIME_SIGNATURES = [
     "memoryerror",
     "out of bounds memory access",
     "memory access out of bounds",
+    "index out of bounds",
     "could not allocate memory",
     "call_indirect to a null table entry",
+    "call_indirect to a signature that does not match",
     "null function",
+    "indirect call to null",
+    "indirect call signature mismatch",
     "aborted(",
+    "pyodide already fatally failed",
+    "pyodide already exited",
 ];
 
 function isRuntimeUnusable(error: any): boolean {
@@ -169,7 +177,15 @@ export class Runner extends State {
      * Async getter for the linting diagnostics of the current code
      */
     public async lintSource(): Promise<WorkerDiagnostic[]> {
-        const backend = await this.backend;
+        let backend: SyncClient<Backend>;
+        try {
+            backend = await this.backend;
+        } catch {
+            // Launch failures surface through launch(), and a lint cannot recover
+            // from one: retrying the launch on every edit would loop on a runtime
+            // that fails to boot
+            return [];
+        }
         const proxy = backend.workerProxy;
 
         if (!proxy) {
@@ -225,6 +241,12 @@ export class Runner extends State {
      * old one is still exhausted fails too, and each failure asks for a recovery.
      */
     private recovering: boolean = false;
+    /**
+     * The files last handed over through provideFiles, replayed into a replacement
+     * runtime. Files over 1 MB never reach io.files, so they cannot be restored
+     * from there.
+     */
+    private providedFiles?: [Record<string, string>, Record<string, string>];
 
     constructor(papyros: Papyros) {
         super();
@@ -327,6 +349,10 @@ export class Runner extends State {
         }
         this.recovering = true;
         try {
+            // A run suspended in input() dies with its worker, so close its prompt
+            // and flush its frames the way stop() does
+            this.papyros.io.onRunEnd();
+            this.papyros.debugger.onRunEnd();
             const client = this.clients.get(this.programmingLanguage);
             try {
                 client?.restart();
@@ -347,7 +373,12 @@ export class Runner extends State {
      * empty filesystem while the editor still shows them.
      */
     private async restoreWorkspace(): Promise<void> {
+        // Snapshot first: replaying the provided files refreshes io.files from the
+        // worker, and the editor's copy of a file edited since must win
         const files = this.papyros.io.files;
+        if (this.providedFiles) {
+            await this.provideFiles(...this.providedFiles);
+        }
         if (files.length === 0) {
             return;
         }
@@ -562,6 +593,7 @@ export class Runner extends State {
         if (fileNames.length === 0) {
             return;
         }
+        this.providedFiles = [inlinedFiles, hrefFiles];
         // parseData hands application/json data over as-is, so it must be the object
         this.onLoad({
             type: BackendEventType.Loading,
