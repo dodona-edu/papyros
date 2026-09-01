@@ -243,6 +243,8 @@ class Papyros(python_runner.PyodideRunner):
                 self._flush_open_files()
                 self._emit_created_files()
                 self._emit_turtle_snapshot()
+                # every run that is not interrupted ends with this event
+                self.callback("end", data="CodeFinished", contentType="text/plain")
             finally:
                 self._tracking_files = False
         self.post_run()
