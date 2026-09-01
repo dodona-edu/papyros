@@ -105,6 +105,20 @@ console.log("done");`;
         jsPapyros.dispose();
     });
 
+    it("should show what a program writes to stderr as error output", async () => {
+        papyros.runner.code = `import sys
+print("to stdout")
+print("to stderr", file=sys.stderr)`;
+        await papyros.runner.start();
+        await waitForPapyrosReady(papyros);
+        await waitForOutput(papyros, 2);
+        expect(papyros.runner.stateMessage).toMatch(/^Code executed in/);
+        // output streams in chunks, so compare the text per stream
+        const text = (type: OutputType) => papyros.io.output.filter(o => o.type === type).map(o => o.content).join("");
+        expect(text(OutputType.stdout)).toBe("to stdout\n");
+        expect(text(OutputType.stderr)).toBe("to stderr\n");
+    });
+
     it("should be able to interrupt code", async () => {
         // Interrupting a busy loop replaces the worker, so use a throwaway instance
         const jsPapyros = await launchPapyros(ProgrammingLanguage.JavaScript);
