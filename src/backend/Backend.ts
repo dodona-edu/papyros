@@ -150,7 +150,8 @@ export abstract class Backend {
 
     /**
      * Suspend until the main thread provides input
-     * @return {Promise<string>} The value the user entered
+     * @return {Promise<string | InterruptError>} The value the user entered, or an
+     * InterruptError when the run was interrupted while waiting
      */
     private suspendForInput(): Promise<string | InterruptError> {
         this.extras.reportStatus("reading");
@@ -162,7 +163,8 @@ export abstract class Backend {
     /**
      * Suspend for the requested duration, remaining interruptible throughout
      * @param {number} ms How long to sleep
-     * @return {Promise<void>} Resolves once the time has passed
+     * @return {Promise<void | InterruptError>} Resolves once the time has passed, or
+     * with an InterruptError when the run was interrupted while waiting
      */
     private suspendForSleep(ms: number): Promise<void | InterruptError> {
         this.extras.reportStatus("sleeping");
