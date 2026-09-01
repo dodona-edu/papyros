@@ -67,6 +67,14 @@ export class SyncClient<T = any> {
             return;
         }
 
+        this.restart();
+    }
+
+    /**
+     * Replace the worker with a fresh one, dropping everything the old one held.
+     * This client keeps its identity, so callers holding it stay valid.
+     */
+    public restart(): void {
         this.terminate();
         this._start();
     }
@@ -147,8 +155,10 @@ export class SyncClient<T = any> {
 
     public terminate(): void {
         this._interruptRejector?.(new InterruptError("Worker terminated"));
-        this._workerProxy![Comlink.releaseProxy]();
-        this._worker!.terminate();
+        // A client that was already terminated has nothing left to release, so
+        // terminating it again is a no-op rather than an error
+        this._workerProxy?.[Comlink.releaseProxy]();
+        this._worker?.terminate();
         delete this._workerProxy;
         delete this._worker;
     }

@@ -48,6 +48,17 @@ describe("SyncClient", () => {
         client.terminate();
     });
 
+    it("restarts into a fresh worker even when already terminated", async () => {
+        const client = idleClient();
+        client.terminate();
+
+        client.restart();
+
+        expect(client.worker).toBeInstanceOf(Worker);
+        expect(client.state).toBe("idle");
+        client.terminate();
+    });
+
     it("fails a queued write instead of hanging when the call ends first", async () => {
         const client = idleClient();
         const call = client.call(() => new Promise(() => undefined));
