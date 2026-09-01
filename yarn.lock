@@ -99,11 +99,11 @@
     w3c-keyname "^2.2.4"
 
 "@dodona/lit-state@^1.1.1":
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/@dodona/lit-state/-/lit-state-1.2.0.tgz#bf0bc499926381579dc26f595c6b5d8681134421"
-  integrity sha512-YcYH8f0YeCTVkC+dTO5Tmx4Po8EnasNy+pCoyfzC9+C/DneF6H93/fa4oHosfVPWfU0jOUipah0Buq7MOd3/ow==
+  version "1.3.0"
+  resolved "https://registry.yarnpkg.com/@dodona/lit-state/-/lit-state-1.3.0.tgz#80f015775f5e107451d685fe539e5d5e1843da74"
+  integrity sha512-KRMdXJ9AcKLxumxvr28u8AhjXMiMqB+u2SAY8TsPwS1yQZxDR9W6r0czVc1aTolhBR7VC6VNtz6vP7IpU7szCQ==
   dependencies:
-    lit "^3.3.1"
+    lit "^3.3.3"
 
 "@dodona/trace-component@1.6.1":
   version "1.6.1"
