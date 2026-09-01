@@ -58,11 +58,14 @@ class Papyros(python_runner.PyodideRunner):
     def set_event_callback(self, event_callback):
         def unwrap(result):
             # With the JSPI transport the callback answers with a promise instead of a
-            # value, so suspend the wasm stack until it settles. run_sync re-raises a
-            # rejection, which python_runner maps onto KeyboardInterrupt.
+            # value, so suspend the wasm stack until it settles. An interrupt arrives
+            # as an InterruptError value: Pyodide prints a rejected promise's error to
+            # the program's stderr.
             if hasattr(result, "then"):
                 from pyodide.ffi import run_sync
-                return run_sync(result)
+                result = run_sync(result)
+            if getattr(result, "type", None) == "InterruptError":
+                raise KeyboardInterrupt
             return result
 
         def runner_callback(event_type, data):
@@ -234,7 +237,7 @@ class Papyros(python_runner.PyodideRunner):
         self._last_emitted_snapshot = None
         with (
             redirect_stdout(python_runner.output.SysStream("output", self.output_buffer)),
-            redirect_stderr(python_runner.output.SysStream("error", self.output_buffer)),
+            redirect_stderr(python_runner.output.SysStream("stderr", self.output_buffer)),
         ):
             try:
                 yield
@@ -243,6 +246,8 @@ class Papyros(python_runner.PyodideRunner):
                 self._flush_open_files()
                 self._emit_created_files()
                 self._emit_turtle_snapshot()
+                # every run that is not interrupted ends with this event
+                self.callback("end", data="CodeFinished", contentType="text/plain")
             finally:
                 self._tracking_files = False
         self.post_run()

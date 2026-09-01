@@ -4,7 +4,7 @@ import {ProgrammingLanguage} from "../../../src/ProgrammingLanguage";
 import {RunState} from "../../../src/frontend/state/Runner";
 import {RunMode} from "../../../src/backend/Backend";
 import {launchPapyros, settlePapyros, waitForOutput, waitForPapyrosReady} from "../../helpers";
-import {FriendlyError} from "../../../src/frontend/state/InputOutput";
+import {FriendlyError, OutputType} from "../../../src/frontend/state/InputOutput";
 
 // One Pyodide boot for the whole file: instances are isolated now, so the suite
 // shares a single Python instance and settles it between tests.
@@ -75,6 +75,48 @@ const c = a + b;`;
         await waitForOutput(papyros);
         expect(papyros.runner.stateMessage).toMatch(/^Code executed in/);
         expect((papyros.io.output[0].content as FriendlyError).traceback).toMatch(/ValueError: test/);
+    });
+
+    it("should finish a run that fails to compile", async () => {
+        papyros.runner.code = "print 'hello'\n";
+        await papyros.runner.start();
+        await waitForPapyrosReady(papyros);
+        await waitForOutput(papyros);
+        expect(papyros.runner.stateMessage).toMatch(/^Code executed in/);
+        expect((papyros.io.output[0].content as FriendlyError).traceback).toMatch(/SyntaxError/);
+    });
+
+    it("should keep running while the program writes to stderr", async () => {
+        const jsPapyros = await launchPapyros(ProgrammingLanguage.JavaScript);
+        jsPapyros.runner.code = `console.error("warning");
+console.log("started");
+const deadline = Date.now() + 500;
+while (Date.now() < deadline) {}
+console.log("done");`;
+        const runPromise = jsPapyros.runner.start();
+        await waitForOutput(jsPapyros, 2);
+        // the stderr output is in, the program is still busy
+        expect(jsPapyros.runner.state).toBe(RunState.Running);
+        await runPromise;
+        await waitForPapyrosReady(jsPapyros);
+        expect(jsPapyros.io.output[0].type).toBe(OutputType.stderr);
+        expect(jsPapyros.io.output.slice(1).every(o => o.type === OutputType.stdout)).toBe(true);
+        expect(jsPapyros.io.output.map(o => o.content).join("")).toMatch(/started[\s\S]*done/);
+        jsPapyros.dispose();
+    });
+
+    it("should show what a program writes to stderr as error output", async () => {
+        papyros.runner.code = `import sys
+print("to stdout")
+print("to stderr", file=sys.stderr)`;
+        await papyros.runner.start();
+        await waitForPapyrosReady(papyros);
+        await waitForOutput(papyros, 2);
+        expect(papyros.runner.stateMessage).toMatch(/^Code executed in/);
+        // output streams in chunks, so compare the text per stream
+        const text = (type: OutputType) => papyros.io.output.filter(o => o.type === type).map(o => o.content).join("");
+        expect(text(OutputType.stdout)).toBe("to stdout\n");
+        expect(text(OutputType.stderr)).toBe("to stderr\n");
     });
 
     it("should be able to interrupt code", async () => {
