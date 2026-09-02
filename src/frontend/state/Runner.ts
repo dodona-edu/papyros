@@ -35,6 +35,34 @@ export interface LoadingData {
 }
 
 /**
+ * Signatures of errors that leave the runtime unable to run or lint anything
+ * afterwards: its heap is exhausted, a trap aborted it, or Pyodide already
+ * declared it dead after a trap that surfaced elsewhere. The WebAssembly heap
+ * only ever grows, so nothing short of a fresh worker recovers from these.
+ * Trap wording differs per engine (V8, JavaScriptCore, SpiderMonkey).
+ */
+const UNUSABLE_RUNTIME_SIGNATURES = [
+    "memoryerror",
+    "out of bounds memory access",
+    "memory access out of bounds",
+    "index out of bounds",
+    "could not allocate memory",
+    "call_indirect to a null table entry",
+    "call_indirect to a signature that does not match",
+    "null function",
+    "indirect call to null",
+    "indirect call signature mismatch",
+    "aborted(",
+    "pyodide already fatally failed",
+    "pyodide already exited",
+];
+
+function isRuntimeUnusable(error: any): boolean {
+    const description = `${error?.type ?? ""} ${error?.message ?? error ?? ""}`.toLowerCase();
+    return UNUSABLE_RUNTIME_SIGNATURES.some((signature) => description.includes(signature));
+}
+
+/**
  * Helper component to manage and visualize the current RunState
  */
 export class Runner extends State {
@@ -149,13 +177,32 @@ export class Runner extends State {
      * Async getter for the linting diagnostics of the current code
      */
     public async lintSource(): Promise<WorkerDiagnostic[]> {
-        const backend = await this.backend;
+        let backend: SyncClient<Backend>;
+        try {
+            backend = await this.backend;
+        } catch {
+            // Launch failures surface through launch(), and a lint cannot recover
+            // from one: retrying the launch on every edit would loop on a runtime
+            // that fails to boot
+            return [];
+        }
         const proxy = backend.workerProxy;
 
         if (!proxy) {
             return [];
         }
-        return await proxy.lintCode(this.code);
+        try {
+            return await proxy.lintCode(this.code);
+        } catch (error: any) {
+            // The editor lints in the background on every edit, and CodeMirror turns a
+            // rejected linter into an uncaught window error. Report it and show no
+            // diagnostics instead.
+            this.papyros.errorHandler(error);
+            if (isRuntimeUnusable(error)) {
+                await this.recoverRuntime();
+            }
+            return [];
+        }
     }
 
     /**
@@ -189,6 +236,17 @@ export class Runner extends State {
      * interrupted, which normally relaunches the worker; this suppresses it.
      */
     private disposed: boolean = false;
+    /**
+     * Whether a runtime is already being replaced. Every lint that lands while the
+     * old one is still exhausted fails too, and each failure asks for a recovery.
+     */
+    private recovering: boolean = false;
+    /**
+     * The files last handed over through provideFiles, replayed into a replacement
+     * runtime. Files over 1 MB never reach io.files, so they cannot be restored
+     * from there.
+     */
+    private providedFiles?: [Record<string, string>, Record<string, string>];
 
     constructor(papyros: Papyros) {
         super();
@@ -199,7 +257,6 @@ export class Runner extends State {
         this.papyros.events.subscribe(BackendEventType.Loading, (e) => this.onLoad(e));
         this.papyros.events.subscribe(BackendEventType.Start, (e) => this.onStart(e));
         this.papyros.events.subscribe(BackendEventType.End, (e) => this.onEnd(e));
-        this.papyros.events.subscribe(BackendEventType.Error, () => this.onError());
     }
 
     /**
@@ -281,6 +338,55 @@ export class Runner extends State {
         }
     }
 
+    /**
+     * Replace a runtime that can no longer run or lint code, and put the files it
+     * held back into the fresh one.
+     */
+    private async recoverRuntime(): Promise<void> {
+        if (this.disposed || this.recovering) {
+            return;
+        }
+        this.recovering = true;
+        try {
+            // A run suspended in input() dies with its worker, so close its prompt
+            // and flush its frames the way stop() does
+            this.papyros.io.onRunEnd();
+            this.papyros.debugger.onRunEnd();
+            const client = this.clients.get(this.programmingLanguage);
+            try {
+                client?.restart();
+            } catch {
+                // An injected or never-started client has no worker to replace
+            }
+            await this.launch();
+            await this.restoreWorkspace();
+        } catch (error: any) {
+            this.papyros.errorHandler(error);
+        } finally {
+            this.recovering = false;
+        }
+    }
+
+    /**
+     * Write the files back into a freshly started worker, which comes up with an
+     * empty filesystem while the editor still shows them.
+     */
+    private async restoreWorkspace(): Promise<void> {
+        // Snapshot first: replaying the provided files refreshes io.files from the
+        // worker, and the editor's copy of a file edited since must win
+        const files = this.papyros.io.files;
+        if (this.providedFiles) {
+            await this.provideFiles(...this.providedFiles);
+        }
+        if (files.length === 0) {
+            return;
+        }
+        const backend = await this.backend;
+        for (const file of files) {
+            await backend.workerProxy.updateFile(file.name, file.content, file.binary);
+        }
+    }
+
     private async launchBackend(
         language: ProgrammingLanguage,
         backend: SyncClient<Backend>,
@@ -355,6 +461,7 @@ export class Runner extends State {
         this.papyros.debugger.onRunStart();
         let interrupted = false;
         let terminated = false;
+        let unusable = false;
         const backend = await this.backend;
         this.runStartTime = new Date().getTime();
         try {
@@ -373,13 +480,17 @@ export class Runner extends State {
                 this.papyros.io.logError(error);
                 this.papyros.io.onRunEnd();
                 this.papyros.debugger.onRunEnd();
+                this.onFinished();
+                unusable = isRuntimeUnusable(error);
             }
         } finally {
             if (this.state === RunState.Stopping) {
                 // stop() already closed the input prompt and flushed the debugger
                 interrupted = true;
             }
-            if (terminated) {
+            if (unusable) {
+                await this.recoverRuntime();
+            } else if (terminated) {
                 await this.launch();
             }
             if (interrupted || terminated) {
@@ -482,6 +593,7 @@ export class Runner extends State {
         if (fileNames.length === 0) {
             return;
         }
+        this.providedFiles = [inlinedFiles, hrefFiles];
         // parseData hands application/json data over as-is, so it must be the object
         this.onLoad({
             type: BackendEventType.Loading,
@@ -557,14 +669,15 @@ export class Runner extends State {
     private onEnd(e: BackendEvent): void {
         const endData = parseData(e.data, e.contentType) as string;
         if (endData.includes("CodeFinished")) {
-            this.setState(
-                RunState.Ready,
-                this.papyros.i18n.t("Papyros.finished", { time: (new Date().getTime() - this.runStartTime) / 1000 }),
-            );
+            this.onFinished();
         }
     }
 
-    private onError(): void {
+    /**
+     * The run is over, whether the program completed or raised: the worker
+     * sends an end event either way, error events only carry output
+     */
+    private onFinished(): void {
         this.setState(
             RunState.Ready,
             this.papyros.i18n.t("Papyros.finished", { time: (new Date().getTime() - this.runStartTime) / 1000 }),

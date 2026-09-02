@@ -1,11 +1,7 @@
 import { BackendEvent, BackendEventType } from "../communication/BackendEvent";
 import { expose, SyncExtras } from "../sync/expose";
+import { InterruptError } from "../sync/errors";
 import { BackendEventQueue } from "../communication/BackendEventQueue";
-
-/**
- * Answer handed to a suspended input or sleep when it is interrupted
- */
-const INTERRUPTED = { type: "InterruptError" };
 
 export interface WorkerDiagnostic {
     /**
@@ -53,10 +49,10 @@ export abstract class Backend {
      */
     protected jspi = false;
     /**
-     * Resumes this backend while it is suspended waiting for the main thread to
-     * answer, if it is waiting at all
+     * Settles the promise this backend is suspended on while it waits for the main
+     * thread to answer, if it is waiting at all
      */
-    private pending?: (value: any) => void;
+    private pending?: { resolve: (value: any) => void };
     /**
      * Callback to handle events published by this Backend
      */
@@ -131,15 +127,15 @@ export abstract class Backend {
             return false;
         }
         this.pending = undefined;
-        pending(message);
+        pending.resolve(message);
         return true;
     }
 
     /**
-     * Abort the main thread question this backend is suspended on. The backend resumes
-     * with an interrupt marker and raises KeyboardInterrupt itself, so the worker survives.
-     * Rejecting the promise instead would make Pyodide print the rejection into the
-     * program's output.
+     * Abort the main thread question this backend is suspended on. The answer is an
+     * InterruptError value, which the Python side raises as KeyboardInterrupt so the
+     * worker survives. Pyodide prints a rejected promise's error to the program's
+     * stderr, so the promise must not reject.
      * @return {boolean} Whether the backend was waiting
      */
     public interruptMessage(): boolean {
@@ -148,38 +144,42 @@ export abstract class Backend {
             return false;
         }
         this.pending = undefined;
-        pending(INTERRUPTED);
+        pending.resolve(new InterruptError());
         return true;
     }
 
     /**
      * Suspend until the main thread provides input
-     * @return {Promise<string>} The value the user entered
+     * @return {Promise<string | InterruptError>} The value the user entered, or an
+     * InterruptError when the run was interrupted while waiting
      */
-    private suspendForInput(): Promise<string> {
+    private suspendForInput(): Promise<string | InterruptError> {
         this.extras.reportStatus("reading");
-        return new Promise<string>((resolve) => {
-            this.pending = resolve;
+        return new Promise<string | InterruptError>((resolve) => {
+            this.pending = { resolve };
         });
     }
 
     /**
      * Suspend for the requested duration, remaining interruptible throughout
      * @param {number} ms How long to sleep
-     * @return {Promise<void>} Resolves once the time has passed
+     * @return {Promise<void | InterruptError>} Resolves once the time has passed, or
+     * with an InterruptError when the run was interrupted while waiting
      */
-    private suspendForSleep(ms: number): Promise<unknown> {
+    private suspendForSleep(ms: number): Promise<void | InterruptError> {
         this.extras.reportStatus("sleeping");
-        return new Promise<unknown>((resolve) => {
+        return new Promise<void | InterruptError>((resolve) => {
             const timer = setTimeout(() => {
                 this.pending = undefined;
                 this.extras.reportStatus("slept");
-                resolve(undefined);
+                resolve();
             }, ms);
-            this.pending = (value) => {
-                clearTimeout(timer);
-                this.extras.reportStatus("slept");
-                resolve(value);
+            this.pending = {
+                resolve: (value: void | InterruptError) => {
+                    clearTimeout(timer);
+                    this.extras.reportStatus("slept");
+                    resolve(value);
+                },
             };
         });
     }

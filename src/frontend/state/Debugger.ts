@@ -4,6 +4,7 @@ import { State, stateProperty } from "@dodona/lit-state";
 import { Papyros } from "./Papyros";
 import { CODE_TAB, FileEntry, parseFileEntries } from "./InputOutput";
 import { materializeFrame } from "./DebuggerFrames";
+import { parseData } from "../../util/Util";
 export type FrameState = {
     line: number;
     outputs: number;
@@ -28,6 +29,13 @@ export class Debugger extends State {
     private lastMaterializedFrame: Frame | undefined = undefined;
     private flushTimer: ReturnType<typeof setTimeout> | undefined = undefined;
     private runActive: boolean = false;
+    /**
+     * Set from the moment the Runner starts a run until the worker reports that
+     * it began. Frames of the previous run can still be in flight then, and the
+     * worker only sends its start event once it has sent everything before it,
+     * so frames received while this is set never belong to the current run.
+     */
+    private awaitingWorkerStart: boolean = false;
     @stateProperty
     private frameStates: FrameState[] = [];
     @stateProperty
@@ -65,12 +73,22 @@ export class Debugger extends State {
         this.papyros = papyros;
         this.reset();
 
+        this.papyros.events.subscribe(BackendEventType.Start, (e) => {
+            if ((parseData(e.data, e.contentType) as string).includes("RunCode")) {
+                this.awaitingWorkerStart = false;
+                // an end event of the previous run may have arrived in the meantime
+                this.runActive = true;
+            }
+        });
         this.papyros.events.subscribe(BackendEventType.Files, (e) => {
-            if (this._active) {
+            if (this._active && !this.awaitingWorkerStart) {
                 this.fileHistory = [...this.fileHistory, parseFileEntries(e.data, e.contentType)];
             }
         });
         this.papyros.events.subscribe(BackendEventType.Frame, (e) => {
+            if (!this.acceptsFrames()) {
+                return;
+            }
             this.activeFrame ??= 0;
             const frame = materializeFrame(this.lastMaterializedFrame, JSON.parse(e.data));
             this.lastMaterializedFrame = frame;
@@ -95,7 +113,7 @@ export class Debugger extends State {
                 this.flushTimer ??= setTimeout(() => this.flushFrames(), Debugger.FLUSH_INTERVAL_MS);
             }
         });
-        for (const type of [BackendEventType.End, BackendEventType.Error, BackendEventType.Interrupt]) {
+        for (const type of [BackendEventType.End, BackendEventType.Interrupt]) {
             this.papyros.events.subscribe(type, () => this.onRunEnd());
         }
     }
@@ -106,6 +124,16 @@ export class Debugger extends State {
     public onRunStart(): void {
         this.runActive = true;
         this.reset();
+        this.awaitingWorkerStart = true;
+    }
+
+    /**
+     * Whether a frame received now belongs to the current run: not while the
+     * previous run's frames may still be arriving, and not after the tracer's
+     * uncaught_exception frame, which is always the last one it sends
+     */
+    private acceptsFrames(): boolean {
+        return !this.awaitingWorkerStart && this.lastMaterializedFrame?.event !== "uncaught_exception";
     }
 
     /**
