@@ -97,6 +97,7 @@ export class App extends PapyrosElement {
             }
 
             .title {
+                margin: 0;
                 font-size: 1.5rem;
                 font-weight: bold;
                 color: var(--md-sys-color-primary);
@@ -167,9 +168,9 @@ export class App extends PapyrosElement {
         document.documentElement.lang = this.papyros.i18n.locale;
         return html`
             <div class="rows">
-                <div class="header">
+                <header class="header">
                     <div class="header-options">
-                        <span class="title">${this.t("Papyros.Papyros")}</span>
+                        <h1 class="title">${this.t("Papyros.Papyros")}</h1>
                         <md-icon-button
                             href="https://github.com/dodona-edu/papyros"
                             target="_blank"
@@ -190,8 +191,8 @@ export class App extends PapyrosElement {
                         <p-language-picker .papyros=${this.papyros}></p-language-picker>
                         <p-programming-language-picker .papyros=${this.papyros}></p-programming-language-picker>
                     </div>
-                </div>
-                <div class="content">
+                </header>
+                <main class="content">
                     <div class="top">
                         <div class="left container">
                             <p-code-runner .papyros=${this.papyros} class="overflow">
@@ -210,7 +211,7 @@ export class App extends PapyrosElement {
                     <div class="bottom container overflow">
                         <p-debugger .papyros=${this.papyros}></p-debugger>
                     </div>
-                </div>
+                </main>
             </div>
         `;
     }
