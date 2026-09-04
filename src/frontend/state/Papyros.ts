@@ -1,6 +1,6 @@
 import { State, stateProperty } from "@dodona/lit-state";
 import { Debugger } from "./Debugger";
-import { Runner } from "./Runner";
+import { Runner, RunState } from "./Runner";
 import { InputOutput } from "./InputOutput";
 import { Constants } from "./Constants";
 import { Examples } from "./Examples";
@@ -50,6 +50,9 @@ export class Papyros extends State {
      */
     public async launch(): Promise<Papyros> {
         if (!this.canDeferChannel() && !(await this.ensureChannel())) {
+            // Without a channel the backend is never launched, so the controls must not
+            // offer a run or stop that has nothing to act on
+            this.runner.setState(RunState.Error, this.i18n.t("Papyros.service_worker_error"));
             alert(this.i18n.t("Papyros.service_worker_error"));
         } else {
             try {
