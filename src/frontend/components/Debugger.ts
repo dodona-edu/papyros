@@ -47,8 +47,7 @@ export class Debugger extends PapyrosElement {
             }
 
             .place-holder {
-                color: var(--md-sys-color-on-surface);
-                opacity: 0.5;
+                color: var(--md-sys-color-on-surface-variant);
             }
 
             .scroll-region {
