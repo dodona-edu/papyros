@@ -88,6 +88,10 @@ export const ENGLISH_TRANSLATION = {
         files_binary: "Binary file",
         output_tab_output: "Output",
         output_tab_turtle: "Turtle",
+        output_tabs: "Output panes",
+        error_prefix: "Error: ",
+        turtle_alt: "Turtle drawing",
+        image_alt: "Image output",
     },
     CodeMirror: {
         // Papyros
@@ -193,6 +197,10 @@ export const DUTCH_TRANSLATION = {
         files_binary: "Binair bestand",
         output_tab_output: "Uitvoer",
         output_tab_turtle: "Turtle",
+        output_tabs: "Uitvoerpanelen",
+        error_prefix: "Fout: ",
+        turtle_alt: "Turtle-tekening",
+        image_alt: "Afbeelding als uitvoer",
     },
     CodeMirror: {
         // Papyros

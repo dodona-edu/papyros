@@ -1,6 +1,6 @@
 import { customElement } from "lit/decorators.js";
 import { css, CSSResult, html, TemplateResult } from "lit";
-import { FriendlyError, OutputEntry, OutputType, OUTPUT_TAB, TURTLE_TAB } from "../state/InputOutput";
+import { FriendlyError, OutputEntry, OutputTab, OutputType, OUTPUT_TAB, TURTLE_TAB } from "../state/InputOutput";
 import { PapyrosElement } from "./PapyrosElement";
 import { tabButtonStyles } from "./shared-styles";
 import { TurtlePatch, TurtleSvgBuilder } from "../state/TurtleSvg";
@@ -33,6 +33,11 @@ export class Output extends PapyrosElement {
                 container-type: size;
                 padding: 0.75rem;
                 background-color: var(--md-sys-color-surface-container-highest);
+            }
+
+            .content:focus-visible {
+                outline: 2px solid var(--md-sys-color-primary);
+                outline-offset: -2px;
             }
 
             .content.turtle {
@@ -77,8 +82,16 @@ export class Output extends PapyrosElement {
             }
 
             .place-holder {
-                color: var(--md-sys-color-on-surface);
-                opacity: 0.5;
+                color: var(--md-sys-color-on-surface-variant);
+            }
+
+            .visually-hidden {
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                overflow: hidden;
+                clip: rect(0 0 0 0);
+                white-space: nowrap;
             }
 
             md-icon {
@@ -157,7 +170,13 @@ export class Output extends PapyrosElement {
             const svg = this.turtleSvg.build(patches);
             return svg === undefined
                 ? []
-                : [html`<img class="turtle" src="data:image/svg+xml,${encodeURIComponent(svg)}"></img>`];
+                : [
+                      html`<img
+                          class="turtle"
+                          src="data:image/svg+xml,${encodeURIComponent(svg)}"
+                          alt=${this.t("Papyros.turtle_alt")}
+                      />`,
+                  ];
         }
         const outputsToRender: OutputEntry[] = this.outputs.filter((o) => o.type !== OutputType.turtle);
         return outputsToRender.map((o) => {
@@ -165,18 +184,23 @@ export class Output extends PapyrosElement {
                 return html`${o.content}`;
             } else if (o.type === OutputType.img) {
                 const mimeType = o.contentType ?? "image/png";
-                return html`<img src="data:${mimeType},${o.content as string}"></img>`;
+                return html`<img src="data:${mimeType},${o.content as string}" alt=${this.t("Papyros.image_alt")} />`;
             } else if (o.type === OutputType.stderr) {
                 if (typeof o.content === "string") {
-                    return html`<span class="error">${o.content}</span>`;
+                    return html`<span class="error"
+                        ><span class="visually-hidden">${this.t("Papyros.error_prefix")}</span>${o.content}</span
+                    >`;
                 } else {
                     const errorObject = o.content as FriendlyError;
                     const errorHTML = [
                         // an array to avoid unintentional spaces/newlines
-                        html`<md-icon title="${errorObject.info}">${this.papyros.constants.icons.help}</md-icon
+                        html`<md-icon title="${errorObject.info}" aria-label="${errorObject.info}" role="img"
+                                >${this.papyros.constants.icons.help}</md-icon
                             >${errorObject.name} traceback:`,
                         "\n",
-                        html`<md-icon title="${errorObject.traceback}">${this.papyros.constants.icons.info}</md-icon>`,
+                        html`<md-icon title="${errorObject.traceback}" aria-label="${errorObject.traceback}" role="img"
+                            >${this.papyros.constants.icons.info}</md-icon
+                        >`,
                         html`<span class="where">${errorObject.where?.trim()}</span>`,
                     ];
                     if (errorObject.what) {
@@ -197,11 +221,53 @@ export class Output extends PapyrosElement {
         return this.papyros.io.hasTurtleOutput || this.papyros.io.activeOutputTab === TURTLE_TAB;
     }
 
+    private get visibleTabs(): OutputTab[] {
+        return this.showTurtleTab ? [OUTPUT_TAB, TURTLE_TAB] : [OUTPUT_TAB];
+    }
+
+    /** Standard ARIA tabs pattern: arrow keys move focus and select in one step. */
+    private handleTabsKeydown(e: KeyboardEvent): void {
+        const tabs = this.visibleTabs;
+        const currentIndex = tabs.indexOf(this.papyros.io.activeOutputTab);
+        let nextIndex: number;
+        switch (e.key) {
+            case "ArrowLeft":
+                nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+                break;
+            case "ArrowRight":
+                nextIndex = (currentIndex + 1) % tabs.length;
+                break;
+            case "Home":
+                nextIndex = 0;
+                break;
+            case "End":
+                nextIndex = tabs.length - 1;
+                break;
+            default:
+                return;
+        }
+        e.preventDefault();
+        const nextTab = tabs[nextIndex];
+        this.papyros.io.selectOutputTab(nextTab);
+        this.updateComplete.then(() => {
+            this.renderRoot.querySelector<HTMLElement>(`#tab-${nextTab}`)?.focus();
+        });
+    }
+
     private renderTabs(): TemplateResult {
         const activeTab = this.papyros.io.activeOutputTab;
         return html`
-            <div class="tabs">
+            <div
+                class="tabs"
+                role="tablist"
+                aria-label=${this.t("Papyros.output_tabs")}
+                @keydown=${this.handleTabsKeydown}
+            >
                 <button
+                    id="tab-output"
+                    role="tab"
+                    aria-selected=${activeTab === OUTPUT_TAB}
+                    tabindex=${activeTab === OUTPUT_TAB ? 0 : -1}
                     class=${activeTab === OUTPUT_TAB ? "active" : ""}
                     @click=${() => this.papyros.io.selectOutputTab(OUTPUT_TAB)}
                 >
@@ -211,6 +277,10 @@ export class Output extends PapyrosElement {
                     this.showTurtleTab
                         ? html`
                               <button
+                                  id="tab-turtle"
+                                  role="tab"
+                                  aria-selected=${activeTab === TURTLE_TAB}
+                                  tabindex=${activeTab === TURTLE_TAB ? 0 : -1}
                                   class=${activeTab === TURTLE_TAB ? "active" : ""}
                                   @click=${() => this.papyros.io.selectOutputTab(TURTLE_TAB)}
                               >
@@ -231,13 +301,20 @@ export class Output extends PapyrosElement {
         const showOverflow = activeTab === OUTPUT_TAB && this.showOverflowWarning;
         return html`
             ${this.renderTabs()}
-            <div class="content ${activeTab === TURTLE_TAB ? "turtle" : ""}">
+            <div
+                class="content ${activeTab === TURTLE_TAB ? "turtle" : ""}"
+                role="tabpanel"
+                aria-labelledby="tab-${activeTab}"
+                tabindex="0"
+            >
                 ${
                     showPlaceholder
                         ? html`<pre class="place-holder">${this.t("Papyros.output_placeholder")}</pre>`
                         : showTurtlePlaceholder
                           ? html`<div class="turtle-placeholder"></div>`
-                          : html`<pre>${rendered}</pre>`
+                          : activeTab === OUTPUT_TAB
+                            ? html`<pre role="log" aria-live="polite" aria-relevant="additions text">${rendered}</pre>`
+                            : html`<pre>${rendered}</pre>`
                 }
                 ${
                     showOverflow
