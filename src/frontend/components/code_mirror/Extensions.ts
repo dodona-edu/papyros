@@ -136,6 +136,7 @@ export const [debugLineExtension, setDebugLines, debugLineState] = lineEffectExt
 export const [testLineExtension, setTestLines, testLineState] = lineEffectExtension({
     lineClass: "papyros-test-line",
     gutterClass: "",
+    marker: "T",
 });
 
 // Inline SVGs instead of unicode glyphs (🖉, ⨯), which many system fonts lack.
