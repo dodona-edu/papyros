@@ -2,8 +2,11 @@ import { customElement, state } from "lit/decorators.js";
 import { PapyrosElement } from "./PapyrosElement";
 import { css, CSSResult, html, TemplateResult } from "lit";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { inlineInputStyles } from "./shared-styles";
+import { ifDefined } from "lit/directives/if-defined.js";
+import { inlineInputStyles, visuallyHiddenStyles } from "./shared-styles";
 import { isValidFileName } from "../../util/Util";
+
+let nextErrorId = 0;
 
 @customElement("p-add-file-button")
 export class AddFileButton extends PapyrosElement {
@@ -14,6 +17,8 @@ export class AddFileButton extends PapyrosElement {
     private invalid = false;
 
     private addInputRef: Ref<HTMLInputElement> = createRef();
+    private addButtonRef: Ref<HTMLButtonElement> = createRef();
+    private readonly errorId = `add-file-error-${nextErrorId++}`;
 
     static get styles(): CSSResult {
         return css`
@@ -38,7 +43,12 @@ export class AddFileButton extends PapyrosElement {
             }
 
             ${inlineInputStyles}
+            ${visuallyHiddenStyles}
         `;
+    }
+
+    private isInvalidName(name: string): boolean {
+        return !isValidFileName(name) || this.papyros.io.files.some((f) => f.name === name);
     }
 
     private startAdding(): void {
@@ -53,21 +63,25 @@ export class AddFileButton extends PapyrosElement {
         }
         void this.papyros.runner.updateFile(name, "", false);
         this.adding = false;
+        void this.updateComplete.then(() => this.addButtonRef.value?.focus());
     }
 
     private cancelAdd(): void {
         this.adding = false;
+        void this.updateComplete.then(() => this.addButtonRef.value?.focus());
     }
 
     private onAddInput(): void {
         const value = this.addInputRef.value?.value.trim() ?? "";
-        this.invalid = !isValidFileName(value) || this.papyros.io.files.some((f) => f.name === value);
+        this.invalid = this.isInvalidName(value);
     }
 
     private onBlur(): void {
         if (!this.adding) return;
         const name = this.addInputRef.value?.value.trim() ?? "";
-        if (name.length === 0) {
+        if (this.isInvalidName(name)) {
+            // confirmAdd() would silently no-op on an invalid name, leaving the input
+            // open but unfocused; cancel instead so focus can't strand there.
             this.cancelAdd();
         } else {
             this.confirmAdd();
@@ -92,15 +106,26 @@ export class AddFileButton extends PapyrosElement {
     protected override render(): TemplateResult {
         if (this.adding) {
             return html`<input
-                ${ref(this.addInputRef)}
-                class=${this.invalid ? "inline-input invalid" : "inline-input"}
-                placeholder=${this.t("Papyros.add_file_placeholder")}
-                @input=${this.onAddInput}
-                @keydown=${this.onAddKeydown}
-                @blur=${this.onBlur}
-            />`;
+                    ${ref(this.addInputRef)}
+                    class=${this.invalid ? "inline-input invalid" : "inline-input"}
+                    placeholder=${this.t("Papyros.add_file_placeholder")}
+                    aria-label=${this.t("Papyros.add_file")}
+                    aria-invalid=${this.invalid ? "true" : "false"}
+                    aria-describedby=${ifDefined(this.invalid ? this.errorId : undefined)}
+                    @input=${this.onAddInput}
+                    @keydown=${this.onAddKeydown}
+                    @blur=${this.onBlur}
+                />
+                ${
+                    this.invalid
+                        ? html`<span id=${this.errorId} class="visually-hidden" role="alert"
+                              >${this.t("Papyros.invalid_file_name")}</span
+                          >`
+                        : ""
+                }`;
         }
         return html`<button
+            ${ref(this.addButtonRef)}
             class="add-btn"
             title=${this.t("Papyros.add_file")}
             aria-label=${this.t("Papyros.add_file")}

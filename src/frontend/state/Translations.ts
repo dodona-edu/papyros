@@ -79,9 +79,13 @@ export const ENGLISH_TRANSLATION = {
             stop: "Stop debugging",
         },
         editor_tab_code: "Code",
+        file_tabs: "Files",
         close_file_tab: "Remove file",
         close_file_confirm: "Are you sure you want to remove this file?",
         rename_file_tab: "Rename file",
+        invalid_file_name:
+            "File name can't be empty, must be unique, and can't start or end with \"/\" " +
+            'or contain "." or ".." as a segment.',
         add_file: "Add file",
         add_file_placeholder: "filename\u2026",
         files_download: "Download",
@@ -188,9 +192,13 @@ export const DUTCH_TRANSLATION = {
             stop: "Stop debugger",
         },
         editor_tab_code: "Code",
+        file_tabs: "Bestanden",
         close_file_tab: "Bestand verwijderen",
         close_file_confirm: "Weet je zeker dat je dit bestand wilt verwijderen?",
         rename_file_tab: "Bestand hernoemen",
+        invalid_file_name:
+            'Bestandsnaam mag niet leeg zijn, moet uniek zijn en mag niet beginnen of eindigen met "/" ' +
+            'of "." of ".." als onderdeel bevatten.',
         add_file: "Bestand toevoegen",
         add_file_placeholder: "bestandsnaam\u2026",
         files_download: "Downloaden",
