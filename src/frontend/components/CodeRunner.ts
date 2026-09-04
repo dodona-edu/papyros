@@ -55,10 +55,13 @@ export class CodeRunner extends PapyrosElement {
                 position: absolute;
                 bottom: 0;
                 right: 6px;
-                background-color: var(--md-sys-color-surface-container);
-                padding: 0.25rem 1rem;
                 border-top-right-radius: 1rem;
                 border-top-left-radius: 1rem;
+            }
+
+            p-run-state:not([empty]) {
+                background-color: var(--md-sys-color-surface-container);
+                padding: 0.25rem 1rem;
             }
 
             p-button-lint {
@@ -166,11 +169,7 @@ export class CodeRunner extends PapyrosElement {
                             ? html`<p-code .papyros=${this.papyros}></p-code>`
                             : html`<p-file-viewer .papyros=${this.papyros} .file=${activeFile}></p-file-viewer>`
                     }
-                    ${
-                        this.papyros.runner.stateMessage
-                            ? html`<p-run-state .papyros=${this.papyros}></p-run-state>`
-                            : ""
-                    }
+                    <p-run-state .papyros=${this.papyros}></p-run-state>
                 </div>
                 <p-button-lint .papyros=${this.papyros}>
                     <slot name="buttons"></slot>

@@ -1,13 +1,16 @@
-import { adoptStyles, CSSResult, html, LitElement, TemplateResult } from "lit";
+import { adoptStyles, CSSResult, html, TemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import "@material/web/icon/icon";
 import "@material/web/iconbutton/filled-icon-button";
+import { PapyrosElement } from "../../PapyrosElement";
 
 @customElement("p-themed-button")
-export class ThemedButton extends LitElement {
+export class ThemedButton extends PapyrosElement {
     theme: CSSResult | undefined;
     @property({ type: Boolean })
     dark: boolean = false;
+    @property()
+    name: string = "";
 
     public override connectedCallback(): void {
         super.connectedCallback();
@@ -16,10 +19,23 @@ export class ThemedButton extends LitElement {
         }
     }
 
+    // Focusing the custom element doesn't reach the inner button without delegatesFocus,
+    // and the button may not exist yet on first render.
+    public override focus(options?: FocusOptions): void {
+        void this.updateComplete.then(() => {
+            (this.renderRoot.querySelector("md-filled-icon-button") as HTMLElement | null)?.focus(options);
+        });
+    }
+
     protected override render(): TemplateResult {
+        const colorName = this.t(`Papyros.themes.names.${this.name.split(" ")[0].toLowerCase()}`);
+        const label = this.dark
+            ? this.t("Papyros.themes.dark", { name: colorName })
+            : this.t("Papyros.themes.light", { name: colorName });
+        const active = this.papyros.constants.activeTheme.name === this.name;
         return html`
-            <md-filled-icon-button>
-                <md-icon>
+            <md-filled-icon-button aria-label=${label} aria-pressed=${active}>
+                <md-icon aria-hidden="true">
                     ${
                         this.dark
                             ? html`
