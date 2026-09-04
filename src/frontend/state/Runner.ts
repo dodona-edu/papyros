@@ -177,16 +177,10 @@ export class Runner extends State {
      * Async getter for the linting diagnostics of the current code
      */
     public async lintSource(): Promise<WorkerDiagnostic[]> {
-        let backend: SyncClient<Backend>;
-        try {
-            backend = await this.backend;
-        } catch {
-            // Launch failures surface through launch(), and a lint cannot recover
-            // from one: retrying the launch on every edit would loop on a runtime
-            // that fails to boot
-            return [];
-        }
-        const proxy = backend.workerProxy;
+        // A lint cannot recover from a failed launch: retrying the launch on every
+        // edit would loop on a runtime that fails to boot
+        const backend = await this.availableBackend();
+        const proxy = backend?.workerProxy;
 
         if (!proxy) {
             return [];
@@ -202,6 +196,19 @@ export class Runner extends State {
                 await this.recoverRuntime();
             }
             return [];
+        }
+    }
+
+    /**
+     * The backend once it is up, or undefined when none was launched or the launch
+     * failed. Launch failures are reported by launch() itself, so callers can treat
+     * both the same way.
+     */
+    private async availableBackend(): Promise<SyncClient<Backend> | undefined> {
+        try {
+            return await this.backend;
+        } catch {
+            return undefined;
         }
     }
 
@@ -251,7 +258,10 @@ export class Runner extends State {
     constructor(papyros: Papyros) {
         super();
         this.papyros = papyros;
-        this.backend = Promise.resolve({} as SyncClient<Backend>);
+        // Nothing is launched yet: a rejection every caller handles, instead of an
+        // empty object whose methods do not exist
+        this.backend = Promise.reject(new Error("No backend has been launched"));
+        this.backend.catch(() => undefined);
 
         this.papyros.events.subscribe(BackendEventType.Input, () => this.setState(RunState.AwaitingInput));
         this.papyros.events.subscribe(BackendEventType.Loading, (e) => this.onLoad(e));
@@ -303,7 +313,7 @@ export class Runner extends State {
      * @return {Promise<void>} Returns when the program has been reset
      */
     public async reset(): Promise<void> {
-        if (![RunState.Ready, RunState.Loading].includes(this.state)) {
+        if (![RunState.Ready, RunState.Loading, RunState.Error].includes(this.state)) {
             await this.stop();
         }
 
@@ -462,7 +472,15 @@ export class Runner extends State {
         let interrupted = false;
         let terminated = false;
         let unusable = false;
-        const backend = await this.backend;
+        const backend = await this.availableBackend();
+        if (!backend) {
+            // Leaving the debugger active would offer a stop-debug button here
+            this.papyros.debugger.active = false;
+            this.papyros.io.onRunEnd();
+            this.papyros.debugger.onRunEnd();
+            this.setState(RunState.Error);
+            return;
+        }
         this.runStartTime = new Date().getTime();
         try {
             await backend.call(
@@ -512,7 +530,11 @@ export class Runner extends State {
         this.setState(RunState.Stopping);
         this.papyros.io.onRunEnd();
         this.papyros.debugger.onRunEnd();
-        const backend = await this.backend;
+        const backend = await this.availableBackend();
+        if (!backend) {
+            this.setState(RunState.Error);
+            return;
+        }
         await backend.interrupt();
 
         const startTime = new Date().getTime();
@@ -530,24 +552,27 @@ export class Runner extends State {
     }
 
     public async provideInput(input: string): Promise<void> {
-        const backend = await this.backend;
+        const backend = await this.availableBackend();
+        if (!backend) {
+            return;
+        }
         this.setState(RunState.Running);
         await backend.writeMessage(input);
     }
 
     public async deleteFile(name: string): Promise<void> {
-        const backend = await this.backend;
-        await backend.workerProxy.deleteFile(name);
+        const backend = await this.availableBackend();
+        await backend?.workerProxy.deleteFile(name);
     }
 
     public async updateFile(name: string, content: string, binary: boolean): Promise<void> {
-        const backend = await this.backend;
-        await backend.workerProxy.updateFile(name, content, binary);
+        const backend = await this.availableBackend();
+        await backend?.workerProxy.updateFile(name, content, binary);
     }
 
     public async renameFile(oldName: string, newName: string): Promise<void> {
-        const backend = await this.backend;
-        await backend.workerProxy.renameFile(oldName, newName);
+        const backend = await this.availableBackend();
+        await backend?.workerProxy.renameFile(oldName, newName);
     }
 
     public upsertFile(name: string, content: string, binary: boolean): void {
@@ -595,17 +620,27 @@ export class Runner extends State {
         }
         this.providedFiles = [inlinedFiles, hrefFiles];
         // parseData hands application/json data over as-is, so it must be the object
-        this.onLoad({
-            type: BackendEventType.Loading,
-            data: {
-                modules: fileNames,
-                status: "loading",
-            },
-            contentType: "application/json",
-        });
+        const report = (status: LoadingData["status"]): void =>
+            this.onLoad({
+                type: BackendEventType.Loading,
+                data: { modules: fileNames, status },
+                contentType: "application/json",
+            });
+        report("loading");
 
-        const backend = await this.backend;
-        await backend.workerProxy.provideFiles(inlinedFiles, hrefFiles);
+        const backend = await this.availableBackend();
+        if (!backend) {
+            report("failed");
+            return;
+        }
+        try {
+            await backend.workerProxy.provideFiles(inlinedFiles, hrefFiles);
+        } catch (error) {
+            // Nothing else reports these files as loaded, so the runner would stay
+            // loading forever behind a stop button that has nothing to stop
+            report("failed");
+            throw error;
+        }
     }
 
     /**

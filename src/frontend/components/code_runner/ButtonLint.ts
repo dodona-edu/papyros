@@ -28,7 +28,11 @@ export class ButtonLint extends PapyrosElement {
     }
 
     get buttons(): TemplateResult | TemplateResult[] {
-        if (this.papyros.runner.state === RunState.Ready) {
+        const state = this.papyros.runner.state;
+        if (state === RunState.Ready || state === RunState.Error) {
+            // Without a backend there is nothing to run or stop, so the run
+            // controls stay in place but inert
+            const disabled = state === RunState.Error;
             if (this.papyros.debugger.active) {
                 return html` <md-outlined-button @click=${() => (this.papyros.debugger.active = false)}>
                     <span slot="icon">${this.papyros.constants.icons.stopDebug}</span>
@@ -36,13 +40,19 @@ export class ButtonLint extends PapyrosElement {
                 </md-outlined-button>`;
             } else {
                 return [
-                    html` <md-filled-button @click=${() => this.papyros.runner.start(RunMode.Run)}>
+                    html` <md-filled-button
+                        ?disabled=${disabled}
+                        @click=${() => this.papyros.runner.start(RunMode.Run)}
+                    >
                         <span slot="icon">${this.papyros.constants.icons[RunMode.Run]}</span>
                         ${this.t(`Papyros.run_modes.${RunMode.Run}`)}
                     </md-filled-button>`,
                     ...this.papyros.runner.runModes.map(
                         (mode) =>
-                            html` <md-outlined-button @click=${() => this.papyros.runner.start(mode)}>
+                            html` <md-outlined-button
+                                ?disabled=${disabled}
+                                @click=${() => this.papyros.runner.start(mode)}
+                            >
                                 <span slot="icon">${this.papyros.constants.icons[mode]}</span>
                                 ${this.t(`Papyros.run_modes.${mode}`)}
                             </md-outlined-button>`,
