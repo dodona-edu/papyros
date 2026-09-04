@@ -9,11 +9,15 @@ import "./code_runner/RunState";
 import "./code_runner/ButtonLint";
 import "./EditorTabs";
 import "./FileViewer";
+import { paneStyles } from "./shared-styles";
 
 @customElement("p-code-runner")
 export class CodeRunner extends PapyrosElement {
     @state()
     private dragOver = false;
+
+    @state()
+    private editorFocused = false;
 
     private dropZoneRef: Ref<HTMLDivElement> = createRef();
 
@@ -23,7 +27,12 @@ export class CodeRunner extends PapyrosElement {
                 width: 100%;
                 display: flex;
                 flex-direction: column;
-                border-radius: 0.5rem;
+            }
+
+            ${paneStyles}
+
+            .pane {
+                flex-grow: 1;
             }
 
             .drop-zone {
@@ -39,7 +48,7 @@ export class CodeRunner extends PapyrosElement {
                 position: absolute;
                 inset: 0;
                 border: 2px dashed var(--md-sys-color-primary);
-                border-radius: 0.5rem;
+                border-radius: 0.625rem;
                 background-color: color-mix(in srgb, var(--md-sys-color-primary) 8%, transparent);
                 pointer-events: none;
                 z-index: 10;
@@ -51,21 +60,28 @@ export class CodeRunner extends PapyrosElement {
                 position: relative;
             }
 
-            p-run-state {
-                position: absolute;
-                bottom: 0;
-                right: 6px;
-                border-top-right-radius: 1rem;
-                border-top-left-radius: 1rem;
+            .footer {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 1rem;
+                height: 1.5rem;
+                padding: 0 0.75rem;
+                flex-shrink: 0;
+                border-top: 1px solid var(--md-sys-color-outline-variant);
+                font-size: 0.75rem;
+                color: var(--md-sys-color-on-surface-variant);
             }
 
-            p-run-state:not([empty]) {
-                background-color: var(--md-sys-color-surface-container);
-                padding: 0.25rem 1rem;
+            .hint {
+                visibility: hidden;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
 
-            p-button-lint {
-                background-color: var(--md-sys-color-surface-container);
+            .editor-focused .hint {
+                visibility: visible;
             }
         `;
     }
@@ -157,19 +173,26 @@ export class CodeRunner extends PapyrosElement {
 
         return html`
             <div ${ref(this.dropZoneRef)} class="drop-zone ${this.dragOver ? "drag-over" : ""}">
-                <p-editor-tabs .papyros=${this.papyros} .files=${files}></p-editor-tabs>
-                <!-- The tabs live in another shadow root, so the panel is named directly instead of by aria-labelledby. -->
-                <div
-                    class="editor"
-                    role="tabpanel"
-                    aria-label=${activeTab === CODE_TAB ? this.t("Papyros.editor_tab_code") : activeTab}
-                >
-                    ${
-                        activeTab === CODE_TAB
-                            ? html`<p-code .papyros=${this.papyros}></p-code>`
-                            : html`<p-file-viewer .papyros=${this.papyros} .file=${activeFile}></p-file-viewer>`
-                    }
-                    <p-run-state .papyros=${this.papyros}></p-run-state>
+                <div class="pane ${this.editorFocused && activeTab === CODE_TAB ? "editor-focused" : ""}">
+                    <p-editor-tabs .papyros=${this.papyros} .files=${files}></p-editor-tabs>
+                    <!-- The tabs live in another shadow root, so the panel is named directly instead of by aria-labelledby. -->
+                    <div
+                        class="editor"
+                        role="tabpanel"
+                        aria-label=${activeTab === CODE_TAB ? this.t("Papyros.editor_tab_code") : activeTab}
+                        @focusin=${() => (this.editorFocused = true)}
+                        @focusout=${() => (this.editorFocused = false)}
+                    >
+                        ${
+                            activeTab === CODE_TAB
+                                ? html`<p-code .papyros=${this.papyros}></p-code>`
+                                : html`<p-file-viewer .papyros=${this.papyros} .file=${activeFile}></p-file-viewer>`
+                        }
+                    </div>
+                    <div class="footer">
+                        <p-run-state .papyros=${this.papyros}></p-run-state>
+                        <span class="hint" aria-hidden="true">${this.t("Papyros.editor.escape_hint")}</span>
+                    </div>
                 </div>
                 <p-button-lint .papyros=${this.papyros}>
                     <slot name="buttons"></slot>

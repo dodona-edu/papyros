@@ -2,7 +2,7 @@ import { customElement } from "lit/decorators.js";
 import { css, CSSResult, html, TemplateResult } from "lit";
 import { FriendlyError, OutputEntry, OutputTab, OutputType, OUTPUT_TAB, TURTLE_TAB } from "../state/InputOutput";
 import { PapyrosElement } from "./PapyrosElement";
-import { tabButtonStyles } from "./shared-styles";
+import { tabBarStyles, tabButtonStyles } from "./shared-styles";
 import { TurtlePatch, TurtleSvgBuilder } from "../state/TurtleSvg";
 import "@material/web/icon/icon";
 
@@ -15,23 +15,20 @@ export class Output extends PapyrosElement {
                 height: 100%;
                 display: flex;
                 flex-direction: column;
+                border: 1px solid var(--md-sys-color-outline-variant);
+                border-radius: 0.625rem;
+                background-color: var(--md-sys-color-surface);
+                overflow: hidden;
+                box-sizing: border-box;
             }
 
-            .tabs {
-                display: flex;
-                flex-direction: row;
-                gap: 0.25rem;
-                padding-top: 0.25rem;
-                flex-shrink: 0;
-                position: relative;
-                z-index: 1;
-            }
+            ${tabBarStyles}
 
             .content {
                 flex: 1;
                 overflow: auto;
                 container-type: size;
-                padding: 0.75rem;
+                padding: 0.625rem 0.875rem;
                 background-color: var(--md-sys-color-surface-container-highest);
             }
 
@@ -41,7 +38,6 @@ export class Output extends PapyrosElement {
             }
 
             .content.turtle {
-                margin-top: -1px;
                 padding: 0;
                 background-color: transparent;
             }
@@ -258,7 +254,7 @@ export class Output extends PapyrosElement {
         const activeTab = this.papyros.io.activeOutputTab;
         return html`
             <div
-                class="tabs"
+                class="tab-bar"
                 role="tablist"
                 aria-label=${this.t("Papyros.output_tabs")}
                 @keydown=${this.handleTabsKeydown}

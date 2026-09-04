@@ -15,6 +15,9 @@ export class Input extends PapyrosElement {
                 width: 100%;
                 height: fit-content;
                 display: block;
+                --md-outlined-text-field-outline-color: var(--md-sys-color-outline-variant);
+                --md-outlined-button-outline-color: var(--md-sys-color-outline-variant);
+                --md-outlined-segmented-button-outline-color: var(--md-sys-color-outline-variant);
             }
 
             p-batch-input {

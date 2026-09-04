@@ -11,16 +11,21 @@ export class RunStateEl extends PapyrosElement {
             :host {
                 display: flex;
                 align-items: center;
+                min-width: 0;
             }
 
             [role="status"] {
                 display: flex;
                 align-items: center;
-                gap: 0.5rem;
+                gap: 0.375rem;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
 
             md-circular-progress {
-                --md-circular-progress-size: 2rem;
+                --md-circular-progress-size: 1rem;
+                flex-shrink: 0;
             }
         `;
     }

@@ -3,6 +3,7 @@ import { adoptStyles, css, CSSResult, html, TemplateResult } from "lit";
 import { PapyrosElement } from "../PapyrosElement";
 import "../CodeRunner";
 import "../Debugger";
+import { paneStyles } from "../shared-styles";
 import "../Output";
 import "../Input";
 import "./ProgrammingLanguagePicker";
@@ -61,26 +62,63 @@ export class App extends PapyrosElement {
                 flex: 1;
                 min-width: 0;
                 display: flex;
+                margin: 0.5rem;
             }
 
             .right {
                 flex: 1;
                 display: flex;
                 flex-direction: column;
+                gap: 1rem;
                 min-width: 0;
                 min-height: 0;
+                margin: 0.5rem;
+            }
+
+            .bottom {
+                margin: 0.5rem;
             }
 
             .grow {
-                flex-grow: 1;
+                flex: 1;
+                min-height: 0;
             }
 
-            .container {
-                padding: 1.5rem;
-                margin: 0.5rem;
-                border-radius: 1rem;
-                background-color: var(--md-sys-color-surface-container);
-                color: var(--md-sys-color-on-surface);
+            ${paneStyles}
+
+            .pane.padded {
+                padding: 0.75rem 0.875rem 0.875rem;
+            }
+
+            .pane-title {
+                position: relative;
+                display: flex;
+                align-items: center;
+                height: 2.25rem;
+                padding: 0 0.875rem;
+                flex-shrink: 0;
+                border-bottom: 1px solid var(--md-sys-color-outline-variant);
+                font-size: 0.875rem;
+                font-weight: 500;
+                color: var(--md-sys-color-primary);
+            }
+
+            .pane-title::after {
+                content: "";
+                position: absolute;
+                left: 0.625rem;
+                width: 4rem;
+                bottom: -1px;
+                height: 2px;
+                border-radius: 2px 2px 0 0;
+                background-color: var(--md-sys-color-primary);
+            }
+
+            .pane-body {
+                flex: 1;
+                min-height: 0;
+                overflow: auto;
+                padding: 0.75rem 0.875rem;
             }
 
             .overflow {
@@ -194,22 +232,23 @@ export class App extends PapyrosElement {
                 </header>
                 <main class="content">
                     <div class="top">
-                        <div class="left container">
+                        <div class="left">
                             <p-code-runner .papyros=${this.papyros} class="overflow">
                                 <p-example-picker .papyros=${this.papyros} slot="buttons"></p-example-picker>
                             </p-code-runner>
                         </div>
                         <div class="right">
-                            <div class="container grow overflow">
-                                <p-output .papyros=${this.papyros}></p-output>
-                            </div>
-                            <div class="container">
+                            <p-output .papyros=${this.papyros} class="grow"></p-output>
+                            <div class="pane padded">
                                 <p-input .papyros=${this.papyros}></p-input>
                             </div>
                         </div>
                     </div>
-                    <div class="bottom container overflow">
-                        <p-debugger .papyros=${this.papyros}></p-debugger>
+                    <div class="bottom pane">
+                        <div class="pane-title">${this.t("Papyros.debugger_tab")}</div>
+                        <div class="pane-body">
+                            <p-debugger .papyros=${this.papyros}></p-debugger>
+                        </div>
                     </div>
                 </main>
             </div>

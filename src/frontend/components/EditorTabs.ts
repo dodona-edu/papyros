@@ -20,19 +20,18 @@ export class EditorTabs extends PapyrosElement {
             :host {
                 display: flex;
                 flex-direction: row;
-                gap: 0.25rem;
-                padding: 0.25rem 0.25rem 0;
-                background-color: var(--md-sys-color-surface-container);
-                border-radius: 0.5rem 0.5rem 0 0;
-                max-height: 2.5rem;
+                height: 2.25rem;
                 flex-shrink: 0;
+                padding: 0 0.125rem;
+                border-bottom: 1px solid var(--md-sys-color-outline-variant);
+                background-color: var(--md-sys-color-surface);
                 overflow-x: auto;
             }
 
             .tablist {
                 display: flex;
                 flex-direction: row;
-                gap: 0.25rem;
+                height: 100%;
             }
 
             ${tabButtonStyles}

@@ -16,6 +16,7 @@ export const ENGLISH_TRANSLATION = {
         },
         output_placeholder: "The output of your code will appear here.",
         debug_placeholder: "The debugger output will appear here.",
+        debugger_tab: "Debugger",
         stop: "Stop",
         finished: "Code executed in %{time} s",
         interrupted: "Code interrupted after %{time} s",
@@ -82,6 +83,7 @@ export const ENGLISH_TRANSLATION = {
             code_label: "Code editor",
             input_label: "Input",
             file_label: "File %{name}",
+            escape_hint: "Esc, then Tab, leaves the editor",
             test_code: {
                 description: "# Appended testcase code for debugging purposes",
                 edit: "Edit",
@@ -143,6 +145,7 @@ export const DUTCH_TRANSLATION = {
         },
         output_placeholder: "Hier komt de uitvoer van je code.",
         debug_placeholder: "Hier komt de uitvoer van de debugger.",
+        debugger_tab: "Debugger",
         stop: "Stop",
         states: {
             running: "Aan het uitvoeren",
@@ -209,6 +212,7 @@ export const DUTCH_TRANSLATION = {
             code_label: "Code-editor",
             input_label: "Invoer",
             file_label: "Bestand %{name}",
+            escape_hint: "Esc en dan Tab verlaat de editor",
             test_code: {
                 description: "# Toegevoegde testcase code voor debugdoeleinden",
                 edit: "Bewerk",
