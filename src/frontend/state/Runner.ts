@@ -474,6 +474,8 @@ export class Runner extends State {
         let unusable = false;
         const backend = await this.availableBackend();
         if (!backend) {
+            // Leaving the debugger active would offer a stop-debug button here
+            this.papyros.debugger.active = false;
             this.papyros.io.onRunEnd();
             this.papyros.debugger.onRunEnd();
             this.setState(RunState.Error);

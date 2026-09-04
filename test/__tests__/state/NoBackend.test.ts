@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { Papyros } from "../../../src/frontend/state/Papyros";
 import { ProgrammingLanguage } from "../../../src/ProgrammingLanguage";
 import { RunState } from "../../../src/frontend/state/Runner";
+import { RunMode } from "../../../src/backend/Backend";
 
 // Fails fast instead of letting a regression hit the suite timeout
 function withTimeout<T>(promise: Promise<T>, ms: number, what: string): Promise<T> {
@@ -27,10 +28,12 @@ describe("Runner without a backend", () => {
         const papyros = new Papyros();
         papyros.runner.code = "print(1)";
 
-        await withTimeout(papyros.runner.start(), 2000, "runner.start()");
+        await withTimeout(papyros.runner.start(RunMode.Debug), 2000, "runner.start()");
 
         expect(papyros.runner.state).toBe(RunState.Error);
         expect(papyros.io.output).toEqual([]);
+        // An active debugger would put a stop-debug button among the inert controls
+        expect(papyros.debugger.active).toBe(false);
     });
 
     it("does not stay loading when files cannot be handed over", async () => {
