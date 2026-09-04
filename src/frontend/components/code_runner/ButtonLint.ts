@@ -1,10 +1,17 @@
 import { customElement } from "lit/decorators.js";
-import { css, CSSResult, html, TemplateResult } from "lit";
+import { css, CSSResult, html, PropertyValues, TemplateResult } from "lit";
+import { createRef, Ref, ref } from "lit/directives/ref.js";
 import { RunState } from "../../state/Runner";
 import { PapyrosElement } from "../PapyrosElement";
 import { RunMode } from "../../../backend/Backend";
 import "@material/web/button/filled-button";
 import "@material/web/button/outlined-button";
+
+/**
+ * Which button set is currently rendered. Distinct from RunState: several
+ * states (e.g. Running, Loading) all render the same single Stop button.
+ */
+type ButtonSet = "run" | "stop" | "stop-debugging";
 
 @customElement("p-button-lint")
 export class ButtonLint extends PapyrosElement {
@@ -27,6 +34,46 @@ export class ButtonLint extends PapyrosElement {
         `;
     }
 
+    /**
+     * The first (primary) button of the currently rendered set, so focus can
+     * follow it when that set changes.
+     */
+    private firstButtonRef: Ref<HTMLElement> = createRef();
+    private renderedSet: ButtonSet | undefined = undefined;
+    /**
+     * Whether focus was inside this component right before the button set
+     * changes, so the successor button is only focused when a keyboard user
+     * was actually driving this component, never when e.g. typing elsewhere.
+     */
+    private shouldRefocus = false;
+
+    private get buttonSet(): ButtonSet {
+        const state = this.papyros.runner.state;
+        if (state === RunState.Ready || state === RunState.Error) {
+            return this.papyros.debugger.active ? "stop-debugging" : "run";
+        }
+        return "stop";
+    }
+
+    protected override willUpdate(changedProperties: PropertyValues): void {
+        super.willUpdate(changedProperties);
+        const newSet = this.buttonSet;
+        const focusWasInside = this.shadowRoot?.activeElement != null;
+        this.shouldRefocus = focusWasInside && newSet !== this.renderedSet;
+        this.renderedSet = newSet;
+    }
+
+    protected override updated(changedProperties: PropertyValues): void {
+        super.updated(changedProperties);
+        if (this.shouldRefocus) {
+            const button = this.firstButtonRef.value;
+            // The button set was just (re)created: a freshly minted md-* element has
+            // not rendered its own focusable internals yet. Its own render is queued
+            // as a microtask, which is guaranteed to flush before the next frame.
+            requestAnimationFrame(() => button?.focus());
+        }
+    }
+
     get buttons(): TemplateResult | TemplateResult[] {
         const state = this.papyros.runner.state;
         if (state === RunState.Ready || state === RunState.Error) {
@@ -34,13 +81,17 @@ export class ButtonLint extends PapyrosElement {
             // controls stay in place but inert
             const disabled = state === RunState.Error;
             if (this.papyros.debugger.active) {
-                return html` <md-outlined-button @click=${() => (this.papyros.debugger.active = false)}>
+                return html` <md-outlined-button
+                    ${ref(this.firstButtonRef)}
+                    @click=${() => (this.papyros.debugger.active = false)}
+                >
                     <span slot="icon">${this.papyros.constants.icons.stopDebug}</span>
                     ${this.t("Papyros.debug.stop")}
                 </md-outlined-button>`;
             } else {
                 return [
                     html` <md-filled-button
+                        ${ref(this.firstButtonRef)}
                         ?disabled=${disabled}
                         @click=${() => this.papyros.runner.start(RunMode.Run)}
                     >
@@ -60,7 +111,7 @@ export class ButtonLint extends PapyrosElement {
                 ];
             }
         } else {
-            return html` <md-filled-button @click=${() => this.papyros.runner.stop()}>
+            return html` <md-filled-button ${ref(this.firstButtonRef)} @click=${() => this.papyros.runner.stop()}>
                 <span slot="icon">${this.papyros.constants.icons.stop}</span>
                 ${this.t("Papyros.stop")}
             </md-filled-button>`;
