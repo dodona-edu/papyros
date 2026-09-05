@@ -64,6 +64,8 @@ export const ENGLISH_TRANSLATION = {
             current_step: "Current step",
             call_stack: "Call stack",
             heap_objects: "Heap objects",
+            reference_to: "reference to %{type} #%{id}",
+            trace_label: "Execution trace",
         },
         editor: {
             test_code: {
@@ -166,6 +168,8 @@ export const DUTCH_TRANSLATION = {
             current_step: "Huidige stap",
             call_stack: "Call stack",
             heap_objects: "Objecten op de heap",
+            reference_to: "verwijzing naar %{type} #%{id}",
+            trace_label: "Uitvoeringstrace",
         },
         editor: {
             test_code: {
