@@ -85,6 +85,33 @@ describe("Papyros launch failure", () => {
 
         papyros.dispose();
     });
+    it("reports a launch that fails after a language switch", async () => {
+        const papyros = new Papyros();
+        const errorHandler = vi.fn();
+        papyros.setErrorHandler(errorHandler);
+        papyros.runner.registerBackend(
+            ProgrammingLanguage.JavaScript,
+            () =>
+                ({
+                    workerProxy: {
+                        launch: () => Promise.reject(new Error("worker failed to start")),
+                    },
+                }) as any,
+        );
+
+        const unhandled = vi.fn();
+        window.addEventListener("unhandledrejection", unhandled);
+        papyros.runner.programmingLanguage = ProgrammingLanguage.JavaScript;
+        await vi.waitFor(() => expect(errorHandler).toHaveBeenCalledOnce());
+        window.removeEventListener("unhandledrejection", unhandled);
+
+        expect(errorHandler.mock.calls[0][0]).toBeInstanceOf(PapyrosLaunchError);
+        expect(unhandled).not.toHaveBeenCalled();
+        expect(papyros.runner.state).toBe(RunState.Error);
+
+        papyros.dispose();
+    });
+
     it("cleans up a failed launch that a language switch superseded", async () => {
         vi.spyOn(window, "confirm").mockReturnValue(false);
 

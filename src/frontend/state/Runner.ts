@@ -7,6 +7,7 @@ import { arrayBufferToBase64, isTextMimeType, isValidFileName, parseData } from 
 import { State, stateProperty } from "@dodona/lit-state";
 import { Papyros } from "./Papyros";
 import { ProgrammingLanguage } from "../../ProgrammingLanguage";
+import { PapyrosLaunchError } from "./PapyrosErrors";
 
 /**
  * Enum representing the possible states while processing code
@@ -78,7 +79,11 @@ export class Runner extends State {
     public set programmingLanguage(value: ProgrammingLanguage) {
         if (this._programmingLanguage !== value) {
             this._programmingLanguage = value;
-            this.launch();
+            this.launch().catch((error) => {
+                this.papyros.errorHandler(
+                    new PapyrosLaunchError("Error launching papyros after a language switch", { cause: error }),
+                );
+            });
         }
     }
 
@@ -321,7 +326,11 @@ export class Runner extends State {
     }
 
     /**
-     * Start the backend to enable running code
+     * Start the backend to enable running code.
+     *
+     * Resolves once the backend can run code and rejects when it fails to start, so
+     * awaiting this waits for the whole runtime to download. `backend` is assigned
+     * before that, so a caller that does not await can already queue runs.
      */
     public async launch(): Promise<void> {
         if (this.disposed) {
@@ -334,7 +343,6 @@ export class Runner extends State {
         const launchId = ++this.launchId;
         const language = this.programmingLanguage;
         const backend = this.getClient(language);
-        // Expose the promise before it settles so runs can already be queued while downloading
         const backendLaunched = this.launchBackend(language, backend, launchId);
         this.backend = backendLaunched;
         this.setState(RunState.Ready);
