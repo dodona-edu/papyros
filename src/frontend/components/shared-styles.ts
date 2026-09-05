@@ -37,10 +37,29 @@ export const inlineInputStyles: CSSResult = css`
         background-color: var(--md-sys-color-surface);
         color: var(--md-sys-color-on-surface);
         width: 8rem;
-        outline: none;
+    }
+
+    .inline-input:focus-visible {
+        outline: 2px solid var(--md-sys-color-primary);
+        outline-offset: -1px;
     }
 
     .inline-input.invalid {
         border-color: var(--md-sys-color-error);
+    }
+
+    .inline-input.invalid:focus-visible {
+        outline-color: var(--md-sys-color-error);
+    }
+`;
+
+export const visuallyHiddenStyles: CSSResult = css`
+    .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
     }
 `;
