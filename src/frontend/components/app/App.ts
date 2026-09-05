@@ -58,10 +58,15 @@ export class App extends PapyrosElement {
 
             .bottom {
                 flex: 1;
-                /* Enough for the title and its one line of placeholder on a short window. */
-                min-height: 6rem;
                 margin: 0.5rem;
                 transition: flex-grow 250ms ease-out;
+            }
+
+            /* Enough for the title and its one line of placeholder on a short window. This
+               carries .pane too, and paneStyles sets min-height: 0 from a later rule of the
+               same weight, so the floor has to outrank it. */
+            .bottom.pane {
+                min-height: 6rem;
             }
 
             .content.debugging .top {
