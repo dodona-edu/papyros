@@ -1,11 +1,13 @@
 import { customElement } from "lit/decorators.js";
-import { css, CSSResult, html, TemplateResult } from "lit";
+import { css, CSSResult, html, PropertyValues, TemplateResult } from "lit";
 import "./input/BatchInput";
 import "./input/InteractiveInput";
 import { PapyrosElement } from "./PapyrosElement";
-import "@material/web/labs/segmentedbuttonset/outlined-segmented-button-set";
-import "@material/web/labs/segmentedbutton/outlined-segmented-button";
+import { tabBarStyles, tabButtonStyles } from "./shared-styles";
+import { HeightTransition } from "./motion";
 import { InputMode } from "../state/InputOutput";
+
+const MODES = [InputMode.interactive, InputMode.batch];
 
 @customElement("p-input")
 export class Input extends PapyrosElement {
@@ -13,62 +15,150 @@ export class Input extends PapyrosElement {
         return css`
             :host {
                 width: 100%;
-                height: fit-content;
-                display: block;
+                display: flex;
+                flex-direction: column;
+                min-height: 0;
+                border: 1px solid var(--md-sys-color-outline-variant);
+                border-radius: 0.625rem;
+                background-color: var(--md-sys-color-surface);
+                overflow: hidden;
+                box-sizing: border-box;
                 --md-outlined-text-field-outline-color: var(--md-sys-color-outline-variant);
                 --md-outlined-button-outline-color: var(--md-sys-color-outline-variant);
-                --md-outlined-segmented-button-outline-color: var(--md-sys-color-outline-variant);
+            }
+
+            ${tabBarStyles}
+            ${tabButtonStyles}
+
+            .tablist {
+                display: flex;
+                flex-direction: row;
+                height: 100%;
+            }
+
+            /* Names the pane, since the tabs themselves only name the two modes. */
+            .pane-label {
+                display: flex;
+                align-items: center;
+                padding: 0 0.75rem 0 0.875rem;
+                font-size: 0.875rem;
+                font-weight: 500;
+                color: var(--md-sys-color-on-surface-variant);
+            }
+
+            .content {
+                display: flex;
+                flex-direction: column;
+                /* Shrinkable, so a tight column takes height from the input box before
+                   it takes it from the output above. */
+                flex: 0 1 auto;
+                min-height: 0;
+                padding: 0.75rem 0.875rem;
             }
 
             p-batch-input {
-                height: 200px;
-            }
-
-            md-outlined-segmented-button-set {
-                margin-top: 0.5rem;
-                --md-outlined-segmented-button-selected-container-color: var(--md-sys-color-primary-container);
-                --md-outlined-segmented-button-selected-label-text-color: var(--md-sys-color-on-primary-container);
-                --md-outlined-segmented-button-selected-hover-label-text-color: var(
-                    --md-sys-color-on-primary-container
-                );
-                --md-outlined-segmented-button-selected-focus-label-text-color: var(
-                    --md-sys-color-on-primary-container
-                );
-                --md-outlined-segmented-button-selected-pressed-label-text-color: var(
-                    --md-sys-color-on-primary-container
-                );
+                flex: 0 1 12.5rem;
+                min-height: 4rem;
             }
         `;
     }
+
+    /** The two modes are very different heights, so the pane resizes into the new one. */
+    private heightTransition = new HeightTransition(this);
+    private renderedMode: InputMode | undefined = undefined;
 
     get mode(): InputMode {
         return this.papyros.io.inputMode;
     }
 
-    private selectMode(e: CustomEvent<{ index: number; selected: boolean }>): void {
-        if (!e.detail.selected) return;
-        this.papyros.io.inputMode = e.detail.index === 0 ? InputMode.interactive : InputMode.batch;
+    protected override willUpdate(changedProperties: PropertyValues): void {
+        super.willUpdate(changedProperties);
+        // Only the mode swap changes the height; the other renders here are input state.
+        if (this.renderedMode !== undefined && this.renderedMode !== this.mode) {
+            this.heightTransition.capture();
+        }
+        this.renderedMode = this.mode;
+    }
+
+    protected override updated(changedProperties: PropertyValues): void {
+        super.updated(changedProperties);
+        void this.heightTransition.play();
+    }
+
+    public override disconnectedCallback(): void {
+        super.disconnectedCallback();
+        this.heightTransition.cancel();
+    }
+
+    private selectMode(mode: InputMode): void {
+        this.papyros.io.inputMode = mode;
+    }
+
+    /** Standard ARIA tabs pattern: arrow keys move focus and select in one step. */
+    private handleTabsKeydown(e: KeyboardEvent): void {
+        const currentIndex = MODES.indexOf(this.mode);
+        let nextIndex: number;
+        switch (e.key) {
+            case "ArrowLeft":
+                nextIndex = (currentIndex - 1 + MODES.length) % MODES.length;
+                break;
+            case "ArrowRight":
+                nextIndex = (currentIndex + 1) % MODES.length;
+                break;
+            case "Home":
+                nextIndex = 0;
+                break;
+            case "End":
+                nextIndex = MODES.length - 1;
+                break;
+            default:
+                return;
+        }
+        e.preventDefault();
+        const nextMode = MODES[nextIndex];
+        this.selectMode(nextMode);
+        this.updateComplete.then(() => {
+            this.renderRoot.querySelector<HTMLElement>(`#tab-${nextMode}`)?.focus();
+        });
+    }
+
+    private renderTab(mode: InputMode): TemplateResult {
+        return html`
+            <button
+                id="tab-${mode}"
+                role="tab"
+                aria-selected=${this.mode === mode}
+                aria-controls="input-panel"
+                tabindex=${this.mode === mode ? 0 : -1}
+                class=${this.mode === mode ? "active" : ""}
+                @click=${() => this.selectMode(mode)}
+            >
+                ${this.t(`Papyros.input_modes.${mode}`)}
+            </button>
+        `;
     }
 
     protected override render(): TemplateResult {
         return html`
-            ${
-                this.mode === InputMode.batch
-                    ? html`<p-batch-input .papyros=${this.papyros}></p-batch-input>`
-                    : html`<p-interactive-input .papyros=${this.papyros}></p-interactive-input>`
-            }
-            <md-outlined-segmented-button-set @segmented-button-set-selection=${this.selectMode}>
-                <md-outlined-segmented-button
-                    no-checkmark
-                    label=${this.t("Papyros.input_modes.interactive")}
-                    ?selected=${this.mode === InputMode.interactive}
-                ></md-outlined-segmented-button>
-                <md-outlined-segmented-button
-                    no-checkmark
-                    label=${this.t("Papyros.input_modes.batch")}
-                    ?selected=${this.mode === InputMode.batch}
-                ></md-outlined-segmented-button>
-            </md-outlined-segmented-button-set>
+            <div class="tab-bar">
+                <span class="pane-label">${this.t("Papyros.input")}</span>
+                <!-- A tablist may only contain tabs, so the pane label sits outside it. -->
+                <div
+                    class="tablist"
+                    role="tablist"
+                    aria-label=${this.t("Papyros.input_tabs")}
+                    @keydown=${this.handleTabsKeydown}
+                >
+                    ${MODES.map((mode) => this.renderTab(mode))}
+                </div>
+            </div>
+            <div class="content" id="input-panel" role="tabpanel" aria-labelledby="tab-${this.mode}">
+                ${
+                    this.mode === InputMode.batch
+                        ? html`<p-batch-input .papyros=${this.papyros}></p-batch-input>`
+                        : html`<p-interactive-input .papyros=${this.papyros}></p-interactive-input>`
+                }
+            </div>
         `;
     }
 }
