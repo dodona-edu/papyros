@@ -11,6 +11,11 @@ export class RunStateEl extends PapyrosElement {
             :host {
                 display: flex;
                 align-items: center;
+            }
+
+            [role="status"] {
+                display: flex;
+                align-items: center;
                 gap: 0.5rem;
             }
 
