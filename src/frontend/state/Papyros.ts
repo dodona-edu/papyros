@@ -45,7 +45,12 @@ export class Papyros extends State {
     private channelPromise?: Promise<Channel | null>;
 
     /**
-     * Launch this instance of Papyros, making it ready to run code
+     * Launch this instance of Papyros, making it ready to run code.
+     *
+     * Resolves once the runtime can run code, so awaiting this waits for the whole
+     * runtime to download. A failed launch is reported to the error handler and
+     * offered as a retry instead of being thrown.
+     *
      * @return {Promise<Papyros>} Promise of launching, chainable
      */
     public async launch(): Promise<Papyros> {

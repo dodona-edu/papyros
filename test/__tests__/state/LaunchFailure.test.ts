@@ -15,6 +15,16 @@ function withTimeout<T>(promise: Promise<T>, ms: number, what: string): Promise<
     return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 }
 
+// A backend that launches and needs no channel
+const working = (): any =>
+    ({
+        workerProxy: {
+            launch: () => Promise.resolve(),
+            usesJspi: () => Promise.resolve(true),
+            runModes: () => Promise.resolve([]),
+        },
+    }) as any;
+
 describe("Papyros launch failure", () => {
     it("surfaces a failed backend launch instead of hanging", async () => {
         vi.spyOn(window, "confirm").mockReturnValue(false);
@@ -85,19 +95,72 @@ describe("Papyros launch failure", () => {
 
         papyros.dispose();
     });
+    it("reports a launch that fails after a language switch", async () => {
+        const papyros = new Papyros();
+        const errorHandler = vi.fn();
+        papyros.setErrorHandler(errorHandler);
+        papyros.runner.registerBackend(
+            ProgrammingLanguage.JavaScript,
+            () =>
+                ({
+                    workerProxy: {
+                        launch: () => Promise.reject(new Error("worker failed to start")),
+                    },
+                }) as any,
+        );
+
+        const unhandled = vi.fn();
+        window.addEventListener("unhandledrejection", unhandled);
+        try {
+            papyros.runner.programmingLanguage = ProgrammingLanguage.JavaScript;
+            await vi.waitFor(() => expect(errorHandler).toHaveBeenCalledOnce());
+
+            expect(errorHandler.mock.calls[0][0]).toBeInstanceOf(PapyrosLaunchError);
+            expect(unhandled).not.toHaveBeenCalled();
+            expect(papyros.runner.state).toBe(RunState.Error);
+        } finally {
+            window.removeEventListener("unhandledrejection", unhandled);
+            papyros.dispose();
+        }
+    });
+
+    it("keeps quiet about a switch launch that a later switch superseded", async () => {
+        let failLaunch: (error: Error) => void;
+        const papyros = new Papyros();
+        const errorHandler = vi.fn();
+        papyros.setErrorHandler(errorHandler);
+        papyros.runner.registerBackend(
+            ProgrammingLanguage.JavaScript,
+            () =>
+                ({
+                    workerProxy: {
+                        launch: () =>
+                            new Promise((_, reject) => {
+                                failLaunch = reject;
+                            }),
+                    },
+                    terminate: vi.fn(),
+                }) as any,
+        );
+        papyros.runner.registerBackend(ProgrammingLanguage.Python, working);
+
+        try {
+            papyros.runner.programmingLanguage = ProgrammingLanguage.JavaScript;
+            papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
+            failLaunch!(new Error("worker failed to start"));
+            await new Promise((resolve) => setTimeout(resolve, 0));
+
+            expect(errorHandler).not.toHaveBeenCalled();
+        } finally {
+            papyros.dispose();
+        }
+    });
+
     it("cleans up a failed launch that a language switch superseded", async () => {
         vi.spyOn(window, "confirm").mockReturnValue(false);
 
         const terminate = vi.fn();
         let failLaunch: (error: Error) => void;
-        const working = (): any =>
-            ({
-                workerProxy: {
-                    launch: () => Promise.resolve(),
-                    usesJspi: () => Promise.resolve(true),
-                    runModes: () => Promise.resolve([]),
-                },
-            }) as any;
         const pythonCreator = vi
             .fn()
             .mockImplementationOnce(
