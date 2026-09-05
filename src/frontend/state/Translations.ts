@@ -7,6 +7,7 @@
 export const ENGLISH_TRANSLATION = {
     Papyros: {
         Papyros: "Papyros",
+        github_link: "Papyros on GitHub",
         code_placeholder: "Write your %{programmingLanguage} code here and click 'Run' to execute...",
         input_placeholder: {
             interactive: "Provide input and press enter to send",
@@ -27,9 +28,21 @@ export const ENGLISH_TRANSLATION = {
             error: "Failed to load",
         },
         programming_language: "Programming language",
+        language: "Language",
         locales: {
             en: "English",
             nl: "Nederlands",
+        },
+        themes: {
+            // Accessible names: announced by screen readers, never shown on screen.
+            pick: "Choose a theme",
+            light: "Light theme %{name}",
+            dark: "Dark theme %{name}",
+            names: {
+                blue: "blue",
+                green: "green",
+                red: "red",
+            },
         },
         input_modes: {
             interactive: "Interactive input",
@@ -122,6 +135,7 @@ export const ENGLISH_TRANSLATION = {
 export const DUTCH_TRANSLATION = {
     Papyros: {
         Papyros: "Papyros",
+        github_link: "Papyros op GitHub",
         code_placeholder: "Schrijf hier je %{programmingLanguage} code en klik op 'Uitvoeren' om uit te voeren...",
         input_placeholder: {
             interactive: "Geef invoer in en druk op enter",
@@ -143,9 +157,21 @@ export const DUTCH_TRANSLATION = {
         finished: "Code uitgevoerd in %{time} s",
         interrupted: "Code onderbroken na %{time} s",
         programming_language: "Programmeertaal",
+        language: "Taal",
         locales: {
             en: "English",
             nl: "Nederlands",
+        },
+        themes: {
+            // Toegankelijkheidslabels: worden voorgelezen door schermlezers, nooit getoond.
+            pick: "Kies een thema",
+            light: "Licht thema %{name}",
+            dark: "Donker thema %{name}",
+            names: {
+                blue: "blauw",
+                green: "groen",
+                red: "rood",
+            },
         },
         input_modes: {
             interactive: "Interactieve invoer",
