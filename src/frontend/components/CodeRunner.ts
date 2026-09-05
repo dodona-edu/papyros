@@ -17,7 +17,7 @@ export class CodeRunner extends PapyrosElement {
     private dragOver = false;
 
     @state()
-    private editorFocused = false;
+    private showEscapeHint = false;
 
     private dropZoneRef: Ref<HTMLDivElement> = createRef();
 
@@ -80,8 +80,22 @@ export class CodeRunner extends PapyrosElement {
                 text-overflow: ellipsis;
             }
 
-            .editor-focused .hint {
+            .show-escape-hint .hint {
                 visibility: visible;
+            }
+
+            .read-only {
+                display: flex;
+                align-items: center;
+                gap: 0.25rem;
+                white-space: nowrap;
+                color: var(--md-sys-color-primary);
+            }
+
+            .read-only md-icon {
+                font-size: 1rem;
+                width: 1rem;
+                height: 1rem;
             }
         `;
     }
@@ -96,6 +110,29 @@ export class CodeRunner extends PapyrosElement {
         super.update(changedProperties);
     }
 
+    /**
+     * Whether the last thing to move focus was the keyboard. The escape hint is only of
+     * use to someone who arrived by Tab and has to leave the same way, and :focus-visible
+     * cannot tell us: it always matches a contenteditable, mouse or not.
+     */
+    private focusFromKeyboard = false;
+
+    private onPointerDown = (): void => {
+        this.focusFromKeyboard = false;
+    };
+
+    private onKeyDown = (): void => {
+        this.focusFromKeyboard = true;
+    };
+
+    override connectedCallback(): void {
+        super.connectedCallback();
+        // Capture phase, on the document: the key that moves focus here is dispatched at
+        // whatever had focus before, which is usually outside this component.
+        document.addEventListener("pointerdown", this.onPointerDown, true);
+        document.addEventListener("keydown", this.onKeyDown, true);
+    }
+
     protected override firstUpdated(): void {
         const dropZone = this.dropZoneRef.value;
         if (!dropZone) return;
@@ -107,6 +144,8 @@ export class CodeRunner extends PapyrosElement {
 
     override disconnectedCallback(): void {
         super.disconnectedCallback();
+        document.removeEventListener("pointerdown", this.onPointerDown, true);
+        document.removeEventListener("keydown", this.onKeyDown, true);
         const dropZone = this.dropZoneRef.value;
         if (!dropZone) return;
         dropZone.removeEventListener("dragover", this.onDragOver, true);
@@ -173,15 +212,15 @@ export class CodeRunner extends PapyrosElement {
 
         return html`
             <div ${ref(this.dropZoneRef)} class="drop-zone ${this.dragOver ? "drag-over" : ""}">
-                <div class="pane ${this.editorFocused && activeTab === CODE_TAB ? "editor-focused" : ""}">
+                <div class="pane ${this.showEscapeHint && activeTab === CODE_TAB ? "show-escape-hint" : ""}">
                     <p-editor-tabs .papyros=${this.papyros} .files=${files}></p-editor-tabs>
                     <!-- The tabs live in another shadow root, so the panel is named directly instead of by aria-labelledby. -->
                     <div
                         class="editor"
                         role="tabpanel"
                         aria-label=${activeTab === CODE_TAB ? this.t("Papyros.editor_tab_code") : activeTab}
-                        @focusin=${() => (this.editorFocused = true)}
-                        @focusout=${() => (this.editorFocused = false)}
+                        @focusin=${() => (this.showEscapeHint = this.focusFromKeyboard)}
+                        @focusout=${() => (this.showEscapeHint = false)}
                     >
                         ${
                             activeTab === CODE_TAB
@@ -191,7 +230,18 @@ export class CodeRunner extends PapyrosElement {
                     </div>
                     <div class="footer">
                         <p-run-state .papyros=${this.papyros}></p-run-state>
-                        <span class="hint" aria-hidden="true">${this.t("Papyros.editor.escape_hint")}</span>
+                        ${
+                            // The editor is read-only while debugging, which CodeMirror only
+                            // exposes through aria-readonly, so say so on screen too.
+                            this.papyros.debugger.active
+                                ? html`<span class="read-only"
+                                      ><md-icon aria-hidden="true">${this.papyros.constants.icons.lock}</md-icon
+                                      >${this.t("Papyros.editor.read_only")}</span
+                                  >`
+                                : html`<span class="hint" aria-hidden="true">
+                                      ${this.t("Papyros.editor.escape_hint")}
+                                  </span>`
+                        }
                     </div>
                 </div>
                 <p-button-lint .papyros=${this.papyros}>

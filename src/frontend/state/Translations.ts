@@ -19,6 +19,7 @@ export const ENGLISH_TRANSLATION = {
         debugger_tab: "Debugger",
         stop: "Stop",
         finished: "Code executed in %{time} s",
+        traced: "Code traced in %{time} s",
         interrupted: "Code interrupted after %{time} s",
         states: {
             running: "Running",
@@ -84,6 +85,7 @@ export const ENGLISH_TRANSLATION = {
             input_label: "Input",
             file_label: "File %{name}",
             escape_hint: "Esc, then Tab, leaves the editor",
+            read_only: "Read-only while debugging",
             test_code: {
                 description: "# Appended testcase code for debugging purposes",
                 edit: "Edit",
@@ -156,6 +158,7 @@ export const DUTCH_TRANSLATION = {
             error: "Laden mislukt",
         },
         finished: "Code uitgevoerd in %{time} s",
+        traced: "Code getraceerd in %{time} s",
         interrupted: "Code onderbroken na %{time} s",
         programming_language: "Programmeertaal",
         language: "Taal",
@@ -213,6 +216,7 @@ export const DUTCH_TRANSLATION = {
             input_label: "Invoer",
             file_label: "Bestand %{name}",
             escape_hint: "Esc en dan Tab verlaat de editor",
+            read_only: "Alleen-lezen tijdens het debuggen",
             test_code: {
                 description: "# Toegevoegde testcase code voor debugdoeleinden",
                 edit: "Bewerk",
