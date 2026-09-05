@@ -37,3 +37,7 @@ src/backend/workers/python/python_package.tar.gz.load_by_url
 
 __screenshots__/
 .vitest-attachments/
+
+# Python bytecode from the worker package build
+__pycache__/
+*.pyc
