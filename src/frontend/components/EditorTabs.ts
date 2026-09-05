@@ -23,7 +23,8 @@ export class EditorTabs extends PapyrosElement {
                 height: 2.25rem;
                 flex-shrink: 0;
                 padding: 0 0.125rem;
-                border-bottom: 1px solid var(--md-sys-color-outline-variant);
+                /* Matches tabBarStyles; an inset shadow survives the clipping overflow-x imposes. */
+                box-shadow: inset 0 -1px 0 var(--md-sys-color-outline-variant);
                 background-color: var(--md-sys-color-surface);
                 overflow-x: auto;
             }

@@ -21,6 +21,15 @@ export const materialTheme = EditorView.theme(
             color: "var(--md-sys-color-on-surface-variant)",
             border: "none",
             fontSize: "12px",
+            // The smaller font would give the digits their own, shorter line box inside the
+            // full-height gutter row, so pin it to the code line height (14px font x 1.4).
+            lineHeight: "19.6px",
+        },
+
+        // Only a line-number column earns a divider. The input editor has a gutter for its
+        // used-line markers but no numbers, and would otherwise show a stray hairline.
+        ".cm-gutters:has(.cm-lineNumbers)": {
+            borderRight: "1px solid var(--md-sys-color-outline-variant)",
         },
 
         ".cm-content": {

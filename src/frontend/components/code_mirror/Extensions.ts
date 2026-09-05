@@ -16,6 +16,8 @@ export type LineEffectExtensionConfig = {
     gutterClass?: string;
     marker?: string;
 };
+let markerGutterCount = 0;
+
 export function lineEffectExtension(
     config: LineEffectExtensionConfig,
 ): [Extension, StateEffectType<number[] | undefined>, StateField<number[] | undefined>] {
@@ -90,6 +92,9 @@ export function lineEffectExtension(
     const extensions: Extension[] = [stateField, gutterHighlighter, lineDecorationPlugin];
 
     if (config.marker !== undefined) {
+        // Unique per extension, so each marker gutter collapses on its own state field.
+        const gutterClass = `cm-marker-gutter-${markerGutterCount++}`;
+        const activeClass = `${gutterClass}-active`;
         class CustomMarker extends GutterMarker {
             toDOM(): Node {
                 const element = document.createElement("div");
@@ -100,7 +105,7 @@ export function lineEffectExtension(
         const customMarker = new CustomMarker();
 
         const customGutter = gutter({
-            class: "cm-custom-gutter",
+            class: `cm-custom-gutter ${gutterClass}`,
             markers: () => {
                 return RangeSet.empty;
             },
@@ -119,11 +124,23 @@ export function lineEffectExtension(
         });
 
         extensions.push(customGutter);
+        // A gutter that has nothing to show takes no width: CodeMirror fills every gutter with
+        // one element per line, so the collapse has to be driven by the state, not by :empty.
+        extensions.push(
+            EditorView.editorAttributes.compute([stateField], (state): Record<string, string> => {
+                const lines = state.field(stateField);
+                return lines !== undefined && lines.length > 0 ? { class: activeClass } : {};
+            }),
+        );
         extensions.push(
             EditorView.baseTheme({
                 ".cm-custom-gutter": {
-                    width: "17px",
+                    width: "0",
+                    overflow: "hidden",
                     textAlign: "center",
+                },
+                [`&.${activeClass} .${gutterClass}`]: {
+                    width: "17px",
                 },
             }),
         );

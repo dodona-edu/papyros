@@ -8,7 +8,8 @@ export const tabBarStyles: CSSResult = css`
         height: 2.25rem;
         flex-shrink: 0;
         padding: 0 0.125rem;
-        border-bottom: 1px solid var(--md-sys-color-outline-variant);
+        /* An inset shadow, not a border: overflow-x clips to the padding box, which a border sits outside of. */
+        box-shadow: inset 0 -1px 0 var(--md-sys-color-outline-variant);
         background-color: var(--md-sys-color-surface);
         overflow-x: auto;
     }
@@ -41,7 +42,7 @@ export const tabButtonStyles: CSSResult = css`
         position: absolute;
         left: 0.625rem;
         right: 0.625rem;
-        bottom: -1px;
+        bottom: 0;
         height: 2px;
         border-radius: 2px 2px 0 0;
         background-color: var(--md-sys-color-primary);
