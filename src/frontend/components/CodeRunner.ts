@@ -155,7 +155,12 @@ export class CodeRunner extends PapyrosElement {
         return html`
             <div ${ref(this.dropZoneRef)} class="drop-zone ${this.dragOver ? "drag-over" : ""}">
                 <p-editor-tabs .papyros=${this.papyros} .files=${files}></p-editor-tabs>
-                <div class="editor">
+                <!-- The tabs live in another shadow root, so the panel is named directly instead of by aria-labelledby. -->
+                <div
+                    class="editor"
+                    role="tabpanel"
+                    aria-label=${activeTab === CODE_TAB ? this.t("Papyros.editor_tab_code") : activeTab}
+                >
                     ${
                         activeTab === CODE_TAB
                             ? html`<p-code .papyros=${this.papyros}></p-code>`

@@ -7,7 +7,7 @@ import { FileEntry } from "../state/InputOutput";
 import { inlineInputStyles, tabButtonStyles, visuallyHiddenStyles } from "./shared-styles";
 import { isValidFileName } from "../../util/Util";
 
-let nextErrorId = 0;
+let nextId = 0;
 
 @customElement("p-editor-tab")
 export class EditorTab extends PapyrosElement {
@@ -22,7 +22,9 @@ export class EditorTab extends PapyrosElement {
 
     private renameInputRef: Ref<HTMLInputElement> = createRef();
     private tabButtonRef: Ref<HTMLButtonElement> = createRef();
-    private readonly errorId = `rename-error-${nextErrorId++}`;
+    private readonly instanceId = nextId++;
+    private readonly errorId = `rename-error-${this.instanceId}`;
+    private readonly hintId = `tab-hint-${this.instanceId}`;
 
     static get styles(): CSSResult {
         return css`
@@ -108,6 +110,7 @@ export class EditorTab extends PapyrosElement {
             return true;
         }
         if (!this.papyros.io.renameFile(oldName, newName)) {
+            this.invalid = true;
             return false;
         }
         this.renaming = false;
@@ -158,16 +161,13 @@ export class EditorTab extends PapyrosElement {
         this.startRenaming();
     }
 
-    private onRenameBtnKeydown(e: KeyboardEvent): void {
-        if (e.key === "Enter" || e.key === " ") {
+    // The rename and close controls are pointer-only, so the tab itself carries their keys.
+    private onTabKeydown(e: KeyboardEvent): void {
+        if (this.papyros.debugger.active) return;
+        if (e.key === "F2") {
             e.preventDefault();
-            e.stopPropagation();
             this.startRenaming();
-        }
-    }
-
-    private onCloseBtnKeydown(e: KeyboardEvent): void {
-        if (e.key === "Enter" || e.key === " ") {
+        } else if (e.key === "Delete" || e.key === "Backspace") {
             e.preventDefault();
             this.closeFile(e);
         }
@@ -215,9 +215,11 @@ export class EditorTab extends PapyrosElement {
                 role="tab"
                 aria-selected=${active ? "true" : "false"}
                 tabindex=${active ? "0" : "-1"}
+                aria-describedby=${ifDefined(debugActive ? undefined : this.hintId)}
                 @click=${this.setTab}
                 @dblclick=${this.onDblClick}
                 @auxclick=${this.onAuxClick}
+                @keydown=${this.onTabKeydown}
             >
                 ${this.file.name}
                 ${
@@ -225,27 +227,26 @@ export class EditorTab extends PapyrosElement {
                         ? ""
                         : html`<span
                                   class="rename-btn"
-                                  role="button"
-                                  tabindex="0"
                                   title=${this.t("Papyros.rename_file_tab")}
-                                  aria-label=${this.t("Papyros.rename_file_tab")}
+                                  aria-hidden="true"
                                   @click=${this.onRenameClick}
-                                  @keydown=${this.onRenameBtnKeydown}
                               >
                                   ${this.papyros.constants.icons.edit}
                               </span>
                               <span
                                   class="close-btn"
-                                  role="button"
-                                  tabindex="0"
                                   title=${this.t("Papyros.close_file_tab")}
-                                  aria-label=${this.t("Papyros.close_file_tab")}
+                                  aria-hidden="true"
                                   @click=${this.closeFile}
-                                  @keydown=${this.onCloseBtnKeydown}
                                   >×</span
                               >`
                 }
             </button>
+            ${
+                debugActive
+                    ? ""
+                    : html`<span id=${this.hintId} class="visually-hidden">${this.t("Papyros.file_tab_hint")}</span>`
+            }
         `;
     }
 }

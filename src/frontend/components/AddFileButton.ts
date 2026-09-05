@@ -59,6 +59,8 @@ export class AddFileButton extends PapyrosElement {
     private confirmAdd(): void {
         const name = this.addInputRef.value?.value.trim() ?? "";
         if (!this.papyros.io.addFile(name)) {
+            // Enter can arrive before any input event, so the name is checked here too.
+            this.invalid = true;
             return;
         }
         void this.papyros.runner.updateFile(name, "", false);
@@ -80,8 +82,7 @@ export class AddFileButton extends PapyrosElement {
         if (!this.adding) return;
         const name = this.addInputRef.value?.value.trim() ?? "";
         if (this.isInvalidName(name)) {
-            // confirmAdd() would silently no-op on an invalid name, leaving the input
-            // open but unfocused; cancel instead so focus can't strand there.
+            // Cancelling keeps focus from stranding in an input left open on an invalid name.
             this.cancelAdd();
         } else {
             this.confirmAdd();

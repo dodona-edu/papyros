@@ -83,9 +83,10 @@ export const ENGLISH_TRANSLATION = {
         close_file_tab: "Remove file",
         close_file_confirm: "Are you sure you want to remove this file?",
         rename_file_tab: "Rename file",
+        file_tab_hint: "Press F2 to rename this file, Delete to remove it.",
         invalid_file_name:
-            "File name can't be empty, must be unique, and can't start or end with \"/\" " +
-            'or contain "." or ".." as a segment.',
+            "File name can't be empty, must be unique, and can't start or end with \"/\", " +
+            'contain "//", or contain "." or ".." as a segment.',
         add_file: "Add file",
         add_file_placeholder: "filename\u2026",
         files_download: "Download",
@@ -196,9 +197,10 @@ export const DUTCH_TRANSLATION = {
         close_file_tab: "Bestand verwijderen",
         close_file_confirm: "Weet je zeker dat je dit bestand wilt verwijderen?",
         rename_file_tab: "Bestand hernoemen",
+        file_tab_hint: "Druk op F2 om dit bestand te hernoemen, Delete om het te verwijderen.",
         invalid_file_name:
-            'Bestandsnaam mag niet leeg zijn, moet uniek zijn en mag niet beginnen of eindigen met "/" ' +
-            'of "." of ".." als onderdeel bevatten.',
+            'Bestandsnaam mag niet leeg zijn, moet uniek zijn en mag niet beginnen of eindigen met "/", ' +
+            'mag "//" niet bevatten en mag "." of ".." niet als onderdeel bevatten.',
         add_file: "Bestand toevoegen",
         add_file_placeholder: "bestandsnaam\u2026",
         files_download: "Downloaden",
