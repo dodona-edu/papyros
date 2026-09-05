@@ -47,24 +47,33 @@ export class Debugger extends PapyrosElement {
             }
 
             .place-holder {
-                color: var(--md-sys-color-on-surface);
-                opacity: 0.5;
+                color: var(--md-sys-color-on-surface-variant);
+            }
+
+            .scroll-region {
+                height: 100%;
+                overflow: auto;
             }
         `;
     }
 
     protected override render(): TemplateResult {
-        if (!this.papyros.debugger.active || this.papyros.debugger.trace.length === 0) {
-            return html`<div class="place-holder">${this.t("Papyros.debug_placeholder")}</div>`;
-        }
-
-        return html`<tc-trace
-            .trace=${this.papyros.debugger.trace}
-            .translations=${this.papyros.i18n.getTranslations("Papyros.debugger")}
-            .selectedFrame=${this.papyros.debugger.activeFrame ?? 0}
-            @frame-change=${(e: CustomEvent) => {
-                this.papyros.debugger.activeFrame = e.detail.frame;
-            }}
-        ></tc-trace>`;
+        const hasTrace = this.papyros.debugger.active && this.papyros.debugger.trace.length > 0;
+        return html`
+            <div class="scroll-region" role="region" tabindex="0" aria-label=${this.t("Papyros.debugger.title")}>
+                ${
+                    hasTrace
+                        ? html`<tc-trace
+                              .trace=${this.papyros.debugger.trace}
+                              .translations=${this.papyros.i18n.getTranslations("Papyros.debugger")}
+                              .selectedFrame=${this.papyros.debugger.activeFrame ?? 0}
+                              @frame-change=${(e: CustomEvent) => {
+                                  this.papyros.debugger.activeFrame = e.detail.frame;
+                              }}
+                          ></tc-trace>`
+                        : html`<div class="place-holder">${this.t("Papyros.debug_placeholder")}</div>`
+                }
+            </div>
+        `;
     }
 }
