@@ -66,11 +66,14 @@ export class ButtonLint extends PapyrosElement {
     protected override updated(changedProperties: PropertyValues): void {
         super.updated(changedProperties);
         if (this.shouldRefocus) {
-            const button = this.firstButtonRef.value;
             // The button set was just (re)created: a freshly minted md-* element has
             // not rendered its own focusable internals yet. Its own render is queued
             // as a microtask, which is guaranteed to flush before the next frame.
-            requestAnimationFrame(() => button?.focus());
+            requestAnimationFrame(() => {
+                // A render in between can have replaced the button, so take the current one.
+                const button = this.firstButtonRef.value;
+                if (button?.isConnected) button.focus();
+            });
         }
     }
 
