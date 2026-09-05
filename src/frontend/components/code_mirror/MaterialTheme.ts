@@ -29,8 +29,14 @@ export const materialTheme = EditorView.theme(
             backgroundColor: "color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent) !important",
         },
 
+        // Inset so the ring stays inside the editor bounds instead of overflowing it.
         "&.cm-focused": {
-            outline: "none",
+            outline: "2px solid var(--md-sys-color-primary)",
+            outlineOffset: "-2px",
+        },
+
+        ".cm-placeholder": {
+            color: "var(--md-sys-color-on-surface-variant)",
         },
 
         ".cm-selectionBackground": {

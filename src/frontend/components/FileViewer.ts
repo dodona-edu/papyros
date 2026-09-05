@@ -104,6 +104,7 @@ export class FileViewer extends PapyrosElement {
                 .value=${this.file.content}
                 .readonly=${readonly}
                 .theme=${this.papyros.constants.CodeMirrorTheme}
+                .accessibleName=${this.t("Papyros.editor.file_label", { name: this.file.name })}
                 @change=${this.onEditorChange}
             ></p-file-editor>
         `;

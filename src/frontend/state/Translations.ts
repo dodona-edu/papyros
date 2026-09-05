@@ -68,6 +68,9 @@ export const ENGLISH_TRANSLATION = {
             trace_label: "Execution trace",
         },
         editor: {
+            code_label: "Code editor",
+            input_label: "Input",
+            file_label: "File %{name}",
             test_code: {
                 description: "# Appended testcase code for debugging purposes",
                 edit: "Edit",
@@ -172,6 +175,9 @@ export const DUTCH_TRANSLATION = {
             trace_label: "Uitvoeringstrace",
         },
         editor: {
+            code_label: "Code-editor",
+            input_label: "Invoer",
+            file_label: "Bestand %{name}",
             test_code: {
                 description: "# Toegevoegde testcase code voor debugdoeleinden",
                 edit: "Bewerk",
