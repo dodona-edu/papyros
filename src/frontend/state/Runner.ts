@@ -79,7 +79,14 @@ export class Runner extends State {
     public set programmingLanguage(value: ProgrammingLanguage) {
         if (this._programmingLanguage !== value) {
             this._programmingLanguage = value;
-            this.launch().catch((error) => {
+            const launching = this.launch();
+            // launch() claims its id synchronously, so a newer id means a later launch
+            // superseded this one and its failure no longer concerns the user
+            const launchId = this.launchId;
+            launching.catch((error) => {
+                if (launchId !== this.launchId) {
+                    return;
+                }
                 this.papyros.errorHandler(
                     new PapyrosLaunchError("Error launching papyros after a language switch", { cause: error }),
                 );
