@@ -267,6 +267,7 @@ export class Output extends PapyrosElement {
                     id="tab-output"
                     role="tab"
                     aria-selected=${activeTab === OUTPUT_TAB}
+                    aria-controls="output-panel"
                     tabindex=${activeTab === OUTPUT_TAB ? 0 : -1}
                     class=${activeTab === OUTPUT_TAB ? "active" : ""}
                     @click=${() => this.papyros.io.selectOutputTab(OUTPUT_TAB)}
@@ -280,6 +281,7 @@ export class Output extends PapyrosElement {
                                   id="tab-turtle"
                                   role="tab"
                                   aria-selected=${activeTab === TURTLE_TAB}
+                                  aria-controls="output-panel"
                                   tabindex=${activeTab === TURTLE_TAB ? 0 : -1}
                                   class=${activeTab === TURTLE_TAB ? "active" : ""}
                                   @click=${() => this.papyros.io.selectOutputTab(TURTLE_TAB)}
@@ -303,6 +305,7 @@ export class Output extends PapyrosElement {
             ${this.renderTabs()}
             <div
                 class="content ${activeTab === TURTLE_TAB ? "turtle" : ""}"
+                id="output-panel"
                 role="tabpanel"
                 aria-labelledby="tab-${activeTab}"
                 tabindex="0"
