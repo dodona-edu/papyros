@@ -1,7 +1,8 @@
-import { css, CSSResult, html, TemplateResult } from "lit";
+import { css, CSSResult, html, PropertyValues, TemplateResult } from "lit";
 import "@dodona/trace-component";
 import { customElement } from "lit/decorators.js";
 import { PapyrosElement } from "./PapyrosElement";
+import { fadeIn } from "./motion";
 
 @customElement("p-debugger")
 export class Debugger extends PapyrosElement {
@@ -57,8 +58,28 @@ export class Debugger extends PapyrosElement {
         `;
     }
 
+    private hadTrace: boolean | undefined = undefined;
+
+    /**
+     * The pane is the same size either way, so the swap between the placeholder and the
+     * trace is easy to miss. A fade points at the thing that just answered the run.
+     */
+    protected override updated(changedProperties: PropertyValues): void {
+        super.updated(changedProperties);
+        const hasTrace = this.hasTrace;
+        if (this.hadTrace !== undefined && this.hadTrace !== hasTrace) {
+            const region = this.renderRoot.querySelector<HTMLElement>(".scroll-region");
+            if (region) fadeIn(region);
+        }
+        this.hadTrace = hasTrace;
+    }
+
+    private get hasTrace(): boolean {
+        return this.papyros.debugger.active && this.papyros.debugger.trace.length > 0;
+    }
+
     protected override render(): TemplateResult {
-        const hasTrace = this.papyros.debugger.active && this.papyros.debugger.trace.length > 0;
+        const hasTrace = this.hasTrace;
         return html`
             <div class="scroll-region" role="region" tabindex="0" aria-label=${this.t("Papyros.debugger.title")}>
                 ${

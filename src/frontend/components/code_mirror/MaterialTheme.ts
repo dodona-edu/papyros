@@ -12,13 +12,24 @@ export const materialTheme = EditorView.theme(
             "font-size": "14px", // use proper size to align gutters with editor
             backgroundColor: "var(--md-sys-color-surface-container-highest)",
             color: "var(--md-sys-color-on-background)",
+            // Reserved for the focus bar, so focusing never shifts the text.
+            borderLeft: "3px solid transparent",
         },
 
         ".cm-gutters": {
-            backgroundColor: "var(--md-sys-color-surface-container)",
+            backgroundColor: "var(--md-sys-color-surface-container-highest)",
             color: "var(--md-sys-color-on-surface-variant)",
             border: "none",
             fontSize: "12px",
+            // The smaller font would give the digits their own, shorter line box inside the
+            // full-height gutter row, so pin it to the code line height (14px font x 1.4).
+            lineHeight: "19.6px",
+        },
+
+        // Only a line-number column earns a divider. The input editor has a gutter for its
+        // used-line markers but no numbers, and would otherwise show a stray hairline.
+        ".cm-gutters:has(.cm-lineNumbers)": {
+            borderRight: "1px solid var(--md-sys-color-outline-variant)",
         },
 
         ".cm-content": {
@@ -29,10 +40,10 @@ export const materialTheme = EditorView.theme(
             backgroundColor: "color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent) !important",
         },
 
-        // Inset so the ring stays inside the editor bounds instead of overflowing it.
+        // A bar on the left edge marks the focused editor without boxing in the tabs above it.
         "&.cm-focused": {
-            outline: "2px solid var(--md-sys-color-primary)",
-            outlineOffset: "-2px",
+            outline: "none",
+            borderLeftColor: "var(--md-sys-color-primary)",
         },
 
         ".cm-placeholder": {

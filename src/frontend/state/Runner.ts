@@ -713,9 +713,14 @@ export class Runner extends State {
      * sends an end event either way, error events only carry output
      */
     private onFinished(): void {
+        const time = (new Date().getTime() - this.runStartTime) / 1000;
+        // While debugging, only the trace is finished: the session itself carries on,
+        // so "executed" would read as if there were nothing left to do.
         this.setState(
             RunState.Ready,
-            this.papyros.i18n.t("Papyros.finished", { time: (new Date().getTime() - this.runStartTime) / 1000 }),
+            this.papyros.debugger.active
+                ? this.papyros.i18n.t("Papyros.traced", { time })
+                : this.papyros.i18n.t("Papyros.finished", { time }),
         );
     }
     private updateRunModes(): void {

@@ -30,6 +30,7 @@ export class EditorTab extends PapyrosElement {
         return css`
             :host {
                 display: flex;
+                height: 100%;
             }
 
             ${tabButtonStyles}

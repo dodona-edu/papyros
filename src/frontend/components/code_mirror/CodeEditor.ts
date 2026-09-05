@@ -59,7 +59,6 @@ export class CodeEditor extends CodeMirrorEditor {
             :host {
                 width: 100%;
                 height: 100%;
-                position: relative;
             }
 
             .papyros-test-line {
@@ -96,6 +95,19 @@ export class CodeEditor extends CodeMirrorEditor {
                 color: var(--md-sys-color-primary);
             }
 
+            /* An arrow rather than a caret: the text still selects, but does not accept typing. */
+            :host([readonly]) .cm-content {
+                cursor: default;
+            }
+
+            /* The view stays focusable for keyboard selection, so CodeMirror keeps drawing a
+               blinking caret. Nothing can be typed there, so it only promises an edit.
+               !important beats CodeMirror's own .cm-focused rule for the cursor layer. */
+            :host([readonly]) .cm-cursor,
+            :host([readonly]) .cm-dropCursor {
+                display: none !important;
+            }
+
             #escape-hint {
                 position: absolute;
                 width: 1px;
@@ -107,25 +119,6 @@ export class CodeEditor extends CodeMirrorEditor {
                 white-space: nowrap;
                 border: 0;
             }
-
-            /* Shown as a pill in the bottom-left corner while the editor is focused, the
-               counterpart of the run-state pill on the right; screen-reader-only otherwise. */
-            .cm-editor.cm-focused ~ #escape-hint {
-                position: absolute;
-                inset: auto auto 0 6px;
-                width: auto;
-                height: auto;
-                margin: 0;
-                padding: 0.25rem 1rem;
-                overflow: visible;
-                clip-path: none;
-                white-space: nowrap;
-                font-size: 0.75rem;
-                border-radius: 1rem 1rem 0 0;
-                color: var(--md-sys-color-on-surface-variant);
-                background-color: var(--md-sys-color-surface-container);
-                z-index: 5;
-            }
         `;
     }
 
@@ -134,6 +127,7 @@ export class CodeEditor extends CodeMirrorEditor {
             debugging: value ? debugLineExtension : [highlightActiveLineGutter(), lintGutter(), highlightActiveLine()],
         });
         this.readonly = value;
+        this.toggleAttribute("readonly", value);
     }
 
     private reLintOnLoaded = (e: BackendEvent): void => {

@@ -21,9 +21,10 @@ export class ButtonLint extends PapyrosElement {
                 display: flex;
                 justify-content: space-between;
                 height: fit-content;
-                padding: 0.5rem;
+                padding: 0.75rem 0 0;
                 gap: 1rem;
                 flex-wrap: wrap;
+                --md-outlined-button-outline-color: var(--md-sys-color-outline-variant);
             }
 
             .buttons {

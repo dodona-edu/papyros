@@ -24,22 +24,29 @@ export class AddFileButton extends PapyrosElement {
         return css`
             :host {
                 display: flex;
+                height: 100%;
             }
 
             .add-btn {
-                padding: 0.375rem 0.5rem;
-                border: 1px solid var(--md-sys-color-outline-variant);
-                border-bottom: 2px solid var(--md-sys-color-outline-variant);
-                border-radius: 0.375rem 0.375rem 0 0;
-                cursor: pointer;
-                font-size: 1rem;
+                height: 100%;
+                padding: 0 0.625rem;
+                border: none;
+                background: transparent;
+                color: var(--md-sys-color-on-surface-variant);
+                font: inherit;
+                font-size: 1.125rem;
                 line-height: 1;
-                background-color: var(--md-sys-color-surface);
-                color: var(--md-sys-color-on-surface);
+                cursor: pointer;
             }
 
             .add-btn:hover {
-                opacity: 0.8;
+                color: var(--md-sys-color-on-surface);
+            }
+
+            .add-btn:focus-visible {
+                outline: 2px solid var(--md-sys-color-primary);
+                outline-offset: -2px;
+                border-radius: 0.25rem;
             }
 
             ${inlineInputStyles}

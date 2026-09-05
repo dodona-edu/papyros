@@ -3,6 +3,7 @@ import { adoptStyles, css, CSSResult, html, TemplateResult } from "lit";
 import { PapyrosElement } from "../PapyrosElement";
 import "../CodeRunner";
 import "../Debugger";
+import { paneStyles } from "../shared-styles";
 import "../Output";
 import "../Input";
 import "./ProgrammingLanguagePicker";
@@ -46,50 +47,111 @@ export class App extends PapyrosElement {
                 height: 100%;
             }
 
+            /* The debugger is only worth a quarter of the page while it is empty. Once a run
+               fills it, it gets an equal share, which is the least a trace can be read in. */
             .top {
-                flex: 2;
+                flex: 3;
                 display: flex;
                 min-height: 0;
+                transition: flex-grow 250ms ease-out;
             }
 
             .bottom {
                 flex: 1;
-                min-height: 0;
+                margin: 0.5rem;
+                transition: flex-grow 250ms ease-out;
+            }
+
+            /* Enough for the title and its one line of placeholder on a short window. This
+               carries .pane too, and paneStyles sets min-height: 0 from a later rule of the
+               same weight, so the floor has to outrank it. */
+            .bottom.pane {
+                min-height: 6rem;
+            }
+
+            .content.debugging .top {
+                flex-grow: 1;
+            }
+
+            .content.debugging .bottom {
+                flex-grow: 1;
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                .top,
+                .bottom {
+                    transition: none;
+                }
             }
 
             .left {
                 flex: 1;
                 min-width: 0;
                 display: flex;
+                margin: 0.5rem;
             }
 
             .right {
                 flex: 1;
                 display: flex;
                 flex-direction: column;
+                gap: 1rem;
                 min-width: 0;
                 min-height: 0;
-            }
-
-            .grow {
-                flex-grow: 1;
-            }
-
-            .container {
-                padding: 1.5rem;
                 margin: 0.5rem;
-                border-radius: 1rem;
-                background-color: var(--md-sys-color-surface-container);
-                color: var(--md-sys-color-on-surface);
             }
 
-            .overflow {
+            /* Output must not be squeezed away when the debugger claims its share. */
+            .grow {
+                flex: 1;
+                min-height: 7rem;
+            }
+
+            ${paneStyles}
+
+            .pane-title {
+                display: flex;
+                align-items: center;
+                height: 2.25rem;
+                padding: 0 0.875rem;
+                flex-shrink: 0;
+                box-shadow: inset 0 -1px 0 var(--md-sys-color-outline-variant);
+                font-size: 0.875rem;
+                font-weight: 500;
+                color: var(--md-sys-color-primary);
+            }
+
+            /* The label carries the indicator, so it is as wide as the text like a real tab. */
+            .pane-title span {
+                position: relative;
+                display: flex;
+                align-items: center;
+                height: 100%;
+            }
+
+            .pane-title span::after {
+                content: "";
+                position: absolute;
+                left: -0.25rem;
+                right: -0.25rem;
+                bottom: 0;
+                height: 2px;
+                border-radius: 2px 2px 0 0;
+                background-color: var(--md-sys-color-primary);
+            }
+
+            .pane-body {
+                flex: 1;
+                min-height: 0;
                 overflow: auto;
+                padding: 0.75rem 0.875rem;
             }
 
+            /* The 40px controls set the height of this row, so the padding is all there is
+               to give back to the content below. */
             .header {
                 align-items: center;
-                padding: 1rem 2rem;
+                padding: 0.5rem 1.5rem;
                 display: flex;
                 justify-content: space-between;
                 background-color: var(--md-sys-color-surface-container);
@@ -109,11 +171,15 @@ export class App extends PapyrosElement {
                 align-items: center;
             }
 
+            /* No height here: flex-grow already claims the room the header leaves, and a
+               definite height would become this item's automatic minimum, so the page
+               scrolled by exactly the header once the panes wanted more than it. */
             .content {
                 max-width: 1500px;
                 width: 100%;
-                height: 100%;
-                margin: 1rem auto;
+                min-height: 0;
+                /* The panes carry their own 0.5rem, so a full rem here doubled the gap. */
+                margin: 0.5rem auto;
                 display: flex;
                 flex-direction: column;
                 flex: 1;
@@ -192,24 +258,23 @@ export class App extends PapyrosElement {
                         <p-programming-language-picker .papyros=${this.papyros}></p-programming-language-picker>
                     </div>
                 </header>
-                <main class="content">
+                <main class="content ${this.papyros.debugger.active ? "debugging" : ""}">
                     <div class="top">
-                        <div class="left container">
-                            <p-code-runner .papyros=${this.papyros} class="overflow">
+                        <div class="left">
+                            <p-code-runner .papyros=${this.papyros}>
                                 <p-example-picker .papyros=${this.papyros} slot="buttons"></p-example-picker>
                             </p-code-runner>
                         </div>
                         <div class="right">
-                            <div class="container grow overflow">
-                                <p-output .papyros=${this.papyros}></p-output>
-                            </div>
-                            <div class="container">
-                                <p-input .papyros=${this.papyros}></p-input>
-                            </div>
+                            <p-output .papyros=${this.papyros} class="grow"></p-output>
+                            <p-input .papyros=${this.papyros}></p-input>
                         </div>
                     </div>
-                    <div class="bottom container overflow">
-                        <p-debugger .papyros=${this.papyros}></p-debugger>
+                    <div class="bottom pane">
+                        <div class="pane-title"><span>${this.t("Papyros.debugger_tab")}</span></div>
+                        <div class="pane-body">
+                            <p-debugger .papyros=${this.papyros}></p-debugger>
+                        </div>
                     </div>
                 </main>
             </div>
