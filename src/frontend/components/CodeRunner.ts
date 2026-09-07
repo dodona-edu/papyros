@@ -73,11 +73,22 @@ export class CodeRunner extends PapyrosElement {
                 color: var(--md-sys-color-on-surface-variant);
             }
 
-            .hint {
-                visibility: hidden;
+            /* Both give up room long before the run state does: it is the message that changes. */
+            .hint,
+            .read-only {
+                min-width: 0;
+                flex-shrink: 100;
+            }
+
+            .hint,
+            .read-only span {
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
+            }
+
+            .hint {
+                visibility: hidden;
             }
 
             .show-escape-hint .hint {
@@ -88,7 +99,6 @@ export class CodeRunner extends PapyrosElement {
                 display: flex;
                 align-items: center;
                 gap: 0.25rem;
-                white-space: nowrap;
                 color: var(--md-sys-color-primary);
             }
 
@@ -96,6 +106,7 @@ export class CodeRunner extends PapyrosElement {
                 font-size: 1rem;
                 width: 1rem;
                 height: 1rem;
+                flex-shrink: 0;
             }
         `;
     }
@@ -234,11 +245,15 @@ export class CodeRunner extends PapyrosElement {
                             // The editor is read-only while debugging, which CodeMirror only
                             // exposes through aria-readonly, so say so on screen too.
                             this.papyros.debugger.active
-                                ? html`<span class="read-only"
-                                      ><md-icon aria-hidden="true">${this.papyros.constants.icons.lock}</md-icon
-                                      >${this.t("Papyros.editor.read_only")}</span
-                                  >`
-                                : html`<span class="hint" aria-hidden="true">
+                                ? html`<span class="read-only" title=${this.t("Papyros.editor.read_only")}>
+                                      <md-icon aria-hidden="true">${this.papyros.constants.icons.lock}</md-icon>
+                                      <span>${this.t("Papyros.editor.read_only")}</span>
+                                  </span>`
+                                : html`<span
+                                      class="hint"
+                                      aria-hidden="true"
+                                      title=${this.t("Papyros.editor.escape_hint")}
+                                  >
                                       ${this.t("Papyros.editor.escape_hint")}
                                   </span>`
                         }
