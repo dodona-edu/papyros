@@ -36,14 +36,27 @@ export class Input extends PapyrosElement {
                 height: 100%;
             }
 
-            /* Names the pane, since the tabs themselves only name the two modes. */
+            /* Names the pane, since the tabs themselves only name the two modes.
+               A caption rather than a tab-sized label, so it is not read as a tab. */
             .pane-label {
                 display: flex;
                 align-items: center;
-                padding: 0 0.75rem 0 0.875rem;
-                font-size: 0.875rem;
+                gap: 0.625rem;
+                flex-shrink: 0;
+                padding: 0 0.375rem 0 0.875rem;
+                font-size: 0.6875rem;
                 font-weight: 500;
+                letter-spacing: 0.09em;
+                text-transform: uppercase;
+                white-space: nowrap;
                 color: var(--md-sys-color-on-surface-variant);
+            }
+
+            .pane-label::after {
+                content: "";
+                width: 1px;
+                height: 1rem;
+                background-color: var(--md-sys-color-outline-variant);
             }
 
             .content {
