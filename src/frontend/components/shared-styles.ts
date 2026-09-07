@@ -12,6 +12,12 @@ export const tabBarStyles: CSSResult = css`
         box-shadow: inset 0 -1px 0 var(--md-sys-color-outline-variant);
         background-color: var(--md-sys-color-surface);
         overflow-x: auto;
+        /* A scrollbar would eat a third of a 36px bar; the clipped tab is the cue instead. */
+        scrollbar-width: none;
+    }
+
+    .tab-bar::-webkit-scrollbar {
+        display: none;
     }
 `;
 

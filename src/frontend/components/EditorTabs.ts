@@ -27,6 +27,11 @@ export class EditorTabs extends PapyrosElement {
                 box-shadow: inset 0 -1px 0 var(--md-sys-color-outline-variant);
                 background-color: var(--md-sys-color-surface);
                 overflow-x: auto;
+                scrollbar-width: none;
+            }
+
+            :host::-webkit-scrollbar {
+                display: none;
             }
 
             .tablist {
