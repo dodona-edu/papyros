@@ -9,6 +9,7 @@ export class LanguagePicker extends PapyrosElement {
     protected override render(): TemplateResult {
         return html`
             <md-outlined-select
+                label=${this.t("Papyros.language")}
                 @input=${(e: InputEvent) => {
                     this.papyros.i18n.locale = (e.target as HTMLInputElement).value;
                 }}

@@ -30,6 +30,7 @@ export class Code extends PapyrosElement {
                 .placeholder=${this.t("Papyros.code_placeholder", {
                     programmingLanguage: this.papyros.runner.programmingLanguage,
                 })}
+                .accessibleName=${this.t("Papyros.editor.code_label")}
                 .testLines=${this.papyros.test.testLines}
                 .testTranslations=${this.papyros.i18n.getTranslations("Papyros.editor.test_code")}
                 @edit-test-code=${() => this.papyros.test.editTestCode()}

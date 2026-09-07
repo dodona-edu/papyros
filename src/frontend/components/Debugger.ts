@@ -1,7 +1,8 @@
-import { css, CSSResult, html, TemplateResult } from "lit";
+import { css, CSSResult, html, PropertyValues, TemplateResult } from "lit";
 import "@dodona/trace-component";
 import { customElement } from "lit/decorators.js";
 import { PapyrosElement } from "./PapyrosElement";
+import { fadeIn } from "./motion";
 
 @customElement("p-debugger")
 export class Debugger extends PapyrosElement {
@@ -47,24 +48,53 @@ export class Debugger extends PapyrosElement {
             }
 
             .place-holder {
-                color: var(--md-sys-color-on-surface);
-                opacity: 0.5;
+                color: var(--md-sys-color-on-surface-variant);
+            }
+
+            .scroll-region {
+                height: 100%;
+                overflow: auto;
             }
         `;
     }
 
-    protected override render(): TemplateResult {
-        if (!this.papyros.debugger.active || this.papyros.debugger.trace.length === 0) {
-            return html`<div class="place-holder">${this.t("Papyros.debug_placeholder")}</div>`;
-        }
+    private hadTrace: boolean | undefined = undefined;
 
-        return html`<tc-trace
-            .trace=${this.papyros.debugger.trace}
-            .translations=${this.papyros.i18n.getTranslations("Papyros.debugger")}
-            .selectedFrame=${this.papyros.debugger.activeFrame ?? 0}
-            @frame-change=${(e: CustomEvent) => {
-                this.papyros.debugger.activeFrame = e.detail.frame;
-            }}
-        ></tc-trace>`;
+    /**
+     * The pane is the same size either way, so the swap between the placeholder and the
+     * trace is easy to miss. A fade points at the thing that just answered the run.
+     */
+    protected override updated(changedProperties: PropertyValues): void {
+        super.updated(changedProperties);
+        const hasTrace = this.hasTrace;
+        if (this.hadTrace !== undefined && this.hadTrace !== hasTrace) {
+            const region = this.renderRoot.querySelector<HTMLElement>(".scroll-region");
+            if (region) fadeIn(region);
+        }
+        this.hadTrace = hasTrace;
+    }
+
+    private get hasTrace(): boolean {
+        return this.papyros.debugger.active && this.papyros.debugger.trace.length > 0;
+    }
+
+    protected override render(): TemplateResult {
+        const hasTrace = this.hasTrace;
+        return html`
+            <div class="scroll-region" role="region" tabindex="0" aria-label=${this.t("Papyros.debugger.title")}>
+                ${
+                    hasTrace
+                        ? html`<tc-trace
+                              .trace=${this.papyros.debugger.trace}
+                              .translations=${this.papyros.i18n.getTranslations("Papyros.debugger")}
+                              .selectedFrame=${this.papyros.debugger.activeFrame ?? 0}
+                              @frame-change=${(e: CustomEvent) => {
+                                  this.papyros.debugger.activeFrame = e.detail.frame;
+                              }}
+                          ></tc-trace>`
+                        : html`<div class="place-holder">${this.t("Papyros.debug_placeholder")}</div>`
+                }
+            </div>
+        `;
     }
 }

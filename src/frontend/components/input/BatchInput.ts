@@ -40,6 +40,7 @@ export class BatchInput extends PapyrosElement {
                 .placeholder=${this.placeholder}
                 .translations=${this.papyros.i18n.getTranslations("CodeMirror")}
                 .theme=${this.papyros.constants.CodeMirrorTheme}
+                .accessibleName=${this.t("Papyros.editor.input_label")}
                 @change=${(e: CustomEvent) => (this.papyros.io.inputBuffer = e.detail)}
             ></p-batch-input-editor>
         `;

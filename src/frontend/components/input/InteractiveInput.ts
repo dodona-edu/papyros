@@ -49,6 +49,7 @@ export class InteractiveInput extends PapyrosElement {
                     }
                 }}
                 placeholder=${this.papyros.io.prompt || this.t("Papyros.input_placeholder.interactive")}
+                aria-label=${this.papyros.io.prompt || this.t("Papyros.input_placeholder.interactive")}
                 ?disabled=${!this.papyros.io.awaitingInput}
                 ${ref(this.inputRef)}
             ></md-outlined-text-field>

@@ -1,7 +1,7 @@
 import { customElement } from "lit/decorators.js";
 import { PapyrosElement } from "../PapyrosElement";
 import { RunState } from "../../state/Runner";
-import { css, CSSResult, html, TemplateResult } from "lit";
+import { css, CSSResult, html, nothing, PropertyValues, TemplateResult } from "lit";
 import "@material/web/progress/circular-progress";
 
 @customElement("p-run-state")
@@ -11,25 +11,46 @@ export class RunStateEl extends PapyrosElement {
             :host {
                 display: flex;
                 align-items: center;
-                gap: 0.5rem;
+                min-width: 0;
+            }
+
+            [role="status"] {
+                display: flex;
+                align-items: center;
+                gap: 0.375rem;
+                min-width: 0;
+            }
+
+            .message {
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
 
             md-circular-progress {
-                --md-circular-progress-size: 2rem;
+                --md-circular-progress-size: 1rem;
+                flex-shrink: 0;
             }
         `;
     }
 
+    // Always mounted so the aria-live region exists before content changes,
+    // otherwise screen readers can miss the first announcement.
+    protected override update(changedProperties: PropertyValues): void {
+        this.toggleAttribute("empty", !this.papyros.runner.stateMessage);
+        super.update(changedProperties);
+    }
+
     protected override render(): TemplateResult {
-        if (!this.papyros.runner.stateMessage) return html``;
+        const message = this.papyros.runner.stateMessage;
+        const showSpinner = !!message && ![RunState.Ready, RunState.Error].includes(this.papyros.runner.state);
 
         return html`
-            ${
-                [RunState.Ready, RunState.Error].includes(this.papyros.runner.state)
-                    ? ""
-                    : html` <md-circular-progress indeterminate></md-circular-progress> `
-            }
-            ${this.papyros.runner.stateMessage}
+            <div role="status" aria-live="polite">
+                ${showSpinner ? html`<md-circular-progress indeterminate aria-hidden="true"></md-circular-progress>` : ""}
+                <!-- The title sits on the text, not on the live region, so it cannot become its name. -->
+                <span class="message" title=${message || nothing}>${message}</span>
+            </div>
         `;
     }
 }

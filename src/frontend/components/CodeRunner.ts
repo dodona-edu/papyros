@@ -9,11 +9,15 @@ import "./code_runner/RunState";
 import "./code_runner/ButtonLint";
 import "./EditorTabs";
 import "./FileViewer";
+import { paneStyles } from "./shared-styles";
 
 @customElement("p-code-runner")
 export class CodeRunner extends PapyrosElement {
     @state()
     private dragOver = false;
+
+    @state()
+    private showEscapeHint = false;
 
     private dropZoneRef: Ref<HTMLDivElement> = createRef();
 
@@ -23,7 +27,12 @@ export class CodeRunner extends PapyrosElement {
                 width: 100%;
                 display: flex;
                 flex-direction: column;
-                border-radius: 0.5rem;
+            }
+
+            ${paneStyles}
+
+            .pane {
+                flex-grow: 1;
             }
 
             .drop-zone {
@@ -39,7 +48,7 @@ export class CodeRunner extends PapyrosElement {
                 position: absolute;
                 inset: 0;
                 border: 2px dashed var(--md-sys-color-primary);
-                border-radius: 0.5rem;
+                border-radius: 0.625rem;
                 background-color: color-mix(in srgb, var(--md-sys-color-primary) 8%, transparent);
                 pointer-events: none;
                 z-index: 10;
@@ -51,18 +60,53 @@ export class CodeRunner extends PapyrosElement {
                 position: relative;
             }
 
-            p-run-state {
-                position: absolute;
-                bottom: 0;
-                right: 6px;
-                background-color: var(--md-sys-color-surface-container);
-                padding: 0.25rem 1rem;
-                border-top-right-radius: 1rem;
-                border-top-left-radius: 1rem;
+            .footer {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 1rem;
+                height: 1.5rem;
+                padding: 0 0.75rem;
+                flex-shrink: 0;
+                border-top: 1px solid var(--md-sys-color-outline-variant);
+                font-size: 0.75rem;
+                color: var(--md-sys-color-on-surface-variant);
             }
 
-            p-button-lint {
-                background-color: var(--md-sys-color-surface-container);
+            /* Both give up room long before the run state does: it is the message that changes. */
+            .hint,
+            .read-only {
+                min-width: 0;
+                flex-shrink: 100;
+            }
+
+            .hint,
+            .read-only span {
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .hint {
+                visibility: hidden;
+            }
+
+            .show-escape-hint .hint {
+                visibility: visible;
+            }
+
+            .read-only {
+                display: flex;
+                align-items: center;
+                gap: 0.25rem;
+                color: var(--md-sys-color-primary);
+            }
+
+            .read-only md-icon {
+                font-size: 1rem;
+                width: 1rem;
+                height: 1rem;
+                flex-shrink: 0;
             }
         `;
     }
@@ -77,6 +121,29 @@ export class CodeRunner extends PapyrosElement {
         super.update(changedProperties);
     }
 
+    /**
+     * Whether the last thing to move focus was the keyboard. The escape hint is only of
+     * use to someone who arrived by Tab and has to leave the same way, and :focus-visible
+     * cannot tell us: it always matches a contenteditable, mouse or not.
+     */
+    private focusFromKeyboard = false;
+
+    private onPointerDown = (): void => {
+        this.focusFromKeyboard = false;
+    };
+
+    private onKeyDown = (): void => {
+        this.focusFromKeyboard = true;
+    };
+
+    override connectedCallback(): void {
+        super.connectedCallback();
+        // Capture phase, on the document: the key that moves focus here is dispatched at
+        // whatever had focus before, which is usually outside this component.
+        document.addEventListener("pointerdown", this.onPointerDown, true);
+        document.addEventListener("keydown", this.onKeyDown, true);
+    }
+
     protected override firstUpdated(): void {
         const dropZone = this.dropZoneRef.value;
         if (!dropZone) return;
@@ -88,6 +155,8 @@ export class CodeRunner extends PapyrosElement {
 
     override disconnectedCallback(): void {
         super.disconnectedCallback();
+        document.removeEventListener("pointerdown", this.onPointerDown, true);
+        document.removeEventListener("keydown", this.onKeyDown, true);
         const dropZone = this.dropZoneRef.value;
         if (!dropZone) return;
         dropZone.removeEventListener("dragover", this.onDragOver, true);
@@ -154,18 +223,41 @@ export class CodeRunner extends PapyrosElement {
 
         return html`
             <div ${ref(this.dropZoneRef)} class="drop-zone ${this.dragOver ? "drag-over" : ""}">
-                <p-editor-tabs .papyros=${this.papyros} .files=${files}></p-editor-tabs>
-                <div class="editor">
-                    ${
-                        activeTab === CODE_TAB
-                            ? html`<p-code .papyros=${this.papyros}></p-code>`
-                            : html`<p-file-viewer .papyros=${this.papyros} .file=${activeFile}></p-file-viewer>`
-                    }
-                    ${
-                        this.papyros.runner.stateMessage
-                            ? html`<p-run-state .papyros=${this.papyros}></p-run-state>`
-                            : ""
-                    }
+                <div class="pane ${this.showEscapeHint && activeTab === CODE_TAB ? "show-escape-hint" : ""}">
+                    <p-editor-tabs .papyros=${this.papyros} .files=${files}></p-editor-tabs>
+                    <!-- The tabs live in another shadow root, so the panel is named directly instead of by aria-labelledby. -->
+                    <div
+                        class="editor"
+                        role="tabpanel"
+                        aria-label=${activeTab === CODE_TAB ? this.t("Papyros.editor_tab_code") : activeTab}
+                        @focusin=${() => (this.showEscapeHint = this.focusFromKeyboard)}
+                        @focusout=${() => (this.showEscapeHint = false)}
+                    >
+                        ${
+                            activeTab === CODE_TAB
+                                ? html`<p-code .papyros=${this.papyros}></p-code>`
+                                : html`<p-file-viewer .papyros=${this.papyros} .file=${activeFile}></p-file-viewer>`
+                        }
+                    </div>
+                    <div class="footer">
+                        <p-run-state .papyros=${this.papyros}></p-run-state>
+                        ${
+                            // The editor is read-only while debugging, which CodeMirror only
+                            // exposes through aria-readonly, so say so on screen too.
+                            this.papyros.debugger.active
+                                ? html`<span class="read-only" title=${this.t("Papyros.editor.read_only")}>
+                                      <md-icon aria-hidden="true">${this.papyros.constants.icons.lock}</md-icon>
+                                      <span>${this.t("Papyros.editor.read_only")}</span>
+                                  </span>`
+                                : html`<span
+                                      class="hint"
+                                      aria-hidden="true"
+                                      title=${this.t("Papyros.editor.escape_hint")}
+                                  >
+                                      ${this.t("Papyros.editor.escape_hint")}
+                                  </span>`
+                        }
+                    </div>
                 </div>
                 <p-button-lint .papyros=${this.papyros}>
                     <slot name="buttons"></slot>

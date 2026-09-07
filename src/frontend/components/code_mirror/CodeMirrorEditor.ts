@@ -61,6 +61,13 @@ export class CodeMirrorEditor extends LitElement {
         });
     }
 
+    // Accessible name for .cm-content, since CodeMirror itself doesn't label it.
+    set accessibleName(value: string) {
+        this.configure({
+            accessibleName: EditorView.contentAttributes.of({ "aria-label": value }),
+        });
+    }
+
     set theme(theme: Extension) {
         this.configure({ theme: theme });
     }

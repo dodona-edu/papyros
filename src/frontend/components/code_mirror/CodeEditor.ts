@@ -95,6 +95,19 @@ export class CodeEditor extends CodeMirrorEditor {
                 color: var(--md-sys-color-primary);
             }
 
+            /* An arrow rather than a caret: the text still selects, but does not accept typing. */
+            :host([readonly]) .cm-content {
+                cursor: default;
+            }
+
+            /* The view stays focusable for keyboard selection, so CodeMirror keeps drawing a
+               blinking caret. Nothing can be typed there, so it only promises an edit.
+               !important beats CodeMirror's own .cm-focused rule for the cursor layer. */
+            :host([readonly]) .cm-cursor,
+            :host([readonly]) .cm-dropCursor {
+                display: none !important;
+            }
+
             #escape-hint {
                 position: absolute;
                 width: 1px;
@@ -114,6 +127,7 @@ export class CodeEditor extends CodeMirrorEditor {
             debugging: value ? debugLineExtension : [highlightActiveLineGutter(), lintGutter(), highlightActiveLine()],
         });
         this.readonly = value;
+        this.toggleAttribute("readonly", value);
     }
 
     private reLintOnLoaded = (e: BackendEvent): void => {

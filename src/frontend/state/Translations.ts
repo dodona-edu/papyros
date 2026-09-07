@@ -7,6 +7,7 @@
 export const ENGLISH_TRANSLATION = {
     Papyros: {
         Papyros: "Papyros",
+        github_link: "Papyros on GitHub",
         code_placeholder: "Write your %{programmingLanguage} code here and click 'Run' to execute...",
         input_placeholder: {
             interactive: "Provide input and press enter to send",
@@ -15,8 +16,10 @@ export const ENGLISH_TRANSLATION = {
         },
         output_placeholder: "The output of your code will appear here.",
         debug_placeholder: "The debugger output will appear here.",
+        debugger_tab: "Debugger",
         stop: "Stop",
         finished: "Code executed in %{time} s",
+        traced: "Code traced in %{time} s",
         interrupted: "Code interrupted after %{time} s",
         states: {
             running: "Running",
@@ -27,13 +30,27 @@ export const ENGLISH_TRANSLATION = {
             error: "Failed to load",
         },
         programming_language: "Programming language",
+        language: "Language",
         locales: {
             en: "English",
             nl: "Nederlands",
         },
+        themes: {
+            // Accessible names: announced by screen readers, never shown on screen.
+            pick: "Choose a theme",
+            light: "Light theme %{name}",
+            dark: "Dark theme %{name}",
+            names: {
+                blue: "blue",
+                green: "green",
+                red: "red",
+            },
+        },
+        input: "Input",
+        input_tabs: "Input modes",
         input_modes: {
-            interactive: "Interactive input",
-            batch: "Input in advance",
+            interactive: "One at a time",
+            batch: "All at once",
         },
         enter: "Enter",
         examples: "Examples",
@@ -68,6 +85,11 @@ export const ENGLISH_TRANSLATION = {
             trace_label: "Execution trace",
         },
         editor: {
+            code_label: "Code editor",
+            input_label: "Input",
+            file_label: "File %{name}",
+            escape_hint: "Esc, then Tab, leaves the editor",
+            read_only: "Read-only while debugging",
             test_code: {
                 description: "# Appended testcase code for debugging purposes",
                 edit: "Edit",
@@ -78,15 +100,24 @@ export const ENGLISH_TRANSLATION = {
             stop: "Stop debugging",
         },
         editor_tab_code: "Code",
+        file_tabs: "Files",
         close_file_tab: "Remove file",
         close_file_confirm: "Are you sure you want to remove this file?",
         rename_file_tab: "Rename file",
+        file_tab_hint: "Press F2 to rename this file, Delete to remove it.",
+        invalid_file_name:
+            "File name can't be empty, must be unique, and can't start or end with \"/\", " +
+            'contain "//", or contain "." or ".." as a segment.',
         add_file: "Add file",
         add_file_placeholder: "filename\u2026",
         files_download: "Download",
         files_binary: "Binary file",
         output_tab_output: "Output",
         output_tab_turtle: "Turtle",
+        output_tabs: "Output panes",
+        error_prefix: "Error: ",
+        turtle_alt: "Turtle drawing",
+        image_alt: "Image output",
     },
     CodeMirror: {
         // Papyros
@@ -110,6 +141,7 @@ export const ENGLISH_TRANSLATION = {
 export const DUTCH_TRANSLATION = {
     Papyros: {
         Papyros: "Papyros",
+        github_link: "Papyros op GitHub",
         code_placeholder: "Schrijf hier je %{programmingLanguage} code en klik op 'Uitvoeren' om uit te voeren...",
         input_placeholder: {
             interactive: "Geef invoer in en druk op enter",
@@ -119,6 +151,7 @@ export const DUTCH_TRANSLATION = {
         },
         output_placeholder: "Hier komt de uitvoer van je code.",
         debug_placeholder: "Hier komt de uitvoer van de debugger.",
+        debugger_tab: "Debugger",
         stop: "Stop",
         states: {
             running: "Aan het uitvoeren",
@@ -129,15 +162,30 @@ export const DUTCH_TRANSLATION = {
             error: "Laden mislukt",
         },
         finished: "Code uitgevoerd in %{time} s",
+        traced: "Code getraceerd in %{time} s",
         interrupted: "Code onderbroken na %{time} s",
         programming_language: "Programmeertaal",
+        language: "Taal",
         locales: {
             en: "English",
             nl: "Nederlands",
         },
+        themes: {
+            // Toegankelijkheidslabels: worden voorgelezen door schermlezers, nooit getoond.
+            pick: "Kies een thema",
+            light: "Licht thema %{name}",
+            dark: "Donker thema %{name}",
+            names: {
+                blue: "blauw",
+                green: "groen",
+                red: "rood",
+            },
+        },
+        input: "Invoer",
+        input_tabs: "Invoermodi",
         input_modes: {
-            interactive: "Interactieve invoer",
-            batch: "Invoer vooraf ingeven",
+            interactive: "Eén per keer",
+            batch: "Alles ineens",
         },
         enter: "Enter",
         examples: "Voorbeelden",
@@ -172,6 +220,11 @@ export const DUTCH_TRANSLATION = {
             trace_label: "Uitvoeringstrace",
         },
         editor: {
+            code_label: "Code-editor",
+            input_label: "Invoer",
+            file_label: "Bestand %{name}",
+            escape_hint: "Esc en dan Tab verlaat de editor",
+            read_only: "Alleen-lezen tijdens het debuggen",
             test_code: {
                 description: "# Toegevoegde testcase code voor debugdoeleinden",
                 edit: "Bewerk",
@@ -182,15 +235,24 @@ export const DUTCH_TRANSLATION = {
             stop: "Stop debugger",
         },
         editor_tab_code: "Code",
+        file_tabs: "Bestanden",
         close_file_tab: "Bestand verwijderen",
         close_file_confirm: "Weet je zeker dat je dit bestand wilt verwijderen?",
         rename_file_tab: "Bestand hernoemen",
+        file_tab_hint: "Druk op F2 om dit bestand te hernoemen, Delete om het te verwijderen.",
+        invalid_file_name:
+            'Bestandsnaam mag niet leeg zijn, moet uniek zijn en mag niet beginnen of eindigen met "/", ' +
+            'mag "//" niet bevatten en mag "." of ".." niet als onderdeel bevatten.',
         add_file: "Bestand toevoegen",
         add_file_placeholder: "bestandsnaam\u2026",
         files_download: "Downloaden",
         files_binary: "Binair bestand",
         output_tab_output: "Uitvoer",
         output_tab_turtle: "Turtle",
+        output_tabs: "Uitvoerpanelen",
+        error_prefix: "Fout: ",
+        turtle_alt: "Turtle-tekening",
+        image_alt: "Afbeelding als uitvoer",
     },
     CodeMirror: {
         // Papyros

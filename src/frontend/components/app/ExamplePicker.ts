@@ -1,12 +1,20 @@
 import { customElement } from "lit/decorators.js";
 import { PapyrosElement } from "../PapyrosElement";
-import { html, TemplateResult } from "lit";
+import { css, CSSResult, html, TemplateResult } from "lit";
 import "@material/web/select/outlined-select";
 import "@material/web/select/select-option";
 import { RunState } from "../../state/Runner";
 
 @customElement("p-example-picker")
 export class ExamplePicker extends PapyrosElement {
+    static get styles(): CSSResult {
+        return css`
+            :host {
+                --md-outlined-select-text-field-outline-color: var(--md-sys-color-outline-variant);
+            }
+        `;
+    }
+
     protected override render(): TemplateResult {
         return html`
             <md-outlined-select

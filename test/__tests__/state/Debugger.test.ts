@@ -130,7 +130,7 @@ for i in range(50):
         // The tracer stops at the frame budget on its own, so the run finishes
         // normally rather than being interrupted by the frontend
         expect(papyros.runner.state).toBe(RunState.Ready);
-        expect(papyros.runner.stateMessage).toMatch(/^Code executed in/);
+        expect(papyros.runner.stateMessage).toMatch(/^Code traced in/);
         expect(papyros.debugger.trace.length).toBe(5);
     });
 
