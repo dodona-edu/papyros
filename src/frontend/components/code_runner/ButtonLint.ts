@@ -21,7 +21,10 @@ export class ButtonLint extends PapyrosElement {
                 display: flex;
                 justify-content: space-between;
                 height: fit-content;
-                padding: 0.75rem 0 0;
+                /* The bottom 4px is the overhang of Material's 48px touch target on a
+                   40px button, not spacing: without it the buttons overflow this host
+                   and any scrolling ancestor grows a scrollbar. */
+                padding: 0.75rem 0 0.25rem;
                 gap: 1rem;
                 flex-wrap: wrap;
                 --md-outlined-button-outline-color: var(--md-sys-color-outline-variant);
