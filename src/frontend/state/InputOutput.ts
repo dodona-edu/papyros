@@ -142,7 +142,7 @@ export class InputOutput extends State {
                 return;
             }
 
-            this.prompt = e.data || "";
+            this.prompt = String(e.data ?? "");
             this.awaitingInput = true;
         });
         this.papyros.events.subscribe(BackendEventType.End, () => this.onRunEnd());
