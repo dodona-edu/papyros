@@ -50,7 +50,7 @@ export class JavaScriptWorker extends Backend {
     private prompt(text = ""): string {
         return this.onEvent({
             type: BackendEventType.Input,
-            data: text,
+            data: String(text),
             contentType: "text/plain",
         });
     }

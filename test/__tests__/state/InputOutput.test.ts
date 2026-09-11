@@ -66,6 +66,28 @@ console.log("world!");
         unsubscribe();
     });
 
+    it("shows a non-string prompt as text", async () => {
+        const jsPapyros = await launchPapyros(ProgrammingLanguage.JavaScript);
+        jsPapyros.runner.code = `prompt(42);`;
+        await waitForInputReady(jsPapyros);
+        const runPromise = jsPapyros.runner.start();
+        await waitForAwaitingInput(jsPapyros);
+        expect(jsPapyros.io.prompt).toBe("42");
+        await jsPapyros.runner.stop();
+        await runPromise;
+        jsPapyros.dispose();
+    });
+
+    it("shows a non-string prompt as text in python", async () => {
+        papyros.runner.code = `input(5)`;
+        await waitForInputReady(papyros);
+        const runPromise = papyros.runner.start();
+        await waitForAwaitingInput(papyros);
+        expect(papyros.io.prompt).toBe("5");
+        await papyros.runner.stop();
+        await runPromise;
+    });
+
     it("stops asking for input on stop", async () => {
         papyros.runner.code = `print("hello " + input())`; // eslint-disable-line quotes
         await waitForInputReady(papyros);

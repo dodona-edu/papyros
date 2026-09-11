@@ -88,7 +88,7 @@ class Papyros(python_runner.PyodideRunner):
                         cb("output", data, contentType=part.get("contentType"))
             elif event_type == "input":
                 self._emit_turtle_snapshot()
-                return unwrap(cb("input", data["prompt"]))
+                return unwrap(cb("input", str(data["prompt"])))
             elif event_type == "sleep":
                 self._emit_turtle_snapshot()
                 return unwrap(cb("sleep", data["seconds"]*1000, contentType="application/number"))
