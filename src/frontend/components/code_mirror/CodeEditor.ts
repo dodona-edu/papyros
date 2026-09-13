@@ -21,7 +21,7 @@ import {
     completionKeymap,
 } from "@codemirror/autocomplete";
 import { highlightSelectionMatches, searchKeymap } from "@codemirror/search";
-import { linter, lintGutter, lintKeymap, forceLinting } from "@codemirror/lint";
+import { linter, lintGutter, lintKeymap } from "@codemirror/lint";
 import { css, CSSResult } from "lit";
 import { javascript } from "@codemirror/lang-javascript";
 import { python } from "@codemirror/lang-python";
@@ -35,9 +35,6 @@ import {
     testLineExtension,
 } from "./Extensions";
 import readOnlyRangesExtension from "codemirror-readonly-ranges";
-import { BackendEvent, BackendEventType } from "../../../communication/BackendEvent";
-import { Papyros } from "../../state/Papyros";
-import { parseData } from "../../../util/Util";
 
 const tabCompletionKeyMap = [{ key: "Tab", run: acceptCompletion }];
 // This editor binds Tab to indentation, so Tab no longer moves focus out of it and the way
@@ -45,8 +42,6 @@ const tabCompletionKeyMap = [{ key: "Tab", run: acceptCompletion }];
 // exit, and aria-describedby only resolves ids in the described element's own tree, so the
 // hint has to sit in this shadow root next to .cm-content.
 const ESCAPE_HINT_ID = "escape-hint";
-// Dispatched to ask the linter to re-run without a document change (see needsRefresh).
-const forceLintEffect = StateEffect.define<null>();
 const languageExtensions: Record<ProgrammingLanguage, LanguageSupport> = {
     JavaScript: javascript(),
     Python: python(),
@@ -130,22 +125,6 @@ export class CodeEditor extends CodeMirrorEditor {
         this.toggleAttribute("readonly", value);
     }
 
-    private reLintOnLoaded = (e: BackendEvent): void => {
-        // The linter resolves imports against the packages installed in the worker,
-        // so code linted while a package is still downloading is wrongly flagged as
-        // "unable to import X". The editor does not re-lint on its own, so when a
-        // package finishes installing, force a re-lint to clear those stale errors.
-        const loadingData = parseData(e.data, e.contentType);
-        if (loadingData.status === "loaded" && this.view) {
-            // forceLinting only runs an already-scheduled lint, so first dispatch
-            // forceLintEffect to schedule one (via the linter's needsRefresh).
-            this.view.dispatch({ effects: forceLintEffect.of(null) });
-            forceLinting(this.view);
-        }
-    };
-
-    private _papyros: Papyros | undefined;
-    private unsubscribeRelint: (() => void) | undefined;
     private escapeHintElement: HTMLElement | undefined;
 
     override set translations(translations: Record<string, string>) {
@@ -161,27 +140,8 @@ export class CodeEditor extends CodeMirrorEditor {
         }
     }
 
-    /**
-     * The instance whose backend this editor lints against, used to re-lint
-     * when that backend finishes installing a package
-     */
-    set papyros(value: Papyros | undefined) {
-        this.unsubscribeRelint?.();
-        this.unsubscribeRelint = undefined;
-        this._papyros = value;
-        if (this.isConnected) {
-            this.subscribeRelint();
-        }
-    }
-
-    private subscribeRelint(): void {
-        this.unsubscribeRelint ??= this._papyros?.events.subscribe(BackendEventType.Loading, this.reLintOnLoaded);
-    }
-
     public override connectedCallback(): void {
         super.connectedCallback();
-        this.subscribeRelint();
-
         this.escapeHintElement = document.createElement("span");
         this.escapeHintElement.id = ESCAPE_HINT_ID;
         this.shadowRoot!.appendChild(this.escapeHintElement);
@@ -190,8 +150,6 @@ export class CodeEditor extends CodeMirrorEditor {
 
     public override disconnectedCallback(): void {
         super.disconnectedCallback();
-        this.unsubscribeRelint?.();
-        this.unsubscribeRelint = undefined;
         this.escapeHintElement?.remove();
         this.escapeHintElement = undefined;
     }
@@ -270,34 +228,24 @@ export class CodeEditor extends CodeMirrorEditor {
 
     set lintingSource(lintSource: () => Promise<readonly WorkerDiagnostic[]>) {
         this.configure({
-            linting: linter(
-                async (view) => {
-                    const workerDiagnostics = await lintSource();
-                    if (
-                        workerDiagnostics.some(
-                            (d) => d.lineNr > view.state.doc.lines || d.endLineNr > view.state.doc.lines,
-                        )
-                    ) {
-                        // if the diagnostics are out of range, the document has changed since the linting was requested
-                        // these diagnostics are no longer valid
-                        return [];
-                    }
+            linting: linter(async (view) => {
+                const workerDiagnostics = await lintSource();
+                if (
+                    workerDiagnostics.some((d) => d.lineNr > view.state.doc.lines || d.endLineNr > view.state.doc.lines)
+                ) {
+                    // if the diagnostics are out of range, the document has changed since the linting was requested
+                    // these diagnostics are no longer valid
+                    return [];
+                }
 
-                    return workerDiagnostics.map((d) => {
-                        const fromline = view.state.doc.line(d.lineNr);
-                        const toLine = view.state.doc.line(d.endLineNr);
-                        const from = Math.min(fromline.from + d.columnNr, fromline.to);
-                        const to = Math.min(toLine.from + d.endColumnNr, toLine.to);
-                        return { ...d, from: from, to: to };
-                    });
-                },
-                {
-                    // Re-lint when we dispatch forceLintEffect, even though the document
-                    // hasn't changed (e.g. after a package finishes installing).
-                    needsRefresh: (update) =>
-                        update.transactions.some((tr) => tr.effects.some((e) => e.is(forceLintEffect))),
-                },
-            ),
+                return workerDiagnostics.map((d) => {
+                    const fromline = view.state.doc.line(d.lineNr);
+                    const toLine = view.state.doc.line(d.endLineNr);
+                    const from = Math.min(fromline.from + d.columnNr, fromline.to);
+                    const to = Math.min(toLine.from + d.endColumnNr, toLine.to);
+                    return { ...d, from: from, to: to, source: d.code };
+                });
+            }),
         });
     }
 

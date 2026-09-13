@@ -29,6 +29,10 @@ export interface WorkerDiagnostic {
      * Message describing the issue
      */
     message: string;
+    /**
+     * Identifier of the rule that produced the issue, when the linter reports one
+     */
+    code?: string;
 }
 
 export enum RunMode {
