@@ -4,6 +4,8 @@ import { loadPyodide, PyodideInterface } from "pyodide";
 import { PyProxy } from "pyodide/ffi";
 import { loadPyodideAndPackage } from "../../../sync/pyodide";
 import { SyncExtras } from "../../../sync/expose";
+import initRuff, { PositionEncoding, Workspace } from "@astral-sh/ruff-wasm-web";
+import { RUFF_OPTIONS, toWorkerDiagnostics } from "./ruff";
 
 const pythonPackageUrl = new URL("./python_package.tar.gz.load_by_url", import.meta.url).href;
 
@@ -18,10 +20,16 @@ export class PythonWorker extends Backend {
      * Promise to asynchronously install imports needed by the code
      */
     private installPromise: Promise<void> | null;
+    /**
+     * The ruff workspace, loading from launch() on. It boots next to Pyodide, so a
+     * lint can answer before the interpreter is up.
+     */
+    private ruff: Promise<Workspace> | null;
     constructor() {
         super();
         this.pyodide = {} as PyodideInterface;
         this.installPromise = null;
+        this.ruff = null;
     }
 
     private static convert(data: any): any {
@@ -41,6 +49,7 @@ export class PythonWorker extends Backend {
         allowJspi: boolean = true,
     ): Promise<void> {
         await super.launch(onEvent, pyodideAssetURL, allowJspi);
+        this.ruff = PythonWorker.loadRuff();
         this.pyodide = await PythonWorker.getPyodide(pyodideAssetURL);
         // Python calls our function with a PyProxy dict or a Js Map,
         // These must be converted to a PapyrosEvent (JS Object) to allow message passing
@@ -57,6 +66,17 @@ export class PythonWorker extends Backend {
         // preload micropip to allow installing packages
         await (this.pyodide as any).loadPackage("micropip");
         this.jspi = allowJspi && (await PythonWorker.detectJspi(this.pyodide));
+    }
+
+    /**
+     * Fetch the ruff wasm module and configure a workspace with papyros' rule set.
+     * The module is resolved next to ruff's own script, so a bundler that emits the
+     * worker must emit the wasm alongside it.
+     * @return {Promise<Workspace>} The workspace once ruff is instantiated
+     */
+    private static async loadRuff(): Promise<Workspace> {
+        await initRuff();
+        return new Workspace(RUFF_OPTIONS, PositionEncoding.Utf16);
     }
 
     /**
@@ -93,9 +113,8 @@ export class PythonWorker extends Backend {
      * Installs are serialized (chained) so concurrent calls don't download the same
      * package twice, but every call still installs the imports for ITS OWN code.
      * A single shared promise must not be reused across calls: otherwise a call could
-     * ride on an install started for different code (e.g. the editor's empty initial
-     * buffer while it is still linting the real code), leaving its own imports
-     * uninstalled and producing a spurious "unable to import X" lint error.
+     * ride on an install started for different code, leaving its own imports
+     * uninstalled.
      * @param {string} code The code containing import statements
      */
     private async installImports(code: string): Promise<void> {
@@ -133,8 +152,9 @@ export class PythonWorker extends Backend {
     }
 
     public override async lintCode(code: string): Promise<Array<WorkerDiagnostic>> {
-        await this.installImports(code);
-        return PythonWorker.convert(this.papyros?.lint(code) || []);
+        // ruff resolves nothing at import time, so the imports need not be installed
+        const workspace = await (this.ruff ?? PythonWorker.loadRuff());
+        return toWorkerDiagnostics(workspace.check(code));
     }
 
     public override async provideFiles(

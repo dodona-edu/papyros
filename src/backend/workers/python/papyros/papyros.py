@@ -365,12 +365,6 @@ if __name__ == "{MODULE_NAME}":
             contentType="text/json"
         )
 
-    def lint(self, code):
-        with self._without_file_tracking():
-            self.set_source_code(code)
-            from .linting import lint
-            return lint(code)
-
     def has_doctests(self, code):
         parser = doctest.DocTestParser()
         try:

@@ -145,40 +145,14 @@ print("to stderr", file=sys.stderr)`;
         expect(papyros.io.output[0].content).toBe("['1', '2', '3']\n");
     });
 
-    it("should lint bare import re", async () => {
-        papyros.runner.code = "import re\n";
+    it("should lint code that imports a package without installing it", async () => {
+        // sympy takes seconds to download and install; ruff answers from the source alone
+        papyros.runner.code = "import sympy\nprint(sympy.sqrt(8))\n";
+        const start = performance.now();
         const diagnostics = await papyros.runner.lintSource();
-        expect(Array.isArray(diagnostics)).toBe(true);
-    }, 60000);
-
-    it("should lint code that uses pandas without hanging or a false import-error", async () => {
-        papyros.runner.code = "import pandas as pd\ndf = pd.DataFrame({'a': [1, 2, 3]})\n";
-        const diagnostics = await papyros.runner.lintSource();
-        expect(Array.isArray(diagnostics)).toBe(true);
-        // pandas is installed before linting, so it must not be flagged as unimportable
-        expect(diagnostics.some((d) => /import-error|Unable to import/.test(d.message))).toBe(false);
-    }, 60000);
-
-    it("should report an import-error for a genuinely missing module", async () => {
-        papyros.runner.code = "import this_module_truly_does_not_exist_xyz\n";
-        const diagnostics = await papyros.runner.lintSource();
-        expect(diagnostics.some((d) => /import-error|Unable to import/.test(d.message))).toBe(true);
-    }, 60000);
-
-    it("should not flag stdlib modules astroid cannot build (os) as unimportable", async () => {
-        // astroid can't build `os` under Emscripten (it pulls in the posix built-in),
-        // which used to surface as a false "Unable to import 'os'".
-        papyros.runner.code = "import os\nfrom os import getcwd\nprint(os.getcwd(), getcwd())\n";
-        const diagnostics = await papyros.runner.lintSource();
-        expect(
-            diagnostics.some((d) => /import-error|Unable to import|No name '.*' in module 'os'/.test(d.message)),
-        ).toBe(false);
-    }, 60000);
-
-    it("should report a wrong name imported from a stubbed stdlib module (os)", async () => {
-        papyros.runner.code = "from os import asdfjasdlf\n";
-        const diagnostics = await papyros.runner.lintSource();
-        expect(diagnostics.some((d) => /No name 'asdfjasdlf' in module 'os'/.test(d.message))).toBe(true);
+        expect(performance.now() - start).toBeLessThan(1000);
+        expect(diagnostics).toEqual([]);
+        expect(papyros.runner.loadingPackages).toEqual([]);
     }, 60000);
 
     it("should be able to handle sleep", async () => {
@@ -199,34 +173,37 @@ print("to stderr", file=sys.stderr)`;
         expect((papyros.io.output[0].content as string).trim()).toBe("[0 1 2 3 4 5 6 7 8 9]");
     });
 
-    it("should show lint errors", async () => {
-        papyros.runner.code = `
-x = 1
-y = 2
-print
-`;
+    it("should show lint errors with their rule id", async () => {
+        papyros.runner.code = "x = 1\ny = undefined_name\n";
         const diagnostics = await papyros.runner.lintSource();
-        expect(diagnostics.length).toBeGreaterThan(0);
-        expect(diagnostics[0].message).toBe("Statement seems to have no effect");
+        expect(diagnostics).toHaveLength(1);
+        expect(diagnostics[0]).toMatchObject({
+            lineNr: 2,
+            columnNr: 4,
+            endLineNr: 2,
+            endColumnNr: 18,
+            severity: "error",
+            message: "Undefined name `undefined_name`",
+            code: "F821",
+        });
     });
 
     it("should show syntax errors", async () => {
         papyros.runner.code = `print 'hello'
 `;
         const diagnostics = await papyros.runner.lintSource();
-        expect(diagnostics.length).toBe(1);
-        expect(diagnostics[0].message).toBe("Missing parentheses in call to 'print'. Did you mean print(...)?");
-        // The error is reported on the p of print, not after it
-        expect(diagnostics[0].columnNr).toBe(0);
+        expect(diagnostics.length).toBeGreaterThan(0);
+        expect(diagnostics.every((d) => d.severity === "error" && d.code === undefined)).toBe(true);
+        expect(diagnostics[0].lineNr).toBe(1);
     });
 
     it("should report style issues as info", async () => {
-        papyros.runner.code = `def foo():
-    return 1
+        papyros.runner.code = `x = 1; y = 2
 `;
         const diagnostics = await papyros.runner.lintSource();
-        expect(diagnostics.length).toBe(1);
+        expect(diagnostics).toHaveLength(1);
         expect(diagnostics[0].severity).toBe("info");
+        expect(diagnostics[0].code).toBe("E702");
     });
 
     it("should run doctests", async () => {
