@@ -1,4 +1,4 @@
-import {describe, expect, it, beforeAll, beforeEach, afterAll} from "vitest";
+import {describe, expect, it, beforeAll, beforeEach, afterAll, afterEach} from "vitest";
 import {Papyros} from "../../../src/frontend/state/Papyros";
 import {ProgrammingLanguage} from "../../../src/ProgrammingLanguage";
 import {RunState} from "../../../src/frontend/state/Runner";
@@ -227,6 +227,47 @@ print
         const diagnostics = await papyros.runner.lintSource();
         expect(diagnostics.length).toBe(1);
         expect(diagnostics[0].severity).toBe("info");
+    });
+
+    describe("with ruff", () => {
+        beforeEach(() => {
+            papyros.runner.linter = "ruff";
+        });
+
+        afterEach(() => {
+            papyros.runner.linter = "pylint";
+        });
+
+        it("reports an undefined name as an error with its rule id", async () => {
+            papyros.runner.code = "x = 1\ny = undefined_name\n";
+            const diagnostics = await papyros.runner.lintSource();
+            expect(diagnostics).toHaveLength(1);
+            expect(diagnostics[0]).toMatchObject({
+                lineNr: 2,
+                columnNr: 4,
+                endLineNr: 2,
+                endColumnNr: 18,
+                severity: "error",
+                code: "F821",
+            });
+        }, 60000);
+
+        it("reports a syntax error as an error without a rule id", async () => {
+            papyros.runner.code = "print 'hello'\n";
+            const diagnostics = await papyros.runner.lintSource();
+            expect(diagnostics.length).toBeGreaterThan(0);
+            expect(diagnostics.every((d) => d.severity === "error" && d.code === undefined)).toBe(true);
+        }, 60000);
+
+        it("does not install imports before linting", async () => {
+            // sympy takes seconds to download and install; ruff answers from the source alone
+            papyros.runner.code = "import sympy\nprint(sympy.sqrt(8))\n";
+            const start = performance.now();
+            const diagnostics = await papyros.runner.lintSource();
+            expect(performance.now() - start).toBeLessThan(1000);
+            expect(diagnostics).toEqual([]);
+            expect(papyros.runner.loadingPackages).toEqual([]);
+        }, 60000);
     });
 
     it("should run doctests", async () => {

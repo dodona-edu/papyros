@@ -20,6 +20,9 @@ export default defineConfig({
     // that follows restarts tests midway through a run.
     optimizeDeps: {
         include: ["pyodide"],
+        // ruff resolves its wasm next to its own script, which a pre-bundled copy
+        // in .vite/deps no longer has
+        exclude: ["@astral-sh/ruff-wasm-web"],
     },
     test: {
         browser: {

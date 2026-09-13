@@ -1,11 +1,28 @@
-import { Backend, RunMode, WorkerDiagnostic } from "../../Backend";
+import { Backend, Linter, RunMode, WorkerDiagnostic } from "../../Backend";
 import { BackendEvent } from "../../../communication/BackendEvent";
 import { loadPyodide, PyodideInterface } from "pyodide";
 import { PyProxy } from "pyodide/ffi";
 import { loadPyodideAndPackage } from "../../../sync/pyodide";
 import { SyncExtras } from "../../../sync/expose";
+import initRuff, { PositionEncoding, Workspace } from "@astral-sh/ruff-wasm-web";
+import { RUFF_OPTIONS, toWorkerDiagnostics } from "./ruff";
 
 const pythonPackageUrl = new URL("./python_package.tar.gz.load_by_url", import.meta.url).href;
+
+export interface LintTimings {
+    /**
+     * The last lint, split into installing the code's imports and the linter itself
+     */
+    last: { linter: Linter; install: number; lint: number } | null;
+    /**
+     * Milliseconds after the worker started at which ruff could lint
+     */
+    ruffReady: number | null;
+    /**
+     * Milliseconds after the worker started at which Pyodide and micropip were loaded
+     */
+    pyodideReady: number | null;
+}
 
 /**
  * Implementation of a Python backend for Papyros
@@ -18,10 +35,22 @@ export class PythonWorker extends Backend {
      * Promise to asynchronously install imports needed by the code
      */
     private installPromise: Promise<void> | null;
+    /**
+     * The ruff workspace, loading from launch() on. It boots next to Pyodide, so a
+     * ruff lint can answer before the interpreter is up.
+     */
+    private ruff: Promise<Workspace> | null;
+    /**
+     * How long the last lint spent installing imports and linting, in milliseconds,
+     * and when each linter became ready, in milliseconds since the worker started
+     */
+    private lintTimings: LintTimings;
     constructor() {
         super();
         this.pyodide = {} as PyodideInterface;
         this.installPromise = null;
+        this.ruff = null;
+        this.lintTimings = { last: null, ruffReady: null, pyodideReady: null };
     }
 
     private static convert(data: any): any {
@@ -41,6 +70,8 @@ export class PythonWorker extends Backend {
         allowJspi: boolean = true,
     ): Promise<void> {
         await super.launch(onEvent, pyodideAssetURL, allowJspi);
+        this.ruff = PythonWorker.loadRuff();
+        this.ruff.then(() => (this.lintTimings.ruffReady = performance.now()));
         this.pyodide = await PythonWorker.getPyodide(pyodideAssetURL);
         // Python calls our function with a PyProxy dict or a Js Map,
         // These must be converted to a PapyrosEvent (JS Object) to allow message passing
@@ -56,7 +87,19 @@ export class PythonWorker extends Backend {
         });
         // preload micropip to allow installing packages
         await (this.pyodide as any).loadPackage("micropip");
+        this.lintTimings.pyodideReady = performance.now();
         this.jspi = allowJspi && (await PythonWorker.detectJspi(this.pyodide));
+    }
+
+    /**
+     * Fetch the ruff wasm module and configure a workspace with papyros' rule set.
+     * The module is resolved next to ruff's own script, so a bundler that emits the
+     * worker must emit the wasm alongside it.
+     * @return {Promise<Workspace>} The workspace once ruff is instantiated
+     */
+    private static async loadRuff(): Promise<Workspace> {
+        await initRuff();
+        return new Workspace(RUFF_OPTIONS, PositionEncoding.Utf16);
     }
 
     /**
@@ -132,9 +175,29 @@ export class PythonWorker extends Backend {
         });
     }
 
-    public override async lintCode(code: string): Promise<Array<WorkerDiagnostic>> {
+    public override async lintCode(code: string, linter: Linter = "pylint"): Promise<Array<WorkerDiagnostic>> {
+        if (linter === "ruff") {
+            // ruff resolves nothing at import time, so the imports need not be installed
+            const workspace = await (this.ruff ?? PythonWorker.loadRuff());
+            const start = performance.now();
+            const diagnostics = toWorkerDiagnostics(workspace.check(code));
+            this.lintTimings.last = { linter, install: 0, lint: performance.now() - start };
+            return diagnostics;
+        }
+        const start = performance.now();
         await this.installImports(code);
-        return PythonWorker.convert(this.papyros?.lint(code) || []);
+        const installed = performance.now();
+        const diagnostics = PythonWorker.convert(this.papyros?.lint(code) || []);
+        this.lintTimings.last = { linter, install: installed - start, lint: performance.now() - installed };
+        return diagnostics;
+    }
+
+    /**
+     * Timings measured for the ruff spike; not part of the editor flow
+     * @return {Promise<LintTimings>} When each linter became ready and how long the last lint took
+     */
+    public async getLintTimings(): Promise<LintTimings> {
+        return this.lintTimings;
     }
 
     public override async provideFiles(
