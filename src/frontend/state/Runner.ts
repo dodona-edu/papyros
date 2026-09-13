@@ -1,6 +1,6 @@
 import { proxy } from "comlink";
 import { SyncClient } from "../../sync/SyncClient";
-import { Backend, RunMode, WorkerDiagnostic } from "../../backend/Backend";
+import { Backend, Linter, RunMode, WorkerDiagnostic } from "../../backend/Backend";
 import { BackendEvent, BackendEventType } from "../../communication/BackendEvent";
 import { BackendManager } from "../../communication/BackendManager";
 import { arrayBufferToBase64, isTextMimeType, isValidFileName, parseData } from "../../util/Util";
@@ -106,6 +106,13 @@ export class Runner extends State {
     allowJspi: boolean = true;
 
     /**
+     * The linter the Python backend runs over the code. Pylint runs inside Pyodide and
+     * needs the code's imports installed first; ruff runs from its own wasm module.
+     */
+    @stateProperty
+    linter: Linter = "pylint";
+
+    /**
      * The backend that executes the code asynchronously
      */
     @stateProperty
@@ -198,7 +205,7 @@ export class Runner extends State {
             return [];
         }
         try {
-            return await proxy.lintCode(this.code);
+            return await proxy.lintCode(this.code, this.linter);
         } catch (error: any) {
             // The editor lints in the background on every edit, and CodeMirror turns a
             // rejected linter into an uncaught window error. Report it and show no

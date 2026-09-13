@@ -288,7 +288,7 @@ export class CodeEditor extends CodeMirrorEditor {
                         const toLine = view.state.doc.line(d.endLineNr);
                         const from = Math.min(fromline.from + d.columnNr, fromline.to);
                         const to = Math.min(toLine.from + d.endColumnNr, toLine.to);
-                        return { ...d, from: from, to: to };
+                        return { ...d, from: from, to: to, source: d.code };
                     });
                 },
                 {
