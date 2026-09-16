@@ -24,11 +24,14 @@ describe("FileViewer", () => {
         return [...editorRoot.querySelectorAll(".cm-line")].flatMap((line) => [...line.querySelectorAll("span")]);
     }
 
-    it("highlights Python keywords in a .py file", async () => {
-        const element = await renderFile({ name: "main.py", content, binary: false });
+    it.each([
+        { name: "main.py", source: content, keyword: "def" },
+        { name: "main.js", source: "function f() {}", keyword: "function" },
+    ])("highlights keywords in $name", async ({ name, source, keyword }) => {
+        const element = await renderFile({ name, content: source, binary: false });
 
         await vi.waitFor(() => {
-            expect(highlightSpans(element).some((span) => span.textContent === "def")).toBe(true);
+            expect(highlightSpans(element).some((span) => span.textContent === keyword)).toBe(true);
         });
 
         element.remove();
