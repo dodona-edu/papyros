@@ -6,6 +6,8 @@ import type { FileEditor } from "../../../src/frontend/components/code_mirror/Fi
 import "../../../src/frontend/components/FileViewer";
 
 describe("FileViewer", () => {
+    const content = "def f():\n    pass";
+
     async function renderFile(file: FileEntry): Promise<FileViewer> {
         const element = document.createElement("p-file-viewer") as FileViewer;
         element.papyros = new Papyros();
@@ -23,7 +25,7 @@ describe("FileViewer", () => {
     }
 
     it("highlights Python keywords in a .py file", async () => {
-        const element = await renderFile({ name: "main.py", content: "def f():\n    pass", binary: false });
+        const element = await renderFile({ name: "main.py", content, binary: false });
 
         await vi.waitFor(() => {
             expect(highlightSpans(element).some((span) => span.textContent === "def")).toBe(true);
@@ -33,10 +35,10 @@ describe("FileViewer", () => {
     });
 
     it("picks up highlighting when a reused element's file is renamed to .py", async () => {
-        const element = await renderFile({ name: "notes.txt", content: "def f():\n    pass", binary: false });
+        const element = await renderFile({ name: "notes.txt", content, binary: false });
         expect(highlightSpans(element)).toHaveLength(0);
 
-        element.file = { name: "notes.py", content: "def f():\n    pass", binary: false };
+        element.file = { name: "notes.py", content, binary: false };
         await element.updateComplete;
 
         await vi.waitFor(() => {
