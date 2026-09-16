@@ -8,6 +8,7 @@ import { State, stateProperty } from "@dodona/lit-state";
 import { Papyros } from "./Papyros";
 import { ProgrammingLanguage } from "../../ProgrammingLanguage";
 import { PapyrosLaunchError } from "./PapyrosErrors";
+import { FileEntry } from "./InputOutput";
 
 /**
  * Enum representing the possible states while processing code
@@ -473,9 +474,11 @@ export class Runner extends State {
     /**
      * Execute the code in the editor
      * @param {RunMode} mode The mode to run with
+     * @param {FileEntry[]} files When given, the run starts from a workspace that holds only these files.
+     * Without them, the workspace is left as is.
      * @return {Promise<void>} Promise of running the code
      */
-    public async start(mode?: RunMode): Promise<void> {
+    public async start(mode?: RunMode, files?: readonly FileEntry[]): Promise<void> {
         this.papyros.debugger.active = mode === RunMode.Debug;
 
         // Setup pre-run
@@ -498,12 +501,22 @@ export class Runner extends State {
         }
         this.runStartTime = new Date().getTime();
         try {
-            await backend.call(
-                backend.workerProxy.runCode,
-                this.effectiveCode,
-                mode,
-                this.papyros.constants.maxDebugFrames,
-            );
+            if (files) {
+                // A recovery would otherwise replay the files an earlier provideFiles handed over
+                this.providedFiles = undefined;
+                await backend.workerProxy.clearWorkspace();
+                for (const file of files) {
+                    await backend.workerProxy.updateFile(file.name, file.content, file.binary);
+                }
+            }
+            if (this.state !== RunState.Stopping) {
+                await backend.call(
+                    backend.workerProxy.runCode,
+                    this.effectiveCode,
+                    mode,
+                    this.papyros.constants.maxDebugFrames,
+                );
+            }
         } catch (error: any) {
             if (error.type === "InterruptError") {
                 // Error signaling forceful interrupt

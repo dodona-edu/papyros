@@ -356,4 +356,50 @@ with open("new.txt", "r") as f:
         await waitForPapyrosReady(papyros);
         expect(papyros.io.output[0].content).toBe("renamed content");
     });
+
+    it("a run given files starts from a workspace that holds only those files", async () => {
+        papyros.runner.code = `
+import os
+os.makedirs("sub", exist_ok=True)
+open("sub/nested.txt", "w").write("nested content")
+`;
+        await waitForInputReady(papyros);
+        await papyros.runner.start();
+        await waitForFiles(papyros, 1);
+        await papyros.runner.provideFiles({ "root.txt": "root content" }, {});
+        await waitForFiles(papyros, 2);
+
+        papyros.runner.code = `import os; print(sorted(os.listdir()), end="")`;
+        await papyros.runner.start(undefined, [{ name: "data.txt", content: "x", binary: false }]);
+        await waitForOutput(papyros);
+        await waitForPapyrosReady(papyros);
+        expect(papyros.io.output[0].content).toBe("['data.txt']");
+        expect(papyros.io.files).toEqual([{ name: "data.txt", content: "x", binary: false }]);
+    });
+
+    it("a run given files starts in the workspace after a run changed the working directory", async () => {
+        papyros.runner.code = `
+import os
+os.makedirs("sub", exist_ok=True)
+os.chdir("sub")
+`;
+        await waitForInputReady(papyros);
+        await papyros.runner.start();
+        await waitForPapyrosReady(papyros);
+
+        papyros.runner.code = `import os; print(os.getcwd(), end="")`;
+        await papyros.runner.start(undefined, []);
+        await waitForOutput(papyros);
+        await waitForPapyrosReady(papyros);
+        expect(papyros.io.output[0].content).toBe("/home/pyodide/workspace");
+    });
+
+    it("a run given a binary file can read its bytes", async () => {
+        papyros.runner.code = `print(list(open("b.bin", "rb").read()), end="")`;
+        await waitForInputReady(papyros);
+        await papyros.runner.start(undefined, [{ name: "b.bin", content: btoa("\x00\x01\x02"), binary: true }]);
+        await waitForOutput(papyros);
+        await waitForPapyrosReady(papyros);
+        expect(papyros.io.output[0].content).toBe("[0, 1, 2]");
+    });
 });

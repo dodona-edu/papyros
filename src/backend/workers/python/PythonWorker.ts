@@ -151,6 +151,10 @@ export class PythonWorker extends Backend {
         await this.papyros?.delete_file(name);
     }
 
+    public override async clearWorkspace(): Promise<void> {
+        await this.papyros?.clear_workspace();
+    }
+
     public override async updateFile(name: string, content: string, binary: boolean): Promise<void> {
         await this.papyros?.update_file(name, content, binary);
     }
