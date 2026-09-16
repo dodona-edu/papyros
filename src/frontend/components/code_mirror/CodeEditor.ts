@@ -11,7 +11,7 @@ import {
     rectangularSelection,
 } from "@codemirror/view";
 import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
-import { bracketMatching, foldGutter, indentOnInput, indentUnit, LanguageSupport } from "@codemirror/language";
+import { bracketMatching, foldGutter, indentOnInput, indentUnit } from "@codemirror/language";
 import { EditorState, StateEffect } from "@codemirror/state";
 import {
     acceptCompletion,
@@ -23,8 +23,6 @@ import {
 import { highlightSelectionMatches, searchKeymap } from "@codemirror/search";
 import { linter, lintGutter, lintKeymap, forceLinting } from "@codemirror/lint";
 import { css, CSSResult } from "lit";
-import { javascript } from "@codemirror/lang-javascript";
-import { python } from "@codemirror/lang-python";
 import { WorkerDiagnostic } from "../../../backend/Backend";
 import { ProgrammingLanguage } from "../../../ProgrammingLanguage";
 import {
@@ -38,6 +36,7 @@ import readOnlyRangesExtension from "codemirror-readonly-ranges";
 import { BackendEvent, BackendEventType } from "../../../communication/BackendEvent";
 import { Papyros } from "../../state/Papyros";
 import { parseData } from "../../../util/Util";
+import { languageExtensions } from "./Languages";
 
 const tabCompletionKeyMap = [{ key: "Tab", run: acceptCompletion }];
 // This editor binds Tab to indentation, so Tab no longer moves focus out of it and the way
@@ -47,10 +46,6 @@ const tabCompletionKeyMap = [{ key: "Tab", run: acceptCompletion }];
 const ESCAPE_HINT_ID = "escape-hint";
 // Dispatched to ask the linter to re-run without a document change (see needsRefresh).
 const forceLintEffect = StateEffect.define<null>();
-const languageExtensions: Record<ProgrammingLanguage, LanguageSupport> = {
-    JavaScript: javascript(),
-    Python: python(),
-};
 
 @customElement("p-code-editor")
 export class CodeEditor extends CodeMirrorEditor {

@@ -13,6 +13,7 @@ import { bracketMatching, foldGutter, indentOnInput } from "@codemirror/language
 import { EditorState } from "@codemirror/state";
 import { highlightSelectionMatches } from "@codemirror/search";
 import { css, CSSResult } from "lit";
+import { languageForFileName } from "./Languages";
 
 @customElement("p-file-editor")
 export class FileEditor extends CodeMirrorEditor {
@@ -25,9 +26,16 @@ export class FileEditor extends CodeMirrorEditor {
         `;
     }
 
+    // Lit reuses this element across file tabs, so the language follows the
+    // file name rather than being set once.
+    set fileName(name: string) {
+        this.configure({ language: languageForFileName(name) });
+    }
+
     constructor() {
         super();
         this.configure({
+            language: [],
             fileExtensions: [
                 lineNumbers(),
                 highlightSpecialChars(),
