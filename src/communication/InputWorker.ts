@@ -1,6 +1,11 @@
 import { serviceWorkerFetchListener } from "../sync/channel";
 
 /**
+ * Message a page posts to the active input service worker to ask it to claim the page
+ */
+export const CLAIM_CLIENTS_MESSAGE = "papyros-claim-clients";
+
+/**
  * Class that is used in a service worker to allow synchronous communication
  * between threads. This is achieved in two different ways.
  * Responses can be modified by attaching headers allowing the use of shared memory.

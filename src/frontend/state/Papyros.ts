@@ -7,6 +7,7 @@ import { Examples } from "./Examples";
 import { BackendManager } from "../../communication/BackendManager";
 import { EventBus } from "../../communication/EventBus";
 import { Channel, makeChannel } from "../../sync/channel";
+import { CLAIM_CLIENTS_MESSAGE } from "../../communication/InputWorker";
 import { ProgrammingLanguage } from "../../ProgrammingLanguage";
 import { I18n } from "./I18n";
 import { Test } from "./Test";
@@ -162,7 +163,7 @@ export class Papyros extends State {
         let registration = serviceWorkerRegistrations.get(this.serviceWorkerName);
         if (!registration) {
             registration = navigator.serviceWorker.register(this.serviceWorkerName, { scope: "/" }).then(async (r) => {
-                await this.waitForActiveRegistration();
+                await this.waitForController(await this.waitForActiveRegistration());
                 return r;
             });
             registration.catch(() => serviceWorkerRegistrations.delete(this.serviceWorkerName));
@@ -171,16 +172,40 @@ export class Papyros extends State {
         return registration;
     }
 
-    private async waitForActiveRegistration(timeout: number = 5000): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
+    private async waitForActiveRegistration(timeout: number = 5000): Promise<ServiceWorkerRegistration> {
+        return new Promise<ServiceWorkerRegistration>((resolve, reject) => {
             const timeoutHandle = setTimeout(
                 () => reject(new Error("Timed out waiting for activated service worker")),
                 timeout,
             );
-            navigator.serviceWorker.ready.then(() => {
+            navigator.serviceWorker.ready.then((registration) => {
+                clearTimeout(timeoutHandle);
+                resolve(registration);
+            });
+        });
+    }
+
+    /**
+     * Make sure the active service worker controls this page, since the channel's requests
+     * only reach it from a controlled page. A hard reload bypasses the service worker and
+     * leaves the page uncontrolled, so the worker is asked to claim it.
+     */
+    private async waitForController(registration: ServiceWorkerRegistration, timeout: number = 5000): Promise<void> {
+        const container = navigator.serviceWorker;
+        if (container.controller) {
+            return;
+        }
+        return new Promise<void>((resolve, reject) => {
+            const onControllerChange = (): void => {
                 clearTimeout(timeoutHandle);
                 resolve();
-            });
+            };
+            const timeoutHandle = setTimeout(() => {
+                container.removeEventListener("controllerchange", onControllerChange);
+                reject(new Error("The service worker does not control this page, reloading the page should fix this"));
+            }, timeout);
+            container.addEventListener("controllerchange", onControllerChange, { once: true });
+            registration.active?.postMessage(CLAIM_CLIENTS_MESSAGE);
         });
     }
 }
