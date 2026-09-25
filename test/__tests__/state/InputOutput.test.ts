@@ -2,7 +2,16 @@ import {Papyros} from "../../../src/frontend/state/Papyros";
 import {expect, it, describe, beforeAll, beforeEach, afterAll} from "vitest";
 import {ProgrammingLanguage} from "../../../src/ProgrammingLanguage";
 import {FriendlyError, InputMode, OutputType} from "../../../src/frontend/state/InputOutput";
-import {launchPapyros, settlePapyros, waitForAwaitingInput, waitForInputReady, waitForOutput} from "../../helpers";
+import {BackendEventType} from "../../../src/communication/BackendEvent";
+import {RunState} from "../../../src/frontend/state/Runner";
+import {
+    launchPapyros,
+    settlePapyros,
+    waitForAwaitingInput,
+    waitForInputReady,
+    waitForOutput,
+    waitForPapyrosReady,
+} from "../../helpers";
 
 // One Pyodide boot for the whole file: the Python tests share an instance, and the
 // JavaScript tests get cheap throwaway instances that never boot Pyodide at all.
@@ -96,6 +105,32 @@ console.log("world!");
         await papyros.runner.stop();
         expect(papyros.io.awaitingInput).toBe(false);
         await runPromise;
+    });
+
+    it("ignores input submitted after the run ended", async () => {
+        const jsPapyros = await launchPapyros(ProgrammingLanguage.JavaScript);
+        jsPapyros.runner.code = `prompt("input");`;
+        await waitForInputReady(jsPapyros);
+        const runPromise = jsPapyros.runner.start();
+        await waitForAwaitingInput(jsPapyros);
+        await jsPapyros.runner.stop();
+        await runPromise;
+        await expect(jsPapyros.runner.provideInput("late")).resolves.toBeUndefined();
+        expect(jsPapyros.runner.state).toBe(RunState.Ready);
+        jsPapyros.dispose();
+    });
+
+    it("ignores an input request that arrives after its run ended", async () => {
+        const jsPapyros = await launchPapyros(ProgrammingLanguage.JavaScript);
+        jsPapyros.runner.code = `console.log("done");`; // eslint-disable-line quotes
+        await jsPapyros.runner.start();
+        await waitForPapyrosReady(jsPapyros);
+        jsPapyros.io.inputMode = InputMode.batch;
+        jsPapyros.io.inputBuffer = "stale\n";
+        jsPapyros.events.publish({type: BackendEventType.Input, data: "input", contentType: "text/plain"});
+        expect(jsPapyros.io.inputs).toEqual([]);
+        expect(jsPapyros.runner.state).toBe(RunState.Ready);
+        jsPapyros.dispose();
     });
 
     it("can log friendly errors", async () => {

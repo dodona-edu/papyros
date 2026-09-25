@@ -275,7 +275,11 @@ export class Runner extends State {
         this.backend = Promise.reject(new Error("No backend has been launched"));
         this.backend.catch(() => undefined);
 
-        this.papyros.events.subscribe(BackendEventType.Input, () => this.setState(RunState.AwaitingInput));
+        this.papyros.events.subscribe(BackendEventType.Input, () => {
+            if (this.papyros.io.runActive) {
+                this.setState(RunState.AwaitingInput);
+            }
+        });
         this.papyros.events.subscribe(BackendEventType.Loading, (e) => this.onLoad(e));
         this.papyros.events.subscribe(BackendEventType.Start, (e) => this.onStart(e));
         this.papyros.events.subscribe(BackendEventType.End, (e) => this.onEnd(e));
@@ -568,11 +572,17 @@ export class Runner extends State {
 
     public async provideInput(input: string): Promise<void> {
         const backend = await this.availableBackend();
-        if (!backend) {
+        // Input submitted as a run ends has no reader left to receive it
+        if (!backend || backend.state === "idle") {
             return;
         }
         this.setState(RunState.Running);
-        await backend.writeMessage(input);
+        await backend.writeMessage(input).catch((error) => {
+            // The run can also end while the write waits for the worker to start reading
+            if (backend.state !== "idle") {
+                throw error;
+            }
+        });
     }
 
     public async deleteFile(name: string): Promise<void> {

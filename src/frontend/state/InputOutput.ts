@@ -93,6 +93,15 @@ export class InputOutput extends State {
     awaitingInput: boolean = false;
     @stateProperty
     inputMode: InputMode = InputMode.interactive;
+    /**
+     * Whether the worker has started the current run and not finished it. Input
+     * requests outside that window come from a run that is already over: they can
+     * still be in flight when it is stopped or when the next run begins.
+     */
+    private _runActive: boolean = false;
+    public get runActive(): boolean {
+        return this._runActive;
+    }
 
     @stateProperty
     private _inputBuffer: string = "";
@@ -136,7 +145,15 @@ export class InputOutput extends State {
             const data = parseData(e.data, e.contentType);
             this.logError(data);
         });
+        this.papyros.events.subscribe(BackendEventType.Start, (e) => {
+            if ((parseData(e.data, e.contentType) as string).includes("RunCode")) {
+                this._runActive = true;
+            }
+        });
         this.papyros.events.subscribe(BackendEventType.Input, (e) => {
+            if (!this._runActive) {
+                return;
+            }
             if (this.nextBufferedLine !== undefined && this.inputMode === InputMode.batch) {
                 this.provideInput(this.nextBufferedLine);
                 return;
@@ -156,6 +173,7 @@ export class InputOutput extends State {
      * failed or was interrupted
      */
     public onRunEnd(): void {
+        this._runActive = false;
         this.awaitingInput = false;
         // If the finished run produced no turtle output, drop the (stale) Turtle tab
         // selection so the tab bar hides. A manual selection is preserved.
@@ -271,6 +289,7 @@ export class InputOutput extends State {
         this.hasTurtleOutput = false;
         this.prompt = "";
         this.awaitingInput = false;
+        this._runActive = false;
         this.activeEditorTab = CODE_TAB;
         // activeOutputTab is intentionally preserved across reruns: resetting it would make
         // the tab bar flicker (Turtle → Output → Turtle) as a turtle rerun progresses. It is
