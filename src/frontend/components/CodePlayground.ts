@@ -9,7 +9,7 @@ import type { PapyrosRuntime } from "../state/PapyrosRuntime";
 import { RunMode } from "../../backend/Backend";
 import { preloadWhenVisible, stopPreloading } from "./playground/preload";
 import "./code_runner/Code";
-import "./FriendlyError";
+import { outputStyles, renderError, renderImage, renderOverflow } from "./output/renderOutput";
 import "./EditorTabs";
 import "./FileViewer";
 
@@ -244,11 +244,6 @@ export class CodePlayground extends PapyrosElement {
                 font: inherit;
             }
 
-            .output-img {
-                display: block;
-                max-width: 100%;
-            }
-
             .error {
                 background: var(--md-sys-color-error-container);
                 color: var(--md-sys-color-on-error-container);
@@ -315,6 +310,8 @@ export class CodePlayground extends PapyrosElement {
                 white-space: nowrap;
                 border: 0;
             }
+
+            ${outputStyles}
         `;
     }
 
@@ -621,8 +618,6 @@ export class CodePlayground extends PapyrosElement {
         e.preventDefault();
         const input = e.target as HTMLInputElement;
         const value = input.value;
-        // Papyros does not echo input into its output, so the transcript would miss the line
-        this.papyros.io.output = [...this.papyros.io.output, { type: OutputType.stdout, content: value + "\n" }];
         this.papyros.io.provideInput(value);
         input.value = "";
     }
@@ -796,21 +791,14 @@ export class CodePlayground extends PapyrosElement {
                 text += entry.content;
             } else if (entry.type === OutputType.img) {
                 flushText();
-                const contentType = entry.contentType ?? "image/png";
-                outputBlocks.push(
-                    html`<img class="output-img" src="data:${contentType};base64,${entry.content}" alt="" />`,
-                );
+                outputBlocks.push(renderImage(entry, this.papyros));
             }
             // Turtle output is not shown in playgrounds
         }
         flushText();
 
         if (truncated) {
-            outputBlocks.push(
-                html`<div class="transcript">
-                    ${this.t("Papyros.playground.output_truncated", { limit: maxLength })}
-                </div>`,
-            );
+            outputBlocks.push(renderOverflow(this.papyros, maxLength));
         }
 
         const result = { source: outputs, outputBlocks, errors };
@@ -857,12 +845,12 @@ export class CodePlayground extends PapyrosElement {
     private renderError(entry: OutputEntry): TemplateResult {
         const content = entry.content;
         if (typeof content !== "string" && "name" in content) {
-            return html`<div class="error">
-                <p-friendly-error .error=${content} .papyros=${this.papyros}></p-friendly-error>
-            </div>`;
+            return html`<div class="error">${renderError(content, this.papyros)}</div>`;
         }
         const text = typeof content === "string" ? content : JSON.stringify(content);
-        return html`<div class="error"><div class="error-title" role="alert">${text}</div></div>`;
+        return html`<div class="error">
+            <div class="error-title" role="alert">${renderError(text, this.papyros)}</div>
+        </div>`;
     }
 }
 

@@ -2,7 +2,21 @@ import {Papyros} from "../../../src/frontend/state/Papyros";
 import {expect, it, describe, beforeAll, beforeEach, afterAll} from "vitest";
 import {ProgrammingLanguage} from "../../../src/ProgrammingLanguage";
 import {FriendlyError, InputMode, OutputType} from "../../../src/frontend/state/InputOutput";
-import {launchPapyros, settlePapyros, waitForAwaitingInput, waitForInputReady, waitForOutput} from "../../helpers";
+import {
+    launchPapyros,
+    settlePapyros,
+    waitForAwaitingInput,
+    waitForInputReady,
+    waitForOutput,
+    waitForPapyrosReady,
+} from "../../helpers";
+
+function stdout(papyros: Papyros): string {
+    return papyros.io.output
+        .filter((o) => o.type === OutputType.stdout)
+        .map((o) => o.content as string)
+        .join("");
+}
 
 // One Pyodide boot for the whole file: the Python tests share an instance, and the
 // JavaScript tests get cheap throwaway instances that never boot Pyodide at all.
@@ -51,7 +65,8 @@ console.log("world!");
         const unsubscribe = jsPapyros.io.subscribe(() => jsPapyros.io.awaitingInput ? jsPapyros.io.provideInput("foo") : "", "awaitingInput");
         await jsPapyros.runner.start();
         await waitForOutput(jsPapyros);
-        expect(jsPapyros.io.output[0].content).toBe("hello foo\n");
+        expect(jsPapyros.io.output[0].content).toBe("foo\n");
+        expect(jsPapyros.io.output[1].content).toBe("hello foo\n");
         unsubscribe();
         jsPapyros.dispose();
     });
@@ -62,7 +77,8 @@ console.log("world!");
         const unsubscribe = papyros.io.subscribe(() => papyros.io.awaitingInput ? papyros.io.provideInput("foo") : "", "awaitingInput");
         await papyros.runner.start();
         await waitForOutput(papyros);
-        expect(papyros.io.output[0].content).toBe("hello foo");
+        expect(papyros.io.output[0].content).toBe("foo\n");
+        expect(papyros.io.output[1].content).toBe("hello foo");
         unsubscribe();
     });
 
@@ -125,8 +141,7 @@ print("world! " + input("input2"))
         await waitForInputReady(papyros);
         await papyros.runner.start();
         await waitForOutput(papyros);
-        expect(papyros.io.output[0].content).toBe("hello foo1");
-        expect(papyros.io.output[3].content).toBe("world! foo2");
+        expect(stdout(papyros)).toBe("foo1\nhello foo1\nfoo2\nworld! foo2\n");
         unsubscribe();
     });
 
@@ -140,7 +155,34 @@ print("world! " + input("input2"))
         await waitForInputReady(papyros);
         await papyros.runner.start();
         await waitForOutput(papyros);
-        expect(papyros.io.output[0].content).toBe("hello foo1");
-        expect(papyros.io.output[3].content).toBe("world! foo2");
+        expect(stdout(papyros)).toBe("foo1\nhello foo1\nfoo2\nworld! foo2\n");
+    });
+
+    it("echoes input into the output as the program reads it, in both input modes", async () => {
+        papyros.runner.code = `print("start")
+print(input() + input())`;
+        await waitForInputReady(papyros);
+
+        papyros.io.inputMode = InputMode.batch;
+        papyros.io.inputBuffer = "a\nb\n";
+        await papyros.runner.start();
+        await waitForPapyrosReady(papyros);
+        const batch = stdout(papyros);
+
+        papyros.io.inputMode = InputMode.interactive;
+        papyros.io.inputBuffer = "";
+        papyros.io.reset();
+        const answers = ["a", "b"];
+        const unsubscribe = papyros.io.subscribe(
+            () => (papyros.io.awaitingInput ? papyros.io.provideInput(answers.shift()!) : ""),
+            "awaitingInput",
+        );
+        await papyros.runner.start();
+        await waitForPapyrosReady(papyros);
+        unsubscribe();
+
+        expect(batch).toBe("start\na\nb\nab\n");
+        expect(stdout(papyros)).toBe(batch);
+        expect(answers).toEqual([]);
     });
 });

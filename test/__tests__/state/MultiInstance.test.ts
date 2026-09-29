@@ -55,8 +55,8 @@ describe.sequential("multiple Papyros instances", () => {
         unsubFirst();
         unsubSecond();
 
-        expect(first.io.output[0].content).toBe("first one\n");
-        expect(second.io.output[0].content).toBe("second two\n");
+        expect(first.io.output[1].content).toBe("first one\n");
+        expect(second.io.output[1].content).toBe("second two\n");
         first.dispose();
         second.dispose();
     }, 180000);

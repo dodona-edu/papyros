@@ -1,0 +1,113 @@
+import { css, html, TemplateResult } from "lit";
+import { FriendlyError, OutputEntry, OutputType } from "../../state/InputOutput";
+import type { Papyros } from "../../state/Papyros";
+import "../FriendlyError";
+
+/**
+ * Styles for the markup below; include them in the styles of any component that uses it.
+ * String errors also need a `.visually-hidden` class, such as visuallyHiddenStyles.
+ */
+export const outputStyles = css`
+    .output-img {
+        display: block;
+        max-width: 100%;
+    }
+
+    .why {
+        display: block;
+        margin-top: 6px;
+        white-space: pre-wrap;
+        overflow-wrap: break-word;
+    }
+
+    .overflow {
+        margin: 0.5rem 0 0;
+    }
+`;
+
+export function renderImage(entry: OutputEntry, papyros: Papyros): TemplateResult {
+    // The backends send the encoding along in the content type, e.g. "image/png;base64"
+    const contentType = entry.contentType ?? "image/png;base64";
+    return html`<img
+        class="output-img"
+        src="data:${contentType},${entry.content as string}"
+        alt=${papyros.i18n.t("Papyros.image_alt")}
+    />`;
+}
+
+export function renderError(error: string | FriendlyError, papyros: Papyros): TemplateResult {
+    if (typeof error === "string") {
+        return html`<span class="visually-hidden">${papyros.i18n.t("Papyros.error_prefix")}</span>${error}`;
+    }
+    return html`<p-friendly-error .error=${error} .papyros=${papyros}></p-friendly-error>${
+            error.why ? html`<span class="why">${error.why.trim()}</span>` : ""
+        }`;
+}
+
+/**
+ * Renders one output entry; turtle output is left to the caller
+ */
+export function renderEntry(entry: OutputEntry, papyros: Papyros): TemplateResult {
+    if (entry.type === OutputType.stdout) {
+        return html`${entry.content}`;
+    } else if (entry.type === OutputType.img) {
+        return renderImage(entry, papyros);
+    } else if (entry.type === OutputType.stderr) {
+        return html`<span class="error">${renderError(entry.content as string | FriendlyError, papyros)}</span>`;
+    }
+    return html``;
+}
+
+/**
+ * Plain text version of the output, for downloading what was not shown
+ */
+export function outputAsText(entries: OutputEntry[]): string {
+    return entries
+        .map((o) => {
+            if (o.type === OutputType.img || o.type === OutputType.turtle) {
+                return `[Image output of type ${o.contentType} omitted]\n`;
+            } else if (o.type === OutputType.stdout) {
+                return o.content as string;
+            } else if (o.type === OutputType.stderr) {
+                if (typeof o.content === "string") {
+                    return `Error: ${o.content}\n`;
+                }
+                const errorObject = o.content as FriendlyError;
+                let errorString = `Error: ${errorObject.name}\nInfo: ${errorObject.info}\nTraceback: ${errorObject.traceback}\n`;
+                if (errorObject.where) {
+                    errorString += `Where: ${errorObject.where.trim()}\n`;
+                }
+                if (errorObject.what) {
+                    errorString += `What: ${errorObject.what.trim()}\n`;
+                }
+                if (errorObject.why) {
+                    errorString += `Why: ${errorObject.why.trim()}\n`;
+                }
+                return errorString;
+            }
+            return "[Unsupported output type omitted]\n";
+        })
+        .join("");
+}
+
+/**
+ * Notice that the output past `shownLength` entries is not shown, with a link to download it
+ */
+export function renderOverflow(papyros: Papyros, shownLength: number): TemplateResult {
+    // The file is only built on click: output keeps growing during a run, and a blob URL made
+    // on every render would never be released.
+    const download = (e: Event): void => {
+        const link = e.currentTarget as HTMLAnchorElement;
+        if (link.href.startsWith("blob:")) {
+            URL.revokeObjectURL(link.href);
+        }
+        const blob = new Blob([outputAsText(papyros.io.output.slice(shownLength))], { type: "text/plain" });
+        link.href = URL.createObjectURL(blob);
+    };
+    return html`<p class="overflow">
+        ${papyros.i18n.t("Papyros.output_overflow")}
+        <a href="#" download="papyros_output.txt" @click=${download}>
+            ${papyros.i18n.t("Papyros.output_overflow_download")}
+        </a>
+    </p>`;
+}

@@ -179,7 +179,7 @@ export class InputOutput extends State {
         this.output = [...this.output, { type: OutputType.stderr, content: error }];
     }
 
-    public logImage(imageData: string, contentType: string = "image/png"): void {
+    public logImage(imageData: string, contentType: string = "image/png;base64"): void {
         this.output = [...this.output, { type: OutputType.img, content: imageData, contentType }];
     }
 
@@ -212,7 +212,12 @@ export class InputOutput extends State {
         }
     }
 
+    /**
+     * Hands a line of input to the running program. Both input modes pass through here, and
+     * the backends leave input out of their output, so this is where it joins the transcript.
+     */
     public provideInput(input: string): void {
+        this.output = [...this.output, { type: OutputType.stdout, content: input + "\n" }];
         this.inputs = [...this.inputs, input];
         this.papyros.runner.provideInput(input);
         this.prompt = "";

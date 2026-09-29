@@ -1,10 +1,10 @@
 import { customElement } from "lit/decorators.js";
 import { css, CSSResult, html, TemplateResult } from "lit";
-import { FriendlyError, OutputEntry, OutputTab, OutputType, OUTPUT_TAB, TURTLE_TAB } from "../state/InputOutput";
+import { OutputEntry, OutputTab, OutputType, OUTPUT_TAB, TURTLE_TAB } from "../state/InputOutput";
 import { PapyrosElement } from "./PapyrosElement";
-import { tabBarStyles, tabButtonStyles } from "./shared-styles";
+import { tabBarStyles, tabButtonStyles, visuallyHiddenStyles } from "./shared-styles";
 import { TurtlePatch, TurtleSvgBuilder } from "../state/TurtleSvg";
-import "./FriendlyError";
+import { outputStyles, renderEntry, renderOverflow } from "./output/renderOutput";
 
 @customElement("p-output")
 export class Output extends PapyrosElement {
@@ -81,16 +81,9 @@ export class Output extends PapyrosElement {
                 color: var(--md-sys-color-on-surface-variant);
             }
 
-            .visually-hidden {
-                position: absolute;
-                width: 1px;
-                height: 1px;
-                overflow: hidden;
-                clip: rect(0 0 0 0);
-                white-space: nowrap;
-            }
-
             ${tabButtonStyles}
+            ${visuallyHiddenStyles}
+            ${outputStyles}
         `;
     }
 
@@ -109,46 +102,8 @@ export class Output extends PapyrosElement {
         return this.papyros.io.output.slice(0, this.maxOutputLength);
     }
 
-    get overflow(): OutputEntry[] {
-        return this.papyros.io.output.slice(this.maxOutputLength);
-    }
-
     get showOverflowWarning(): boolean {
         return !this.papyros.debugger.active && this.papyros.io.output.length > this.maxOutputLength;
-    }
-
-    get downloadOverflowUrl(): string {
-        const blob = new Blob(
-            this.overflow.map((o) => {
-                if (o.type === OutputType.img || o.type === OutputType.turtle) {
-                    return `[Image output of type ${o.contentType} omitted]\n`;
-                } else if (o.type === OutputType.stdout) {
-                    return o.content as string;
-                } else if (o.type === OutputType.stderr) {
-                    if (typeof o.content === "string") {
-                        return `Error: ${o.content}\n`;
-                    } else {
-                        const errorObject = o.content as FriendlyError;
-                        let errorString = `Error: ${errorObject.name}\nInfo: ${errorObject.info}\nTraceback: ${errorObject.traceback}\n`;
-                        if (errorObject.where) {
-                            errorString += `Where: ${errorObject.where.trim()}\n`;
-                        }
-                        if (errorObject.what) {
-                            errorString += `What: ${errorObject.what.trim()}\n`;
-                        }
-                        if (errorObject.why) {
-                            errorString += `Why: ${errorObject.why.trim()}\n`;
-                        }
-                        return errorString;
-                    }
-                } else {
-                    return "[Unsupported output type omitted]\n";
-                }
-            }),
-            { type: "text/plain" },
-        );
-
-        return URL.createObjectURL(blob);
     }
 
     get renderedOutputs(): TemplateResult[] {
@@ -170,30 +125,7 @@ export class Output extends PapyrosElement {
                       />`,
                   ];
         }
-        const outputsToRender: OutputEntry[] = this.outputs.filter((o) => o.type !== OutputType.turtle);
-        return outputsToRender.map((o) => {
-            if (o.type === OutputType.stdout) {
-                return html`${o.content}`;
-            } else if (o.type === OutputType.img) {
-                const mimeType = o.contentType ?? "image/png";
-                return html`<img src="data:${mimeType},${o.content as string}" alt=${this.t("Papyros.image_alt")} />`;
-            } else if (o.type === OutputType.stderr) {
-                if (typeof o.content === "string") {
-                    return html`<span class="error"
-                        ><span class="visually-hidden">${this.t("Papyros.error_prefix")}</span>${o.content}</span
-                    >`;
-                } else {
-                    const errorObject = o.content as FriendlyError;
-                    return html`<span class="error"
-                        ><p-friendly-error .error=${errorObject} .papyros=${this.papyros}></p-friendly-error>${
-                            errorObject.why ? html`<span class="why">${errorObject.why.trim()}</span>` : ""
-                        }</span
-                    >`;
-                }
-            } else {
-                return html``; // unsupported output type
-            }
-        });
+        return this.outputs.filter((o) => o.type !== OutputType.turtle).map((o) => renderEntry(o, this.papyros));
     }
 
     private get showTurtleTab(): boolean {
@@ -298,18 +230,7 @@ export class Output extends PapyrosElement {
                             ? html`<pre role="log" aria-live="polite" aria-relevant="additions text">${rendered}</pre>`
                             : html`<pre>${rendered}</pre>`
                 }
-                ${
-                    showOverflow
-                        ? html`
-                              <p>
-                                  ${this.t("Papyros.output_overflow")}
-                                  <a href="${this.downloadOverflowUrl}" download="papyros_output.txt">
-                                      ${this.t("Papyros.output_overflow_download")}
-                                  </a>
-                              </p>
-                          `
-                        : html``
-                }
+                ${showOverflow ? renderOverflow(this.papyros, this.maxOutputLength) : html``}
             </div>
         `;
     }
