@@ -461,7 +461,7 @@ describe("p-code-playground", () => {
         expect($(hidden, ".card")!.hasAttribute("aria-labelledby")).toBe(false);
     });
 
-    it("submits input on Enter and echoes it into the transcript", async () => {
+    it("submits input on Enter without echoing it into the transcript", async () => {
         const el = await mount();
         const client = await startRun(el);
         await awaitInput(el, client);
@@ -471,9 +471,9 @@ describe("p-code-playground", () => {
         input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
 
         await vi.waitFor(() => expect(client.writeMessage).toHaveBeenCalledWith("Alice"));
-        expect(el.outputs).toEqual([{ type: OutputType.stdout, content: "Alice\n" }]);
+        expect(el.outputs).toEqual([]);
         await settle(el);
-        expect($(el, ".transcript")!.textContent).toBe("Alice\n");
+        expect($(el, ".transcript")).toBeNull();
         await finishRun(el, client);
     });
 
@@ -633,15 +633,18 @@ describe("p-code-playground", () => {
         await setOutputs(el, [
             { type: OutputType.stdout, content: "line one\n" },
             { type: OutputType.stderr, content: "a warning\n" },
-            { type: OutputType.stderr, content: { name: "ValueError", what: "bad", traceback: "Traceback…" } },
-            { type: OutputType.img, content: "AAAA", contentType: "image/png" },
+            {
+                type: OutputType.stderr,
+                content: { name: "ValueError", what: "bad", traceback: "Traceback…", why: " Pass a number. " },
+            },
+            { type: OutputType.img, content: "AAAA", contentType: "image/png;base64" },
         ]);
 
         expect($(el, ".output .panel-label")!.textContent).toContain("Output");
         expect($(el, ".output .transcript")!.textContent).toContain("line one");
-        expect($<HTMLImageElement>(el, ".output img.output-img")!.getAttribute("src")).toBe(
-            "data:image/png;base64,AAAA",
-        );
+        const img = $<HTMLImageElement>(el, ".output img.output-img")!;
+        expect(img.getAttribute("src")).toBe("data:image/png;base64,AAAA");
+        expect(img.getAttribute("alt")).toBe("Image output");
 
         const errors = $$(el, ".error");
         expect(errors).toHaveLength(2);
@@ -650,6 +653,7 @@ describe("p-code-playground", () => {
         const plain = errors[0].querySelector(".error-title")!;
         expect(plain.getAttribute("role")).toBe("alert");
         expect(plain.textContent).toContain("a warning");
+        expect(plain.querySelector(".visually-hidden")!.textContent).toBe("Error: ");
 
         const friendly = errors[1].querySelector<FriendlyErrorElement>("p-friendly-error")!;
         await friendly.updateComplete;
@@ -658,9 +662,10 @@ describe("p-code-playground", () => {
         expect(title.textContent).toBe("ValueError: bad");
         expect(friendly.shadowRoot!.querySelector(".traceback-toggle")).not.toBeNull();
         expect(friendly.shadowRoot!.querySelector(".traceback-body")).toBeNull();
+        expect(errors[1].querySelector(".why")!.textContent).toBe("Pass a number.");
     });
 
-    it("caps rendered output at maxOutputLength and shows a truncated notice", async () => {
+    it("caps rendered output at maxOutputLength and offers the rest as a download", async () => {
         const el = await mount();
         el.papyros.constants.maxOutputLength = 2;
         await setOutputs(el, [
@@ -675,7 +680,9 @@ describe("p-code-playground", () => {
         expect(text).toContain("one");
         expect(text).toContain("two");
         expect(text).not.toContain("three");
-        expect(text).toContain("Output truncated; showing the first 2 entries.");
+        const overflow = $(el, ".output .overflow")!;
+        expect(overflow.textContent).toContain("Output truncated. No more results will be shown.");
+        expect(overflow.querySelector("a[download]")).not.toBeNull();
     });
 
     it("makes the output log a keyboard-scrollable live log", async () => {

@@ -60,6 +60,8 @@ export interface FileEntry {
     binary: boolean;
 }
 
+export const DEFAULT_IMAGE_CONTENT_TYPE = "image/png;base64";
+
 export const CODE_TAB = "code";
 
 export const OUTPUT_TAB = "output";
@@ -179,7 +181,7 @@ export class InputOutput extends State {
         this.output = [...this.output, { type: OutputType.stderr, content: error }];
     }
 
-    public logImage(imageData: string, contentType: string = "image/png"): void {
+    public logImage(imageData: string, contentType: string = DEFAULT_IMAGE_CONTENT_TYPE): void {
         this.output = [...this.output, { type: OutputType.img, content: imageData, contentType }];
     }
 

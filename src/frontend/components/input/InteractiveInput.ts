@@ -43,7 +43,8 @@ export class InteractiveInput extends PapyrosElement {
                 .value=${this.value}
                 @input=${(e: Event) => (this.value = (e.target as HTMLInputElement).value)}
                 @keydown=${(e: KeyboardEvent) => {
-                    if (e.key === "Enter") {
+                    // An IME confirms composed text with Enter, which must not submit the line.
+                    if (e.key === "Enter" && !e.isComposing) {
                         e.preventDefault();
                         this.provideInput();
                     }
