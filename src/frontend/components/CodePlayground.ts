@@ -687,7 +687,8 @@ export class CodePlayground extends PapyrosElement {
                                     ></p-file-viewer>`
                                   : this.failedFile === undefined
                                     ? html`<div class="file-status status-line">
-                                          <span class="spinner"></span>${this.t("Papyros.playground.file_loading")}
+                                          <md-circular-progress indeterminate aria-hidden="true"></md-circular-progress
+                                          >${this.t("Papyros.playground.file_loading")}
                                       </div>`
                                     : nothing
                           }
