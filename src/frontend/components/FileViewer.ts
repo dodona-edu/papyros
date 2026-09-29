@@ -89,6 +89,12 @@ export class FileViewer extends PapyrosElement {
         setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
 
+    public override disconnectedCallback(): void {
+        super.disconnectedCallback();
+        // Switching to another tab removes this viewer; the edit still has to reach the backend.
+        this.debouncedUpdateFile.flush();
+    }
+
     protected override updated(changedProperties: Map<PropertyKey, unknown>): void {
         if (changedProperties.has("file") && this.file && !this.file.binary && !this.readonly) {
             this.editorRef.value?.focus();

@@ -10,7 +10,14 @@ import { RunMode } from "../../backend/Backend";
 import { preloadWhenVisible, stopPreloading } from "./playground/preload";
 import "@material/web/progress/circular-progress";
 import "./code_runner/Code";
-import { outputStyles, renderError, renderImage, renderOverflow, shownOutput } from "./output/renderOutput";
+import {
+    isFriendlyError,
+    outputStyles,
+    renderError,
+    renderImage,
+    renderOverflow,
+    shownOutput,
+} from "./output/renderOutput";
 import "./EditorTabs";
 import "./FileViewer";
 
@@ -363,7 +370,7 @@ export class CodePlayground extends PapyrosElement {
     }
 
     private get isActive(): boolean {
-        return this.papyros.runtime.running === this.papyros;
+        return this.papyros.runtime.isRunning(this.papyros);
     }
 
     private get otherRunning(): boolean {
@@ -680,10 +687,7 @@ export class CodePlayground extends PapyrosElement {
                                         readonly
                                     ></p-file-viewer>`
                                   : this.failedFile === undefined
-                                    ? html`<div class="file-status status-line">
-                                          <md-circular-progress indeterminate aria-hidden="true"></md-circular-progress
-                                          >${this.t("Papyros.playground.file_loading")}
-                                      </div>`
+                                    ? this.renderStatus(this.t("Papyros.playground.file_loading"), "file-status")
                                     : nothing
                           }
                       </div>`
@@ -787,16 +791,19 @@ export class CodePlayground extends PapyrosElement {
                 <div class="output-body" style=${styleMap(this.bodyReservationStyle())}>
                     ${
                         outputBlocks.length === 0 && (this.preparing || this.isActive)
-                            ? html`<div class="status-line">
-                                  <md-circular-progress indeterminate aria-hidden="true"></md-circular-progress
-                                  >${this.statusText()}
-                              </div>`
+                            ? this.renderStatus(this.statusText())
                             : outputBlocks
                     }
                 </div>
             </div>
             ${errors.map((entry) => this.renderError(entry))} ${this.launchFailed ? this.renderLaunchError() : nothing}
         `;
+    }
+
+    private renderStatus(text: string, extraClass = ""): TemplateResult {
+        return html`<div class="status-line ${extraClass}">
+            <md-circular-progress indeterminate aria-hidden="true"></md-circular-progress>${text}
+        </div>`;
     }
 
     private renderLaunchError(): TemplateResult {
@@ -806,13 +813,11 @@ export class CodePlayground extends PapyrosElement {
     }
 
     private renderError(entry: OutputEntry): TemplateResult {
-        const content = entry.content;
-        if (typeof content !== "string" && "name" in content) {
-            return html`<div class="error">${renderError(content, this.papyros)}</div>`;
+        if (isFriendlyError(entry.content)) {
+            return html`<div class="error">${renderError(entry.content, this.papyros)}</div>`;
         }
-        const text = typeof content === "string" ? content : JSON.stringify(content);
         return html`<div class="error">
-            <div class="error-title" role="alert">${renderError(text, this.papyros)}</div>
+            <div class="error-title" role="alert">${renderError(entry.content, this.papyros)}</div>
         </div>`;
     }
 }

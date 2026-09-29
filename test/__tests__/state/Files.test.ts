@@ -2,7 +2,7 @@ import { Papyros } from "../../../src/frontend/state/Papyros";
 import { expect, it, describe, beforeAll, beforeEach, afterAll } from "vitest";
 import { ProgrammingLanguage } from "../../../src/ProgrammingLanguage";
 import { launchPapyros, settlePapyros, waitForFiles, waitForPapyrosReady, waitForInputReady, waitForOutput, waitForAwaitingInput, wipeWorkspace } from "../../helpers";
-import { isValidFileName } from "../../../src/util/Util";
+import { isFileNameAvailable, isValidFileName } from "../../../src/util/Util";
 
 describe("isValidFileName", () => {
     it.each(["../escape", "/absolute", "trailing/", "a//b", ".", "a/./b", "a/../b", ""])
@@ -14,6 +14,27 @@ describe("isValidFileName", () => {
         ("accepts valid name: %s", (name) => {
             expect(isValidFileName(name)).toBe(true);
         });
+});
+
+describe("isFileNameAvailable", () => {
+    const files = [{ name: "a.txt" }, { name: "b.txt" }];
+
+    it("accepts a valid name no file has", () => {
+        expect(isFileNameAvailable("c.txt", files)).toBe(true);
+    });
+
+    it("rejects an invalid name", () => {
+        expect(isFileNameAvailable("../c.txt", files)).toBe(false);
+    });
+
+    it("rejects a name another file has", () => {
+        expect(isFileNameAvailable("a.txt", files)).toBe(false);
+        expect(isFileNameAvailable("a.txt", files, "b.txt")).toBe(false);
+    });
+
+    it("accepts the name being replaced", () => {
+        expect(isFileNameAvailable("a.txt", files, "a.txt")).toBe(true);
+    });
 });
 
 // One Pyodide boot for the whole file: the tests that execute code share a Python

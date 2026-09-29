@@ -115,6 +115,10 @@ export class PapyrosRuntime extends State {
         return true;
     }
 
+    public isRunning(papyros: Papyros): boolean {
+        return this.running === papyros;
+    }
+
     /**
      * Whether a run by another instance is in progress, which the given instance must wait out
      */
