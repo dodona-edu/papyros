@@ -2,6 +2,7 @@ import { css, CSSResult, html, TemplateResult } from "lit";
 import "../code_mirror/CodeEditor";
 import { customElement } from "lit/decorators.js";
 import { PapyrosElement } from "../PapyrosElement";
+import type { WorkerDiagnostic } from "../../../backend/Backend";
 
 @customElement("p-code")
 export class Code extends PapyrosElement {
@@ -14,6 +15,8 @@ export class Code extends PapyrosElement {
         `;
     }
 
+    private lintSource = (): Promise<WorkerDiagnostic[]> => this.papyros.runner.lintSource();
+
     protected override render(): TemplateResult {
         return html`
             <p-code-editor
@@ -23,7 +26,7 @@ export class Code extends PapyrosElement {
                 .debug=${this.papyros.debugger.active}
                 .debugLine=${this.papyros.debugger.debugLine}
                 .value=${this.papyros.runner.effectiveCode}
-                .lintingSource=${this.papyros.runner.lintSource.bind(this.papyros.runner)}
+                .lintingSource=${this.lintSource}
                 .indentLength=${this.papyros.constants.indentationSize}
                 .translations=${this.papyros.i18n.getTranslations("CodeMirror")}
                 .theme=${this.papyros.constants.CodeMirrorTheme}

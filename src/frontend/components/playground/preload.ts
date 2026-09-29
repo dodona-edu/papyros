@@ -10,10 +10,6 @@ interface Preload {
 
 const preloads: WeakMap<PapyrosRuntime, Preload> = new WeakMap();
 
-function launch(papyros: Papyros): Promise<void> {
-    return papyros.runner.backendReady ? Promise.resolve() : papyros.runner.launch();
-}
-
 /**
  * Launch the runtime of a playground once the first playground on that runtime scrolls
  * into view, rather than on page load: a page can hold playgrounds nobody ever sees, such
@@ -25,7 +21,7 @@ function launch(papyros: Papyros): Promise<void> {
 export function preloadWhenVisible(element: Element, papyros: Papyros): void {
     let preload = preloads.get(papyros.runtime);
     if (preload?.started) {
-        launch(papyros).catch(() => undefined);
+        papyros.runner.ensureLaunched().catch(() => undefined);
         return;
     }
     if (!preload) {
@@ -41,7 +37,7 @@ export function preloadWhenVisible(element: Element, papyros: Papyros): void {
                 created.observer.disconnect();
                 created.started = true;
                 const reporter = waiting.get(visible.target)!;
-                const launches = [...waiting.values()].map(launch);
+                const launches = [...waiting.values()].map((instance) => instance.runner.ensureLaunched());
                 waiting.clear();
                 // A failure is reported once, and the next Run retries the launch
                 Promise.all(launches).catch((error) =>

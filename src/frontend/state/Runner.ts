@@ -224,7 +224,7 @@ export class Runner extends State {
         try {
             await this.backend;
             // Another instance on a shared runtime may have replaced the worker since
-            return await this.papyros.runtime.ready(this.programmingLanguage, this.papyros);
+            return await this.papyros.runtime.ready(this.programmingLanguage);
         } catch {
             return undefined;
         }
@@ -264,8 +264,7 @@ export class Runner extends State {
         this.papyros.events.subscribe(BackendEventType.Input, () => this.setState(RunState.AwaitingInput));
         this.papyros.events.subscribe(BackendEventType.Loading, (e) => {
             // Packages installed for another instance's run say nothing about this one
-            const running = this.papyros.runtime.running;
-            if (running === null || running === this.papyros) {
+            if (!this.papyros.runtime.isBusyFor(this.papyros)) {
                 this.onLoad(e);
             }
         });
@@ -331,6 +330,17 @@ export class Runner extends State {
     }
 
     /**
+     * Resolves at once when the backend is up, and otherwise launches it. Rejects when
+     * the launch fails, without the alert or confirm of Papyros.launch(), so the caller
+     * decides how to report it and a later call retries.
+     */
+    public async ensureLaunched(): Promise<void> {
+        if (!this.backendReady) {
+            await this.launch();
+        }
+    }
+
+    /**
      * Replace a runtime that can no longer run or lint code, and on a private runtime
      * put the files it held back into the fresh one. A shared runtime is left empty:
      * each run there writes the files it needs itself.
@@ -370,7 +380,7 @@ export class Runner extends State {
     }
 
     private async launchBackend(language: ProgrammingLanguage, launchId: number): Promise<SyncClient<Backend>> {
-        const backend = await this.papyros.runtime.ready(language, this.papyros);
+        const backend = await this.papyros.runtime.ready(language);
         if (launchId === this.launchId) {
             this.updateRunModes();
             this.backendReady = true;
@@ -477,7 +487,7 @@ export class Runner extends State {
      */
     public async stop(): Promise<void> {
         const runtime = this.papyros.runtime;
-        if (runtime.running !== null && runtime.running !== this.papyros) {
+        if (runtime.isBusyFor(this.papyros)) {
             return;
         }
         this.setState(RunState.Stopping);
