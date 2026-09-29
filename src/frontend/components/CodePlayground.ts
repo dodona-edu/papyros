@@ -8,10 +8,9 @@ import { PapyrosLaunchError } from "../state/PapyrosErrors";
 import type { PapyrosRuntime } from "../state/PapyrosRuntime";
 import { RunMode } from "../../backend/Backend";
 import { preloadWhenVisible, stopPreloading } from "./playground/preload";
-import { visuallyHiddenStyles } from "./shared-styles";
 import "@material/web/progress/circular-progress";
 import "./code_runner/Code";
-import { outputStyles, renderError, renderImage, renderOverflow } from "./output/renderOutput";
+import { outputStyles, renderError, renderImage, renderOverflow, shownOutput } from "./output/renderOutput";
 import "./EditorTabs";
 import "./FileViewer";
 
@@ -286,8 +285,6 @@ export class CodePlayground extends PapyrosElement {
             .config-error-title {
                 font-weight: 700;
             }
-
-            ${visuallyHiddenStyles}
 
             ${outputStyles}
         `;
@@ -743,8 +740,7 @@ export class CodePlayground extends PapyrosElement {
 
         // Caps rendered entries like p-output does; the rest is not walked on every render.
         const maxLength = this.papyros.constants.maxOutputLength;
-        const truncated = outputs.length > maxLength;
-        const entries = truncated ? outputs.slice(0, maxLength) : outputs;
+        const { shown: entries, truncated } = shownOutput(outputs, maxLength);
 
         for (const entry of entries) {
             if (entry.type === OutputType.stderr) {

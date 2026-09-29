@@ -1,13 +1,15 @@
 import { css, html, TemplateResult } from "lit";
-import { FriendlyError, OutputEntry, OutputType } from "../../state/InputOutput";
+import { DEFAULT_IMAGE_CONTENT_TYPE, FriendlyError, OutputEntry, OutputType } from "../../state/InputOutput";
 import type { Papyros } from "../../state/Papyros";
+import { visuallyHiddenStyles } from "../shared-styles";
 import "../FriendlyError";
 
 /**
  * Styles for the markup below; include them in the styles of any component that uses it.
- * String errors also need a `.visually-hidden` class, such as visuallyHiddenStyles.
  */
 export const outputStyles = css`
+    ${visuallyHiddenStyles}
+
     .output-img {
         display: block;
         max-width: 100%;
@@ -25,9 +27,18 @@ export const outputStyles = css`
     }
 `;
 
+/**
+ * The entries up to `max`, and whether there were more. Entries past the cut are neither
+ * rendered nor walked on every render.
+ */
+export function shownOutput(entries: OutputEntry[], max: number): { shown: OutputEntry[]; truncated: boolean } {
+    const truncated = entries.length > max;
+    return { shown: truncated ? entries.slice(0, max) : entries, truncated };
+}
+
 export function renderImage(entry: OutputEntry, papyros: Papyros): TemplateResult {
     // The backends send the encoding along in the content type, e.g. "image/png;base64"
-    const contentType = entry.contentType ?? "image/png;base64";
+    const contentType = entry.contentType ?? DEFAULT_IMAGE_CONTENT_TYPE;
     return html`<img
         class="output-img"
         src="data:${contentType},${entry.content as string}"

@@ -2,9 +2,9 @@ import { customElement } from "lit/decorators.js";
 import { css, CSSResult, html, TemplateResult } from "lit";
 import { OutputEntry, OutputTab, OutputType, OUTPUT_TAB, TURTLE_TAB } from "../state/InputOutput";
 import { PapyrosElement } from "./PapyrosElement";
-import { tabBarStyles, tabButtonStyles, visuallyHiddenStyles } from "./shared-styles";
+import { tabBarStyles, tabButtonStyles } from "./shared-styles";
 import { TurtlePatch, TurtleSvgBuilder } from "../state/TurtleSvg";
-import { outputStyles, renderEntry, renderOverflow } from "./output/renderOutput";
+import { outputStyles, renderEntry, renderOverflow, shownOutput } from "./output/renderOutput";
 
 @customElement("p-output")
 export class Output extends PapyrosElement {
@@ -82,7 +82,6 @@ export class Output extends PapyrosElement {
             }
 
             ${tabButtonStyles}
-            ${visuallyHiddenStyles}
             ${outputStyles}
         `;
     }
@@ -99,11 +98,11 @@ export class Output extends PapyrosElement {
     }
 
     get outputs(): OutputEntry[] {
-        return this.papyros.io.output.slice(0, this.maxOutputLength);
+        return shownOutput(this.papyros.io.output, this.maxOutputLength).shown;
     }
 
     get showOverflowWarning(): boolean {
-        return !this.papyros.debugger.active && this.papyros.io.output.length > this.maxOutputLength;
+        return !this.papyros.debugger.active && shownOutput(this.papyros.io.output, this.maxOutputLength).truncated;
     }
 
     get renderedOutputs(): TemplateResult[] {
