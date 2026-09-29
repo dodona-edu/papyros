@@ -520,7 +520,7 @@ export class Runner extends State {
     }
 
     public async provideInput(input: string): Promise<void> {
-        if (this.papyros.runtime.running !== this.papyros) {
+        if (!this.papyros.runtime.isRunning(this.papyros)) {
             return;
         }
         const backend = await this.availableBackend();

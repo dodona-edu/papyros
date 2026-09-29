@@ -3,6 +3,7 @@ import "@dodona/trace-component";
 import { customElement } from "lit/decorators.js";
 import { PapyrosElement } from "./PapyrosElement";
 import { fadeIn } from "./motion";
+import { placeholderStyles } from "./shared-styles";
 
 @customElement("p-debugger")
 export class Debugger extends PapyrosElement {
@@ -47,9 +48,7 @@ export class Debugger extends PapyrosElement {
                 --tc-tertiary-color: var(--md-sys-color-tertiary);
             }
 
-            .place-holder {
-                color: var(--md-sys-color-on-surface-variant);
-            }
+            ${placeholderStyles}
 
             .scroll-region {
                 height: 100%;

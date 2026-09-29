@@ -6,6 +6,7 @@ import { PapyrosElement } from "./PapyrosElement";
 import { tabBarStyles, tabButtonStyles } from "./shared-styles";
 import { HeightTransition } from "./motion";
 import { InputMode } from "../state/InputOutput";
+import { nextTabIndex } from "./tabs";
 
 const MODES = [InputMode.interactive, InputMode.batch];
 
@@ -29,12 +30,6 @@ export class Input extends PapyrosElement {
 
             ${tabBarStyles}
             ${tabButtonStyles}
-
-            .tablist {
-                display: flex;
-                flex-direction: row;
-                height: 100%;
-            }
 
             /* Names the pane, since the tabs themselves only name the two modes.
                A caption rather than a tab-sized label, so it is not read as a tab. */
@@ -109,24 +104,8 @@ export class Input extends PapyrosElement {
 
     /** Standard ARIA tabs pattern: arrow keys move focus and select in one step. */
     private handleTabsKeydown(e: KeyboardEvent): void {
-        const currentIndex = MODES.indexOf(this.mode);
-        let nextIndex: number;
-        switch (e.key) {
-            case "ArrowLeft":
-                nextIndex = (currentIndex - 1 + MODES.length) % MODES.length;
-                break;
-            case "ArrowRight":
-                nextIndex = (currentIndex + 1) % MODES.length;
-                break;
-            case "Home":
-                nextIndex = 0;
-                break;
-            case "End":
-                nextIndex = MODES.length - 1;
-                break;
-            default:
-                return;
-        }
+        const nextIndex = nextTabIndex(e.key, MODES.indexOf(this.mode), MODES.length);
+        if (nextIndex === undefined) return;
         e.preventDefault();
         const nextMode = MODES[nextIndex];
         this.selectMode(nextMode);

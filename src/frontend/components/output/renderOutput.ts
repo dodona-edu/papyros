@@ -46,9 +46,15 @@ export function renderImage(entry: OutputEntry, papyros: Papyros): TemplateResul
     />`;
 }
 
-export function renderError(error: string | FriendlyError, papyros: Papyros): TemplateResult {
-    if (typeof error === "string") {
-        return html`<span class="visually-hidden">${papyros.i18n.t("Papyros.error_prefix")}</span>${error}`;
+export function isFriendlyError(error: unknown): error is FriendlyError {
+    return typeof error === "object" && error !== null && "name" in error;
+}
+
+/** A friendly error, or anything else as plain text: a backend may send an object of another shape. */
+export function renderError(error: unknown, papyros: Papyros): TemplateResult {
+    if (!isFriendlyError(error)) {
+        const text = typeof error === "string" ? error : JSON.stringify(error);
+        return html`<span class="visually-hidden">${papyros.i18n.t("Papyros.error_prefix")}</span>${text}`;
     }
     return html`<p-friendly-error .error=${error} .papyros=${papyros}></p-friendly-error>${
             error.why ? html`<span class="why">${error.why.trim()}</span>` : ""
@@ -64,7 +70,7 @@ export function renderEntry(entry: OutputEntry, papyros: Papyros): TemplateResul
     } else if (entry.type === OutputType.img) {
         return renderImage(entry, papyros);
     } else if (entry.type === OutputType.stderr) {
-        return html`<span class="error">${renderError(entry.content as string | FriendlyError, papyros)}</span>`;
+        return html`<span class="error">${renderError(entry.content, papyros)}</span>`;
     }
     return html``;
 }
@@ -84,7 +90,13 @@ export function outputAsText(entries: OutputEntry[]): string {
                     return `Error: ${o.content}\n`;
                 }
                 const errorObject = o.content as FriendlyError;
-                let errorString = `Error: ${errorObject.name}\nInfo: ${errorObject.info}\nTraceback: ${errorObject.traceback}\n`;
+                let errorString = `Error: ${errorObject.name}\n`;
+                if (errorObject.info) {
+                    errorString += `Info: ${errorObject.info}\n`;
+                }
+                if (errorObject.traceback) {
+                    errorString += `Traceback: ${errorObject.traceback}\n`;
+                }
                 if (errorObject.where) {
                     errorString += `Where: ${errorObject.where.trim()}\n`;
                 }

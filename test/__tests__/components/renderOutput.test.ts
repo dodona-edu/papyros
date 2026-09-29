@@ -64,6 +64,17 @@ describe("renderEntry", () => {
         expect(el.querySelector(".error .why")!.textContent).toBe("x / 0");
     });
 
+    it("shows an error object without a name as plain text", () => {
+        const el = container();
+        render(
+            renderEntry({ type: OutputType.stderr, content: { message: "odd" } as unknown as string }, new Papyros()),
+            el,
+        );
+
+        expect(el.querySelector("p-friendly-error")).toBeNull();
+        expect(el.querySelector(".error")!.textContent).toBe('Error: {"message":"odd"}');
+    });
+
     it("leaves out why when the error has none", () => {
         const el = container();
         render(renderEntry({ type: OutputType.stderr, content: { name: "ValueError" } }, new Papyros()), el);
@@ -107,6 +118,14 @@ describe("renderOverflow", () => {
         ).toBe(
             "[Image output of type image/png;base64 omitted]\n" +
                 "Error: ValueError\nInfo: info\nTraceback: tb\nWhat: bad\nWhy: because\n",
+        );
+    });
+});
+
+describe("outputAsText", () => {
+    it("leaves out the info and traceback of a friendly error that has none", () => {
+        expect(outputAsText([{ type: OutputType.stderr, content: { name: "ValueError" } }])).toBe(
+            "Error: ValueError\n",
         );
     });
 });

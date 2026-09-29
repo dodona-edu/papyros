@@ -5,7 +5,7 @@ import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { ifDefined } from "lit/directives/if-defined.js";
 import { FileEntry } from "../state/InputOutput";
 import { inlineInputStyles, tabButtonStyles, visuallyHiddenStyles } from "./shared-styles";
-import { isValidFileName } from "../../util/Util";
+import { isFileNameAvailable } from "../../util/Util";
 
 let nextId = 0;
 
@@ -142,9 +142,7 @@ export class EditorTab extends PapyrosElement {
 
     private onRenameInput(): void {
         const value = this.renameInputRef.value?.value.trim() ?? "";
-        this.invalid =
-            !isValidFileName(value) ||
-            (value !== this.file.name && this.papyros.io.files.some((f) => f.name === value));
+        this.invalid = !isFileNameAvailable(value, this.papyros.io.files, this.file.name);
     }
 
     private onRenameKeydown(e: KeyboardEvent): void {

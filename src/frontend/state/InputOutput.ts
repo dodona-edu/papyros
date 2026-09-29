@@ -1,6 +1,6 @@
 import { State, stateProperty } from "@dodona/lit-state";
 import { BackendEventType } from "../../communication/BackendEvent";
-import { isValidFileName, parseData } from "../../util/Util";
+import { isFileNameAvailable, isValidFileName, parseData } from "../../util/Util";
 import { Papyros } from "./Papyros";
 import { RunState } from "./Runner";
 import { ServiceWorkerInputError } from "./PapyrosErrors";
@@ -229,7 +229,7 @@ export class InputOutput extends State {
     }
 
     public addFile(name: string, content: string = "", binary: boolean = false): boolean {
-        if (!isValidFileName(name) || this.files.some((f) => f.name === name)) {
+        if (!isFileNameAvailable(name, this.files)) {
             return false;
         }
         this.files = [...this.files, { name, content, binary }];
