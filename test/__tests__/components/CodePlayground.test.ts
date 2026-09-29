@@ -70,6 +70,7 @@ interface MountOptions {
     code?: string;
     label?: string;
     language?: string;
+    files?: string;
     runtime?: PapyrosRuntime;
     client?: any;
     /** Keeps the playground in view, which is what starts the preload */
@@ -86,6 +87,9 @@ async function mount(options: MountOptions = {}): Promise<CodePlayground> {
     }
     if (options.language !== undefined) {
         el.programmingLanguage = options.language;
+    }
+    if (options.files !== undefined) {
+        el.files = options.files;
     }
     if (!options.visible) {
         // Out of view, so the preload leaves the launch to the test
@@ -172,6 +176,7 @@ function mockScroll(log: HTMLElement, geometry: { clientHeight: number; lineHeig
 }
 
 afterEach(() => {
+    vi.unstubAllGlobals();
     for (const el of mounted.splice(0)) {
         el.remove();
     }
@@ -813,4 +818,132 @@ describe("p-code-playground preload", () => {
         expect(client).toBe(working);
         await finishRun(first, client);
     });
+});
+
+// Loaded files are cached per URL for the whole module, so every test uses its own file names.
+function stubFiles(files: Record<string, () => Response>): ReturnType<typeof vi.fn> {
+    const realFetch = globalThis.fetch;
+    const fetch = vi.fn(async (input: RequestInfo | URL) => {
+        const name = new URL(String(input), document.baseURI).pathname.split("/").pop()!;
+        return files[name] ? files[name]() : realFetch(input);
+    });
+    vi.stubGlobal("fetch", fetch);
+    return fetch;
+}
+
+function fileTabs(el: CodePlayground): HTMLElement | null {
+    return $(el, "p-editor-tabs");
+}
+
+function tabButtons(el: CodePlayground): HTMLButtonElement[] {
+    const tabs = Array.from(fileTabs(el)!.shadowRoot!.querySelectorAll<HTMLElement>("[role=tab], p-editor-tab"));
+    return tabs.flatMap((tab) =>
+        tab.matches("p-editor-tab")
+            ? [tab.shadowRoot!.querySelector<HTMLButtonElement>("button")!]
+            : [tab as HTMLButtonElement],
+    );
+}
+
+describe("p-code-playground files", () => {
+    it("has no tabs without files", async () => {
+        const el = await mount();
+
+        expect(fileTabs(el)).toBeNull();
+    });
+
+    it("shows a read-only tab per file next to the code tab", async () => {
+        stubFiles({ "tabs-a.txt": () => new Response("a"), "tabs-b.txt": () => new Response("b") });
+        const el = await mount({ files: " media/tabs-a.txt\n media/tabs-b.txt " });
+        await settle(el);
+
+        const tabs = fileTabs(el)! as HTMLElement & { readonly: boolean };
+        await (tabs as any).updateComplete;
+        expect(tabs.readonly).toBe(true);
+        expect(tabButtons(el).map((b) => b.textContent!.trim())).toEqual(["Code", "tabs-a.txt", "tabs-b.txt"]);
+    });
+
+    it("shows a loading state, then the file content, when a file tab is opened", async () => {
+        let respond: (r: Response) => void = () => undefined;
+        const pending = new Promise<Response>((resolve) => (respond = resolve));
+        stubFiles({ "open-me.txt": () => pending as unknown as Response });
+        const el = await mount({ files: "open-me.txt" });
+
+        tabButtons(el)[1].click();
+        await settle(el);
+        expect($(el, ".file-panel")!.textContent).toContain("Loading file");
+        expect($(el, "p-code")!.hidden).toBe(true);
+
+        respond(new Response("naam;score\n"));
+        await vi.waitFor(() => expect($(el, "p-file-viewer")).not.toBeNull());
+        const viewer = $<
+            HTMLElement & { file: { content: string }; readonly: boolean; updateComplete: Promise<boolean> }
+        >(el, "p-file-viewer")!;
+        expect(viewer.file.content).toBe("naam;score\n");
+        expect(viewer.readonly).toBe(true);
+    });
+
+    it("passes the loaded files to the run", async () => {
+        stubFiles({ "run-grades.txt": () => new Response("18\n15\n") });
+        const client = fakeClient();
+        const el = await mount({ client, files: "media/run-grades.txt" });
+
+        await startRun(el);
+
+        expect(client.workerProxy.clearWorkspace).toHaveBeenCalled();
+        expect(client.workerProxy.updateFile).toHaveBeenCalledWith("run-grades.txt", "18\n15\n", false);
+        await finishRun(el, client);
+    });
+
+    it("shows an alert and does not run when a file fails to load", async () => {
+        stubFiles({ "gone.txt": () => new Response("Not found", { status: 404 }) });
+        const client = fakeClient();
+        const el = await mount({ client, files: "gone.txt" });
+
+        button(el, "button.run").click();
+        await vi.waitFor(() => expect($(el, ".file-error")).not.toBeNull());
+
+        expect($(el, ".file-error")!.getAttribute("role")).toBe("alert");
+        expect($(el, ".file-error")!.textContent).toContain("gone.txt");
+        expect(client.workerProxy.runCode).not.toHaveBeenCalled();
+        expect(el.papyros.runtime.running).toBeNull();
+    });
+
+    it("runs on the next attempt once the file loads", async () => {
+        const responses = [() => new Response("nope", { status: 500 }), () => new Response("fine")];
+        stubFiles({ "retry.txt": () => responses.shift()!() });
+        const client = fakeClient();
+        const el = await mount({ client, files: "retry.txt" });
+
+        button(el, "button.run").click();
+        await vi.waitFor(() => expect($(el, ".file-error")).not.toBeNull());
+        await startRun(el);
+
+        expect($(el, ".file-error")).toBeNull();
+        expect(client.workerProxy.updateFile).toHaveBeenCalledWith("retry.txt", "fine", false);
+        await finishRun(el, client);
+    });
+
+    it("shows a config error for duplicate file names", async () => {
+        const el = await mount({ files: "a/data.txt b/data.txt" });
+
+        expect($(el, ".config-error")!.textContent).toContain('"data.txt"');
+        expect(fileTabs(el)).toBeNull();
+    });
+
+    it("lets a real run read a declared file", async () => {
+        stubFiles({ "grades.txt": () => new Response("18\n15\n") });
+        const runtime = new PapyrosRuntime();
+        runtimes.push(runtime);
+        const el = await mount({
+            runtime,
+            code: 'print(open("grades.txt").read().split())',
+            files: "media/grades.txt",
+        });
+
+        button(el, "button.run").click();
+
+        await vi.waitFor(() => expect(el.outputs.map((o) => o.content).join("")).toContain("['18', '15']"), {
+            timeout: 120000,
+        });
+    }, 180000);
 });

@@ -2,7 +2,8 @@ import { customElement, property, state } from "lit/decorators.js";
 import { css, CSSResult, html, nothing, PropertyValues, TemplateResult } from "lit";
 import { styleMap } from "lit/directives/style-map.js";
 import { PapyrosElement } from "./PapyrosElement";
-import { OutputEntry, OutputType } from "../state/InputOutput";
+import { FileEntry, OutputEntry, OutputType } from "../state/InputOutput";
+import { fileNameFromUrl, loadFile } from "../state/Files";
 import { PapyrosLaunchError } from "../state/PapyrosErrors";
 import type { PapyrosRuntime } from "../state/PapyrosRuntime";
 import { RunMode } from "../../backend/Backend";
@@ -11,6 +12,8 @@ import { visuallyHiddenStyles } from "./shared-styles";
 import "@material/web/progress/circular-progress";
 import "./code_runner/Code";
 import "./FriendlyError";
+import "./EditorTabs";
+import "./FileViewer";
 
 /**
  * Mirrors the .output-body min-height below: reservations at or below this floor are a no-op
@@ -139,6 +142,31 @@ export class CodePlayground extends PapyrosElement {
                 display: block;
                 height: auto;
                 min-height: 40px;
+            }
+
+            [hidden] {
+                display: none;
+            }
+
+            p-editor-tabs {
+                border-bottom: 1px solid var(--md-sys-color-outline-variant);
+            }
+
+            .file-panel {
+                max-height: 300px;
+                overflow: auto;
+            }
+
+            .file-status {
+                padding: 14px 16px;
+                font-size: 14px;
+            }
+
+            .file-error {
+                padding: 14px 16px;
+                background: var(--md-sys-color-error-container);
+                color: var(--md-sys-color-on-error-container);
+                font-size: 14px;
             }
 
             .input-row,
@@ -286,6 +314,14 @@ export class CodePlayground extends PapyrosElement {
     @property({ type: String })
     label?: string;
 
+    /**
+     * Space-separated paths of data files the code can open, resolved against the document's
+     * base URL. They show as read-only tabs above the editor and are the only files a run
+     * starts with.
+     */
+    @property({ type: String })
+    files = "";
+
     @state()
     private preparing = false;
 
@@ -294,6 +330,17 @@ export class CodePlayground extends PapyrosElement {
 
     @state()
     private reservedHeight = 0;
+
+    // Keyed by URL. Replaced instead of mutated so that a load triggers a render.
+    @state()
+    private previews = new Map<string, FileEntry>();
+
+    @state()
+    private failedFile: string | undefined;
+
+    private fileRefs: { name: string; url: string }[] = [];
+
+    private fileTabs: FileEntry[] = [];
 
     private wasAwaitingInput = false;
     private wasActive = false;
@@ -327,6 +374,11 @@ export class CodePlayground extends PapyrosElement {
 
     private get otherRunning(): boolean {
         return this.papyros.runtime.isBusyFor(this.papyros);
+    }
+
+    private get duplicateFileName(): string | undefined {
+        const names = this.fileRefs.map((f) => f.name);
+        return names.find((name, index) => names.indexOf(name) !== index);
     }
 
     private get dirty(): boolean {
@@ -364,6 +416,17 @@ export class CodePlayground extends PapyrosElement {
 
     protected override willUpdate(changedProperties: PropertyValues): void {
         super.willUpdate(changedProperties);
+        if (changedProperties.has("files")) {
+            this.fileRefs = this.files
+                .split(/\s+/)
+                .filter((path) => path !== "")
+                .map((path) => {
+                    const url = new URL(path, document.baseURI).href;
+                    return { name: fileNameFromUrl(url), url };
+                });
+            this.fileTabs = this.fileRefs.map((f) => ({ name: f.name, content: "", binary: false }));
+            this.failedFile = undefined;
+        }
         if (changedProperties.has("code")) {
             this.papyros.runner.code = this.code;
         }
@@ -395,6 +458,7 @@ export class CodePlayground extends PapyrosElement {
 
     protected override updated(changedProperties: PropertyValues): void {
         super.updated(changedProperties);
+        this.previewActiveFile();
         const log = this.outputLog;
         if (log && this.scrollToTop) {
             log.scrollTop = 0;
@@ -424,6 +488,40 @@ export class CodePlayground extends PapyrosElement {
         return this.renderRoot.querySelector<HTMLElement>(".output");
     }
 
+    private get activeFile(): { name: string; url: string } | undefined {
+        return this.fileRefs.find((f) => f.name === this.papyros.io.activeEditorTab);
+    }
+
+    // Files load when their tab is first opened, or when Run needs them
+    private previewActiveFile(): void {
+        const file = this.activeFile;
+        if (!file || this.previews.has(file.url) || this.failedFile !== undefined) {
+            return;
+        }
+        loadFile(file.url).then(
+            (loaded) => (this.previews = new Map(this.previews).set(file.url, loaded)),
+            () => (this.failedFile = file.name),
+        );
+    }
+
+    /** Resolves to undefined after a failure, which is shown as an alert */
+    private async loadRunFiles(): Promise<FileEntry[] | undefined> {
+        try {
+            return await Promise.all(
+                this.fileRefs.map(async (f) => {
+                    try {
+                        return await loadFile(f.url);
+                    } catch (error) {
+                        this.failedFile ??= f.name;
+                        throw error;
+                    }
+                }),
+            );
+        } catch {
+            return undefined;
+        }
+    }
+
     private async run(): Promise<void> {
         // Measure the output height before the run empties it, so the panel body can hold its
         // height across the run instead of collapsing and regrowing. Capped at the height that
@@ -436,8 +534,13 @@ export class CodePlayground extends PapyrosElement {
         this.scrollToTop = true;
         this.preparing = true;
         this.launchFailed = false;
+        this.failedFile = undefined;
+        // Started before the launch so the two overlap
+        const loading = this.loadRunFiles();
+        let files: FileEntry[] | undefined;
         try {
             await this.papyros.runner.ensureLaunched();
+            files = await loading;
         } catch (error) {
             this.papyros.errorHandler(
                 new PapyrosLaunchError("Launching the code playground runtime failed", { cause: error }),
@@ -447,8 +550,11 @@ export class CodePlayground extends PapyrosElement {
         } finally {
             this.preparing = false;
         }
-        // An empty file list starts every run from an empty workspace
-        this.papyros.runner.start(RunMode.Run, []).catch((error) => this.papyros.errorHandler(error));
+        if (!files) {
+            return;
+        }
+        // Passing the files, even none, starts every run from a workspace holding only those
+        this.papyros.runner.start(RunMode.Run, files).catch((error) => this.papyros.errorHandler(error));
     }
 
     private onRunStopClick(): void {
@@ -497,7 +603,16 @@ export class CodePlayground extends PapyrosElement {
     }
 
     protected override render(): TemplateResult {
-        return this.supported ? this.renderCard() : this.renderConfigError();
+        if (!this.supported) {
+            return this.renderConfigError(
+                this.t("Papyros.playground.unsupported_language", { language: this.programmingLanguage }),
+            );
+        }
+        const duplicate = this.duplicateFileName;
+        if (duplicate !== undefined) {
+            return this.renderConfigError(this.t("Papyros.playground.duplicate_file_name", { name: duplicate }));
+        }
+        return this.renderCard();
     }
 
     private renderCard(): TemplateResult {
@@ -540,18 +655,55 @@ export class CodePlayground extends PapyrosElement {
                         }
                     </div>
                 </div>
-                <p-code .papyros=${this.papyros}></p-code>
+                ${this.fileRefs.length > 0 ? this.renderFileTabs() : nothing}
+                <p-code ?hidden=${this.activeFile !== undefined} .papyros=${this.papyros}></p-code>
                 ${showInput ? this.renderInput() : nothing} ${this.renderPanels()}
             </div>
         `;
     }
 
-    private renderConfigError(): TemplateResult {
+    private renderConfigError(message: string): TemplateResult {
         return html`
             <div class="config-error">
                 <div class="config-error-title">${this.t("Papyros.playground.config_error_title")}</div>
-                <div>${this.t("Papyros.playground.unsupported_language", { language: this.programmingLanguage })}</div>
+                <div>${message}</div>
             </div>
+        `;
+    }
+
+    private renderFileTabs(): TemplateResult {
+        const file = this.activeFile;
+        const preview = file && this.previews.get(file.url);
+        return html`
+            <p-editor-tabs .papyros=${this.papyros} .files=${this.fileTabs} readonly></p-editor-tabs>
+            ${
+                file
+                    ? html`<div class="file-panel" role="tabpanel" aria-label=${file.name}>
+                          ${
+                              preview
+                                  ? html`<p-file-viewer
+                                        .papyros=${this.papyros}
+                                        .file=${preview}
+                                        .url=${file.url}
+                                        readonly
+                                    ></p-file-viewer>`
+                                  : this.failedFile === undefined
+                                    ? html`<div class="file-status status-line">
+                                          <md-circular-progress indeterminate aria-hidden="true"></md-circular-progress
+                                          >${this.t("Papyros.playground.file_loading")}
+                                      </div>`
+                                    : nothing
+                          }
+                      </div>`
+                    : nothing
+            }
+            ${
+                this.failedFile === undefined
+                    ? nothing
+                    : html`<div class="file-error" role="alert">
+                          ${this.t("Papyros.playground.file_load_failed", { name: this.failedFile })}
+                      </div>`
+            }
         `;
     }
 

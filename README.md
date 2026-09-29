@@ -211,6 +211,16 @@ render(
 the "Try it yourself" title, and an empty label hides it. Every run starts from an empty
 workspace.
 
+`files` declares data files the code can `open()`: space-separated paths, resolved against
+the document's base URL. The playground then shows a read-only tab per file above the
+editor, and every run starts with exactly those files. The names must be unique, and a file
+that fails to load stops the run with an alert. Binary files and text over 100 kB are not
+previewed; their tab links to the file instead.
+
+```html
+<p-code-playground files="media/grades.txt media/names.csv"></p-code-playground>
+```
+
 ---
 
 ## Theming

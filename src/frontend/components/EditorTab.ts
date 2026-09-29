@@ -14,6 +14,10 @@ export class EditorTab extends PapyrosElement {
     @property({ attribute: false })
     file!: FileEntry;
 
+    /** No renaming or closing */
+    @property({ type: Boolean })
+    readonly = false;
+
     @state()
     private renaming = false;
 
@@ -89,6 +93,10 @@ export class EditorTab extends PapyrosElement {
         this.papyros.io.activeEditorTab = this.file.name;
     }
 
+    private get editable(): boolean {
+        return !this.readonly && !this.papyros.debugger.active;
+    }
+
     private closeFile(e: Event): void {
         e.stopPropagation();
         if (!confirm(this.t("Papyros.close_file_confirm"))) return;
@@ -150,11 +158,11 @@ export class EditorTab extends PapyrosElement {
     }
 
     private onDblClick(): void {
-        if (!this.papyros.debugger.active) this.startRenaming();
+        if (this.editable) this.startRenaming();
     }
 
     private onAuxClick(e: MouseEvent): void {
-        if (!this.papyros.debugger.active && e.button === 1) this.closeFile(e);
+        if (this.editable && e.button === 1) this.closeFile(e);
     }
 
     private onRenameClick(e: Event): void {
@@ -164,7 +172,7 @@ export class EditorTab extends PapyrosElement {
 
     // The rename and close controls are pointer-only, so the tab itself carries their keys.
     private onTabKeydown(e: KeyboardEvent): void {
-        if (this.papyros.debugger.active) return;
+        if (!this.editable) return;
         if (e.key === "F2") {
             e.preventDefault();
             this.startRenaming();
@@ -186,9 +194,9 @@ export class EditorTab extends PapyrosElement {
 
     protected override render(): TemplateResult {
         const active = this.papyros.io.activeEditorTab === this.file.name;
-        const debugActive = this.papyros.debugger.active;
+        const editable = this.editable;
 
-        if (!debugActive && this.renaming) {
+        if (editable && this.renaming) {
             return html`<input
                     ${ref(this.renameInputRef)}
                     class=${this.invalid ? "inline-input invalid" : "inline-input"}
@@ -216,7 +224,7 @@ export class EditorTab extends PapyrosElement {
                 role="tab"
                 aria-selected=${active ? "true" : "false"}
                 tabindex=${active ? "0" : "-1"}
-                aria-describedby=${ifDefined(debugActive ? undefined : this.hintId)}
+                aria-describedby=${ifDefined(editable ? this.hintId : undefined)}
                 @click=${this.setTab}
                 @dblclick=${this.onDblClick}
                 @auxclick=${this.onAuxClick}
@@ -224,9 +232,8 @@ export class EditorTab extends PapyrosElement {
             >
                 ${this.file.name}
                 ${
-                    debugActive
-                        ? ""
-                        : html`<span
+                    editable
+                        ? html`<span
                                   class="rename-btn"
                                   title=${this.t("Papyros.rename_file_tab")}
                                   aria-hidden="true"
@@ -241,12 +248,13 @@ export class EditorTab extends PapyrosElement {
                                   @click=${this.closeFile}
                                   >×</span
                               >`
+                        : ""
                 }
             </button>
             ${
-                debugActive
-                    ? ""
-                    : html`<span id=${this.hintId} class="visually-hidden">${this.t("Papyros.file_tab_hint")}</span>`
+                editable
+                    ? html`<span id=${this.hintId} class="visually-hidden">${this.t("Papyros.file_tab_hint")}</span>`
+                    : ""
             }
         `;
     }
