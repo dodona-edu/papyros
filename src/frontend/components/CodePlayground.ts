@@ -334,6 +334,8 @@ export class CodePlayground extends PapyrosElement {
 
     private fileRefs: { name: string; url: string }[] = [];
 
+    private fileTabs: FileEntry[] = [];
+
     private wasAwaitingInput = false;
     private wasActive = false;
     private restoreFocus = false;
@@ -416,6 +418,7 @@ export class CodePlayground extends PapyrosElement {
                     const url = new URL(path, document.baseURI).href;
                     return { name: fileNameFromUrl(url), url };
                 });
+            this.fileTabs = this.fileRefs.map((f) => ({ name: f.name, content: "", binary: false }));
             this.failedFile = undefined;
         }
         if (changedProperties.has("code")) {
@@ -663,9 +666,8 @@ export class CodePlayground extends PapyrosElement {
     private renderFileTabs(): TemplateResult {
         const file = this.activeFile;
         const preview = file && this.previews.get(file.url);
-        const entries = this.fileRefs.map((f) => ({ name: f.name, content: "", binary: false }));
         return html`
-            <p-editor-tabs .papyros=${this.papyros} .files=${entries} readonly></p-editor-tabs>
+            <p-editor-tabs .papyros=${this.papyros} .files=${this.fileTabs} readonly></p-editor-tabs>
             ${
                 file
                     ? html`<div class="file-panel" role="tabpanel" aria-label=${file.name}>
