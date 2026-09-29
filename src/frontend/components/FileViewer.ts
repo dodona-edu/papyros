@@ -5,10 +5,11 @@ import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { FileEntry } from "../state/InputOutput";
 import { debounce } from "../../util/Util";
 
-// Longer text is not rendered in a read-only viewer, to keep the page responsive
-const MAX_READONLY_PREVIEW_LENGTH = 100_000;
 import type { FileEditor } from "./code_mirror/FileEditor";
 import "./code_mirror/FileEditor";
+
+// Longer text is not rendered in a read-only viewer, to keep the page responsive
+const MAX_READONLY_PREVIEW_LENGTH = 100_000;
 
 @customElement("p-file-viewer")
 export class FileViewer extends PapyrosElement {
@@ -106,25 +107,20 @@ export class FileViewer extends PapyrosElement {
         if (!this.file) {
             return html``;
         }
-        if (this.readonly && (this.file.binary || this.file.content.length > MAX_READONLY_PREVIEW_LENGTH)) {
+        if (this.file.binary || (this.readonly && this.file.content.length > MAX_READONLY_PREVIEW_LENGTH)) {
+            const message = this.readonly
+                ? this.t("Papyros.playground.file_not_previewable", { name: this.file.name })
+                : this.t("Papyros.files_binary");
             return html`
                 <div class="placeholder-container">
-                    <span>${this.t("Papyros.playground.file_not_previewable", { name: this.file.name })}</span>
+                    <span>${message}</span>
                     ${
-                        this.url
+                        this.readonly && this.url
                             ? html`<a class="open-link" href=${this.url} target="_blank" rel="noopener"
                                   >${this.t("Papyros.playground.open_file")}</a
                               >`
                             : html`<button @click=${this.downloadBinary}>${this.t("Papyros.files_download")}</button>`
                     }
-                </div>
-            `;
-        }
-        if (this.file.binary) {
-            return html`
-                <div class="placeholder-container">
-                    <span>${this.t("Papyros.files_binary")}</span>
-                    <button @click=${this.downloadBinary}>${this.t("Papyros.files_download")}</button>
                 </div>
             `;
         }

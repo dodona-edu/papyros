@@ -40,7 +40,6 @@ describe("loadFile", () => {
             name: "text.txt",
             content: "naam;score\nJoké;10\n",
             binary: false,
-            size: new TextEncoder().encode("naam;score\nJoké;10\n").byteLength,
         });
     });
 
@@ -61,7 +60,6 @@ describe("loadFile", () => {
         const file = await loadFile(`${BASE}image.png`);
 
         expect(file.binary).toBe(true);
-        expect(file.size).toBe(100_000);
         expect(file.content).toBe(btoa(String.fromCharCode(...bytes)));
     });
 

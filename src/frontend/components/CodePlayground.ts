@@ -3,7 +3,7 @@ import { css, CSSResult, html, nothing, PropertyValues, TemplateResult } from "l
 import { styleMap } from "lit/directives/style-map.js";
 import { PapyrosElement } from "./PapyrosElement";
 import { FileEntry, OutputEntry, OutputType } from "../state/InputOutput";
-import { fileNameFromUrl, loadFile, LoadedFile } from "../state/Files";
+import { fileNameFromUrl, loadFile } from "../state/Files";
 import { PapyrosLaunchError } from "../state/PapyrosErrors";
 import type { PapyrosRuntime } from "../state/PapyrosRuntime";
 import { RunMode } from "../../backend/Backend";
@@ -333,7 +333,7 @@ export class CodePlayground extends PapyrosElement {
 
     // Keyed by URL. Replaced instead of mutated so that a load triggers a render.
     @state()
-    private previews = new Map<string, LoadedFile>();
+    private previews = new Map<string, FileEntry>();
 
     @state()
     private failedFile: string | undefined;
@@ -653,10 +653,7 @@ export class CodePlayground extends PapyrosElement {
                     </div>
                 </div>
                 ${this.fileRefs.length > 0 ? this.renderFileTabs() : nothing}
-                <p-code
-                    ?hidden=${this.fileRefs.length > 0 && this.activeFile !== undefined}
-                    .papyros=${this.papyros}
-                ></p-code>
+                <p-code ?hidden=${this.activeFile !== undefined} .papyros=${this.papyros}></p-code>
                 ${showInput ? this.renderInput() : nothing} ${this.renderPanels()}
             </div>
         `;
