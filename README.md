@@ -185,6 +185,32 @@ files a run needs to `runner.start(mode, files)`, which starts it from a workspa
 only those. Disposing an instance leaves the workers to the others; call
 `runtime.dispose()` to terminate them.
 
+### Code playgrounds
+
+`<p-code-playground>` is a small, self-contained Python editor with Run, Reset, input and
+output, for embedding runnable examples in a page. Give every playground its own `Papyros`
+and let them share one `PapyrosRuntime`: Python then boots once, as soon as the first
+playground scrolls into view, and while one playground runs the others wait.
+
+```javascript
+import { html, render } from "lit";
+import { Papyros, PapyrosRuntime } from "@dodona/papyros";
+
+const runtime = new PapyrosRuntime();
+const examples = ['print("Hello")', 'name = input("Name: ")\nprint(f"Hi {name}")'];
+
+render(
+    examples.map(
+        (code) => html`<p-code-playground .papyros=${new Papyros({ runtime })} .code=${code}></p-code-playground>`,
+    ),
+    document.body,
+);
+```
+
+`code` is the code the playground starts with and that Reset restores. `label` replaces
+the "Try it yourself" title, and an empty label hides it. Every run starts from an empty
+workspace.
+
 ---
 
 ## Theming
@@ -225,6 +251,10 @@ Lets users provide input (batch or interactive), passed to `papyros.io`.
 #### `<p-output>`
 
 Visualizes program output: stdout, stderr, and images.
+
+#### `<p-code-playground>`
+
+An inline, runnable Python block, see [Code playgrounds](#code-playgrounds).
 
 #### `<p-debugger>`
 

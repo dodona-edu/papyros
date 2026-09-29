@@ -9,6 +9,7 @@ import "./code_runner/RunState";
 import "./code_runner/ButtonLint";
 import "./EditorTabs";
 import "./FileViewer";
+import "@material/web/icon/icon";
 import { paneStyles } from "./shared-styles";
 
 @customElement("p-code-runner")
