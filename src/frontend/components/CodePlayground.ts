@@ -8,6 +8,8 @@ import { PapyrosLaunchError } from "../state/PapyrosErrors";
 import type { PapyrosRuntime } from "../state/PapyrosRuntime";
 import { RunMode } from "../../backend/Backend";
 import { preloadWhenVisible, stopPreloading } from "./playground/preload";
+import { visuallyHiddenStyles } from "./shared-styles";
+import "@material/web/progress/circular-progress";
 import "./code_runner/Code";
 import "./FriendlyError";
 import "./EditorTabs";
@@ -16,7 +18,7 @@ import "./FileViewer";
 /**
  * Mirrors the .output-body min-height below: reservations at or below this floor are a no-op
  */
-export const OUTPUT_BODY_MIN_HEIGHT = 22;
+const OUTPUT_BODY_MIN_HEIGHT = 22;
 
 // Scroll positions can be fractional on high-DPI screens, so "at the bottom" allows a
 // small remainder.
@@ -267,28 +269,14 @@ export class CodePlayground extends PapyrosElement {
                 color: var(--md-sys-color-on-surface);
             }
 
-            .spinner {
-                width: 14px;
-                height: 14px;
-                border: 2px solid var(--md-sys-color-outline-variant);
-                border-top-color: var(--md-sys-color-primary);
-                border-radius: 50%;
-                animation: spin 0.8s linear infinite;
-            }
-
-            @keyframes spin {
-                to {
-                    transform: rotate(360deg);
-                }
+            md-circular-progress {
+                --md-circular-progress-size: 14px;
+                flex-shrink: 0;
             }
 
             @media (prefers-reduced-motion: reduce) {
                 .output-body {
                     transition: none;
-                }
-
-                .spinner {
-                    animation: none;
                 }
             }
 
@@ -304,17 +292,7 @@ export class CodePlayground extends PapyrosElement {
                 font-weight: 700;
             }
 
-            .visually-hidden {
-                position: absolute;
-                width: 1px;
-                height: 1px;
-                padding: 0;
-                margin: -1px;
-                overflow: hidden;
-                clip-path: inset(50%);
-                white-space: nowrap;
-                border: 0;
-            }
+            ${visuallyHiddenStyles}
         `;
     }
 
@@ -393,8 +371,7 @@ export class CodePlayground extends PapyrosElement {
     }
 
     private get otherRunning(): boolean {
-        const running = this.papyros.runtime.running;
-        return running !== null && running !== this.papyros;
+        return this.papyros.runtime.isBusyFor(this.papyros);
     }
 
     private get duplicateFileName(): string | undefined {
@@ -417,6 +394,10 @@ export class CodePlayground extends PapyrosElement {
 
     override disconnectedCallback(): void {
         super.disconnectedCallback();
+        this.stopWatchingForPreload();
+    }
+
+    private stopWatchingForPreload(): void {
         if (this.preloadRuntime) {
             stopPreloading(this, this.preloadRuntime);
             this.preloadRuntime = undefined;
@@ -424,10 +405,7 @@ export class CodePlayground extends PapyrosElement {
     }
 
     private observeForPreload(): void {
-        if (this.preloadRuntime) {
-            stopPreloading(this, this.preloadRuntime);
-            this.preloadRuntime = undefined;
-        }
+        this.stopWatchingForPreload();
         if (this.isConnected && this.supported) {
             this.preloadRuntime = this.papyros.runtime;
             preloadWhenVisible(this, this.papyros);
@@ -541,23 +519,6 @@ export class CodePlayground extends PapyrosElement {
         }
     }
 
-    private async launch(): Promise<void> {
-        if (this.papyros.runner.backendReady) {
-            return;
-        }
-        try {
-            // Not papyros.launch(): that resolves even when the backend failed, after an
-            // alert or confirm per instance. The runner's own launch rejects instead, so
-            // the next Run can retry.
-            await this.papyros.runner.launch();
-        } catch (error) {
-            this.papyros.errorHandler(
-                new PapyrosLaunchError("Launching the code playground runtime failed", { cause: error }),
-            );
-            throw error;
-        }
-    }
-
     private async run(): Promise<void> {
         // Measure the output height before the run empties it, so the panel body can hold its
         // height across the run instead of collapsing and regrowing. Capped at the height that
@@ -575,9 +536,12 @@ export class CodePlayground extends PapyrosElement {
         const loading = this.loadRunFiles();
         let files: FileEntry[] | undefined;
         try {
-            await this.launch();
+            await this.papyros.runner.ensureLaunched();
             files = await loading;
-        } catch {
+        } catch (error) {
+            this.papyros.errorHandler(
+                new PapyrosLaunchError("Launching the code playground runtime failed", { cause: error }),
+            );
             this.launchFailed = true;
             return;
         } finally {
@@ -839,7 +803,10 @@ export class CodePlayground extends PapyrosElement {
                 <div class="output-body" style=${styleMap(this.bodyReservationStyle())}>
                     ${
                         outputBlocks.length === 0 && (this.preparing || this.isActive)
-                            ? html`<div class="status-line"><span class="spinner"></span>${this.statusText()}</div>`
+                            ? html`<div class="status-line">
+                                  <md-circular-progress indeterminate aria-hidden="true"></md-circular-progress
+                                  >${this.statusText()}
+                              </div>`
                             : outputBlocks
                     }
                 </div>

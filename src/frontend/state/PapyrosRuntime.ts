@@ -116,6 +116,13 @@ export class PapyrosRuntime extends State {
     }
 
     /**
+     * Whether a run by another instance is in progress, which the given instance must wait out
+     */
+    public isBusyFor(papyros: Papyros): boolean {
+        return this.running !== null && this.running !== papyros;
+    }
+
+    /**
      * Give up the claim of the given instance, if it holds one
      */
     public release(papyros: Papyros): void {
@@ -167,10 +174,9 @@ export class PapyrosRuntime extends State {
      * The client for a language once its worker can run code. Launches the worker
      * when it is not up yet, including a worker that was replaced since its last launch.
      * @param {ProgrammingLanguage} language The language to run
-     * @param {Papyros} requester The instance asking, whose error handler reports a failing channel
      * @return {Promise<SyncClient<Backend>>} The launched client
      */
-    public async ready(language: ProgrammingLanguage, requester: Papyros): Promise<SyncClient<Backend>> {
+    public async ready(language: ProgrammingLanguage): Promise<SyncClient<Backend>> {
         if (this.disposed) {
             throw new Error("This runtime has been disposed");
         }
@@ -179,7 +185,7 @@ export class PapyrosRuntime extends State {
         const worker: object = backend.worker ?? backend;
         let launched = this.launched.get(worker);
         if (!launched) {
-            launched = this.launchWorker(language, backend, worker, requester);
+            launched = this.launchWorker(language, backend, worker);
             this.launched.set(worker, launched);
         }
         return launched;
@@ -189,7 +195,6 @@ export class PapyrosRuntime extends State {
         language: ProgrammingLanguage,
         backend: SyncClient<Backend>,
         worker: object,
-        requester: Papyros,
     ): Promise<SyncClient<Backend>> {
         try {
             // Allow passing messages between worker and main thread
@@ -222,7 +227,7 @@ export class PapyrosRuntime extends State {
             // can suspend the wasm stack, since Python then never touches it.
             // A failure here is reported by ensureChannel and leaves the channel null, so
             // running code still works and only reading input fails.
-            await this.ensureChannel(requester);
+            await this.ensureChannel();
         }
         // Assign either way, so a client that switched to JSPI drops a channel it no longer uses
         backend.channel = this.channel;
@@ -275,32 +280,40 @@ export class PapyrosRuntime extends State {
             }
             return;
         }
-        // Before any run, the events come from launching or linting
-        const target = this.owner ?? this.instances.values().next().value;
-        target?.events.publish(e);
+        this.eventTarget()?.events.publish(e);
+    }
+
+    /**
+     * Before any run, the events and errors come from launching or linting
+     */
+    private eventTarget(): Papyros | undefined {
+        return this.owner ?? this.instances.values().next().value;
+    }
+
+    private report(error: Error): void {
+        this.eventTarget()?.errorHandler(error);
     }
 
     /**
      * Make sure a channel exists, registering the input service worker if that is what it takes.
      * Idempotent, and safe to call from several places at once.
-     * @param {Papyros} requester The instance asking, whose error handler reports a failure
      * @return {Promise<boolean>} Whether a channel is available
      */
-    public async ensureChannel(requester: Papyros): Promise<boolean> {
+    public async ensureChannel(): Promise<boolean> {
         if (this.channel) {
             return true;
         }
-        this.channelPromise ??= this.createChannel(requester);
+        this.channelPromise ??= this.createChannel();
         return (await this.channelPromise) !== null;
     }
 
-    private async createChannel(requester: Papyros): Promise<Channel | null> {
+    private async createChannel(): Promise<Channel | null> {
         if (typeof SharedArrayBuffer !== "undefined") {
             this.channel = makeChannel({ atomics: {} })!;
             return this.channel;
         }
         if (!this.serviceWorkerName || !("serviceWorker" in navigator)) {
-            requester.errorHandler(
+            this.report(
                 new ServiceWorkerRegistrationError("No service worker available to handle input", {
                     cause: new Error(`serviceWorkerName=${this.serviceWorkerName}`),
                 }),
@@ -316,9 +329,7 @@ export class PapyrosRuntime extends State {
             this.channel = makeChannel({ serviceWorker: { scope: registration.scope } })!;
             return this.channel;
         } catch (e) {
-            requester.errorHandler(
-                new ServiceWorkerRegistrationError("Error registering service worker", { cause: e }),
-            );
+            this.report(new ServiceWorkerRegistrationError("Error registering service worker", { cause: e }));
             // Allow a later backend to try again rather than caching the failure forever
             this.channelPromise = undefined;
             return null;
