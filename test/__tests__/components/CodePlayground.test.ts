@@ -112,6 +112,11 @@ function $<T extends Element = HTMLElement>(el: CodePlayground, selector: string
     return el.shadowRoot!.querySelector<T>(selector);
 }
 
+/** The editor inside the playground's p-code */
+function editorOf(el: CodePlayground): CodeEditor | null {
+    return $(el, "p-code")?.shadowRoot?.querySelector<CodeEditor>("p-code-editor") ?? null;
+}
+
 function $$<T extends Element = HTMLElement>(el: CodePlayground, selector: string): T[] {
     return Array.from(el.shadowRoot!.querySelectorAll<T>(selector));
 }
@@ -187,23 +192,24 @@ describe("p-code-playground", () => {
         const error = $(el, ".config-error")!;
         expect(error.textContent).toContain("Configuration error");
         expect(error.textContent).toContain('Only Python is supported in code playgrounds (got "haskell").');
-        expect($(el, "p-code-editor")).toBeNull();
+        expect($(el, "p-code")).toBeNull();
     });
 
     it("accepts the language in any case", async () => {
         const el = await mount({ language: ProgrammingLanguage.Python });
 
         expect($(el, ".config-error")).toBeNull();
-        expect($(el, "p-code-editor")).not.toBeNull();
+        expect(editorOf(el)).not.toBeNull();
     });
 
-    it("hands its code and instance to the editor", async () => {
+    it("hands its code to the editor through its own runner", async () => {
         const el = await mount({ code: "print(42)" });
 
-        expect($<CodeEditor>(el, "p-code-editor")!.value).toBe("print(42)");
+        expect(editorOf(el)!.value).toBe("print(42)");
+        expect(el.papyros.runner.code).toBe("print(42)");
     });
 
-    it("gates the editor lint source on launch", async () => {
+    it("does not lint before the runtime is launched", async () => {
         const client = fakeClient();
         const el = await mount({ client });
 
@@ -214,6 +220,12 @@ describe("p-code-playground", () => {
 
         await el.papyros.runner.launch();
         await settle(el);
+        // The editor re-lints when a package finishes loading
+        client.emit({
+            type: BackendEventType.Loading,
+            data: JSON.stringify({ modules: ["numpy"], status: "loaded" }),
+            contentType: "text/json",
+        });
         await vi.waitFor(() => expect(client.workerProxy.lintCode).toHaveBeenCalledWith("print(1)"), { timeout: 3000 });
     });
 
@@ -370,7 +382,7 @@ describe("p-code-playground", () => {
 
     it("hands focus to the run button when Reset disables itself", async () => {
         const el = await mount();
-        $(el, "p-code-editor")!.dispatchEvent(new CustomEvent("change", { detail: "edited" }));
+        editorOf(el)!.dispatchEvent(new CustomEvent("change", { detail: "edited" }));
         await el.updateComplete;
 
         const reset = button(el, "button.reset");
@@ -384,7 +396,7 @@ describe("p-code-playground", () => {
 
     it("leaves focus alone on reset when Reset was not holding it", async () => {
         const el = await mount();
-        $(el, "p-code-editor")!.dispatchEvent(new CustomEvent("change", { detail: "edited" }));
+        editorOf(el)!.dispatchEvent(new CustomEvent("change", { detail: "edited" }));
         await el.updateComplete;
 
         button(el, "button.reset").click();
@@ -505,7 +517,7 @@ describe("p-code-playground", () => {
         await el.updateComplete;
 
         const statusLine = $(el, ".output-body .status-line")!;
-        expect(statusLine.textContent).toContain("Loading Python (one-time, a few MB)…");
+        expect(statusLine.textContent).toContain("Loading");
 
         launch.resolve();
         await vi.waitFor(() => expect(client.workerProxy.runCode).toHaveBeenCalled());
@@ -519,7 +531,7 @@ describe("p-code-playground", () => {
         await settle(el);
 
         const statusLine = $(el, ".output-body .status-line")!;
-        expect(statusLine.textContent).toContain("Running…");
+        expect(statusLine.textContent).toContain("Running");
         expect(statusLine.closest(".toolbar")).toBeNull();
 
         client.emit(output("hi\n"));
@@ -701,7 +713,7 @@ describe("p-code-playground", () => {
     it("resets to the original code and clears the output", async () => {
         const el = await mount({ code: "print(1)" });
         await setOutputs(el, [{ type: OutputType.stdout, content: "old\n" }]);
-        const editor = $<CodeEditor>(el, "p-code-editor")!;
+        const editor = editorOf(el)!;
         editor.dispatchEvent(new CustomEvent("change", { detail: "edited" }));
         await el.updateComplete;
 
@@ -721,7 +733,7 @@ describe("p-code-playground", () => {
 
     it("runs the edited code", async () => {
         const el = await mount({ code: "print(1)" });
-        $(el, "p-code-editor")!.dispatchEvent(new CustomEvent("change", { detail: "print(2)" }));
+        editorOf(el)!.dispatchEvent(new CustomEvent("change", { detail: "print(2)" }));
         await el.updateComplete;
 
         const client = await startRun(el);
@@ -859,7 +871,7 @@ describe("p-code-playground files", () => {
         tabButtons(el)[1].click();
         await settle(el);
         expect($(el, ".file-panel")!.textContent).toContain("Loading file");
-        expect($(el, "p-code-editor")!.hidden).toBe(true);
+        expect($(el, "p-code")!.hidden).toBe(true);
 
         respond(new Response("naam;score\n"));
         await vi.waitFor(() => expect($(el, "p-file-viewer")).not.toBeNull());

@@ -4,12 +4,11 @@ import { styleMap } from "lit/directives/style-map.js";
 import { PapyrosElement } from "./PapyrosElement";
 import { FileEntry, OutputEntry, OutputType } from "../state/InputOutput";
 import { fileNameFromUrl, loadFile, LoadedFile } from "../state/Files";
-import { RunState } from "../state/Runner";
 import { PapyrosLaunchError } from "../state/PapyrosErrors";
 import type { PapyrosRuntime } from "../state/PapyrosRuntime";
-import { RunMode, WorkerDiagnostic } from "../../backend/Backend";
+import { RunMode } from "../../backend/Backend";
 import { preloadWhenVisible, stopPreloading } from "./playground/preload";
-import "./code_mirror/CodeEditor";
+import "./code_runner/Code";
 import "./FriendlyError";
 import "./EditorTabs";
 import "./FileViewer";
@@ -22,10 +21,6 @@ export const OUTPUT_BODY_MIN_HEIGHT = 22;
 // Scroll positions can be fractional on high-DPI screens, so "at the bottom" allows a
 // small remainder.
 const SCROLL_BOTTOM_TOLERANCE = 2;
-
-// Module-level for reference stability: p-code-editor reconfigures its linter whenever
-// lintingSource returns a new reference.
-const beforeLaunch = (): Promise<readonly WorkerDiagnostic[]> => Promise.resolve([]);
 
 /**
  * An inline, runnable Python code block with its own output and input.
@@ -141,8 +136,9 @@ export class CodePlayground extends PapyrosElement {
                 height: 18px;
             }
 
-            p-code-editor {
+            p-code {
                 display: block;
+                height: auto;
                 min-height: 40px;
             }
 
@@ -348,12 +344,6 @@ export class CodePlayground extends PapyrosElement {
     @property({ type: String })
     files = "";
 
-    // Not reactive: CodeMirror owns the text while editing; only `dirty` needs to trigger renders.
-    private editedCode = "";
-
-    @state()
-    private dirty = false;
-
     @state()
     private preparing = false;
 
@@ -379,11 +369,6 @@ export class CodePlayground extends PapyrosElement {
     private followOutput = false;
     private preloadRuntime: PapyrosRuntime | undefined;
 
-    private afterLaunch = (): Promise<readonly WorkerDiagnostic[]> => {
-        this.papyros.runner.code = this.editedCode;
-        return this.papyros.runner.lintSource();
-    };
-
     // Keyed on `outputs` array identity: papyros hands out a fresh array on every change
     // and never mutates it in place.
     private panelsCache?: {
@@ -403,12 +388,6 @@ export class CodePlayground extends PapyrosElement {
         return this.programmingLanguage.toLowerCase() === "python";
     }
 
-    // Launch flips the returned reference, which reconfigures CodeMirror's linter and
-    // re-lints blocks rendered before the runtime came up.
-    private get lintSource(): () => Promise<readonly WorkerDiagnostic[]> {
-        return this.papyros.runner.backendReady ? this.afterLaunch : beforeLaunch;
-    }
-
     private get isActive(): boolean {
         return this.papyros.runtime.running === this.papyros;
     }
@@ -421,6 +400,10 @@ export class CodePlayground extends PapyrosElement {
     private get duplicateFileName(): string | undefined {
         const names = this.fileRefs.map((f) => f.name);
         return names.find((name, index) => names.indexOf(name) !== index);
+    }
+
+    private get dirty(): boolean {
+        return this.papyros.runner.code !== this.code;
     }
 
     private get titleText(): string {
@@ -464,8 +447,7 @@ export class CodePlayground extends PapyrosElement {
             this.failedFile = undefined;
         }
         if (changedProperties.has("code")) {
-            this.editedCode = this.code;
-            this.syncDirty();
+            this.papyros.runner.code = this.code;
         }
         if (this.hasUpdated && (changedProperties.has("papyros") || changedProperties.has("programmingLanguage"))) {
             this.observeForPreload();
@@ -559,10 +541,6 @@ export class CodePlayground extends PapyrosElement {
         }
     }
 
-    private syncDirty(): void {
-        this.dirty = this.editedCode !== this.code;
-    }
-
     private async launch(): Promise<void> {
         if (this.papyros.runner.backendReady) {
             return;
@@ -608,7 +586,6 @@ export class CodePlayground extends PapyrosElement {
         if (!files) {
             return;
         }
-        this.papyros.runner.code = this.editedCode;
         // Passing the files, even none, starts every run from a workspace holding only those
         this.papyros.runner.start(RunMode.Run, files).catch((error) => this.papyros.errorHandler(error));
     }
@@ -631,15 +608,9 @@ export class CodePlayground extends PapyrosElement {
         // Reset disables itself as `dirty` clears, dropping focus to <body>; hand it to the
         // run/stop button, but only when Reset was the one holding it.
         this.restoreFocus = this.shadowRoot?.activeElement === this.renderRoot.querySelector(".reset");
-        this.editedCode = this.code;
-        this.syncDirty();
+        this.papyros.runner.code = this.code;
         this.papyros.io.reset();
         this.launchFailed = false;
-    }
-
-    private onEditorChange(e: CustomEvent<string>): void {
-        this.editedCode = e.detail;
-        this.syncDirty();
     }
 
     private onInputKeydown(e: KeyboardEvent): void {
@@ -657,26 +628,11 @@ export class CodePlayground extends PapyrosElement {
     }
 
     private statusText(): string {
-        if (this.preparing) {
-            return this.t("Papyros.playground.loading");
-        }
-        if (!this.isActive) {
+        if (!this.preparing && !this.isActive) {
             return "";
         }
-        switch (this.papyros.runner.state) {
-            case RunState.Loading:
-                return this.t("Papyros.playground.loading");
-            case RunState.Running:
-                return this.t("Papyros.playground.running");
-            case RunState.AwaitingInput:
-                return this.t("Papyros.playground.awaiting_input");
-            case RunState.Stopping:
-                return this.t("Papyros.playground.stopping");
-            case RunState.Error:
-                return this.t("Papyros.playground.error");
-            default:
-                return "";
-        }
+        // The runner is already back in Ready while the runtime is still downloading, so it has no message then
+        return this.papyros.runner.stateMessage || this.t("Papyros.states.loading");
     }
 
     protected override render(): TemplateResult {
@@ -733,18 +689,10 @@ export class CodePlayground extends PapyrosElement {
                     </div>
                 </div>
                 ${this.fileRefs.length > 0 ? this.renderFileTabs() : nothing}
-                <p-code-editor
+                <p-code
                     ?hidden=${this.fileRefs.length > 0 && this.activeFile !== undefined}
-                    .value=${this.editedCode}
-                    .programmingLanguage=${this.papyros.runner.programmingLanguage}
-                    .theme=${this.papyros.constants.CodeMirrorTheme}
-                    .indentLength=${this.papyros.constants.indentationSize}
-                    .translations=${this.papyros.i18n.getTranslations("CodeMirror")}
-                    .lintingSource=${this.lintSource}
                     .papyros=${this.papyros}
-                    .placeholder=${this.t("Papyros.playground.editor_placeholder")}
-                    @change=${this.onEditorChange}
-                ></p-code-editor>
+                ></p-code>
                 ${showInput ? this.renderInput() : nothing} ${this.renderPanels()}
             </div>
         `;
