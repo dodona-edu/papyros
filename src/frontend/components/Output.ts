@@ -4,7 +4,7 @@ import { FriendlyError, OutputEntry, OutputTab, OutputType, OUTPUT_TAB, TURTLE_T
 import { PapyrosElement } from "./PapyrosElement";
 import { tabBarStyles, tabButtonStyles } from "./shared-styles";
 import { TurtlePatch, TurtleSvgBuilder } from "../state/TurtleSvg";
-import "@material/web/icon/icon";
+import "./FriendlyError";
 
 @customElement("p-output")
 export class Output extends PapyrosElement {
@@ -88,10 +88,6 @@ export class Output extends PapyrosElement {
                 overflow: hidden;
                 clip: rect(0 0 0 0);
                 white-space: nowrap;
-            }
-
-            md-icon {
-                vertical-align: bottom;
             }
 
             ${tabButtonStyles}
@@ -188,24 +184,11 @@ export class Output extends PapyrosElement {
                     >`;
                 } else {
                     const errorObject = o.content as FriendlyError;
-                    const errorHTML = [
-                        // an array to avoid unintentional spaces/newlines
-                        html`<md-icon title="${errorObject.info}" aria-label="${errorObject.info}" role="img"
-                                >${this.papyros.constants.icons.help}</md-icon
-                            >${errorObject.name} traceback:`,
-                        "\n",
-                        html`<md-icon title="${errorObject.traceback}" aria-label="${errorObject.traceback}" role="img"
-                            >${this.papyros.constants.icons.info}</md-icon
-                        >`,
-                        html`<span class="where">${errorObject.where?.trim()}</span>`,
-                    ];
-                    if (errorObject.what) {
-                        errorHTML.push("\n", html`<span class="what">${errorObject.what.trim()}</span>`);
-                    }
-                    if (errorObject.why) {
-                        errorHTML.push("\n", html`<span class="why">${errorObject.why.trim()}</span>`);
-                    }
-                    return html`<span class="error">${errorHTML}</span>`;
+                    return html`<span class="error"
+                        ><p-friendly-error .error=${errorObject} .papyros=${this.papyros}></p-friendly-error>${
+                            errorObject.why ? html`<span class="why">${errorObject.why.trim()}</span>` : ""
+                        }</span
+                    >`;
                 }
             } else {
                 return html``; // unsupported output type
