@@ -159,7 +159,7 @@ export class Papyros extends State {
      * @return {Promise<boolean>} Whether a channel is available
      */
     public ensureChannel(): Promise<boolean> {
-        return this.runtime.ensureChannel(this);
+        return this.runtime.ensureChannel();
     }
 }
 
