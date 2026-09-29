@@ -167,6 +167,24 @@ at the same time, even in the same language. The one service worker registration
 have is shared between them. Call `papyros.dispose()` to terminate an instance's workers
 when it is removed from the page.
 
+Instances can also share one set of workers, so a page with many small editors boots
+Pyodide only once. Pass the same `PapyrosRuntime` to each of them:
+
+```javascript
+import { Papyros, PapyrosRuntime } from "@dodona/papyros";
+
+const runtime = new PapyrosRuntime();
+const first = new Papyros({ runtime });
+const second = new Papyros({ runtime });
+```
+
+Each instance keeps its own code, output, input and debugger, but only one of them can run
+code at a time: `runner.start()` does nothing while another instance on the runtime is
+running, and `runtime.running` tells which one is. Files are shared as well, so pass the
+files a run needs to `runner.start(mode, files)`, which starts it from a workspace holding
+only those. Disposing an instance leaves the workers to the others; call
+`runtime.dispose()` to terminate them.
+
 ---
 
 ## Theming

@@ -1,4 +1,4 @@
-import { State, stateProperty } from "@dodona/lit-state";
+import { State } from "@dodona/lit-state";
 import { Debugger } from "./Debugger";
 import { Runner, RunState } from "./Runner";
 import { InputOutput } from "./InputOutput";
@@ -6,18 +6,24 @@ import { Constants } from "./Constants";
 import { Examples } from "./Examples";
 import { BackendManager } from "../../communication/BackendManager";
 import { EventBus } from "../../communication/EventBus";
-import { Channel, makeChannel } from "../../sync/channel";
+import { Channel } from "../../sync/channel";
 import { ProgrammingLanguage } from "../../ProgrammingLanguage";
 import { I18n } from "./I18n";
 import { Test } from "./Test";
-import { PapyrosLaunchError, ServiceWorkerRegistrationError } from "./PapyrosErrors";
+import { PapyrosLaunchError } from "./PapyrosErrors";
+import { PapyrosRuntime } from "./PapyrosRuntime";
 
 /**
- * In flight service worker registrations, shared between instances: a page can only
- * have one registration per scope anyway, so instances wait on the same promise
- * instead of racing the browser. Failed registrations are removed so they can retry.
+ * Options for creating a Papyros instance
  */
-const serviceWorkerRegistrations: Map<string, Promise<ServiceWorkerRegistration>> = new Map();
+export interface PapyrosOptions {
+    /**
+     * The runtime to run code in. Instances given the same runtime share its workers, so
+     * only one of them can run code at a time. Without one, the instance gets a private
+     * runtime that is disposed along with it.
+     */
+    runtime?: PapyrosRuntime;
+}
 
 export class Papyros extends State {
     // The bus is declared first so the states below can subscribe to it while constructing
@@ -31,18 +37,36 @@ export class Papyros extends State {
     readonly test: Test = new Test(this);
     errorHandler: (error: Error) => void = () => {};
 
-    @stateProperty
-    serviceWorkerName: string = "InputServiceWorker.js";
+    /**
+     * The workers and input channel this instance runs code with
+     */
+    readonly runtime: PapyrosRuntime;
+    /**
+     * Whether the runtime was created for this instance alone
+     */
+    readonly ownsRuntime: boolean;
+
+    constructor(options: PapyrosOptions = {}) {
+        super();
+        this.ownsRuntime = options.runtime === undefined;
+        this.runtime = options.runtime ?? new PapyrosRuntime();
+        this.runtime.attach(this);
+    }
+
+    public get serviceWorkerName(): string {
+        return this.runtime.serviceWorkerName;
+    }
+
+    public set serviceWorkerName(value: string) {
+        this.runtime.serviceWorkerName = value;
+    }
 
     /**
      * The channel this instance's backends read their input from, when they need one
      */
-    public channel: Channel | null = null;
-
-    /**
-     * In flight channel setup, so concurrent callers build the channel once
-     */
-    private channelPromise?: Promise<Channel | null>;
+    public get channel(): Channel | null {
+        return this.runtime.channel;
+    }
 
     /**
      * Launch this instance of Papyros, making it ready to run code.
@@ -75,11 +99,24 @@ export class Papyros extends State {
     }
 
     /**
-     * Release the resources held by this instance: its workers are terminated and
-     * in flight launches are abandoned. The instance cannot run code afterwards.
+     * Release the resources held by this instance: in flight launches are abandoned and
+     * the instance cannot run code afterwards. A private runtime is disposed along with
+     * it, terminating its workers. On a shared runtime, a run of this instance is killed
+     * and the workers are left to the other instances.
      */
     public dispose(): void {
+        const running = this.runtime.running === this;
         this.runner.dispose();
+        if (this.ownsRuntime) {
+            this.runtime.dispose();
+        } else {
+            if (running) {
+                // An interrupt can leave the worker busy for a while, or forever in a
+                // JavaScript loop, and the other instances cannot run until it is free
+                this.runtime.restartWorker(this.runner.programmingLanguage);
+            }
+            this.runtime.detach(this);
+        }
         // Drops any pending frame flush timer
         this.debugger.reset();
     }
@@ -121,67 +158,8 @@ export class Papyros extends State {
      * Idempotent, and safe to call from several places at once.
      * @return {Promise<boolean>} Whether a channel is available
      */
-    public async ensureChannel(): Promise<boolean> {
-        if (this.channel) {
-            return true;
-        }
-        this.channelPromise ??= this.createChannel();
-        return (await this.channelPromise) !== null;
-    }
-
-    private async createChannel(): Promise<Channel | null> {
-        if (typeof SharedArrayBuffer !== "undefined") {
-            this.channel = makeChannel({ atomics: {} })!;
-            return this.channel;
-        }
-        if (!this.serviceWorkerName || !("serviceWorker" in navigator)) {
-            this.errorHandler(
-                new ServiceWorkerRegistrationError("No service worker available to handle input", {
-                    cause: new Error(`serviceWorkerName=${this.serviceWorkerName}`),
-                }),
-            );
-            return null;
-        }
-        try {
-            const registration = await this.registerServiceWorker();
-            // The channel's scope becomes the base of a synchronous XHR inside the worker;
-            // a relative scope resolves against the worker's own base URL, which is opaque
-            // in a worker bootstrapped from a blob (see BackendManager.setWorkerUrl), so
-            // registration.scope (an absolute URL) is used instead
-            this.channel = makeChannel({ serviceWorker: { scope: registration.scope } })!;
-            return this.channel;
-        } catch (e) {
-            this.errorHandler(new ServiceWorkerRegistrationError("Error registering service worker", { cause: e }));
-            // Allow a later backend to try again rather than caching the failure forever
-            this.channelPromise = undefined;
-            return null;
-        }
-    }
-
-    private registerServiceWorker(): Promise<ServiceWorkerRegistration> {
-        let registration = serviceWorkerRegistrations.get(this.serviceWorkerName);
-        if (!registration) {
-            registration = navigator.serviceWorker.register(this.serviceWorkerName, { scope: "/" }).then(async (r) => {
-                await this.waitForActiveRegistration();
-                return r;
-            });
-            registration.catch(() => serviceWorkerRegistrations.delete(this.serviceWorkerName));
-            serviceWorkerRegistrations.set(this.serviceWorkerName, registration);
-        }
-        return registration;
-    }
-
-    private async waitForActiveRegistration(timeout: number = 5000): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            const timeoutHandle = setTimeout(
-                () => reject(new Error("Timed out waiting for activated service worker")),
-                timeout,
-            );
-            navigator.serviceWorker.ready.then(() => {
-                clearTimeout(timeoutHandle);
-                resolve();
-            });
-        });
+    public ensureChannel(): Promise<boolean> {
+        return this.runtime.ensureChannel(this);
     }
 }
 
