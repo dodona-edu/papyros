@@ -57,8 +57,7 @@ describe.sequential("JSPI input transport", () => {
         await papyros.runner.start();
         await waitForOutput(papyros);
         await waitForPapyrosReady(papyros);
-        expect(papyros.io.output[0].content).toBe("jspi\n");
-        expect(papyros.io.output[1].content).toBe("hello jspi");
+        expect(papyros.io.output[0].content).toBe("hello jspi");
         unsubscribe();
     });
 
@@ -69,7 +68,7 @@ describe.sequential("JSPI input transport", () => {
         await papyros.runner.start();
         await waitForOutput(papyros);
         await waitForPapyrosReady(papyros);
-        expect(papyros.io.output.map((o) => o.content).slice(0, 4)).toEqual(["7\n", "7\n", "7\n", "21"]);
+        expect(papyros.io.output[0].content).toBe("21");
         unsubscribe();
     });
 
@@ -183,8 +182,7 @@ describe.sequential("channel input transport", () => {
         await papyros.runner.start();
         await waitForOutput(papyros);
         await waitForPapyrosReady(papyros);
-        expect(papyros.io.output[0].content).toBe("channel\n");
-        expect(papyros.io.output[1].content).toBe("hello channel");
+        expect(papyros.io.output[0].content).toBe("hello channel");
         unsubscribe();
     }, 180000);
 

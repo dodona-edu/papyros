@@ -65,8 +65,7 @@ console.log("world!");
         const unsubscribe = jsPapyros.io.subscribe(() => jsPapyros.io.awaitingInput ? jsPapyros.io.provideInput("foo") : "", "awaitingInput");
         await jsPapyros.runner.start();
         await waitForOutput(jsPapyros);
-        expect(jsPapyros.io.output[0].content).toBe("foo\n");
-        expect(jsPapyros.io.output[1].content).toBe("hello foo\n");
+        expect(jsPapyros.io.output[0].content).toBe("hello foo\n");
         unsubscribe();
         jsPapyros.dispose();
     });
@@ -77,8 +76,7 @@ console.log("world!");
         const unsubscribe = papyros.io.subscribe(() => papyros.io.awaitingInput ? papyros.io.provideInput("foo") : "", "awaitingInput");
         await papyros.runner.start();
         await waitForOutput(papyros);
-        expect(papyros.io.output[0].content).toBe("foo\n");
-        expect(papyros.io.output[1].content).toBe("hello foo");
+        expect(papyros.io.output[0].content).toBe("hello foo");
         unsubscribe();
     });
 
@@ -141,7 +139,8 @@ print("world! " + input("input2"))
         await waitForInputReady(papyros);
         await papyros.runner.start();
         await waitForOutput(papyros);
-        expect(stdout(papyros)).toBe("foo1\nhello foo1\nfoo2\nworld! foo2\n");
+        expect(papyros.io.output[0].content).toBe("hello foo1");
+        expect(papyros.io.output[3].content).toBe("world! foo2");
         unsubscribe();
     });
 
@@ -155,34 +154,25 @@ print("world! " + input("input2"))
         await waitForInputReady(papyros);
         await papyros.runner.start();
         await waitForOutput(papyros);
-        expect(stdout(papyros)).toBe("foo1\nhello foo1\nfoo2\nworld! foo2\n");
+        expect(papyros.io.output[0].content).toBe("hello foo1");
+        expect(papyros.io.output[3].content).toBe("world! foo2");
     });
 
-    it("echoes input into the output as the program reads it, in both input modes", async () => {
-        papyros.runner.code = `print("start")
-print(input() + input())`;
+    it("does not add provided input to the output", async () => {
+        papyros.runner.code = `input()\nprint("done")`;
         await waitForInputReady(papyros);
-
-        papyros.io.inputMode = InputMode.batch;
-        papyros.io.inputBuffer = "a\nb\n";
-        await papyros.runner.start();
-        await waitForPapyrosReady(papyros);
-        const batch = stdout(papyros);
-
         papyros.io.inputMode = InputMode.interactive;
         papyros.io.inputBuffer = "";
         papyros.io.reset();
-        const answers = ["a", "b"];
         const unsubscribe = papyros.io.subscribe(
-            () => (papyros.io.awaitingInput ? papyros.io.provideInput(answers.shift()!) : ""),
+            () => (papyros.io.awaitingInput ? papyros.io.provideInput("typed") : ""),
             "awaitingInput",
         );
         await papyros.runner.start();
         await waitForPapyrosReady(papyros);
         unsubscribe();
 
-        expect(batch).toBe("start\na\nb\nab\n");
-        expect(stdout(papyros)).toBe(batch);
-        expect(answers).toEqual([]);
+        expect(papyros.io.inputs).toContain("typed");
+        expect(stdout(papyros)).toBe("done\n");
     });
 });

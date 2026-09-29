@@ -49,8 +49,7 @@ describe.sequential("lazy channel setup", () => {
         await papyros.runner.start();
         await waitForOutput(papyros);
         await waitForPapyrosReady(papyros);
-        expect(papyros.io.output[0].content).toBe("channel\n");
-        expect(papyros.io.output[1].content).toBe("hello channel\n");
+        expect(papyros.io.output[0].content).toBe("hello channel\n");
         unsubscribe();
     }, 180000);
 });

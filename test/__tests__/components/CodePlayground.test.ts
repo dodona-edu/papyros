@@ -461,7 +461,7 @@ describe("p-code-playground", () => {
         expect($(hidden, ".card")!.hasAttribute("aria-labelledby")).toBe(false);
     });
 
-    it("submits input on Enter and echoes it into the transcript", async () => {
+    it("submits input on Enter without echoing it into the transcript", async () => {
         const el = await mount();
         const client = await startRun(el);
         await awaitInput(el, client);
@@ -471,9 +471,9 @@ describe("p-code-playground", () => {
         input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
 
         await vi.waitFor(() => expect(client.writeMessage).toHaveBeenCalledWith("Alice"));
-        expect(el.outputs).toEqual([{ type: OutputType.stdout, content: "Alice\n" }]);
+        expect(el.outputs).toEqual([]);
         await settle(el);
-        expect($(el, ".transcript")!.textContent).toBe("Alice\n");
+        expect($(el, ".transcript")).toBeNull();
         await finishRun(el, client);
     });
 
