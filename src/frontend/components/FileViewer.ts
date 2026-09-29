@@ -4,6 +4,9 @@ import { css, CSSResult, html, TemplateResult } from "lit";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { FileEntry } from "../state/InputOutput";
 import { debounce } from "../../util/Util";
+
+// Longer text is not rendered in a read-only viewer, to keep the page responsive
+const MAX_READONLY_PREVIEW_LENGTH = 100_000;
 import type { FileEditor } from "./code_mirror/FileEditor";
 import "./code_mirror/FileEditor";
 
@@ -11,6 +14,14 @@ import "./code_mirror/FileEditor";
 export class FileViewer extends PapyrosElement {
     @property({ type: Object })
     file: FileEntry | undefined = undefined;
+
+    /** Makes the file read-only, and offers an open link instead of a preview for files that cannot be shown */
+    @property({ type: Boolean })
+    readonly = false;
+
+    /** Where the file can be opened; without it a download button is offered instead */
+    @property({ type: String })
+    url: string | undefined = undefined;
 
     private editorRef: Ref<FileEditor> = createRef();
 
@@ -56,13 +67,19 @@ export class FileViewer extends PapyrosElement {
             button:hover {
                 opacity: 0.9;
             }
+
+            a.open-link {
+                color: var(--md-sys-color-primary);
+                font-size: 0.875rem;
+            }
         `;
     }
 
     private downloadBinary(): void {
         if (!this.file) return;
-        const bytes = Uint8Array.from(atob(this.file.content), (c) => c.charCodeAt(0));
-        const blob = new Blob([bytes]);
+        const blob = new Blob([
+            this.file.binary ? Uint8Array.from(atob(this.file.content), (c) => c.charCodeAt(0)) : this.file.content,
+        ]);
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
@@ -72,7 +89,7 @@ export class FileViewer extends PapyrosElement {
     }
 
     protected override updated(changedProperties: Map<PropertyKey, unknown>): void {
-        if (changedProperties.has("file") && this.file && !this.file.binary) {
+        if (changedProperties.has("file") && this.file && !this.file.binary && !this.readonly) {
             this.editorRef.value?.focus();
         }
     }
@@ -89,6 +106,20 @@ export class FileViewer extends PapyrosElement {
         if (!this.file) {
             return html``;
         }
+        if (this.readonly && (this.file.binary || this.file.content.length > MAX_READONLY_PREVIEW_LENGTH)) {
+            return html`
+                <div class="placeholder-container">
+                    <span>${this.t("Papyros.playground.file_not_previewable", { name: this.file.name })}</span>
+                    ${
+                        this.url
+                            ? html`<a class="open-link" href=${this.url} target="_blank" rel="noopener"
+                                  >${this.t("Papyros.playground.open_file")}</a
+                              >`
+                            : html`<button @click=${this.downloadBinary}>${this.t("Papyros.files_download")}</button>`
+                    }
+                </div>
+            `;
+        }
         if (this.file.binary) {
             return html`
                 <div class="placeholder-container">
@@ -97,7 +128,7 @@ export class FileViewer extends PapyrosElement {
                 </div>
             `;
         }
-        const readonly = this.papyros.debugger.active;
+        const readonly = this.readonly || this.papyros.debugger.active;
         return html`
             <p-file-editor
                 ${ref(this.editorRef)}

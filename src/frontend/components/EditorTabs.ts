@@ -13,6 +13,10 @@ export class EditorTabs extends PapyrosElement {
     @property({ attribute: false })
     files: FileEntry[] = [];
 
+    /** Hides the add-file button and makes the tabs unrenamable and unclosable */
+    @property({ type: Boolean })
+    readonly = false;
+
     private codeTabRef: Ref<HTMLButtonElement> = createRef();
 
     static get styles(): CSSResult {
@@ -114,9 +118,9 @@ export class EditorTabs extends PapyrosElement {
                 >
                     ${this.t("Papyros.editor_tab_code")}
                 </button>
-                ${this.files.map((f) => html`<p-editor-tab .papyros=${this.papyros} .file=${f}></p-editor-tab>`)}
+                ${this.files.map((f) => html`<p-editor-tab .papyros=${this.papyros} .file=${f} .readonly=${this.readonly}></p-editor-tab>`)}
             </div>
-            ${debugActive ? "" : html`<p-add-file-button .papyros=${this.papyros}></p-add-file-button>`}
+            ${debugActive || this.readonly ? "" : html`<p-add-file-button .papyros=${this.papyros}></p-add-file-button>`}
         `;
     }
 }
