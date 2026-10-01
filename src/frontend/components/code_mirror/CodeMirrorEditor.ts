@@ -1,7 +1,7 @@
 import { LitElement } from "lit";
 import { customElement } from "lit/decorators.js";
 import { EditorView, ViewUpdate, placeholder } from "@codemirror/view";
-import { Compartment, EditorState, Extension, StateEffect } from "@codemirror/state";
+import { Compartment, EditorSelection, EditorState, Extension, StateEffect } from "@codemirror/state";
 
 // Keep gutters out of native text selection: with drawSelection() active the
 // browser's own selection is invisible over the code, so a page-wide select-all
@@ -47,6 +47,8 @@ export class CodeMirrorEditor extends LitElement {
                 to: this.view.state.doc.length,
                 insert: this.__value,
             },
+            // Mapped through a full replace, a selection inside the document comes out inverted
+            selection: EditorSelection.cursor(Math.min(this.view.state.selection.main.head, this.__value.length)),
         });
         this.configure({ readonly: EditorState.readOnly.of(this.__readonly) });
     }
