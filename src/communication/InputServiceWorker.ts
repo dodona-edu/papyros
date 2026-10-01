@@ -2,7 +2,7 @@
  * Default service worker to process user input using HTTP requests
  */
 // Import service worker provided by the Papyros-package
-import { InputWorker } from "./InputWorker";
+import { CLAIM_CLIENTS_MESSAGE, InputWorker } from "./InputWorker";
 
 // Strip away the filename of the script to obtain the scope
 // let domain = location.href;
@@ -24,6 +24,12 @@ addEventListener("install", function (event: ExtendableEvent) {
 });
 addEventListener("activate", function (event: ExtendableEvent) {
     event.waitUntil(clients.claim());
+});
+// A hard reload bypasses the service worker, and the page stays uncontrolled until it is claimed
+addEventListener("message", function (event: ExtendableMessageEvent) {
+    if (event.data === CLAIM_CLIENTS_MESSAGE) {
+        event.waitUntil(clients.claim());
+    }
 });
 
 export {};
