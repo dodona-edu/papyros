@@ -189,6 +189,10 @@ export class App extends PapyrosElement {
 
     constructor() {
         super();
+        // The linter switch is only reachable through the URL while ruff is a spike
+        if (new URLSearchParams(location.search).get("linter") === "ruff") {
+            this.papyros.runner.linter = "ruff";
+        }
         this.papyros.launch();
     }
 

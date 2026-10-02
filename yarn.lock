@@ -2,6 +2,11 @@
 # yarn lockfile v1
 
 
+"@astral-sh/ruff-wasm-web@0.16.7":
+  version "0.16.7"
+  resolved "https://registry.yarnpkg.com/@astral-sh/ruff-wasm-web/-/ruff-wasm-web-0.16.7.tgz#1e5698c3d9ab9c09c71ab620b0fe6b16400adc8f"
+  integrity sha512-yQS2YvuP0iZSNlxYCg72mIzGTBSMV9yU13tEnpKJTv67hjYwAmAOa8G5UM8piZcqq4VQpwNfAVEJDo0Z5yBq6g==
+
 "@blazediff/core@1.9.1":
   version "1.9.1"
   resolved "https://registry.yarnpkg.com/@blazediff/core/-/core-1.9.1.tgz#ad61c4ec48dc11a2913b9753c8c74902e05e8f14"

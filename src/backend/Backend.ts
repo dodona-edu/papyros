@@ -29,7 +29,16 @@ export interface WorkerDiagnostic {
      * Message describing the issue
      */
     message: string;
+    /**
+     * Identifier of the rule that produced the issue, when the linter reports one
+     */
+    code?: string;
 }
+
+/**
+ * The linters a backend can run over Python code
+ */
+export type Linter = "pylint" | "ruff";
 
 export enum RunMode {
     Run = "run",
@@ -207,8 +216,9 @@ export abstract class Backend {
     /**
      * Generate linting suggestions for the given code
      * @param {string} code The code to lint
+     * @param {Linter} linter The linter to run, for backends that offer more than one
      */
-    public abstract lintCode(code: string): Promise<Array<WorkerDiagnostic>>;
+    public abstract lintCode(code: string, linter?: Linter): Promise<Array<WorkerDiagnostic>>;
 
     /**
      * Provide files to be used by the backend
