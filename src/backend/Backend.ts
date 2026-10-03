@@ -232,6 +232,14 @@ export abstract class Backend {
     }
 
     /**
+     * Remove every file from the backend filesystem
+     * @return {Promise<void>} Resolves when the workspace has been cleared
+     */
+    public clearWorkspace(): Promise<void> {
+        return Promise.resolve();
+    }
+
+    /**
      * Update the content of a file in the backend filesystem
      * @param {string} name The name of the file to update
      * @param {string} content The new content of the file; base64-encoded when binary is true
