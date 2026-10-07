@@ -144,7 +144,8 @@ console.log(papyros.runner.io.output[0].content);
 ### Minimal setup with components
 
 Papyros provides four web components for visualization.
-Each expects a `papyros` state instance, but defaults to the global `papyros`.
+Each expects a `papyros` state instance, but defaults to the global `papyros`
+(`<p-code-playground>` defaults to an instance of its own, see [Code playgrounds](#code-playgrounds)).
 
 ```html
 <script type="module">
@@ -184,6 +185,35 @@ running, and `runtime.currentRun?.owner` tells which one is. Files are shared as
 files a run needs to `runner.start(mode, files)`, which starts it from a workspace holding
 only those. Disposing an instance leaves the workers to the others; call
 `runtime.dispose()` to terminate them.
+
+### Code playgrounds
+
+`<p-code-playground>` is a small, self-contained Python editor with Run, Reset, input and
+output, for embedding runnable examples in a page. Every playground runs on its own `Papyros`
+instance, and playgrounds share one `PapyrosRuntime`: Python then boots once, as soon as the
+first playground scrolls into view, and while one playground runs the others wait. A
+playground without a `.papyros` gets an instance on a runtime shared by every such
+playground; to configure them yourself, give every playground its own `Papyros` on one
+runtime:
+
+```javascript
+import { html, render } from "lit";
+import { Papyros, PapyrosRuntime } from "@dodona/papyros";
+
+const runtime = new PapyrosRuntime();
+const examples = ['print("Hello")', 'name = input("Name: ")\nprint(f"Hi {name}")'];
+
+render(
+    examples.map(
+        (code) => html`<p-code-playground .papyros=${new Papyros({ runtime })} .code=${code}></p-code-playground>`,
+    ),
+    document.body,
+);
+```
+
+`code` is the code the playground starts with. Reset restores it and clears the output.
+`label` replaces the "Try it yourself" title, and an empty label hides it. Every run starts
+from an empty workspace.
 
 ---
 
@@ -225,6 +255,10 @@ Lets users provide input (batch or interactive), passed to `papyros.io`.
 #### `<p-output>`
 
 Visualizes program output: stdout, stderr, and images.
+
+#### `<p-code-playground>`
+
+An inline, runnable Python block, see [Code playgrounds](#code-playgrounds).
 
 #### `<p-debugger>`
 

@@ -52,12 +52,14 @@ export function isFriendlyError(error: unknown): error is FriendlyError {
 
 /**
  * A friendly error, or anything else as plain text: a backend may send an object of another shape.
- * @param {boolean} alert Announce the friendly error's heading as an alert, for errors shown outside a live region
+ * @param {boolean} alert Announce the error's heading as an alert, for errors shown outside a live region.
+ * Plain text then becomes a heading of its own, in an `.error-title` block.
  */
 export function renderError(error: unknown, papyros: Papyros, alert = false): TemplateResult {
     if (!isFriendlyError(error)) {
         const text = typeof error === "string" ? error : JSON.stringify(error);
-        return html`<span class="visually-hidden">${papyros.i18n.t("Papyros.error_prefix")}</span>${text}`;
+        const content = html`<span class="visually-hidden">${papyros.i18n.t("Papyros.error_prefix")}</span>${text}`;
+        return alert ? html`<div class="error-title" role="alert">${content}</div>` : content;
     }
     return html`<p-friendly-error .error=${error} .papyros=${papyros} ?alert=${alert}></p-friendly-error>${
             error.why ? html`<span class="why">${error.why.trim()}</span>` : ""
