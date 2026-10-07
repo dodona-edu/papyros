@@ -50,4 +50,39 @@ describe("FileViewer", () => {
 
         element.remove();
     });
+
+    it("writes a pending edit to the backend when it switches to another file", async () => {
+        const element = await renderFile({ name: "a.txt", content: "a", binary: false });
+        element.papyros.io.files = [{ name: "a.txt", content: "a", binary: false }];
+        const updateFile = vi.spyOn(element.papyros.runner, "updateFile").mockResolvedValue();
+        const editor = element.shadowRoot!.querySelector("p-file-editor")!;
+
+        editor.dispatchEvent(new CustomEvent("change", { detail: "a edited" }));
+        element.file = { name: "a.txt", content: "a edited", binary: false };
+        await element.updateComplete;
+        expect(updateFile).not.toHaveBeenCalled();
+
+        element.file = { name: "b.txt", content: "b", binary: false };
+        await element.updateComplete;
+        expect(updateFile).toHaveBeenCalledExactlyOnceWith("a.txt", "a edited", false);
+
+        element.remove();
+    });
+
+    it("does not write a pending edit of a file that is closed before it is written", async () => {
+        const element = await renderFile({ name: "a.txt", content: "a", binary: false });
+        element.papyros.io.files = [{ name: "a.txt", content: "a", binary: false }];
+        const updateFile = vi.spyOn(element.papyros.runner, "updateFile").mockResolvedValue();
+        const editor = element.shadowRoot!.querySelector("p-file-editor")!;
+        vi.useFakeTimers();
+        try {
+            editor.dispatchEvent(new CustomEvent("change", { detail: "a edited" }));
+            element.papyros.io.removeFile("a.txt");
+            vi.advanceTimersByTime(300);
+            element.remove();
+            expect(updateFile).not.toHaveBeenCalled();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
 });

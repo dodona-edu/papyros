@@ -18,4 +18,26 @@ describe("CodeRunner", () => {
 
         element.remove();
     });
+
+    it("keeps the drop zone working after being moved in the page", async () => {
+        const element = document.createElement("p-code-runner") as CodeRunner;
+        element.papyros = new Papyros();
+        document.body.append(element);
+        await element.updateComplete;
+
+        element.remove();
+        document.body.append(element);
+        await element.updateComplete;
+
+        const dropZone = element.shadowRoot!.querySelector<HTMLElement>(".drop-zone")!;
+        dropZone.dispatchEvent(new DragEvent("dragover", { bubbles: true, cancelable: true, composed: true }));
+        await element.updateComplete;
+        expect(dropZone.classList.contains("drag-over")).toBe(true);
+
+        dropZone.dispatchEvent(new DragEvent("drop", { bubbles: true, cancelable: true, composed: true }));
+        await element.updateComplete;
+        expect(dropZone.classList.contains("drag-over")).toBe(false);
+
+        element.remove();
+    });
 });

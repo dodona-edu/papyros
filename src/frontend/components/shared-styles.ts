@@ -19,6 +19,13 @@ export const tabBarStyles: CSSResult = css`
     .tab-bar::-webkit-scrollbar {
         display: none;
     }
+
+    /* For a bar that holds more than its tabs: the tabs sit in this inner tablist. */
+    .tablist {
+        display: flex;
+        flex-direction: row;
+        height: 100%;
+    }
 `;
 
 export const tabButtonStyles: CSSResult = css`
@@ -115,5 +122,11 @@ export const visuallyHiddenStyles: CSSResult = css`
         overflow: hidden;
         clip: rect(0 0 0 0);
         white-space: nowrap;
+    }
+`;
+
+export const placeholderStyles: CSSResult = css`
+    .place-holder {
+        color: var(--md-sys-color-on-surface-variant);
     }
 `;

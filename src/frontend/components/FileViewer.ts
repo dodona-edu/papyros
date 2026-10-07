@@ -15,7 +15,10 @@ export class FileViewer extends PapyrosElement {
     private editorRef: Ref<FileEditor> = createRef();
 
     private debouncedUpdateFile = debounce((name: string, content: string) => {
-        void this.papyros.runner.updateFile(name, content, false);
+        // Writing a file that was closed while its edit was pending would recreate it in the backend
+        if (this.papyros.io.files.some((f) => f.name === name)) {
+            void this.papyros.runner.updateFile(name, content, false);
+        }
     }, 300);
 
     static get styles(): CSSResult {
@@ -69,6 +72,20 @@ export class FileViewer extends PapyrosElement {
         a.download = this.file.name;
         a.click();
         setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    public override disconnectedCallback(): void {
+        super.disconnectedCallback();
+        // Switching to another tab removes this viewer; the edit still has to reach the backend.
+        this.debouncedUpdateFile.flush();
+    }
+
+    protected override willUpdate(changedProperties: Map<PropertyKey, unknown>): void {
+        // Every edit hands in a new object for the same file, so only a different name means another file
+        const previous = changedProperties.get("file") as FileEntry | undefined;
+        if (previous && previous.name !== this.file?.name) {
+            this.debouncedUpdateFile.flush();
+        }
     }
 
     protected override updated(changedProperties: Map<PropertyKey, unknown>): void {
