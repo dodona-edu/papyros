@@ -69,7 +69,8 @@ export const ENGLISH_TRANSLATION = {
         launch_error: "Papyros failed to load. Do you want to reload?",
         url_fetch_error: "Failed to fetch URL: %{url}",
         loading: "Loading %{packages}.",
-        unsupported_browser: "This browser cannot run Python. Update your browser or use another one.",
+        unsupported_browser:
+            "Python could not start in this browser. Close other tabs, update your browser or use another one.",
         run_modes: {
             doctest: "Run doctests",
             debug: "Debug",
@@ -132,6 +133,21 @@ export const ENGLISH_TRANSLATION = {
         traceback: {
             hide: "Hide traceback",
             show: "Show traceback",
+        },
+        playground: {
+            config_error_title: "Configuration error",
+            error: "Python failed to load. Try again, or reload the page.",
+            input_label: "Program input",
+            input_placeholder: "Type input and press Enter",
+            other_running: "Another code block is running",
+            output_label: "Program output",
+            output_panel_label: "Output",
+            reset: "Reset",
+            reset_hint: "Restore the original code and clear the output",
+            run: "Run",
+            stop: "Stop",
+            title: "Try it yourself",
+            unsupported_language: 'Only Python is supported in code playgrounds (got "%{language}").',
         },
     },
     CodeMirror: {
@@ -220,7 +236,7 @@ export const DUTCH_TRANSLATION = {
         url_fetch_error: "Kon URL niet ophalen: %{url}",
         loading: "Bezig met het installeren van %{packages}.",
         unsupported_browser:
-            "Deze browser kan geen Python uitvoeren. Werk je browser bij of gebruik een andere browser.",
+            "Python kon niet starten in deze browser. Sluit andere tabbladen, werk je browser bij of gebruik een andere browser.",
         run_modes: {
             doctest: "Doctests uitvoeren",
             debug: "Debuggen",
@@ -283,6 +299,21 @@ export const DUTCH_TRANSLATION = {
         traceback: {
             hide: "Verberg traceback",
             show: "Toon traceback",
+        },
+        playground: {
+            config_error_title: "Configuratiefout",
+            error: "Python kon niet laden. Probeer opnieuw of herlaad de pagina.",
+            input_label: "Programma-invoer",
+            input_placeholder: "Typ invoer en druk op Enter",
+            other_running: "Er wordt al een ander codeblok uitgevoerd",
+            output_label: "Programma-uitvoer",
+            output_panel_label: "Uitvoer",
+            reset: "Reset",
+            reset_hint: "Oorspronkelijke code herstellen en uitvoer wissen",
+            run: "Uitvoeren",
+            stop: "Stoppen",
+            title: "Probeer het zelf",
+            unsupported_language: 'Enkel Python wordt ondersteund in een code playground (kreeg "%{language}").',
         },
     },
     CodeMirror: {

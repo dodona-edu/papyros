@@ -2,7 +2,12 @@ import { afterEach, describe, expect, it } from "vitest";
 import { render } from "lit";
 import { Papyros } from "../../../src/frontend/state/Papyros";
 import { OutputType } from "../../../src/frontend/state/InputOutput";
-import { outputAsText, renderEntry, renderOverflow } from "../../../src/frontend/components/output/renderOutput";
+import {
+    outputAsText,
+    renderEntry,
+    renderError,
+    renderOverflow,
+} from "../../../src/frontend/components/output/renderOutput";
 import type { Output } from "../../../src/frontend/components/Output";
 import "../../../src/frontend/components/Output";
 
@@ -79,6 +84,25 @@ describe("renderEntry", () => {
         render(renderEntry({ type: OutputType.stderr, content: { name: "ValueError" } }, new Papyros()), el);
 
         expect(el.querySelector(".why")).toBeNull();
+    });
+});
+
+describe("renderError", () => {
+    it("announces a plain error as an alert on request, keeping its screen reader prefix", () => {
+        const el = container();
+        render(renderError("oops", new Papyros(), true), el);
+
+        const title = el.querySelector(".error-title")!;
+        expect(title.getAttribute("role")).toBe("alert");
+        expect(title.textContent).toBe("Error: oops");
+    });
+
+    it("leaves a plain error inline without an alert by default", () => {
+        const el = container();
+        render(renderError("oops", new Papyros()), el);
+
+        expect(el.querySelector(".error-title")).toBeNull();
+        expect(el.querySelector("[role='alert']")).toBeNull();
     });
 });
 
