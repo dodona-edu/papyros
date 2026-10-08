@@ -183,7 +183,8 @@ Each instance keeps its own code, output, input and debugger, but only one of th
 code at a time: `runner.start()` does nothing while another instance on the runtime is
 running, and `runtime.currentRun?.owner` tells which one is. Files are shared as well, so pass the
 files a run needs to `runner.start(mode, files)`, which starts it from a workspace holding
-only those. Disposing an instance leaves the workers to the others; call
+only those. `files` can also be a promise: the run claims the runtime right away and waits
+for the files, and ends without running when the promise rejects. Disposing an instance leaves the workers to the others; call
 `runtime.dispose()` to terminate them.
 
 ### Code playgrounds
@@ -214,6 +215,18 @@ render(
 `code` is the code the playground starts with. Reset restores it and clears the output.
 `label` replaces the "Try it yourself" title, and an empty label hides it. Every run starts
 from an empty workspace.
+
+`files` declares data files the code can `open()`: space-separated paths, resolved against
+the document's base URL. The playground then shows a read-only tab per file above the
+editor, and every run starts with exactly those files. Every path must end in a valid file
+name (`media/` does not) and the names must be unique; otherwise the playground shows a
+configuration error instead. A file that fails to load shows an alert and stops the run;
+opening its tab again or the next Run retries it. Binary files and text over 100 kB are not
+previewed; their tab links to the file instead.
+
+```html
+<p-code-playground files="media/grades.txt media/names.csv"></p-code-playground>
+```
 
 ---
 

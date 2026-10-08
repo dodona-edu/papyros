@@ -124,9 +124,15 @@ export const ENGLISH_TRANSLATION = {
         },
         playground: {
             config_error_title: "Configuration error",
+            duplicate_file_name: 'Files in a code playground need different names (got "%{name}" more than once).',
             error: "Python failed to load. Try again, or reload the page.",
+            file_load_failed: "The file %{name} failed to load. Try again, or reload the page.",
+            file_loading: "Loading file…",
+            file_not_previewable: "The file %{name} can't be shown here.",
             input_label: "Program input",
             input_placeholder: "Type input and press Enter",
+            invalid_file_name: 'Files in a code playground need a valid file name (got "%{path}").',
+            open_file: "Open file",
             other_running: "Another code block is running",
             output_label: "Program output",
             output_panel_label: "Output",
@@ -278,9 +284,17 @@ export const DUTCH_TRANSLATION = {
         },
         playground: {
             config_error_title: "Configuratiefout",
+            duplicate_file_name:
+                'Bestanden in een code playground moeten elk een andere naam hebben (kreeg "%{name}" meer dan één keer).',
             error: "Python kon niet laden. Probeer opnieuw of herlaad de pagina.",
+            file_load_failed: "Het bestand %{name} kon niet geladen worden. Probeer opnieuw of herlaad de pagina.",
+            file_loading: "Bestand laden…",
+            file_not_previewable: "Het bestand %{name} kan hier niet getoond worden.",
             input_label: "Programma-invoer",
             input_placeholder: "Typ invoer en druk op Enter",
+            invalid_file_name:
+                'Bestanden in een code playground moeten een geldige bestandsnaam hebben (kreeg "%{path}").',
+            open_file: "Bestand openen",
             other_running: "Er wordt al een ander codeblok uitgevoerd",
             output_label: "Programma-uitvoer",
             output_panel_label: "Uitvoer",

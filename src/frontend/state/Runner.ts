@@ -426,11 +426,12 @@ export class Runner extends State {
      * Execute the code in the editor
      * @param {RunMode} mode The mode to run with
      * @param {FileEntry[]} files When given, the run starts from a workspace that holds only these files.
-     * Without them, the workspace is left as is.
+     * Without them, the workspace is left as is. A promise of them holds the run in its Loading phase
+     * until it settles, and its rejection ends the run before it starts, without reporting an error.
      * @return {Promise<void>} Promise of running the code. Resolves without running anything
      * while another run on the same runtime is in progress.
      */
-    public async start(mode?: RunMode, files?: readonly FileEntry[]): Promise<void> {
+    public async start(mode?: RunMode, files?: readonly FileEntry[] | Promise<readonly FileEntry[]>): Promise<void> {
         // Claimed before anything else is touched, so a refused start leaves this instance as it was
         const run = this.papyros.runtime.tryAcquire(this.papyros);
         if (!run) {
@@ -454,7 +455,11 @@ export class Runner extends State {
         }
     }
 
-    private async run(run: Run, mode?: RunMode, files?: readonly FileEntry[]): Promise<void> {
+    private async run(
+        run: Run,
+        mode?: RunMode,
+        loadingFiles?: readonly FileEntry[] | Promise<readonly FileEntry[]>,
+    ): Promise<void> {
         this.papyros.debugger.active = mode === RunMode.Debug;
 
         // Setup pre-run
@@ -464,13 +469,17 @@ export class Runner extends State {
         let interrupted = false;
         let terminated = false;
         let unusable = false;
+        let files: readonly FileEntry[] | undefined;
+        try {
+            files = await loadingFiles;
+        } catch {
+            // Whoever loads the files reports why they failed
+            this.endBeforeStart(RunState.Ready);
+            return;
+        }
         const backend = await this.availableBackend();
         if (!backend) {
-            // Leaving the debugger active would offer a stop-debug button here
-            this.papyros.debugger.active = false;
-            this.papyros.io.onRunEnd();
-            this.papyros.debugger.onRunEnd();
-            this.setState(RunState.Error);
+            this.endBeforeStart(RunState.Error);
             return;
         }
         this.runStartTime = new Date().getTime();
@@ -530,6 +539,14 @@ export class Runner extends State {
                 );
             }
         }
+    }
+
+    private endBeforeStart(state: RunState): void {
+        // Leaving the debugger active would offer a stop-debug button here
+        this.papyros.debugger.active = false;
+        this.papyros.io.onRunEnd();
+        this.papyros.debugger.onRunEnd();
+        this.setState(state);
     }
 
     /**
