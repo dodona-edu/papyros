@@ -118,6 +118,10 @@ export const ENGLISH_TRANSLATION = {
         error_prefix: "Error: ",
         turtle_alt: "Turtle drawing",
         image_alt: "Image output",
+        traceback: {
+            hide: "Hide traceback",
+            show: "Show traceback",
+        },
     },
     CodeMirror: {
         // Papyros
@@ -253,6 +257,10 @@ export const DUTCH_TRANSLATION = {
         error_prefix: "Fout: ",
         turtle_alt: "Turtle-tekening",
         image_alt: "Afbeelding als uitvoer",
+        traceback: {
+            hide: "Verberg traceback",
+            show: "Toon traceback",
+        },
     },
     CodeMirror: {
         // Papyros

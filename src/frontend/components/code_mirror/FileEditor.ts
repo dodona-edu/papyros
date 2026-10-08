@@ -10,10 +10,25 @@ import {
 } from "@codemirror/view";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { bracketMatching, foldGutter, indentOnInput } from "@codemirror/language";
-import { EditorState } from "@codemirror/state";
+import { EditorState, Extension } from "@codemirror/state";
 import { highlightSelectionMatches } from "@codemirror/search";
 import { css, CSSResult } from "lit";
 import { languageForFileName } from "./Languages";
+
+const fileExtensions: Extension = [
+    lineNumbers(),
+    highlightSpecialChars(),
+    history(),
+    foldGutter(),
+    drawSelection(),
+    EditorState.allowMultipleSelections.of(true),
+    indentOnInput(),
+    bracketMatching(),
+    highlightSelectionMatches(),
+    highlightActiveLineGutter(),
+    highlightActiveLine(),
+    keymap.of([...defaultKeymap, ...historyKeymap]),
+];
 
 @customElement("p-file-editor")
 export class FileEditor extends CodeMirrorEditor {
@@ -36,20 +51,7 @@ export class FileEditor extends CodeMirrorEditor {
         super();
         this.configure({
             language: [],
-            fileExtensions: [
-                lineNumbers(),
-                highlightSpecialChars(),
-                history(),
-                foldGutter(),
-                drawSelection(),
-                EditorState.allowMultipleSelections.of(true),
-                indentOnInput(),
-                bracketMatching(),
-                highlightSelectionMatches(),
-                highlightActiveLineGutter(),
-                highlightActiveLine(),
-                keymap.of([...defaultKeymap, ...historyKeymap]),
-            ],
+            fileExtensions,
         });
     }
 }

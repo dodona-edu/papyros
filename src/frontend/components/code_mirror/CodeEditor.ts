@@ -12,7 +12,7 @@ import {
 } from "@codemirror/view";
 import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
 import { bracketMatching, foldGutter, indentOnInput, indentUnit } from "@codemirror/language";
-import { EditorState, StateEffect } from "@codemirror/state";
+import { EditorState, Extension, StateEffect } from "@codemirror/state";
 import {
     acceptCompletion,
     autocompletion,
@@ -46,6 +46,31 @@ const tabCompletionKeyMap = [{ key: "Tab", run: acceptCompletion }];
 const ESCAPE_HINT_ID = "escape-hint";
 // Dispatched to ask the linter to re-run without a document change (see needsRefresh).
 const forceLintEffect = StateEffect.define<null>();
+
+const codingExtensions: Extension = [
+    lineNumbers(),
+    highlightSpecialChars(),
+    history(),
+    foldGutter(),
+    drawSelection(),
+    EditorState.allowMultipleSelections.of(true),
+    indentOnInput(),
+    bracketMatching(),
+    closeBrackets(),
+    autocompletion(),
+    rectangularSelection(),
+    highlightSelectionMatches(),
+    keymap.of([
+        ...closeBracketsKeymap,
+        ...defaultKeymap,
+        ...searchKeymap,
+        ...historyKeymap,
+        ...completionKeymap,
+        ...tabCompletionKeyMap,
+        ...lintKeymap,
+        indentWithTab,
+    ]),
+];
 
 @customElement("p-code-editor")
 export class CodeEditor extends CodeMirrorEditor {
@@ -307,28 +332,7 @@ export class CodeEditor extends CodeMirrorEditor {
         this.configure({
             language: [],
             codingExtensions: [
-                lineNumbers(),
-                highlightSpecialChars(),
-                history(),
-                foldGutter(),
-                drawSelection(),
-                EditorState.allowMultipleSelections.of(true),
-                indentOnInput(),
-                bracketMatching(),
-                closeBrackets(),
-                autocompletion(),
-                rectangularSelection(),
-                highlightSelectionMatches(),
-                keymap.of([
-                    ...closeBracketsKeymap,
-                    ...defaultKeymap,
-                    ...searchKeymap,
-                    ...historyKeymap,
-                    ...completionKeymap,
-                    ...tabCompletionKeyMap,
-                    ...lintKeymap,
-                    indentWithTab,
-                ]),
+                codingExtensions,
                 EditorView.contentAttributes.of({ "aria-describedby": ESCAPE_HINT_ID }),
             ],
             debugging: [highlightActiveLineGutter(), lintGutter(), highlightActiveLine()],

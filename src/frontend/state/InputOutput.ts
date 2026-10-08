@@ -1,6 +1,6 @@
 import { State, stateProperty } from "@dodona/lit-state";
 import { BackendEventType } from "../../communication/BackendEvent";
-import { isValidFileName, parseData } from "../../util/Util";
+import { isFileNameAvailable, isValidFileName, parseData } from "../../util/Util";
 import { Papyros } from "./Papyros";
 import { RunState } from "./Runner";
 import { ServiceWorkerInputError } from "./PapyrosErrors";
@@ -59,6 +59,8 @@ export interface FileEntry {
     content: string;
     binary: boolean;
 }
+
+export const DEFAULT_IMAGE_CONTENT_TYPE = "image/png;base64";
 
 export const CODE_TAB = "code";
 
@@ -197,7 +199,7 @@ export class InputOutput extends State {
         this.output = [...this.output, { type: OutputType.stderr, content: error }];
     }
 
-    public logImage(imageData: string, contentType: string = "image/png"): void {
+    public logImage(imageData: string, contentType: string = DEFAULT_IMAGE_CONTENT_TYPE): void {
         this.output = [...this.output, { type: OutputType.img, content: imageData, contentType }];
     }
 
@@ -245,7 +247,7 @@ export class InputOutput extends State {
     }
 
     public addFile(name: string, content: string = "", binary: boolean = false): boolean {
-        if (!isValidFileName(name) || this.files.some((f) => f.name === name)) {
+        if (!isFileNameAvailable(name, this.files)) {
             return false;
         }
         this.files = [...this.files, { name, content, binary }];

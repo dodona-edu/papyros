@@ -13,6 +13,13 @@ import {
     waitForPapyrosReady,
 } from "../../helpers";
 
+function stdout(papyros: Papyros): string {
+    return papyros.io.output
+        .filter((o) => o.type === OutputType.stdout)
+        .map((o) => o.content as string)
+        .join("");
+}
+
 // One Pyodide boot for the whole file: the Python tests share an instance, and the
 // JavaScript tests get cheap throwaway instances that never boot Pyodide at all.
 describe.sequential("InputOutput", () => {
@@ -177,5 +184,23 @@ print("world! " + input("input2"))
         await waitForOutput(papyros);
         expect(papyros.io.output[0].content).toBe("hello foo1");
         expect(papyros.io.output[3].content).toBe("world! foo2");
+    });
+
+    it("does not add provided input to the output", async () => {
+        papyros.runner.code = `input()\nprint("done")`;
+        await waitForInputReady(papyros);
+        papyros.io.inputMode = InputMode.interactive;
+        papyros.io.inputBuffer = "";
+        papyros.io.reset();
+        const unsubscribe = papyros.io.subscribe(
+            () => (papyros.io.awaitingInput ? papyros.io.provideInput("typed") : ""),
+            "awaitingInput",
+        );
+        await papyros.runner.start();
+        await waitForPapyrosReady(papyros);
+        unsubscribe();
+
+        expect(papyros.io.inputs).toContain("typed");
+        expect(stdout(papyros)).toBe("done\n");
     });
 });

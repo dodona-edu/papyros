@@ -1,7 +1,6 @@
 import { customElement, state } from "lit/decorators.js";
 import { PapyrosElement } from "./PapyrosElement";
 import { css, CSSResult, html, PropertyValues, TemplateResult } from "lit";
-import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { CODE_TAB } from "../state/InputOutput";
 import { arrayBufferToBase64, isTextMimeType } from "../../util/Util";
 import "./code_runner/Code";
@@ -9,6 +8,7 @@ import "./code_runner/RunState";
 import "./code_runner/ButtonLint";
 import "./EditorTabs";
 import "./FileViewer";
+import "@material/web/icon/icon";
 import { paneStyles } from "./shared-styles";
 
 @customElement("p-code-runner")
@@ -18,8 +18,6 @@ export class CodeRunner extends PapyrosElement {
 
     @state()
     private showEscapeHint = false;
-
-    private dropZoneRef: Ref<HTMLDivElement> = createRef();
 
     static get styles(): CSSResult {
         return css`
@@ -144,41 +142,39 @@ export class CodeRunner extends PapyrosElement {
         document.addEventListener("keydown", this.onKeyDown, true);
     }
 
-    protected override firstUpdated(): void {
-        const dropZone = this.dropZoneRef.value;
-        if (!dropZone) return;
-        // Use capture phase so we intercept before CodeMirror handles the drop
-        dropZone.addEventListener("dragover", this.onDragOver, true);
-        dropZone.addEventListener("dragleave", this.onDragLeave, true);
-        dropZone.addEventListener("drop", this.onDrop, true);
-    }
-
     override disconnectedCallback(): void {
         super.disconnectedCallback();
         document.removeEventListener("pointerdown", this.onPointerDown, true);
         document.removeEventListener("keydown", this.onKeyDown, true);
-        const dropZone = this.dropZoneRef.value;
-        if (!dropZone) return;
-        dropZone.removeEventListener("dragover", this.onDragOver, true);
-        dropZone.removeEventListener("dragleave", this.onDragLeave, true);
-        dropZone.removeEventListener("drop", this.onDrop, true);
     }
 
-    private onDragOver = (e: DragEvent): void => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (this.papyros.debugger.active) return;
-        if (!this.dragOver) this.dragOver = true;
+    // The drop zone listens in the capture phase, so it intercepts drops before CodeMirror handles them.
+    private onDragOver = {
+        capture: true,
+        handleEvent: (e: DragEvent): void => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (this.papyros.debugger.active) return;
+            if (!this.dragOver) this.dragOver = true;
+        },
     };
 
-    private onDragLeave = (e: DragEvent): void => {
-        const dropZone = this.dropZoneRef.value;
-        // Only react if leaving the drop zone, not moving between children
-        if (e.relatedTarget && dropZone?.contains(e.relatedTarget as Node)) return;
-        this.dragOver = false;
+    private onDragLeave = {
+        capture: true,
+        handleEvent: (e: DragEvent): void => {
+            const dropZone = e.currentTarget as HTMLElement;
+            // Only react if leaving the drop zone, not moving between children
+            if (e.relatedTarget && dropZone.contains(e.relatedTarget as Node)) return;
+            this.dragOver = false;
+        },
     };
 
-    private onDrop = (e: DragEvent): void => {
+    private onDrop = {
+        capture: true,
+        handleEvent: (e: DragEvent): void => this.drop(e),
+    };
+
+    private drop(e: DragEvent): void {
         e.preventDefault();
         e.stopPropagation();
         this.dragOver = false;
@@ -199,7 +195,7 @@ export class CodeRunner extends PapyrosElement {
                 void this.papyros.runner.fetchAndAddUrl(url);
             }
         }
-    };
+    }
 
     private readAndAddFile(file: File): void {
         const reader = new FileReader();
@@ -222,7 +218,12 @@ export class CodeRunner extends PapyrosElement {
         const activeFile = files.find((f) => f.name === activeTab);
 
         return html`
-            <div ${ref(this.dropZoneRef)} class="drop-zone ${this.dragOver ? "drag-over" : ""}">
+            <div
+                class="drop-zone ${this.dragOver ? "drag-over" : ""}"
+                @dragover=${this.onDragOver}
+                @dragleave=${this.onDragLeave}
+                @drop=${this.onDrop}
+            >
                 <div class="pane ${this.showEscapeHint && activeTab === CODE_TAB ? "show-escape-hint" : ""}">
                     <p-editor-tabs .papyros=${this.papyros} .files=${files}></p-editor-tabs>
                     <!-- The tabs live in another shadow root, so the panel is named directly instead of by aria-labelledby. -->

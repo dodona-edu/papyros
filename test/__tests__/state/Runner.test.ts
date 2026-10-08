@@ -75,6 +75,7 @@ const c = a + b;`;
         await waitForOutput(papyros);
         expect(papyros.runner.stateMessage).toMatch(/^Code executed in/);
         expect((papyros.io.output[0].content as FriendlyError).traceback).toMatch(/ValueError: test/);
+        expect((papyros.io.output[0].content as FriendlyError).where).not.toContain("LOCAL:");
     });
 
     it("should finish a run that fails to compile", async () => {
