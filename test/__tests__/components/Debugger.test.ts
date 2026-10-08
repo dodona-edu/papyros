@@ -2,7 +2,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Frame } from "@dodona/trace-component/dist/trace_types";
 import type { TraceComponent } from "@dodona/trace-component";
 import { Papyros } from "../../../src/frontend/state/Papyros";
-import { RunState } from "../../../src/frontend/state/Runner";
 import { RunMode } from "../../../src/backend/Backend";
 import type { Debugger } from "../../../src/frontend/components/Debugger";
 import { prefersReducedMotion } from "../../../src/frontend/components/motion";
@@ -167,9 +166,9 @@ describe("Debugger", () => {
         expect(title()).toBe("The debugger has stopped");
     });
 
-    it("disables its Debug button while another run is in progress", async () => {
+    it("disables its Debug button while a run is in progress", async () => {
         await mount(false);
-        element.papyros.runner.setState(RunState.Running);
+        element.papyros.runtime.tryAcquire(element.papyros);
         await element.updateComplete;
         expect(debugButton().hasAttribute("disabled")).toBe(true);
     });
@@ -180,7 +179,7 @@ describe("Debugger", () => {
         expect(element.shadowRoot!.activeElement).toBe(debugButton());
 
         element.papyros.debugger.active = true;
-        element.papyros.runner.setState(RunState.Loading);
+        element.papyros.runtime.tryAcquire(element.papyros);
         await element.updateComplete;
         await nextFrame();
         expect(element.shadowRoot!.activeElement).toBe(element.shadowRoot!.querySelector(".body"));
@@ -194,7 +193,7 @@ describe("Debugger", () => {
     it("shows a named progress bar until the first step of a debug run arrives", async () => {
         await mount(false);
         element.papyros.debugger.active = true;
-        element.papyros.runner.setState(RunState.Loading);
+        element.papyros.runtime.tryAcquire(element.papyros);
         await element.updateComplete;
         const progress = element.shadowRoot!.querySelector("md-linear-progress")!;
         expect(progress.getAttribute("aria-label")).toBe("Preparing the debugger\u2026");
@@ -210,7 +209,7 @@ describe("Debugger", () => {
         vi.mocked(prefersReducedMotion).mockReturnValue(true);
         await mount(false);
         element.papyros.debugger.active = true;
-        element.papyros.runner.setState(RunState.Loading);
+        element.papyros.runtime.tryAcquire(element.papyros);
         await element.updateComplete;
 
         expect(element.shadowRoot!.querySelector("md-linear-progress")).toBeNull();
@@ -223,7 +222,7 @@ describe("Debugger", () => {
     it("follows a change of the reduced-motion preference while the debugger starts", async () => {
         await mount(false);
         element.papyros.debugger.active = true;
-        element.papyros.runner.setState(RunState.Loading);
+        element.papyros.runtime.tryAcquire(element.papyros);
         await element.updateComplete;
         const progress = (): Element | null => element.shadowRoot!.querySelector("md-linear-progress");
         expect(progress()).not.toBeNull();
