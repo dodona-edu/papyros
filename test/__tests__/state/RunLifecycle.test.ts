@@ -144,6 +144,59 @@ describe("starting a run from given files", () => {
         papyros.dispose();
     });
 
+    it("waits in its Loading phase for files that are still loading, holding the runtime", async () => {
+        const client = fakeClient();
+        const papyros = await launched(client);
+        let resolveFiles!: (loaded: typeof files) => void;
+        const loading = new Promise<typeof files>((resolve) => (resolveFiles = resolve));
+
+        const running = papyros.runner.start(RunMode.Run, loading);
+        await Promise.resolve();
+        expect(papyros.runtime.currentRun?.owner).toBe(papyros);
+        expect(papyros.runner.state).toBe(RunState.Loading);
+        expect(client.workerProxy.clearWorkspace).not.toHaveBeenCalled();
+
+        resolveFiles(files);
+        await vi.waitFor(() => expect(client.workerProxy.runCode).toHaveBeenCalled());
+        expect(client.workerProxy.updateFile).toHaveBeenCalledTimes(2);
+        client.finishRun();
+        await running;
+
+        papyros.dispose();
+    });
+
+    it("ends without running or reporting anything when its files fail to load", async () => {
+        const client = fakeClient();
+        const papyros = await launched(client);
+
+        await papyros.runner.start(RunMode.Run, Promise.reject(new Error("HTTP 404")));
+
+        expect(client.workerProxy.clearWorkspace).not.toHaveBeenCalled();
+        expect(client.workerProxy.runCode).not.toHaveBeenCalled();
+        expect(papyros.io.output).toEqual([]);
+        expect(papyros.runner.state).toBe(RunState.Ready);
+        expect(papyros.runtime.currentRun).toBeNull();
+
+        papyros.dispose();
+    });
+
+    it("does not run when stopped while the files load", async () => {
+        const client = fakeClient();
+        const papyros = await launched(client);
+        let resolveFiles!: (loaded: typeof files) => void;
+        const loading = new Promise<typeof files>((resolve) => (resolveFiles = resolve));
+
+        const running = papyros.runner.start(RunMode.Run, loading);
+        const stopping = papyros.runner.stop();
+        resolveFiles(files);
+        await Promise.all([running, stopping]);
+
+        expect(client.workerProxy.runCode).not.toHaveBeenCalled();
+        expect(papyros.runner.state).toBe(RunState.Ready);
+
+        papyros.dispose();
+    });
+
     it("reports a file that cannot be written instead of running", async () => {
         const error = new Error("No space left on device");
         const client = fakeClient();

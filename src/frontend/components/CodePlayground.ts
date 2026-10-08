@@ -5,9 +5,10 @@ import { PapyrosElement } from "./PapyrosElement";
 import { OutputEntry } from "../state/InputOutput";
 import { PapyrosLaunchError } from "../state/PapyrosErrors";
 import { RunMode } from "../../backend/Backend";
+import { PlaygroundFiles } from "./playground/files";
 import { PlaygroundInstance } from "./playground/instance";
 import { PlaygroundOutput } from "./playground/output";
-import { cardStyles, configErrorStyles, outputPanelStyles } from "./playground/styles";
+import { cardStyles, configErrorStyles, fileStyles, outputPanelStyles } from "./playground/styles";
 import { statusStyles } from "./playground/status";
 import { outputStyles } from "./output/renderOutput";
 import "./code_runner/Code";
@@ -24,7 +25,7 @@ import "./code_runner/Code";
 @customElement("p-code-playground")
 export class CodePlayground extends PapyrosElement {
     static get styles(): CSSResultGroup {
-        return [cardStyles, outputPanelStyles, statusStyles, configErrorStyles, outputStyles];
+        return [cardStyles, fileStyles, outputPanelStyles, statusStyles, configErrorStyles, outputStyles];
     }
 
     /**
@@ -45,10 +46,19 @@ export class CodePlayground extends PapyrosElement {
     @property({ type: String })
     label?: string;
 
+    /**
+     * Space-separated paths of data files the code can open, resolved against the document's
+     * base URL. They show as read-only tabs above the editor and are the only files a run
+     * starts with.
+     */
+    @property({ type: String })
+    files = "";
+
     private readonly runStopButton = createRef<HTMLButtonElement>();
 
     private readonly instance = new PlaygroundInstance(this, () => this.supported);
     private readonly output = new PlaygroundOutput(this, () => this.focusRunStop());
+    private readonly dataFiles = new PlaygroundFiles(this);
 
     /**
      * The output of the latest run of this playground
@@ -76,7 +86,10 @@ export class CodePlayground extends PapyrosElement {
     private get canReset(): boolean {
         return (
             !this.isActive &&
-            (this.papyros.runner.code !== this.code || this.papyros.io.output.length > 0 || this.output.launchFailed)
+            (this.papyros.runner.code !== this.code ||
+                this.papyros.io.output.length > 0 ||
+                this.output.launchFailed ||
+                this.dataFiles.failed)
         );
     }
 
@@ -90,15 +103,19 @@ export class CodePlayground extends PapyrosElement {
 
     private run(): void {
         this.output.onRunStart();
-        // Launched first, so a run started while the runtime loads waits for it
+        this.dataFiles.clearFailures();
+        // Launched while the files load, so the two overlap; a run started while the runtime
+        // still loads waits for it
         this.papyros.runner.ensureLaunched().catch((error) => {
             this.papyros.errorHandler(
                 new PapyrosLaunchError("Launching the code playground runtime failed", { cause: error }),
             );
             this.output.onLaunchFailed();
         });
-        // An empty file list starts every run from an empty workspace
-        this.papyros.runner.start(RunMode.Run, []).catch((error) => this.papyros.errorHandler(error));
+        // Passing the files, even none, starts every run from a workspace holding only those
+        this.papyros.runner
+            .start(RunMode.Run, this.dataFiles.loadForRun())
+            .catch((error) => this.papyros.errorHandler(error));
     }
 
     private onRunStopClick(): void {
@@ -126,6 +143,7 @@ export class CodePlayground extends PapyrosElement {
         }
         this.papyros.runner.code = this.code;
         this.output.reset();
+        this.dataFiles.clearFailures();
     }
 
     protected override render(): TemplateResult {
@@ -133,6 +151,10 @@ export class CodePlayground extends PapyrosElement {
             return this.renderConfigError(
                 this.t("Papyros.playground.unsupported_language", { language: this.programmingLanguage }),
             );
+        }
+        const filesError = this.dataFiles.configError;
+        if (filesError !== undefined) {
+            return this.renderConfigError(filesError);
         }
         return this.renderCard();
     }
@@ -176,7 +198,8 @@ export class CodePlayground extends PapyrosElement {
                         }
                     </div>
                 </div>
-                <p-code .papyros=${this.papyros}></p-code>
+                ${this.dataFiles.renderTabs()}
+                ${this.dataFiles.renderCodePanel(html`<p-code .papyros=${this.papyros}></p-code>`)}
                 ${this.output.renderPanels()}
             </div>
         `;

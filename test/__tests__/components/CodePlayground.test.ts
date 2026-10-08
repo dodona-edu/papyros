@@ -37,6 +37,7 @@ interface MountOptions {
     code?: string;
     label?: string;
     language?: string;
+    files?: string;
     runtime?: PapyrosRuntime;
     client?: any;
     /** Keeps the playground in view, which is what starts the preload */
@@ -57,6 +58,9 @@ async function mount(options: MountOptions = {}): Promise<CodePlayground> {
     }
     if (options.language !== undefined) {
         el.programmingLanguage = options.language;
+    }
+    if (options.files !== undefined) {
+        el.files = options.files;
     }
     if (!options.visible) {
         // Out of view, so the preload leaves the launch to the test
@@ -183,6 +187,7 @@ function mockScroll(log: HTMLElement, geometry: { clientHeight: number; lineHeig
 }
 
 afterEach(() => {
+    vi.unstubAllGlobals();
     for (const el of mounted.splice(0)) {
         el.remove();
     }
@@ -1097,4 +1102,305 @@ describe("p-code-playground preload", () => {
         expect(client).toBe(working);
         await finishRun(first, client);
     });
+});
+
+// Loaded files are cached per URL for the whole module, so every test uses its own file names.
+function stubFiles(files: Record<string, () => Response>): ReturnType<typeof vi.fn> {
+    const realFetch = globalThis.fetch;
+    const fetch = vi.fn(async (input: RequestInfo | URL) => {
+        const name = new URL(String(input), document.baseURI).pathname.split("/").pop()!;
+        return files[name] ? files[name]() : realFetch(input);
+    });
+    vi.stubGlobal("fetch", fetch);
+    return fetch;
+}
+
+function fileTabs(el: CodePlayground): HTMLElement | null {
+    return $(el, "p-editor-tabs");
+}
+
+function tabButtons(el: CodePlayground): HTMLButtonElement[] {
+    const tabs = Array.from(fileTabs(el)!.shadowRoot!.querySelectorAll<HTMLElement>("[role=tab], p-editor-tab"));
+    return tabs.flatMap((tab) =>
+        tab.matches("p-editor-tab")
+            ? [tab.shadowRoot!.querySelector<HTMLButtonElement>("button")!]
+            : [tab as HTMLButtonElement],
+    );
+}
+
+describe("p-code-playground files", () => {
+    it("has no tabs without files", async () => {
+        const el = await mount();
+
+        expect(fileTabs(el)).toBeNull();
+    });
+
+    it("shows a read-only tab per file next to the code tab", async () => {
+        stubFiles({ "tabs-a.txt": () => new Response("a"), "tabs-b.txt": () => new Response("b") });
+        const el = await mount({ files: " media/tabs-a.txt\n media/tabs-b.txt " });
+        await settle(el);
+
+        const tabs = fileTabs(el)! as HTMLElement & { readonly: boolean };
+        await (tabs as any).updateComplete;
+        expect(tabs.readonly).toBe(true);
+        expect(tabButtons(el).map((b) => b.textContent!.trim())).toEqual(["Code", "tabs-a.txt", "tabs-b.txt"]);
+    });
+
+    it("shows a loading state, then the file content, when a file tab is opened", async () => {
+        let respond: (r: Response) => void = () => undefined;
+        const pending = new Promise<Response>((resolve) => (respond = resolve));
+        stubFiles({ "open-me.txt": () => pending as unknown as Response });
+        const el = await mount({ files: "open-me.txt" });
+
+        tabButtons(el)[1].click();
+        await settle(el);
+        expect($(el, ".file-panel")!.textContent).toContain("Loading file");
+        expect($(el, "p-code")!.checkVisibility()).toBe(false);
+
+        respond(new Response("naam;score\n"));
+        await vi.waitFor(() => expect($(el, "p-file-viewer")).not.toBeNull());
+        const viewer = $<
+            HTMLElement & { file: { content: string }; readonly: boolean; updateComplete: Promise<boolean> }
+        >(el, "p-file-viewer")!;
+        expect(viewer.file.content).toBe("naam;score\n");
+        expect(viewer.readonly).toBe(true);
+    });
+
+    it("passes the loaded files to the run", async () => {
+        stubFiles({ "run-grades.txt": () => new Response("18\n15\n") });
+        const client = fakeClient();
+        const el = await mount({ client, files: "media/run-grades.txt" });
+
+        await startRun(el);
+
+        expect(client.workerProxy.clearWorkspace).toHaveBeenCalled();
+        expect(client.workerProxy.updateFile).toHaveBeenCalledWith("run-grades.txt", "18\n15\n", false);
+        await finishRun(el, client);
+    });
+
+    it("shows an alert and does not run when a file fails to load", async () => {
+        stubFiles({ "gone.txt": () => new Response("Not found", { status: 404 }) });
+        const client = fakeClient();
+        const el = await mount({ client, files: "gone.txt" });
+
+        button(el, "button.run").click();
+        await vi.waitFor(() => expect($(el, ".file-error")).not.toBeNull());
+
+        expect($(el, ".file-error")!.getAttribute("role")).toBe("alert");
+        expect($(el, ".file-error")!.textContent).toContain("gone.txt");
+        expect(client.workerProxy.runCode).not.toHaveBeenCalled();
+        await vi.waitFor(() => expect(el.papyros.runtime.currentRun).toBeNull());
+    });
+
+    it("leaves only the file alert once a file of its run fails to load", async () => {
+        stubFiles({ "reserve-gone.txt": () => new Response("Not found", { status: 404 }) });
+        const el = await mount({ files: "reserve-gone.txt" });
+        await setPreviousOutput(el);
+
+        button(el, "button.run").click();
+        await el.updateComplete;
+        expect($(el, ".output-body")!.style.minHeight).toBe("88px");
+
+        await vi.waitFor(() => expect(el.papyros.runtime.currentRun).toBeNull());
+        await settle(el);
+        expect($(el, ".file-error")).not.toBeNull();
+        expect($(el, ".output")).toBeNull();
+    });
+
+    it("claims the runtime at the click and offers Stop while the files of its run load", async () => {
+        let respond: (r: Response) => void = () => undefined;
+        const pending = new Promise<Response>((resolve) => (respond = resolve));
+        stubFiles({ "gate-slow.txt": () => pending as unknown as Response });
+        const client = fakeClient();
+        const runtime = sharedRuntime(client);
+        const el = await mount({ runtime, files: "gate-slow.txt" });
+        const other = await mount({ runtime });
+        await setOutputs(el, [{ type: OutputType.stdout, content: "earlier\n" }]);
+
+        const pill = button(el);
+        pill.click();
+        await settle(el);
+        expect(el.outputs).toEqual([]);
+        expect(pill.textContent).toContain("Stop");
+        expect(pill.hasAttribute("aria-disabled")).toBe(false);
+        expect(button(el, "button.reset").getAttribute("aria-disabled")).toBe("true");
+        await settle(other);
+        expect(button(other, "button.run").getAttribute("aria-disabled")).toBe("true");
+
+        respond(new Response("x\n"));
+        await vi.waitFor(() => expect(client.workerProxy.runCode).toHaveBeenCalledTimes(1));
+        expect(client.workerProxy.updateFile).toHaveBeenCalledWith("gate-slow.txt", "x\n", false);
+        await finishRun(el, client);
+    });
+
+    it("stops a run while its files load, before the code runs", async () => {
+        let respond: (r: Response) => void = () => undefined;
+        const pending = new Promise<Response>((resolve) => (respond = resolve));
+        stubFiles({ "stop-slow.txt": () => pending as unknown as Response });
+        const client = fakeClient();
+        const el = await mount({ client, files: "stop-slow.txt" });
+
+        const pill = button(el);
+        pill.click();
+        await settle(el);
+        pill.click();
+        respond(new Response("x\n"));
+
+        await vi.waitFor(() => expect(el.papyros.runtime.currentRun).toBeNull());
+        await settle(el);
+        expect(client.workerProxy.runCode).not.toHaveBeenCalled();
+        expect(pill.textContent).toContain("Run");
+    });
+
+    it("keeps the runtime and the reserved height for its run while the files load", async () => {
+        let respond: (r: Response) => void = () => undefined;
+        const pending = new Promise<Response>((resolve) => (respond = resolve));
+        stubFiles({ "claimed-slow.txt": () => pending as unknown as Response });
+        const client = fakeClient();
+        const runtime = sharedRuntime(client);
+        const first = await mount({ runtime });
+        const second = await mount({ runtime, files: "claimed-slow.txt" });
+        await setPreviousOutput(second);
+
+        button(second, "button.run").click();
+        await settle(second);
+        expect($(second, ".output-body")!.style.minHeight).toBe("88px");
+
+        button(first, "button.run").click();
+        await settle(first);
+        respond(new Response("x\n"));
+        await vi.waitFor(() => expect(client.workerProxy.runCode).toHaveBeenCalledTimes(1));
+        expect(runtime.currentRun?.owner).toBe(second.papyros);
+        expect($(second, ".output-body")!.style.minHeight).toBe("88px");
+
+        client.emit(output("x\n"));
+        await finishRun(second, client);
+        expect($(second, ".output-body")!.style.minHeight).toBe("");
+    });
+
+    it("offers Reset after a file failed to load, and Reset clears the alert", async () => {
+        stubFiles({ "reset-gone.txt": () => new Response("Not found", { status: 404 }) });
+        const el = await mount({ files: "reset-gone.txt" });
+
+        button(el, "button.run").click();
+        await vi.waitFor(() => expect($(el, ".file-error")).not.toBeNull());
+        await settle(el);
+
+        const reset = button(el, "button.reset");
+        expect(reset.hasAttribute("aria-disabled")).toBe(false);
+        reset.click();
+        await settle(el);
+        expect($(el, ".file-error")).toBeNull();
+        expect(reset.getAttribute("aria-disabled")).toBe("true");
+    });
+
+    it("keeps previewing the other files when one fails to load", async () => {
+        stubFiles({
+            "broken-a.txt": () => new Response("Not found", { status: 404 }),
+            "fine-b.txt": () => new Response("b content"),
+        });
+        const el = await mount({ files: "broken-a.txt fine-b.txt" });
+
+        tabButtons(el)[1].click();
+        await vi.waitFor(() => expect($(el, ".file-error")).not.toBeNull());
+        expect($(el, ".file-error")!.textContent).toContain("broken-a.txt");
+
+        tabButtons(el)[2].click();
+        await vi.waitFor(() => expect($(el, "p-file-viewer")).not.toBeNull());
+        const viewer = $<HTMLElement & { file: { content: string } }>(el, "p-file-viewer")!;
+        expect(viewer.file.content).toBe("b content");
+        expect($$(el, ".file-error").map((alert) => alert.textContent!.trim())).toEqual([
+            "The file broken-a.txt failed to load. Try again, or reload the page.",
+        ]);
+    });
+
+    it("retries a file that failed to load when its tab is opened again", async () => {
+        const responses = [() => new Response("nope", { status: 500 }), () => new Response("second try")];
+        const fetch = stubFiles({ "reopen.txt": () => responses.shift()!() });
+        const el = await mount({ files: "reopen.txt" });
+
+        tabButtons(el)[1].click();
+        await vi.waitFor(() => expect($(el, ".file-error")).not.toBeNull());
+        await settle(el);
+        expect(fetch).toHaveBeenCalledTimes(1);
+
+        tabButtons(el)[0].click();
+        await settle(el);
+        tabButtons(el)[1].click();
+        await vi.waitFor(() => expect($(el, "p-file-viewer")).not.toBeNull());
+
+        const viewer = $<HTMLElement & { file: { content: string } }>(el, "p-file-viewer")!;
+        expect(viewer.file.content).toBe("second try");
+        expect($(el, ".file-error")).toBeNull();
+        expect(fetch).toHaveBeenCalledTimes(2);
+    });
+
+    it("runs on the next attempt once the file loads", async () => {
+        const responses = [() => new Response("nope", { status: 500 }), () => new Response("fine")];
+        stubFiles({ "retry.txt": () => responses.shift()!() });
+        const client = fakeClient();
+        const el = await mount({ client, files: "retry.txt" });
+
+        button(el, "button.run").click();
+        await vi.waitFor(() => expect($(el, ".file-error")).not.toBeNull());
+        await startRun(el);
+
+        expect($(el, ".file-error")).toBeNull();
+        expect(client.workerProxy.updateFile).toHaveBeenCalledWith("retry.txt", "fine", false);
+        await finishRun(el, client);
+    });
+
+    it("puts the editor in a tab panel named after the Code tab", async () => {
+        stubFiles({ "panel.txt": () => new Response("p") });
+        const el = await mount({ files: "panel.txt" });
+
+        const panel = $(el, "[role=tabpanel]")!;
+        expect(panel.getAttribute("aria-label")).toBe(tabButtons(el)[0].textContent!.trim());
+        expect(panel.querySelector("p-code")).not.toBeNull();
+
+        tabButtons(el)[1].click();
+        await settle(el);
+        expect(panel.hidden).toBe(true);
+        expect($$(el, "[role=tabpanel]:not([hidden])").map((p) => p.getAttribute("aria-label"))).toEqual(["panel.txt"]);
+    });
+
+    it("keeps the editor out of a tab panel without files", async () => {
+        const el = await mount();
+
+        expect($(el, "[role=tabpanel]")).toBeNull();
+        expect($(el, ".card > p-code")).not.toBeNull();
+    });
+
+    it("shows a config error for a file path without a file name", async () => {
+        const el = await mount({ files: "media/grades.txt media/" });
+
+        expect($(el, ".config-error")!.textContent).toContain(
+            'Files in a code playground need a valid file name (got "media/").',
+        );
+        expect(fileTabs(el)).toBeNull();
+    });
+
+    it("shows a config error for duplicate file names", async () => {
+        const el = await mount({ files: "a/data.txt b/data.txt" });
+
+        expect($(el, ".config-error")!.textContent).toContain('"data.txt"');
+        expect(fileTabs(el)).toBeNull();
+    });
+
+    it("lets a real run read a declared file", async () => {
+        stubFiles({ "grades.txt": () => new Response("18\n15\n") });
+        const runtime = new PapyrosRuntime();
+        runtimes.push(runtime);
+        const el = await mount({
+            runtime,
+            code: 'print(open("grades.txt").read().split())',
+            files: "media/grades.txt",
+        });
+
+        button(el, "button.run").click();
+
+        await vi.waitFor(() => expect(el.outputs.map((o) => o.content).join("")).toContain("['18', '15']"), {
+            timeout: 120000,
+        });
+    }, 180000);
 });
