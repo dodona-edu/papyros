@@ -1,13 +1,12 @@
-import { proxy } from "comlink";
 import { SyncClient } from "../../sync/SyncClient";
 import { Backend, RunMode, WorkerDiagnostic } from "../../backend/Backend";
 import { BackendEvent, BackendEventType } from "../../communication/BackendEvent";
-import { BackendManager } from "../../communication/BackendManager";
 import { arrayBufferToBase64, isTextMimeType, isValidFileName, parseData } from "../../util/Util";
 import { State, stateProperty } from "@dodona/lit-state";
 import { Papyros } from "./Papyros";
 import { ProgrammingLanguage } from "../../ProgrammingLanguage";
 import { PapyrosLaunchError } from "./PapyrosErrors";
+import { FileEntry } from "./InputOutput";
 
 /**
  * Enum representing the possible states while processing code
@@ -94,16 +93,21 @@ export class Runner extends State {
         }
     }
 
-    @stateProperty
-    pyodideAssetURL: string | undefined = undefined;
+    /** @see PapyrosRuntime.pyodideAssetURL */
+    public get pyodideAssetURL(): string | undefined {
+        return this.papyros.runtime.pyodideAssetURL;
+    }
+    public set pyodideAssetURL(value: string | undefined) {
+        this.papyros.runtime.pyodideAssetURL = value;
+    }
 
-    /**
-     * Whether Python may use JSPI stack switching for input and sleep where the browser
-     * supports it. Set to false to force the service worker or SharedArrayBuffer channel,
-     * for instance to work around a browser whose stack switching misbehaves.
-     */
-    @stateProperty
-    allowJspi: boolean = true;
+    /** @see PapyrosRuntime.allowJspi */
+    public get allowJspi(): boolean {
+        return this.papyros.runtime.allowJspi;
+    }
+    public set allowJspi(value: boolean) {
+        this.papyros.runtime.allowJspi = value;
+    }
 
     /**
      * The backend that executes the code asynchronously
@@ -112,8 +116,7 @@ export class Runner extends State {
     public backend: Promise<SyncClient<Backend>>;
     /**
      * Whether the backend has finished loading and can execute code.
-     * Runs may be started before this is true: they are queued until the
-     * backend is up, so the run state is Ready while it is still loading.
+     * Runs may be started before this is true: they wait for the backend.
      */
     @stateProperty
     public backendReady: boolean = false;
@@ -122,24 +125,40 @@ export class Runner extends State {
      */
     private launchId: number = 0;
     /**
-     * Current state of the program
+     * Where the run lifecycle is: launching, running, stopping, and so on.
+     * Packages being installed do not change it, see `state`.
      */
     @stateProperty
-    public state: RunState = RunState.Ready;
-    /**
-     * An explanatory message about the current state
-     */
+    public phase: RunState = RunState.Ready;
     @stateProperty
-    public stateMessage: string = "";
-    /**
-     * Previous state to restore when loading is done
-     */
-    private previousState: RunState = RunState.Ready;
+    private phaseMessage: string = "";
     /**
      * Array of packages that are being installed
      */
     @stateProperty
     public loadingPackages: Array<string> = [];
+
+    /**
+     * Current state of the program: Loading while packages are installed, the phase otherwise
+     */
+    @stateProperty
+    public get state(): RunState {
+        return this.loadingPackages.length > 0 ? RunState.Loading : this.phase;
+    }
+
+    /**
+     * An explanatory message about the current state
+     */
+    @stateProperty
+    public get stateMessage(): string {
+        if (this.loadingPackages.length > 0) {
+            return this.papyros.i18n.t("Papyros.loading", {
+                // limit amount of package names shown
+                packages: this.loadingPackages.slice(0, 3).join(", "),
+            });
+        }
+        return this.phaseMessage;
+    }
     /**
      * Time at which the setState call occurred
      */
@@ -218,7 +237,9 @@ export class Runner extends State {
      */
     private async availableBackend(): Promise<SyncClient<Backend> | undefined> {
         try {
-            return await this.backend;
+            await this.backend;
+            // Another instance on a shared runtime may have replaced the worker since
+            return await this.papyros.runtime.ready(this.programmingLanguage);
         } catch {
             return undefined;
         }
@@ -236,30 +257,10 @@ export class Runner extends State {
     private papyros: Papyros;
 
     /**
-     * The live backend client per language, owned by this instance
-     */
-    private clients: Map<ProgrammingLanguage, SyncClient<Backend>> = new Map();
-    /**
-     * Per-instance factory overrides, so tests can inject a backend without
-     * touching the static registry shared by every instance
-     */
-    private backendCreators: Map<ProgrammingLanguage, () => SyncClient<Backend>> = new Map();
-    /**
-     * Tracks which workers have completed their launch call, so relaunching a live
-     * client is free. Keyed by the Worker itself: an interrupt that replaces the
-     * worker automatically invalidates the entry.
-     */
-    private launched: WeakMap<object, Promise<void>> = new WeakMap();
-    /**
      * Whether dispose() ran. Disposing during an active run makes that run fail as
      * interrupted, which normally relaunches the worker; this suppresses it.
      */
     private disposed: boolean = false;
-    /**
-     * Whether a runtime is already being replaced. Every lint that lands while the
-     * old one is still exhausted fails too, and each failure asks for a recovery.
-     */
-    private recovering: boolean = false;
     /**
      * The files last handed over through provideFiles, replayed into a replacement
      * runtime. Files over 1 MB never reach io.files, so they cannot be restored
@@ -280,47 +281,29 @@ export class Runner extends State {
                 this.setState(RunState.AwaitingInput);
             }
         });
-        this.papyros.events.subscribe(BackendEventType.Loading, (e) => this.onLoad(e));
+        this.papyros.events.subscribe(BackendEventType.Loading, (e) => {
+            // On a shared runtime, the installs of a lint or of another instance's run
+            // say nothing about this instance
+            if (this.papyros.ownsRuntime || this.papyros.runtime.isRunning(this.papyros)) {
+                this.onLoad(e);
+            }
+        });
         this.papyros.events.subscribe(BackendEventType.Start, (e) => this.onStart(e));
         this.papyros.events.subscribe(BackendEventType.End, (e) => this.onEnd(e));
     }
 
-    /**
-     * Use a custom backend for the given language on this instance only
-     * @param {ProgrammingLanguage} language The language to override
-     * @param {Function} backendCreator The constructor for a SyncClient
-     */
+    /** @see PapyrosRuntime.registerBackend */
     public registerBackend(language: ProgrammingLanguage, backendCreator: () => SyncClient<Backend>): void {
-        this.backendCreators.set(language, backendCreator);
-        this.clients.delete(language);
-    }
-
-    private getClient(language: ProgrammingLanguage): SyncClient<Backend> {
-        let client = this.clients.get(language);
-        if (!client) {
-            const create = this.backendCreators.get(language);
-            client = create ? create() : BackendManager.createBackend(language);
-            this.clients.set(language, client);
-        }
-        return client;
+        this.papyros.runtime.registerBackend(language, backendCreator);
     }
 
     /**
-     * Terminate every worker this instance started and abandon in flight launches.
-     * The runner cannot launch again afterwards.
+     * Abandon in flight launches. The runner cannot launch again afterwards.
      */
     public dispose(): void {
         this.disposed = true;
         this.launchId++;
         this.backendReady = false;
-        for (const client of this.clients.values()) {
-            try {
-                client.terminate();
-            } catch {
-                // An injected or never-started client has no worker to terminate
-            }
-        }
-        this.clients.clear();
     }
 
     /**
@@ -329,7 +312,7 @@ export class Runner extends State {
      * @return {Promise<void>} Returns when the program has been reset
      */
     public async reset(): Promise<void> {
-        if (![RunState.Ready, RunState.Loading, RunState.Error].includes(this.state)) {
+        if (![RunState.Ready, RunState.Loading, RunState.Error].includes(this.phase)) {
             await this.stop();
         }
 
@@ -340,8 +323,9 @@ export class Runner extends State {
      * Start the backend to enable running code.
      *
      * Resolves once the backend can run code and rejects when it fails to start, so
-     * awaiting this waits for the whole runtime to download. `backend` is assigned
-     * before that, so a caller that does not await can already queue runs.
+     * awaiting this waits for the whole runtime to download. The state is Loading until
+     * then. `backend` is assigned before that, so a caller that does not await can
+     * already start a run, which waits for the backend.
      */
     public async launch(): Promise<void> {
         if (this.disposed) {
@@ -353,10 +337,8 @@ export class Runner extends State {
         this.backendReady = false;
         const launchId = ++this.launchId;
         const language = this.programmingLanguage;
-        const backend = this.getClient(language);
-        const backendLaunched = this.launchBackend(language, backend, launchId);
+        const backendLaunched = this.launchBackend(language, launchId);
         this.backend = backendLaunched;
-        this.setState(RunState.Ready);
         try {
             await backendLaunched;
         } catch (error) {
@@ -365,34 +347,39 @@ export class Runner extends State {
             }
             throw error;
         }
+        // A run started during the launch, or one that relaunched the worker, sets its own state
+        if (launchId === this.launchId && !this.papyros.runtime.isRunning(this.papyros)) {
+            this.setState(RunState.Ready);
+        }
     }
 
     /**
-     * Replace a runtime that can no longer run or lint code, and put the files it
-     * held back into the fresh one.
+     * Resolves at once when the backend is up, and otherwise launches it. Rejects when
+     * the launch fails, without the alert or confirm of Papyros.launch(), so the caller
+     * decides how to report it and a later call retries.
+     */
+    public async ensureLaunched(): Promise<void> {
+        if (!this.backendReady) {
+            await this.launch();
+        }
+    }
+
+    /**
+     * Replace a runtime that can no longer run or lint code, and on a private runtime
+     * put the files it held back into the fresh one. A shared runtime is left empty:
+     * each run there writes the files it needs itself.
      */
     private async recoverRuntime(): Promise<void> {
-        if (this.disposed || this.recovering) {
+        if (this.disposed) {
             return;
         }
-        this.recovering = true;
         try {
-            // A run suspended in input() dies with its worker, so close its prompt
-            // and flush its frames the way stop() does
-            this.papyros.io.onRunEnd();
-            this.papyros.debugger.onRunEnd();
-            const client = this.clients.get(this.programmingLanguage);
-            try {
-                client?.restart();
-            } catch {
-                // An injected or never-started client has no worker to replace
+            const recovered = await this.papyros.runtime.recover(this.programmingLanguage, this.papyros);
+            if (recovered && this.papyros.ownsRuntime) {
+                await this.restoreWorkspace();
             }
-            await this.launch();
-            await this.restoreWorkspace();
         } catch (error: any) {
             this.papyros.errorHandler(error);
-        } finally {
-            this.recovering = false;
         }
     }
 
@@ -416,57 +403,8 @@ export class Runner extends State {
         }
     }
 
-    private async launchBackend(
-        language: ProgrammingLanguage,
-        backend: SyncClient<Backend>,
-        launchId: number,
-    ): Promise<SyncClient<Backend>> {
-        // An injected test double has no worker, so fall back to keying on the client
-        const worker: object = backend.worker ?? backend;
-        let launched = this.launched.get(worker);
-        if (!launched) {
-            // Allow passing messages between worker and main thread
-            launched = backend.workerProxy
-                .launch(
-                    proxy((e: BackendEvent) => this.papyros.events.publish(e)),
-                    this.pyodideAssetURL,
-                    this.allowJspi,
-                )
-                .then(async () => {
-                    backend.usesPromiseTransport = await backend.workerProxy.usesJspi();
-                });
-            this.launched.set(worker, launched);
-        }
-        try {
-            await launched;
-        } catch (error) {
-            // Let a retry attempt the launch again instead of replaying this failure
-            this.launched.delete(worker);
-            if (this.clients.get(language) === backend) {
-                // The module map of the failed worker keeps the failed import, so retrying in
-                // it fails the same way: drop the client so the next launch spawns a fresh
-                // worker. Keyed on the client rather than on launchId, so a launch a language
-                // switch superseded is cleaned up too, while a client already replaced for this
-                // language is left alone.
-                this.clients.delete(language);
-                try {
-                    backend.terminate();
-                } catch {
-                    // An injected or never-started client has no worker to terminate
-                }
-            }
-            throw error;
-        }
-        if (!backend.usesPromiseTransport) {
-            // This backend blocks on the channel, so it needs one to exist before it runs.
-            // Registration may not have happened yet: Papyros defers it when the browser
-            // can suspend the wasm stack, since Python then never touches it.
-            // A failure here is reported by ensureChannel and leaves the channel null, so
-            // running code still works and only reading input fails.
-            await this.papyros.ensureChannel();
-        }
-        // Assign either way, so a client that switched to JSPI drops a channel it no longer uses
-        backend.channel = this.papyros.channel;
+    private async launchBackend(language: ProgrammingLanguage, launchId: number): Promise<SyncClient<Backend>> {
+        const backend = await this.papyros.runtime.ready(language);
         if (launchId === this.launchId) {
             this.updateRunModes();
             this.backendReady = true;
@@ -477,15 +415,36 @@ export class Runner extends State {
     /**
      * Execute the code in the editor
      * @param {RunMode} mode The mode to run with
-     * @return {Promise<void>} Promise of running the code
+     * @param {FileEntry[]} files When given, the run starts from a workspace that holds only these files.
+     * Without them, the workspace is left as is.
+     * @return {Promise<void>} Promise of running the code. Resolves without running anything
+     * while another run on the same runtime is in progress.
      */
-    public async start(mode?: RunMode): Promise<void> {
+    public async start(mode?: RunMode, files?: readonly FileEntry[]): Promise<void> {
+        // Claimed before anything else is touched, so a refused start leaves this instance as it was
+        if (!this.papyros.runtime.tryAcquire(this.papyros)) {
+            return;
+        }
+        try {
+            await this.run(mode, files);
+        } finally {
+            this.releaseRuntime();
+        }
+    }
+
+    private releaseRuntime(): void {
+        this.papyros.runtime.release(this.papyros);
+        if (!this.papyros.ownsRuntime && this.loadingPackages.length > 0) {
+            // Only the running instance hears the matching "loaded" events
+            this.loadingPackages = [];
+        }
+    }
+
+    private async run(mode?: RunMode, files?: readonly FileEntry[]): Promise<void> {
         this.papyros.debugger.active = mode === RunMode.Debug;
 
         // Setup pre-run
         this.setState(RunState.Loading);
-        // Ensure we go back to Loading after finishing any remaining installs
-        this.previousState = RunState.Loading;
         this.papyros.io.reset();
         this.papyros.debugger.onRunStart();
         let interrupted = false;
@@ -501,13 +460,26 @@ export class Runner extends State {
             return;
         }
         this.runStartTime = new Date().getTime();
+        const runtime = this.papyros.runtime;
         try {
-            await backend.call(
-                backend.workerProxy.runCode,
-                this.effectiveCode,
-                mode,
-                this.papyros.constants.maxDebugFrames,
-            );
+            // Disposing this instance while the backend was awaited gives up its claim, and another
+            // instance may be using the worker by now
+            if (files && runtime.isRunning(this.papyros)) {
+                // A recovery would otherwise replay the files an earlier provideFiles handed over
+                this.providedFiles = undefined;
+                await backend.workerProxy.clearWorkspace();
+                for (const file of files) {
+                    await backend.workerProxy.updateFile(file.name, file.content, file.binary);
+                }
+            }
+            if (this.phase !== RunState.Stopping && runtime.isRunning(this.papyros)) {
+                await backend.call(
+                    backend.workerProxy.runCode,
+                    this.effectiveCode,
+                    mode,
+                    this.papyros.constants.maxDebugFrames,
+                );
+            }
         } catch (error: any) {
             if (error.type === "InterruptError") {
                 // Error signaling forceful interrupt
@@ -521,12 +493,16 @@ export class Runner extends State {
                 unusable = isRuntimeUnusable(error);
             }
         } finally {
-            if (this.state === RunState.Stopping) {
+            if (this.phase === RunState.Stopping) {
                 // stop() already closed the input prompt and flushed the debugger
                 interrupted = true;
             }
             if (unusable) {
                 await this.recoverRuntime();
+                // The run already ended, so nothing else moves on from the replacement's launch
+                if (this.phase === RunState.Loading) {
+                    this.setState(RunState.Ready);
+                }
             } else if (terminated) {
                 await this.launch();
             }
@@ -542,10 +518,15 @@ export class Runner extends State {
     }
 
     /**
-     * Interrupt the currently running code
+     * Interrupt the currently running code. Does nothing while another instance
+     * sharing the runtime is running.
      * @return {Promise<void>} Returns when the code has been interrupted
      */
     public async stop(): Promise<void> {
+        const runtime = this.papyros.runtime;
+        if (runtime.isBusyFor(this.papyros)) {
+            return;
+        }
         this.setState(RunState.Stopping);
         this.papyros.io.onRunEnd();
         this.papyros.debugger.onRunEnd();
@@ -554,14 +535,26 @@ export class Runner extends State {
             this.setState(RunState.Error);
             return;
         }
+        if (!runtime.isRunning(this.papyros)) {
+            // Another instance may have started a run while the backend was awaited, and that one is not ours to stop
+            if (this.phase === RunState.Stopping) {
+                this.setState(RunState.Ready);
+            }
+            return;
+        }
         await backend.interrupt();
 
         const startTime = new Date().getTime();
-        while (this.state === RunState.Stopping && new Date().getTime() - startTime < 5000) {
+        while (this.phase === RunState.Stopping && new Date().getTime() - startTime < 5000) {
             await new Promise((resolve) => setTimeout(resolve, 100));
         }
-        if (this.state === RunState.Stopping) {
+        if (this.phase === RunState.Stopping) {
             console.warn("Deadlock while stopping, restarting backend");
+            if (runtime.running === this.papyros) {
+                // launch() keeps a worker that is already up, so the stuck run would never settle
+                runtime.restartWorker(this.programmingLanguage);
+                this.releaseRuntime();
+            }
             await this.launch();
             this.setState(
                 RunState.Ready,
@@ -571,12 +564,19 @@ export class Runner extends State {
     }
 
     public async provideInput(input: string): Promise<void> {
-        const backend = await this.availableBackend();
-        // Input submitted as a run ends has no reader left to receive it
-        if (!backend || backend.state === "idle") {
+        if (!this.papyros.runtime.isRunning(this.papyros)) {
             return;
         }
-        this.setState(RunState.Running);
+        const backend = await this.availableBackend();
+        // Input submitted as a run ends has no reader left to receive it, and another
+        // instance may have started a run while the backend was awaited
+        if (!backend || backend.state === "idle" || !this.papyros.runtime.isRunning(this.papyros)) {
+            return;
+        }
+        // The End event can already have arrived while the run still holds the runtime
+        if (this.phase === RunState.AwaitingInput) {
+            this.setState(RunState.Running);
+        }
         await backend.writeMessage(input).catch((error) => {
             // The run can also end while the write waits for the worker to start reading
             if (backend.state !== "idle") {
@@ -666,19 +666,18 @@ export class Runner extends State {
             report("failed");
             throw error;
         }
+        // The worker reports each file as loaded, but on a shared runtime only the running instance hears it
+        report("loaded");
     }
 
     /**
-     * Show the current state of the program to the user
-     * @param {RunState} state The current state of the run
-     * @param {string} message Optional message to indicate the state
+     * Move the run lifecycle to the given phase, shown to the user once no packages are loading
+     * @param {RunState} state The current phase of the run
+     * @param {string} message Optional message to indicate the phase
      */
     public setState(state: RunState, message?: string): void {
-        this.stateMessage = message || this.papyros.i18n.t(`Papyros.states.${state}`);
-        if (state !== this.state) {
-            this.previousState = this.state;
-            this.state = state;
-        }
+        this.phaseMessage = message || this.papyros.i18n.t(`Papyros.states.${state}`);
+        this.phase = state;
     }
 
     /**
@@ -687,34 +686,22 @@ export class Runner extends State {
      */
     private onLoad(e: BackendEvent): void {
         const loadingData = parseData(e.data, e.contentType) as LoadingData;
+        // Reassigned rather than mutated, so subscribers notice the change
         if (loadingData.status === "loading") {
-            loadingData.modules.forEach((m) => {
-                if (!this.loadingPackages.includes(m)) {
-                    this.loadingPackages.push(m);
-                }
-            });
+            const added = loadingData.modules.filter((m) => !this.loadingPackages.includes(m));
+            if (added.length > 0) {
+                this.loadingPackages = [...this.loadingPackages, ...added];
+            }
         } else if (loadingData.status === "loaded") {
-            loadingData.modules.forEach((m) => {
-                const index = this.loadingPackages.indexOf(m);
-                if (index !== -1) {
-                    this.loadingPackages.splice(index, 1);
-                }
-            });
-        } else {
+            if (loadingData.modules.some((m) => this.loadingPackages.includes(m))) {
+                this.loadingPackages = this.loadingPackages.filter((m) => !loadingData.modules.includes(m));
+            }
+        } else if (this.loadingPackages.length > 0) {
             // failed
             // If it is a true module, an Exception will be raised when running
             // So this does not need to be handled here, as it is often an incomplete package-name
             // that causes micropip to not find the correct wheel
             this.loadingPackages = [];
-        }
-        if (this.loadingPackages.length > 0) {
-            const packageMessage = this.papyros.i18n.t("Papyros.loading", {
-                // limit amount of package names shown
-                packages: this.loadingPackages.slice(0, 3).join(", "),
-            });
-            this.setState(RunState.Loading, packageMessage);
-        } else {
-            this.setState(this.previousState);
         }
     }
 

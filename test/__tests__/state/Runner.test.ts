@@ -38,12 +38,12 @@ const c = a + b;`;
         const jsPapyros = new Papyros();
         jsPapyros.runner.programmingLanguage = ProgrammingLanguage.JavaScript;
 
-        // Runs are queued while the backend loads, so the run state is Ready first
-        expect(jsPapyros.runner.state).toBe(RunState.Ready);
+        expect(jsPapyros.runner.state).toBe(RunState.Loading);
         expect(jsPapyros.runner.backendReady).toBe(false);
 
         await jsPapyros.runner.backend;
         expect(jsPapyros.runner.backendReady).toBe(true);
+        expect(jsPapyros.runner.state).toBe(RunState.Ready);
         jsPapyros.dispose();
     });
 
