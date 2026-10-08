@@ -1,4 +1,4 @@
-import {describe, it, expect, beforeAll, beforeEach, afterAll} from "vitest";
+import {describe, it, expect, beforeAll, beforeEach, afterAll, afterEach, vi} from "vitest";
 import {ProgrammingLanguage} from "../../../src/ProgrammingLanguage";
 import {Papyros} from "../../../src/frontend/state/Papyros";
 import {RunMode} from "../../../src/backend/Backend";
@@ -6,6 +6,7 @@ import {RunState} from "../../../src/frontend/state/Runner";
 import {NonExceptionFrame} from "@dodona/trace-component/dist/trace_types";
 import {launchPapyros, settlePapyros, waitForInputReady, waitForOutput, waitForPapyrosReady, wipeWorkspace} from "../../helpers";
 import {BackendEvent, BackendEventType} from "../../../src/communication/BackendEvent";
+import {fakeClient} from "../../fakeClient";
 
 // One Pyodide boot for the whole file: the tests share a Python instance. The frame
 // history records a file snapshot per run, so the workspace is wiped between tests.
@@ -149,9 +150,9 @@ print(z)`;
 
 });
 
-// The events a worker sends during a debug run, replayed by hand on an instance
-// without a worker: the ordering between two runs is what these tests are about,
-// and it cannot be reproduced reliably against a live worker.
+// The events a worker sends during a debug run, emitted by hand through a fake worker:
+// the ordering between two runs is what these tests are about, and it cannot be
+// reproduced reliably against a live worker.
 describe("Debugger run boundaries", () => {
     const start: BackendEvent = { type: BackendEventType.Start, data: "RunCode", contentType: "text/plain" };
     const end: BackendEvent = { type: BackendEventType.End, data: "CodeFinished", contentType: "text/plain" };
@@ -175,51 +176,78 @@ describe("Debugger run boundaries", () => {
     };
 
     let papyros: Papyros;
+    let client: any;
+    let running: Promise<void>;
 
-    beforeEach(() => {
+    beforeEach(async () => {
+        client = fakeClient();
         papyros = new Papyros();
-        papyros.debugger.active = true;
+        papyros.runner.registerBackend(ProgrammingLanguage.Python, () => client);
+        await papyros.runner.launch();
     });
 
-    afterAll(() => papyros.dispose());
+    afterEach(() => papyros.dispose());
 
-    it("drops frames of the previous run that arrive before the worker starts the next one", () => {
-        papyros.debugger.onRunStart();
-        papyros.events.publish(start);
-        papyros.events.publish(frame(1));
-        papyros.events.publish(exception);
-        papyros.events.publish(end);
+    /**
+     * Start a debug run and wait until the worker has received it
+     * @return {Promise<number>} The id the worker puts on the events of the run
+     */
+    async function debugRun(): Promise<number> {
+        const runs = client.workerProxy.runCode.mock.calls.length;
+        running = papyros.runner.start(RunMode.Debug);
+        await vi.waitFor(() => expect(client.workerProxy.runCode).toHaveBeenCalledTimes(runs + 1));
+        return client.runId;
+    }
+
+    function finishRun(): Promise<void> {
+        client.emit(end);
+        client.finishRun();
+        return running;
+    }
+
+    it("drops frames of the previous run that arrive after the next one started", async () => {
+        const previous = await debugRun();
+        client.emit(start);
+        client.emit(frame(1));
+        client.emit(exception);
+        await finishRun();
         expect(papyros.debugger.trace.map(f => f.event)).toEqual(["step_line", "uncaught_exception"]);
 
         // the next run starts while the previous one is still delivering its last frame
-        papyros.debugger.onRunStart();
-        papyros.events.publish(exception);
+        await debugRun();
+        client.emit({ ...exception, runId: previous });
         expect(papyros.debugger.trace).toEqual([]);
 
-        papyros.events.publish(start);
-        papyros.events.publish(frame(1));
-        papyros.events.publish(end);
+        client.emit(start);
+        client.emit(frame(1));
+        await finishRun();
         expect(papyros.debugger.trace.map(f => f.event)).toEqual(["step_line"]);
     });
 
-    it("ignores anything sent after the uncaught_exception frame of a run", () => {
-        papyros.debugger.onRunStart();
-        papyros.events.publish(start);
-        papyros.events.publish(frame(1));
-        papyros.events.publish(exception);
-        papyros.events.publish(frame(3));
-        papyros.events.publish(end);
+    it("ignores anything sent after the uncaught_exception frame of a run", async () => {
+        await debugRun();
+        client.emit(start);
+        client.emit(frame(1));
+        client.emit(exception);
+        client.emit(frame(3));
+        await finishRun();
         expect(papyros.debugger.trace.map(f => f.event)).toEqual(["step_line", "uncaught_exception"]);
     });
 
-    it("keeps batching frames when the previous run ends after the next one started", () => {
-        papyros.debugger.onRunStart();
+    it("keeps batching frames when the previous run ends after the next one started", async () => {
+        const previous = await debugRun();
+        client.emit(start);
+        await finishRun();
+
+        await debugRun();
         // the end event of the previous run lands after the reset
-        papyros.events.publish(end);
-        papyros.events.publish(start);
-        papyros.events.publish(frame(1));
+        client.emit({ ...end, runId: previous });
+        client.emit(start);
+        client.emit(frame(1));
         expect(papyros.debugger.trace).toEqual([]);
-        papyros.events.publish(end);
+        client.emit(end);
         expect(papyros.debugger.trace.map(f => f.line)).toEqual([1]);
+        client.finishRun();
+        await running;
     });
 });

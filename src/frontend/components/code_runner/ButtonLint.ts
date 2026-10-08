@@ -51,12 +51,21 @@ export class ButtonLint extends PapyrosElement {
      */
     private shouldRefocus = false;
 
-    private get buttonSet(): ButtonSet {
+    private get runInProgress(): boolean {
         const state = this.papyros.runner.state;
         if (state === RunState.Ready || state === RunState.Error) {
-            return this.papyros.debugger.active ? "stop-debugging" : "run";
+            return false;
         }
-        return "stop";
+        // Loading is also the backend starting up or installing packages for the editor,
+        // and a click on Run then starts a run that waits for it
+        return state !== RunState.Loading || this.papyros.runtime.isRunning(this.papyros);
+    }
+
+    private get buttonSet(): ButtonSet {
+        if (this.runInProgress) {
+            return "stop";
+        }
+        return this.papyros.debugger.active ? "stop-debugging" : "run";
     }
 
     protected override willUpdate(changedProperties: PropertyValues): void {
@@ -82,11 +91,10 @@ export class ButtonLint extends PapyrosElement {
     }
 
     get buttons(): TemplateResult | TemplateResult[] {
-        const state = this.papyros.runner.state;
-        if (state === RunState.Ready || state === RunState.Error) {
+        if (!this.runInProgress) {
             // Without a backend there is nothing to run or stop, so the run
             // controls stay in place but inert
-            const disabled = state === RunState.Error;
+            const disabled = this.papyros.runner.state === RunState.Error;
             if (this.papyros.debugger.active) {
                 return html` <md-outlined-button
                     ${ref(this.firstButtonRef)}

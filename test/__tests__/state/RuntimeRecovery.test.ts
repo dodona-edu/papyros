@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { Papyros } from "../../../src/frontend/state/Papyros";
 import { ProgrammingLanguage } from "../../../src/ProgrammingLanguage";
+import { RunMode } from "../../../src/backend/Backend";
+import { RunState } from "../../../src/frontend/state/Runner";
 
 const memoryError = (): Error => Object.assign(new Error("MemoryError"), { type: "PythonError" });
 
@@ -27,6 +29,7 @@ function fakeClient({
         runCode: vi.fn(run),
         provideFiles: vi.fn(() => Promise.resolve()),
         updateFile,
+        clearWorkspace: vi.fn(() => Promise.resolve()),
     });
     const client: any = {
         worker: {},
@@ -94,6 +97,7 @@ describe("recovering from an unusable runtime", () => {
         expect(client.restart).toHaveBeenCalledOnce();
         expect(client.updateFile).toHaveBeenCalledWith("data.txt", "hello", false);
         expect(papyros.io.awaitingInput).toBe(false);
+        expect(papyros.runner.state).toBe(RunState.Ready);
 
         papyros.dispose();
     });
@@ -124,6 +128,20 @@ describe("recovering from an unusable runtime", () => {
 
         expect(client.restart).toHaveBeenCalledOnce();
         expect(client.workerProxy.provideFiles).toHaveBeenCalledWith(inlined, hrefs);
+
+        papyros.dispose();
+    });
+
+    it("does not replay provided files after a run that was given files", async () => {
+        const client = fakeClient({ lintCode: () => Promise.reject(memoryError()) });
+        const papyros = await launched(client);
+        await papyros.runner.provideFiles({ "data.csv": "a,b" }, {});
+        await papyros.runner.start(RunMode.Run, [{ name: "data.txt", content: "x", binary: false }]);
+
+        await papyros.runner.lintSource();
+
+        expect(client.restart).toHaveBeenCalledOnce();
+        expect(client.workerProxy.provideFiles).not.toHaveBeenCalled();
 
         papyros.dispose();
     });
