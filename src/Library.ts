@@ -2,6 +2,8 @@ import "./frontend/components/Input";
 import "./frontend/components/Output";
 import "./frontend/components/CodeRunner";
 import "./frontend/components/Debugger";
+import "./frontend/components/CodePlayground";
+import type { CodePlayground } from "./frontend/components/CodePlayground";
 import { Papyros, papyros } from "./frontend/state/Papyros";
 import type { PapyrosOptions } from "./frontend/state/Papyros";
 import { PapyrosRuntime } from "./frontend/state/PapyrosRuntime";
@@ -32,4 +34,4 @@ export {
     ServiceWorkerRegistrationError,
     ServiceWorkerInputError,
 };
-export type { FriendlyError, OutputEntry, WorkerDiagnostic, PapyrosOptions, Run };
+export type { FriendlyError, OutputEntry, WorkerDiagnostic, PapyrosOptions, Run, CodePlayground };
