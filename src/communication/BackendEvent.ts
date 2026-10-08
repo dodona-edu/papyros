@@ -31,4 +31,8 @@ export interface BackendEvent {
      * The format used for the data to help with parsing
      */
     contentType?: string;
+    /**
+     * The run that emitted this event, absent for events from outside a run such as linting
+     */
+    runId?: number;
 }

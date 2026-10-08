@@ -101,10 +101,12 @@ export class PythonWorker extends Backend {
      * buffer while it is still linting the real code), leaving its own imports
      * uninstalled and producing a spurious "unable to import X" lint error.
      * @param {string} code The code containing import statements
+     * @param {function(BackendEvent):void} onEvent Callback for the loading events of this install
      */
-    private async installImports(code: string): Promise<void> {
+    private async installImports(code: string, onEvent: (e: BackendEvent) => void): Promise<void> {
+        const callback = (e: any): void => onEvent(PythonWorker.convert(e));
         const install = (): Promise<void> | undefined =>
-            this.papyros?.install_imports.callKwargs({ source_code: code });
+            this.papyros?.install_imports.callKwargs({ source_code: code, callback });
         // Chain onto any in-flight install (ignoring its outcome) so this call's
         // imports are installed after it, without concurrent double-downloads.
         this.installPromise = (this.installPromise ?? Promise.resolve()).then(install, install);
@@ -125,7 +127,7 @@ export class PythonWorker extends Backend {
         if (extras.interruptBuffer) {
             this.pyodide.setInterruptBuffer(extras.interruptBuffer);
         }
-        await this.installImports(code);
+        await this.installImports(code, this.onEvent);
         return await this.papyros?.run_async.callKwargs({
             source_code: code,
             mode: mode,
@@ -134,7 +136,7 @@ export class PythonWorker extends Backend {
     }
 
     public override async lintCode(code: string): Promise<Array<WorkerDiagnostic>> {
-        await this.installImports(code);
+        await this.installImports(code, this.onEventOutsideRun);
         return PythonWorker.convert(this.papyros?.lint(code) || []);
     }
 
@@ -145,11 +147,16 @@ export class PythonWorker extends Backend {
         await this.papyros?.provide_files.callKwargs({
             inline_files: JSON.stringify(inlineFiles),
             href_files: JSON.stringify(hrefFiles),
+            callback: (e: any) => this.onEventOutsideRun(PythonWorker.convert(e)),
         });
     }
 
     public override async deleteFile(name: string): Promise<void> {
         await this.papyros?.delete_file(name);
+    }
+
+    public override async clearWorkspace(): Promise<void> {
+        await this.papyros?.clear_workspace();
     }
 
     public override async updateFile(name: string, content: string, binary: boolean): Promise<void> {

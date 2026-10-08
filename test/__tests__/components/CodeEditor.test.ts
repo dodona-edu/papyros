@@ -1,7 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { userEvent } from "vitest/browser";
 import type { EditorView } from "@codemirror/view";
 import { undo } from "@codemirror/commands";
+import { diagnosticCount, forceLinting } from "@codemirror/lint";
 import { DUTCH_TRANSLATION, ENGLISH_TRANSLATION } from "../../../src/frontend/state/Translations";
 import type { CodeEditor } from "../../../src/frontend/components/code_mirror/CodeEditor";
 import type { CodeMirrorEditor } from "../../../src/frontend/components/code_mirror/CodeMirrorEditor";
@@ -10,6 +11,8 @@ import "../../../src/frontend/components/code_mirror/FileEditor";
 import type { Code } from "../../../src/frontend/components/code_runner/Code";
 import "../../../src/frontend/components/code_runner/Code";
 import { Papyros } from "../../../src/frontend/state/Papyros";
+import type { WorkerDiagnostic } from "../../../src/backend/Backend";
+import { BackendEventType } from "../../../src/communication/BackendEvent";
 
 describe("CodeEditor", () => {
     it("describes how to leave the editor on the editable content", async () => {
@@ -139,5 +142,44 @@ describe("CodeEditor", () => {
         window.removeEventListener("keydown", onKeydown);
         element.remove();
         next.remove();
+    });
+    it("lints again after a package install only when it shows an import error", async () => {
+        const papyros = new Papyros();
+        const importError: WorkerDiagnostic = {
+            lineNr: 1,
+            columnNr: 0,
+            endLineNr: 1,
+            endColumnNr: 10,
+            severity: "error",
+            message: "Unable to import 'numpy'",
+            code: "E0401",
+        };
+        const mount = async (diagnostics: WorkerDiagnostic[]): Promise<[CodeEditor, () => number]> => {
+            const element = document.createElement("p-code-editor") as CodeEditor;
+            const lint = vi.fn(() => Promise.resolve(diagnostics));
+            element.papyros = papyros;
+            element.value = "import numpy";
+            element.lintingSource = lint;
+            document.body.append(element);
+            await element.updateComplete;
+            const view = (element as unknown as { view: EditorView }).view;
+            forceLinting(view);
+            await vi.waitFor(() => expect(diagnosticCount(view.state)).toBe(1));
+            return [element, () => lint.mock.calls.length];
+        };
+        const [flagged, flaggedLints] = await mount([importError]);
+        const [clean, cleanLints] = await mount([{ ...importError, message: "Unused import numpy", code: "W0611" }]);
+        const before = [flaggedLints(), cleanLints()];
+
+        papyros.events.publish({
+            type: BackendEventType.Loading,
+            data: { modules: ["numpy"], status: "loaded" },
+            contentType: "application/json",
+        });
+
+        expect(flaggedLints()).toBe(before[0] + 1);
+        expect(cleanLints()).toBe(before[1]);
+        flagged.remove();
+        clean.remove();
     });
 });

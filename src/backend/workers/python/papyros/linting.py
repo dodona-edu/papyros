@@ -112,6 +112,7 @@ def process_pylint_output(linting_output):
             "endLineNr": int(end_line) if end_line else line_nr,
             "endColumnNr": int(end_column) if end_column else column_nr,
             "severity": SEVERITIES[category],
-            "message": message
+            "message": message,
+            "code": msg_id
         })
     return diagnostics

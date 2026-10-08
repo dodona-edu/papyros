@@ -4,14 +4,13 @@ import { html, TemplateResult } from "lit";
 import { ProgrammingLanguage } from "../../../ProgrammingLanguage";
 import "@material/web/select/outlined-select";
 import "@material/web/select/select-option";
-import { RunState } from "../../state/Runner";
 
 @customElement("p-programming-language-picker")
 export class ProgrammingLanguagePicker extends PapyrosElement {
     protected override render(): TemplateResult {
         return html`
             <md-outlined-select
-                ?disabled=${this.papyros.runner.state !== RunState.Ready || this.papyros.debugger.active}
+                ?disabled=${!this.papyros.runner.canStart || this.papyros.debugger.active}
                 label=${this.t("Papyros.programming_language")}
                 @input=${(e: InputEvent) => {
                     this.papyros.runner.programmingLanguage = (e.target as HTMLInputElement)

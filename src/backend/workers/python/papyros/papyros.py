@@ -42,10 +42,7 @@ class Papyros(python_runner.PyodideRunner):
             self.OutputBufferClass = lambda f: buffer_constructor(create_proxy(f))
         super().__init__(source_code=source_code, filename=filename)
         self.workspace = "/home/pyodide/workspace"
-        if os.path.exists(self.workspace):
-            shutil.rmtree(self.workspace)
-        os.makedirs(self.workspace)
-        os.chdir(self.workspace)
+        self._reset_workspace()
         self._tracked_files = set()
         self._tracking_files = False
         self._original_open = builtins.open
@@ -149,7 +146,7 @@ class Papyros(python_runner.PyodideRunner):
         except ModuleNotFoundError:
             pass
 
-    async def install_imports(self, source_code):
+    async def install_imports(self, source_code, callback=None):
         """Install missing modules that were not installed before, return whether anything was installed."""
         imports = find_imports(source_code) if isinstance(source_code, str) else source_code
         new_imports = [m for m in imports if m and m not in self._installed_imports]
@@ -157,14 +154,14 @@ class Papyros(python_runner.PyodideRunner):
         if not modules:
             return False
         try:
-            await install_imports(modules, self.import_callback)
+            await install_imports(modules, lambda typ, installed: self.import_callback(typ, installed, callback))
         except (ValueError, JsException):
             # Occurs when trying to fetch PyPi files for misspelled imports
-            self.callback("loading", data=dict(status="failed", modules=[]), contentType="application/json")
+            self._emit(callback, "loading", dict(status="failed", modules=[]), "application/json")
             return False
         return True
 
-    def import_callback(self, typ, modules):
+    def import_callback(self, typ, modules, callback):
         if typ == "loaded_one":
             # Only finished installs count, so a failed one is retried
             self._installed_imports.add(modules["module"])
@@ -175,7 +172,14 @@ class Papyros(python_runner.PyodideRunner):
         if not isinstance(modules, list):
             modules = [modules]
         module_names = [mod["module"] for mod in modules]
-        self.callback("loading", data=dict(status=status, modules=module_names), contentType="application/json")
+        self._emit(callback, "loading", dict(status=status, modules=module_names), "application/json")
+
+    def _emit(self, callback, event_type, data, content_type):
+        """Emit an event of the run, or with a callback, an event of another worker call"""
+        if callback is None:
+            self.callback(event_type, data=data, contentType=content_type)
+        else:
+            callback(dict(type=event_type, data=data, contentType=content_type))
 
     def _install_open_tracking(self):
         papyros = self
@@ -210,7 +214,7 @@ class Papyros(python_runner.PyodideRunner):
                     pass
         self._tracked_files -= closed
 
-    def _emit_created_files(self):
+    def _emit_created_files(self, callback=None):
         with self._without_file_tracking():
             cwd = os.getcwd()
             result = {}
@@ -239,7 +243,7 @@ class Papyros(python_runner.PyodideRunner):
             if snapshot == self._last_emitted_snapshot:
                 return
             self._last_emitted_snapshot = snapshot
-            self.callback("files", data=snapshot, contentType="text/json")
+            self._emit(callback, "files", snapshot, "text/json")
 
     @contextmanager
     def _execute_context(self):
@@ -425,6 +429,18 @@ if __name__ == "{MODULE_NAME}":
         os.remove(path)
         self._cleanup_empty_dirs(os.path.dirname(path))
 
+    def _reset_workspace(self):
+        # Emscripten's filesystem refuses to remove the working directory
+        os.chdir("/")
+        if os.path.exists(self.workspace):
+            shutil.rmtree(self.workspace)
+        os.makedirs(self.workspace)
+        os.chdir(self.workspace)
+
+    def clear_workspace(self):
+        with self._without_file_tracking():
+            self._reset_workspace()
+
     def rename_file(self, old_name, new_name):
         with self._without_file_tracking():
             old_path = self._safe_path(old_name)
@@ -442,14 +458,14 @@ if __name__ == "{MODULE_NAME}":
                 with open(path, "w", encoding="utf-8") as f:
                     f.write(content)
 
-    async def provide_files(self, inline_files, href_files):
+    async def provide_files(self, inline_files, href_files, callback):
         with self._without_file_tracking():
             inline_files = json.loads(inline_files)
             for f in inline_files:
                 path = self._safe_writable_path(f)
                 with open(path, "w") as fd:
                     fd.write(inline_files[f])
-                self.callback("loading", data=dict(status="loaded", modules=[f]), contentType="application/json")
+                self._emit(callback, "loading", dict(status="loaded", modules=[f]), "application/json")
 
             href_files = json.loads(href_files)
             for f in href_files:
@@ -458,9 +474,9 @@ if __name__ == "{MODULE_NAME}":
                 r = await pyfetch(url, stream=True)
                 with open(path, "wb") as fd:
                     fd.write(await r.bytes())
-                self.callback("loading", data=dict(status="loaded", modules=[f]), contentType="application/json")
+                self._emit(callback, "loading", dict(status="loaded", modules=[f]), "application/json")
 
-            self._emit_created_files()
+            self._emit_created_files(callback)
 
     def reset(self):
         """

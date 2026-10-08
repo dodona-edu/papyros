@@ -1,7 +1,6 @@
 import { customElement, property, state } from "lit/decorators.js";
 import { css, CSSResult, html, nothing, PropertyValues, TemplateResult } from "lit";
 import { createRef, Ref, ref } from "lit/directives/ref.js";
-import { RunState } from "../../state/Runner";
 import { PapyrosElement } from "../PapyrosElement";
 import { RunMode } from "../../../backend/Backend";
 import "@material/web/button/filled-button";
@@ -121,12 +120,15 @@ export class ButtonLint extends PapyrosElement {
      */
     private focusedIndexInHiddenRow: number | undefined = undefined;
 
+    private get runInProgress(): boolean {
+        return this.papyros.runtime.isRunning(this.papyros);
+    }
+
     private get buttonSet(): ButtonSet {
-        const state = this.papyros.runner.state;
-        if (state === RunState.Ready || state === RunState.Error) {
-            return this.papyros.debugger.active ? "stop-debugging" : "run";
+        if (this.runInProgress) {
+            return "stop";
         }
-        return "stop";
+        return this.papyros.debugger.active ? "stop-debugging" : "run";
     }
 
     protected override willUpdate(changedProperties: PropertyValues): void {
@@ -166,8 +168,7 @@ export class ButtonLint extends PapyrosElement {
     }
 
     private get buttonSpecs(): ButtonSpec[] {
-        const state = this.papyros.runner.state;
-        if (state === RunState.Ready || state === RunState.Error) {
+        if (!this.runInProgress) {
             // Without a backend there is nothing to run or stop, so the run
             // controls stay in place but inert
             const disabled = !this.papyros.runner.canStart;

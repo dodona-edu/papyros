@@ -21,7 +21,8 @@ describe("Runner without a backend", () => {
 
         await withTimeout(papyros.runner.stop(), 2000, "runner.stop()");
 
-        expect(papyros.runner.state).toBe(RunState.Error);
+        // There is no run to stop, so nothing changes
+        expect(papyros.runner.state).toBe(RunState.Ready);
     });
 
     it("refuses to start when nothing was launched", async () => {
