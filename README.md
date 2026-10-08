@@ -228,6 +228,8 @@ previewed; their tab links to the file instead.
 <p-code-playground files="media/grades.txt media/names.csv"></p-code-playground>
 ```
 
+A demo page with a fixed set of scenarios is deployed with the app at `/playground.html` (run `yarn start` to open it locally).
+
 ---
 
 ## Theming
