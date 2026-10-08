@@ -7,6 +7,9 @@ import { debounce } from "../../util/Util";
 import type { FileEditor } from "./code_mirror/FileEditor";
 import "./code_mirror/FileEditor";
 
+// Longer text that can be opened from its URL is not rendered, to keep the page responsive
+const MAX_PREVIEW_LENGTH = 100_000;
+
 @customElement("p-file-viewer")
 export class FileViewer extends PapyrosElement {
     @property({ type: Object })
@@ -15,6 +18,13 @@ export class FileViewer extends PapyrosElement {
     /** Whether this file's tab is open. Viewers of the other files stay mounted, hidden. */
     @property({ type: Boolean })
     active = true;
+
+    @property({ type: Boolean })
+    readonly = false;
+
+    /** Where the file can be opened when it is not shown; without it a binary file gets a download button */
+    @property({ type: String })
+    url: string | undefined = undefined;
 
     private editorRef: Ref<FileEditor> = createRef();
 
@@ -67,6 +77,11 @@ export class FileViewer extends PapyrosElement {
             button:hover {
                 opacity: 0.9;
             }
+
+            a.open-link {
+                color: var(--md-sys-color-primary);
+                font-size: 0.875rem;
+            }
         `;
     }
 
@@ -97,13 +112,14 @@ export class FileViewer extends PapyrosElement {
         const opened =
             changedProperties.has("active") ||
             (changedProperties.has("file") && changedProperties.get("file") === undefined);
-        if (opened && this.active && this.file && !this.file.binary) {
+        if (opened && this.active && this.file && !this.file.binary && !this.readonly) {
             this.editorRef.value?.focus();
         }
     }
 
     private onEditorChange(e: CustomEvent): void {
-        if (!this.file || this.papyros.debugger.active) return;
+        // A read-only preview is never edited, so it has nothing to write back
+        if (!this.file || this.readonly || this.papyros.debugger.active) return;
         const name = this.file.name;
         const content = e.detail as string;
         this.papyros.io.updateFileContent(name, content, this.file.binary);
@@ -114,15 +130,24 @@ export class FileViewer extends PapyrosElement {
         if (!this.file) {
             return html``;
         }
-        if (this.file.binary) {
+        if (this.file.binary || (this.url && this.file.content.length > MAX_PREVIEW_LENGTH)) {
+            const message = this.url
+                ? this.t("Papyros.file_not_previewable", { name: this.file.name })
+                : this.t("Papyros.files_binary");
             return html`
                 <div class="placeholder-container">
-                    <span>${this.t("Papyros.files_binary")}</span>
-                    <button @click=${this.downloadBinary}>${this.t("Papyros.files_download")}</button>
+                    <span>${message}</span>
+                    ${
+                        this.url
+                            ? html`<a class="open-link" href=${this.url} target="_blank" rel="noopener"
+                                  >${this.t("Papyros.open_file", { name: this.file.name })}</a
+                              >`
+                            : html`<button @click=${this.downloadBinary}>${this.t("Papyros.files_download")}</button>`
+                    }
                 </div>
             `;
         }
-        const readonly = this.papyros.debugger.active;
+        const readonly = this.readonly || this.papyros.debugger.active;
         return html`
             <p-file-editor
                 ${ref(this.editorRef)}

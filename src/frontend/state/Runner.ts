@@ -8,6 +8,7 @@ import { ProgrammingLanguage } from "../../ProgrammingLanguage";
 import { CODE_TAB, EditorTabId, FileEntry } from "./InputOutput";
 import { UnsupportedBrowserError } from "./PapyrosErrors";
 import type { Run } from "./PapyrosRuntime";
+import { fileNameFromUrl } from "./Files";
 
 /**
  * Enum representing the possible states while processing code
@@ -30,9 +31,11 @@ export interface RunOptions {
     editorTab?: EditorTabId;
     /**
      * When given, the run starts from a workspace that holds only these files. Without
-     * them, the workspace is left as is.
+     * them, the workspace is left as is. A promise of them holds the run in its Loading
+     * phase until it settles, and its rejection ends the run before it starts, without
+     * reporting an error.
      */
-    files?: readonly FileEntry[];
+    files?: readonly FileEntry[] | Promise<readonly FileEntry[]>;
 }
 
 /**
@@ -297,6 +300,11 @@ export class Runner extends State {
      * from there.
      */
     private providedFiles?: [Record<string, string>, Record<string, string>];
+    /**
+     * The run of this instance while it waits for its files and the backend, before it
+     * hands anything to the worker. Stop ends such a run on the spot.
+     */
+    private runBeforeWorker: Run | null = null;
 
     constructor(papyros: Papyros) {
         super();
@@ -502,26 +510,40 @@ export class Runner extends State {
         let interrupted = false;
         let terminated = false;
         let unusable = false;
-        const backend = await this.availableBackend();
+        const runtime = this.papyros.runtime;
+        this.runBeforeWorker = run;
+        let files: readonly FileEntry[] | undefined;
+        let filesFailed = false;
+        try {
+            files = await options.files;
+        } catch {
+            filesFailed = true;
+        }
+        const backend = filesFailed ? undefined : await this.availableBackend();
+        if (runtime.currentRun !== run) {
+            // Stopped or disposed while it waited
+            return;
+        }
+        this.runBeforeWorker = null;
+        if (filesFailed) {
+            // Whoever loads the files reports why they failed
+            this.endBeforeStart(RunState.Ready);
+            return;
+        }
         if (!backend) {
-            // Leaving the debugger active would offer a stop-debug button here
-            this.papyros.debugger.active = false;
-            this.papyros.io.onRunEnd();
-            this.papyros.debugger.onRunEnd();
-            this.setState(RunState.Error);
+            this.endBeforeStart(RunState.Error);
             return;
         }
         this.runStartTime = new Date().getTime();
-        const runtime = this.papyros.runtime;
         try {
-            // Disposing this instance while the backend was awaited ends its run, and another
-            // instance may be using the worker by now
-            if (options.files && runtime.currentRun === run) {
+            if (files) {
                 // A recovery would otherwise replay the files an earlier provideFiles handed over
                 this.providedFiles = undefined;
                 await backend.workerProxy.clearWorkspace();
-                await this.writeFiles(backend, options.files);
+                await this.writeFiles(backend, files);
             }
+            // Disposing this instance while the files were written ends its run, and another
+            // instance may be using the worker by now
             if (this.phase !== RunState.Stopping && runtime.currentRun === run) {
                 await backend.call(
                     backend.workerProxy.runCode,
@@ -567,6 +589,14 @@ export class Runner extends State {
         }
     }
 
+    private endBeforeStart(state: RunState): void {
+        // Leaving the debugger active would offer a stop-debug button here
+        this.papyros.debugger.active = false;
+        this.papyros.io.onRunEnd();
+        this.papyros.debugger.onRunEnd();
+        this.setState(state);
+    }
+
     /**
      * Interrupt the run of this instance. Does nothing when it has none in progress.
      * @return {Promise<void>} Returns when the code has been interrupted
@@ -575,6 +605,13 @@ export class Runner extends State {
         const runtime = this.papyros.runtime;
         const run = this.ownRun();
         if (!run) {
+            return;
+        }
+        if (this.runBeforeWorker === run) {
+            // Nothing runs in the worker yet, and the run ignores its files when they arrive
+            this.runBeforeWorker = null;
+            this.endBeforeStart(RunState.Ready);
+            this.releaseRuntime(run);
             return;
         }
         this.setState(RunState.Stopping);
@@ -677,13 +714,10 @@ export class Runner extends State {
     }
 
     private filenameFromUrl(url: URL): string {
-        const segments = url.pathname.split("/").filter((s) => s.length > 0);
-        let candidate = segments[segments.length - 1] ?? "";
-        try {
-            candidate = decodeURIComponent(candidate);
-        } catch {
-            // Leave as-is if decoding fails
-        }
+        // Without its trailing slashes, a URL of a directory is named after that directory
+        const trimmed = new URL(url);
+        trimmed.pathname = trimmed.pathname.replace(/\/+$/, "");
+        const candidate = fileNameFromUrl(trimmed.href);
         if (isValidFileName(candidate)) return candidate;
         if (isValidFileName(url.hostname)) return url.hostname;
         return "download";

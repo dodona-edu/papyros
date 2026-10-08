@@ -209,3 +209,28 @@ export const configErrorStyles = css`
         font-weight: 700;
     }
 `;
+
+/** The file tabs, the file previews and the alerts of files that failed to load */
+export const fileStyles = css`
+    [hidden] {
+        display: none;
+    }
+
+    /* Each preview scrolls on its own, so a hidden one keeps its scroll position. */
+    .file-panel p-file-viewer {
+        height: auto;
+        max-height: 300px;
+    }
+
+    .file-status {
+        padding: 14px 16px;
+        font-size: 14px;
+    }
+
+    .file-error {
+        padding: 14px 16px;
+        background: var(--md-sys-color-error-container);
+        color: var(--md-sys-color-on-error-container);
+        font-size: 14px;
+    }
+`;
