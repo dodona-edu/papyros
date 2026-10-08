@@ -18,6 +18,10 @@ export class EditorTabs extends PapyrosElement {
     @property({ type: Boolean, attribute: "host-tab" })
     hostTab = false;
 
+    /** Hides the add-file button and makes the tabs unrenamable and unclosable */
+    @property({ type: Boolean })
+    readonly = false;
+
     private codeTabRef: Ref<HTMLButtonElement> = createRef();
     private hostTabRef: Ref<HTMLButtonElement> = createRef();
     private resizeObserver = new ResizeObserver(() => this.dispatchEvent(new Event("p-editor-tabs-resize")));
@@ -141,7 +145,7 @@ export class EditorTabs extends PapyrosElement {
         // The code panel stands in for a host tab that has no label yet.
         const selected = this.papyros.io.activeEditorTab;
         const activeTab = selected === HOST_TAB && !this.hostTab ? CODE_TAB : selected;
-        const debugActive = this.papyros.debugger.active;
+        const locked = this.readonly || this.papyros.debugger.active;
         return html`
             <div
                 class="tablist"
@@ -160,9 +164,11 @@ export class EditorTabs extends PapyrosElement {
                 >
                     ${this.t("Papyros.editor_tab_code")}
                 </button>
-                ${this.files.map((f) => html`<p-editor-tab .papyros=${this.papyros} .file=${f}></p-editor-tab>`)}
+                ${this.files.map(
+                    (f) => html`<p-editor-tab .papyros=${this.papyros} .file=${f} .readonly=${locked}></p-editor-tab>`,
+                )}
             </div>
-            ${debugActive ? "" : html`<p-add-file-button .papyros=${this.papyros}></p-add-file-button>`}
+            ${locked ? "" : html`<p-add-file-button .papyros=${this.papyros}></p-add-file-button>`}
             ${
                 // The add-file button sits between the file tabs and this tab, and a tablist may
                 // only contain tabs, so the tablist claims this tab through aria-owns instead.

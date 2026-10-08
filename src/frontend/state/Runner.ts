@@ -8,6 +8,7 @@ import { ProgrammingLanguage } from "../../ProgrammingLanguage";
 import { CODE_TAB, EditorTabId, FileEntry } from "./InputOutput";
 import { UnsupportedBrowserError } from "./PapyrosErrors";
 import type { Run } from "./PapyrosRuntime";
+import { fileNameFromUrl } from "./Files";
 
 /**
  * Enum representing the possible states while processing code
@@ -30,9 +31,11 @@ export interface RunOptions {
     editorTab?: EditorTabId;
     /**
      * When given, the run starts from a workspace that holds only these files. Without
-     * them, the workspace is left as is.
+     * them, the workspace is left as is. A promise of them holds the run in its Loading
+     * phase until it settles, and its rejection ends the run before it starts, without
+     * reporting an error.
      */
-    files?: readonly FileEntry[];
+    files?: readonly FileEntry[] | Promise<readonly FileEntry[]>;
 }
 
 /**
@@ -502,13 +505,17 @@ export class Runner extends State {
         let interrupted = false;
         let terminated = false;
         let unusable = false;
+        let files: readonly FileEntry[] | undefined;
+        try {
+            files = await options.files;
+        } catch {
+            // Whoever loads the files reports why they failed
+            this.endBeforeStart(RunState.Ready);
+            return;
+        }
         const backend = await this.availableBackend();
         if (!backend) {
-            // Leaving the debugger active would offer a stop-debug button here
-            this.papyros.debugger.active = false;
-            this.papyros.io.onRunEnd();
-            this.papyros.debugger.onRunEnd();
-            this.setState(RunState.Error);
+            this.endBeforeStart(RunState.Error);
             return;
         }
         this.runStartTime = new Date().getTime();
@@ -516,11 +523,11 @@ export class Runner extends State {
         try {
             // Disposing this instance while the backend was awaited ends its run, and another
             // instance may be using the worker by now
-            if (options.files && runtime.currentRun === run) {
+            if (files && runtime.currentRun === run) {
                 // A recovery would otherwise replay the files an earlier provideFiles handed over
                 this.providedFiles = undefined;
                 await backend.workerProxy.clearWorkspace();
-                await this.writeFiles(backend, options.files);
+                await this.writeFiles(backend, files);
             }
             if (this.phase !== RunState.Stopping && runtime.currentRun === run) {
                 await backend.call(
@@ -565,6 +572,14 @@ export class Runner extends State {
                 await this.launch();
             }
         }
+    }
+
+    private endBeforeStart(state: RunState): void {
+        // Leaving the debugger active would offer a stop-debug button here
+        this.papyros.debugger.active = false;
+        this.papyros.io.onRunEnd();
+        this.papyros.debugger.onRunEnd();
+        this.setState(state);
     }
 
     /**
@@ -677,13 +692,10 @@ export class Runner extends State {
     }
 
     private filenameFromUrl(url: URL): string {
-        const segments = url.pathname.split("/").filter((s) => s.length > 0);
-        let candidate = segments[segments.length - 1] ?? "";
-        try {
-            candidate = decodeURIComponent(candidate);
-        } catch {
-            // Leave as-is if decoding fails
-        }
+        // Without its trailing slashes, a URL of a directory is named after that directory
+        const trimmed = new URL(url);
+        trimmed.pathname = trimmed.pathname.replace(/\/+$/, "");
+        const candidate = fileNameFromUrl(trimmed.href);
         if (isValidFileName(candidate)) return candidate;
         if (isValidFileName(url.hostname)) return url.hostname;
         return "download";
