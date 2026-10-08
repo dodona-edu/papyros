@@ -96,9 +96,9 @@ export class InputOutput extends State {
     @stateProperty
     inputMode: InputMode = InputMode.interactive;
     /**
-     * Whether the worker has started the current run and not finished it. Input
-     * requests outside that window come from a run that is already over: they can
-     * still be in flight when it is stopped or when the next run begins.
+     * Whether the worker has started the current run and not finished it. An input
+     * request outside that window comes from a stopped run: it can still be in flight
+     * after stop() closed the prompt.
      */
     private _runActive: boolean = false;
     public get runActive(): boolean {

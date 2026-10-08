@@ -407,6 +407,17 @@ if __name__ == "{MODULE_NAME}":
         os.remove(path)
         self._cleanup_empty_dirs(os.path.dirname(path))
 
+    def clear_workspace(self):
+        with self._without_file_tracking():
+            # A program may have left the cwd in a directory removed below
+            os.chdir(self.workspace)
+            for entry in os.listdir(self.workspace):
+                path = os.path.join(self.workspace, entry)
+                if os.path.isdir(path) and not os.path.islink(path):
+                    shutil.rmtree(path)
+                else:
+                    os.remove(path)
+
     def rename_file(self, old_name, new_name):
         with self._without_file_tracking():
             old_path = self._safe_path(old_name)
