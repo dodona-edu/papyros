@@ -180,7 +180,7 @@ const second = new Papyros({ runtime });
 
 Each instance keeps its own code, output, input and debugger, but only one of them can run
 code at a time: `runner.start()` does nothing while another instance on the runtime is
-running, and `runtime.running` tells which one is. Files are shared as well, so pass the
+running, and `runtime.currentRun?.owner` tells which one is. Files are shared as well, so pass the
 files a run needs to `runner.start(mode, files)`, which starts it from a workspace holding
 only those. Disposing an instance leaves the workers to the others; call
 `runtime.dispose()` to terminate them.

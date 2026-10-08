@@ -105,7 +105,7 @@ export class Papyros extends State {
      * and the workers are left to the other instances.
      */
     public dispose(): void {
-        const running = this.runtime.running === this;
+        const running = this.runtime.isRunning(this);
         this.runner.dispose();
         if (this.ownsRuntime) {
             this.runtime.dispose();

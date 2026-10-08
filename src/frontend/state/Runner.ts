@@ -7,6 +7,7 @@ import { Papyros } from "./Papyros";
 import { ProgrammingLanguage } from "../../ProgrammingLanguage";
 import { PapyrosLaunchError } from "./PapyrosErrors";
 import { FileEntry } from "./InputOutput";
+import type { Run } from "./PapyrosRuntime";
 
 /**
  * Enum representing the possible states while processing code
@@ -267,6 +268,10 @@ export class Runner extends State {
      * from there.
      */
     private providedFiles?: [Record<string, string>, Record<string, string>];
+    /**
+     * The run this instance started and has not finished yet
+     */
+    private currentRun: Run | null = null;
 
     constructor(papyros: Papyros) {
         super();
@@ -276,20 +281,33 @@ export class Runner extends State {
         this.backend = Promise.reject(new Error("No backend has been launched"));
         this.backend.catch(() => undefined);
 
-        this.papyros.events.subscribe(BackendEventType.Input, () => {
-            if (this.papyros.io.runActive) {
+        this.papyros.events.subscribe(BackendEventType.Input, (e) => {
+            if (this.isCurrentRun(e) && this.papyros.io.runActive) {
                 this.setState(RunState.AwaitingInput);
             }
         });
         this.papyros.events.subscribe(BackendEventType.Loading, (e) => {
-            // On a shared runtime, the installs of a lint or of another instance's run
-            // say nothing about this instance
-            if (this.papyros.ownsRuntime || this.papyros.runtime.isRunning(this.papyros)) {
+            // Installs from outside a run, such as linting, are only shown when no other
+            // instance shares the runtime
+            if (this.isCurrentRun(e) || (e.runId === undefined && this.papyros.ownsRuntime)) {
                 this.onLoad(e);
             }
         });
-        this.papyros.events.subscribe(BackendEventType.Start, (e) => this.onStart(e));
-        this.papyros.events.subscribe(BackendEventType.End, (e) => this.onEnd(e));
+        this.papyros.events.subscribe(BackendEventType.Start, (e) => {
+            if (this.isCurrentRun(e)) {
+                this.onStart(e);
+            }
+        });
+        // The End of a run can arrive after the run itself has settled
+        this.papyros.events.subscribe(BackendEventType.End, (e) => {
+            if (e.runId !== undefined) {
+                this.onEnd(e);
+            }
+        });
+    }
+
+    private isCurrentRun(e: BackendEvent): boolean {
+        return this.currentRun !== null && e.runId === this.currentRun.id;
     }
 
     /** @see PapyrosRuntime.registerBackend */
@@ -422,25 +440,30 @@ export class Runner extends State {
      */
     public async start(mode?: RunMode, files?: readonly FileEntry[]): Promise<void> {
         // Claimed before anything else is touched, so a refused start leaves this instance as it was
-        if (!this.papyros.runtime.tryAcquire(this.papyros)) {
+        const run = this.papyros.runtime.tryAcquire(this.papyros);
+        if (!run) {
             return;
         }
+        this.currentRun = run;
         try {
-            await this.run(mode, files);
+            await this.run(run, mode, files);
         } finally {
-            this.releaseRuntime();
+            this.releaseRuntime(run);
         }
     }
 
-    private releaseRuntime(): void {
-        this.papyros.runtime.release(this.papyros);
-        if (!this.papyros.ownsRuntime && this.loadingPackages.length > 0) {
-            // Only the running instance hears the matching "loaded" events
-            this.loadingPackages = [];
+    private releaseRuntime(run: Run): void {
+        this.papyros.runtime.release(run);
+        if (this.currentRun === run) {
+            this.currentRun = null;
+            // The matching "loaded" events of an interrupted install never come
+            if (this.loadingPackages.length > 0) {
+                this.loadingPackages = [];
+            }
         }
     }
 
-    private async run(mode?: RunMode, files?: readonly FileEntry[]): Promise<void> {
+    private async run(run: Run, mode?: RunMode, files?: readonly FileEntry[]): Promise<void> {
         this.papyros.debugger.active = mode === RunMode.Debug;
 
         // Setup pre-run
@@ -462,9 +485,9 @@ export class Runner extends State {
         this.runStartTime = new Date().getTime();
         const runtime = this.papyros.runtime;
         try {
-            // Disposing this instance while the backend was awaited gives up its claim, and another
+            // Disposing this instance while the backend was awaited ends its run, and another
             // instance may be using the worker by now
-            if (files && runtime.isRunning(this.papyros)) {
+            if (files && runtime.currentRun === run) {
                 // A recovery would otherwise replay the files an earlier provideFiles handed over
                 this.providedFiles = undefined;
                 await backend.workerProxy.clearWorkspace();
@@ -472,12 +495,13 @@ export class Runner extends State {
                     await backend.workerProxy.updateFile(file.name, file.content, file.binary);
                 }
             }
-            if (this.phase !== RunState.Stopping && runtime.isRunning(this.papyros)) {
+            if (this.phase !== RunState.Stopping && runtime.currentRun === run) {
                 await backend.call(
                     backend.workerProxy.runCode,
                     this.effectiveCode,
                     mode,
                     this.papyros.constants.maxDebugFrames,
+                    run.id,
                 );
             }
         } catch (error: any) {
@@ -518,13 +542,13 @@ export class Runner extends State {
     }
 
     /**
-     * Interrupt the currently running code. Does nothing while another instance
-     * sharing the runtime is running.
+     * Interrupt the run of this instance. Does nothing when it has none in progress.
      * @return {Promise<void>} Returns when the code has been interrupted
      */
     public async stop(): Promise<void> {
         const runtime = this.papyros.runtime;
-        if (runtime.isBusyFor(this.papyros)) {
+        const run = this.currentRun;
+        if (!run || runtime.currentRun !== run) {
             return;
         }
         this.setState(RunState.Stopping);
@@ -535,7 +559,7 @@ export class Runner extends State {
             this.setState(RunState.Error);
             return;
         }
-        if (!runtime.isRunning(this.papyros)) {
+        if (runtime.currentRun !== run) {
             // Another instance may have started a run while the backend was awaited, and that one is not ours to stop
             if (this.phase === RunState.Stopping) {
                 this.setState(RunState.Ready);
@@ -550,10 +574,10 @@ export class Runner extends State {
         }
         if (this.phase === RunState.Stopping) {
             console.warn("Deadlock while stopping, restarting backend");
-            if (runtime.running === this.papyros) {
+            if (runtime.currentRun === run) {
                 // launch() keeps a worker that is already up, so the stuck run would never settle
                 runtime.restartWorker(this.programmingLanguage);
-                this.releaseRuntime();
+                this.releaseRuntime(run);
             }
             await this.launch();
             this.setState(
@@ -564,13 +588,14 @@ export class Runner extends State {
     }
 
     public async provideInput(input: string): Promise<void> {
-        if (!this.papyros.runtime.isRunning(this.papyros)) {
+        const run = this.currentRun;
+        if (!run) {
             return;
         }
         const backend = await this.availableBackend();
         // Input submitted as a run ends has no reader left to receive it, and another
-        // instance may have started a run while the backend was awaited
-        if (!backend || backend.state === "idle" || !this.papyros.runtime.isRunning(this.papyros)) {
+        // run may have started while the backend was awaited
+        if (!backend || backend.state === "idle" || this.papyros.runtime.currentRun !== run) {
             return;
         }
         // The End event can already have arrived while the run still holds the runtime
@@ -666,7 +691,7 @@ export class Runner extends State {
             report("failed");
             throw error;
         }
-        // The worker reports each file as loaded, but on a shared runtime only the running instance hears it
+        // On a shared runtime, the worker's own "loaded" events leave loadingPackages alone
         report("loaded");
     }
 

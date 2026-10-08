@@ -18,11 +18,20 @@ import type { Papyros } from "./Papyros";
 const serviceWorkerRegistrations: Map<string, Promise<ServiceWorkerRegistration>> = new Map();
 
 /**
+ * A run of code by one instance on a runtime. The worker puts the id on every event
+ * of the run, so the runtime can hand them to the instance that started it.
+ */
+export interface Run {
+    readonly id: number;
+    readonly owner: Papyros;
+}
+
+/**
  * The backend workers and input channel that run code for one or more Papyros instances.
  *
  * Every Papyros gets a private runtime unless it is given one. Instances given the same
  * runtime share one worker per language: only one of them can run code at a time, and
- * the worker's events go to the instance that started the most recent run.
+ * the events of a run go to the instance that started it.
  */
 export class PapyrosRuntime extends State {
     @stateProperty
@@ -40,16 +49,18 @@ export class PapyrosRuntime extends State {
     serviceWorkerName: string = "InputServiceWorker.js";
 
     /**
-     * The instance whose run is in progress, or null when nothing runs
+     * The run in progress, or null when nothing runs
      */
     @stateProperty
-    running: Papyros | null = null;
+    currentRun: Run | null = null;
 
     /**
-     * The instance that started the most recent run. It keeps receiving the worker's
-     * events after its run ended, since output can still be flushed then.
+     * The most recent run, which keeps receiving its events after it ended: the worker
+     * tags them as it emits them, but they can arrive after runCode has settled.
+     * Events of any earlier run are dropped.
      */
-    owner: Papyros | null = null;
+    private lastRun: Run | null = null;
+    private lastRunId: number = 0;
 
     /**
      * The channel the backends read their input from, when they need one
@@ -97,42 +108,45 @@ export class PapyrosRuntime extends State {
      */
     public detach(papyros: Papyros): void {
         this.instances.delete(papyros);
-        this.release(papyros);
-        if (this.owner === papyros) {
-            this.owner = null;
+        if (this.currentRun?.owner === papyros) {
+            this.currentRun = null;
+        }
+        if (this.lastRun?.owner === papyros) {
+            this.lastRun = null;
         }
     }
 
     /**
      * Claim the worker for a run by the given instance
-     * @return {boolean} Whether the claim succeeded: false while any run is in progress
+     * @return {Run | null} The new run, or null while any run is in progress
      */
-    public tryAcquire(papyros: Papyros): boolean {
-        if (this.running) {
-            return false;
+    public tryAcquire(papyros: Papyros): Run | null {
+        if (this.currentRun) {
+            return null;
         }
-        this.running = papyros;
-        this.owner = papyros;
-        return true;
+        const run = { id: ++this.lastRunId, owner: papyros };
+        this.currentRun = run;
+        this.lastRun = run;
+        return run;
     }
 
     public isRunning(papyros: Papyros): boolean {
-        return this.running === papyros;
+        return this.currentRun?.owner === papyros;
     }
 
     /**
      * Whether a run by another instance is in progress, which the given instance must wait out
      */
     public isBusyFor(papyros: Papyros): boolean {
-        return this.running !== null && this.running !== papyros;
+        return this.currentRun !== null && this.currentRun.owner !== papyros;
     }
 
     /**
-     * Give up the claim of the given instance, if it holds one
+     * End the given run, if it is still in progress
      */
-    public release(papyros: Papyros): void {
-        if (this.running === papyros) {
-            this.running = null;
+    public release(run: Run): void {
+        if (this.currentRun === run) {
+            this.currentRun = null;
         }
     }
 
@@ -151,8 +165,8 @@ export class PapyrosRuntime extends State {
         }
         this.clients.clear();
         this.instances.clear();
-        this.running = null;
-        this.owner = null;
+        this.currentRun = null;
+        this.lastRun = null;
     }
 
     /**
@@ -204,7 +218,12 @@ export class PapyrosRuntime extends State {
         try {
             // Allow passing messages between worker and main thread
             await backend.workerProxy.launch(
-                proxy((e: BackendEvent) => this.dispatch(e)),
+                proxy((e: BackendEvent) => {
+                    // A replaced worker can still have events on their way
+                    if ((backend.worker ?? backend) === worker) {
+                        this.dispatch(e);
+                    }
+                }),
                 this.pyodideAssetURL,
                 this.allowJspi,
             );
@@ -266,7 +285,7 @@ export class PapyrosRuntime extends State {
         try {
             // A run suspended in input() dies with its worker, so close its prompt
             // and flush its frames the way stop() does
-            const owner = this.owner ?? requester;
+            const owner = this.currentRun?.owner ?? requester;
             owner.io.onRunEnd();
             owner.debugger.onRunEnd();
             this.restartWorker(language);
@@ -277,26 +296,36 @@ export class PapyrosRuntime extends State {
         }
     }
 
+    /**
+     * Hand the events of a run to the instance that started it, and Loading events to
+     * every instance. Other events from outside a run go to an instance only on its
+     * private runtime.
+     */
     private dispatch(e: BackendEvent): void {
+        const run = this.lastRun;
+        if (e.runId !== undefined && e.runId !== run?.id) {
+            return;
+        }
         if (e.type === BackendEventType.Loading) {
             // Every editor relints once a package it may import has been installed
             for (const papyros of this.instances) {
                 papyros.events.publish(e);
             }
-            return;
+        } else if (e.runId !== undefined) {
+            run?.owner.events.publish(e);
+        } else {
+            // A shared runtime cannot tell which instance output of code that outlived its
+            // run, or the files provideFiles reports, belongs to
+            for (const papyros of this.instances) {
+                if (papyros.ownsRuntime) {
+                    papyros.events.publish(e);
+                }
+            }
         }
-        this.eventTarget()?.events.publish(e);
-    }
-
-    /**
-     * Before any run, the events and errors come from launching or linting
-     */
-    private eventTarget(): Papyros | undefined {
-        return this.owner ?? this.instances.values().next().value;
     }
 
     private report(error: Error): void {
-        this.eventTarget()?.errorHandler(error);
+        (this.lastRun?.owner ?? this.instances.values().next().value)?.errorHandler(error);
     }
 
     /**

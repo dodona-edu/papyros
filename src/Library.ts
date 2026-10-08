@@ -5,6 +5,7 @@ import "./frontend/components/Debugger";
 import { Papyros, papyros } from "./frontend/state/Papyros";
 import type { PapyrosOptions } from "./frontend/state/Papyros";
 import { PapyrosRuntime } from "./frontend/state/PapyrosRuntime";
+import type { Run } from "./frontend/state/PapyrosRuntime";
 import { InputMode } from "./frontend/state/InputOutput";
 import { RunMode, WorkerDiagnostic } from "./backend/Backend";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
@@ -31,4 +32,4 @@ export {
     ServiceWorkerRegistrationError,
     ServiceWorkerInputError,
 };
-export type { FriendlyError, OutputEntry, WorkerDiagnostic, PapyrosOptions };
+export type { FriendlyError, OutputEntry, WorkerDiagnostic, PapyrosOptions, Run };

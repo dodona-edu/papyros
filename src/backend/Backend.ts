@@ -62,6 +62,10 @@ export abstract class Backend {
      */
     protected queue: BackendEventQueue;
     /**
+     * The id of the run in progress, put on every event emitted until the run ends
+     */
+    private runId?: number;
+    /**
      * Constructor is limited as it is meant to be used as a WebWorker
      * Proper initialization occurs in the launch method when the worker is started
      * Synchronously exposing methods should be done here
@@ -71,7 +75,18 @@ export abstract class Backend {
         this.onEvent = () => {
             // Empty, initialized in launch
         };
-        this.runCode = this.expose()(this.runCode.bind(this));
+        const runCode = this.runCode.bind(this);
+        // The main thread passes the id of the run after the arguments of runCode itself
+        this.runCode = this.expose()(
+            async (extras: SyncExtras, code: string, mode?: string, maxSteps?: number, runId?: number) => {
+                this.runId = runId;
+                try {
+                    return await runCode(extras, code, mode, maxSteps);
+                } finally {
+                    this.runId = undefined;
+                }
+            },
+        );
         this.queue = {} as BackendEventQueue;
     }
 
@@ -96,7 +111,7 @@ export abstract class Backend {
         allowJspi: boolean = true,
     ): Promise<void> {
         this.onEvent = (e: BackendEvent) => {
-            onEvent(e);
+            onEvent(this.runId === undefined ? e : { ...e, runId: this.runId });
             if (e.type === BackendEventType.Sleep) {
                 return this.jspi ? this.suspendForSleep(e.data) : this.extras.syncSleep(e.data);
             } else if (e.type === BackendEventType.Input) {

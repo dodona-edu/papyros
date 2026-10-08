@@ -30,6 +30,30 @@ function errorEvent(events: BackendEvent[]): BackendEvent | undefined {
 }
 
 describe("JavaScriptWorker", () => {
+    it("puts the run id on every event of the run, and only during the run", async () => {
+        const events: BackendEvent[] = [];
+        const worker = new TestableJavaScriptWorker();
+        await worker.launch((e) => events.push(e), undefined);
+        await (worker.runCode as any)(
+            {} as SyncExtras,
+            'console.log("out"); console.error("err");',
+            undefined,
+            undefined,
+            7,
+        );
+        expect(events.map((e) => e.type)).toEqual([
+            BackendEventType.Start,
+            BackendEventType.Output,
+            BackendEventType.Error,
+            BackendEventType.End,
+        ]);
+        expect(events.every((e) => e.runId === 7)).toBe(true);
+
+        events.length = 0;
+        await worker.runCode({} as SyncExtras, 'console.log("no id");');
+        expect(events.some((e) => "runId" in e)).toBe(false);
+    });
+
     it("logs null without crashing", async () => {
         const events = await run("console.log(null);");
         expect(outputText(events)).toBe("null\n");
