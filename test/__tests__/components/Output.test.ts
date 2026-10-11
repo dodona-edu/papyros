@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { Papyros } from "../../../src/frontend/state/Papyros";
-import { OutputType, TURTLE_TAB } from "../../../src/frontend/state/InputOutput";
+import { OutputEntry, OutputType, TURTLE_TAB } from "../../../src/frontend/state/InputOutput";
 import type { Output } from "../../../src/frontend/components/Output";
 import "../../../src/frontend/components/Output";
 
@@ -16,6 +16,14 @@ async function mount(): Promise<Output> {
 
 function content(): HTMLElement {
     return element.shadowRoot!.querySelector<HTMLElement>(".content")!;
+}
+
+function atEnd(): boolean {
+    return content().scrollTop + content().clientHeight >= content().scrollHeight - 1;
+}
+
+function nextFrame(): Promise<void> {
+    return new Promise((resolve) => requestAnimationFrame(() => resolve()));
 }
 
 afterEach(() => {
@@ -47,7 +55,31 @@ describe("Output", () => {
         expect(element.getBoundingClientRect().height).toBeGreaterThan(oneLine);
         expect(element.getBoundingClientRect().height).toBeLessThanOrEqual(160);
         expect(content().scrollHeight).toBeGreaterThan(content().clientHeight);
-        expect(content().scrollTop + content().clientHeight).toBeGreaterThanOrEqual(content().scrollHeight - 1);
+        expect(atEnd()).toBe(true);
+    });
+
+    it("keeps following the newest line when an inline image loads", async () => {
+        await mount();
+        const canvas = document.createElement("canvas");
+        canvas.width = 400;
+        canvas.height = 300;
+        const png = canvas.toDataURL("image/png").split(",")[1];
+        const text = (content: string): OutputEntry => ({ type: OutputType.stdout, content });
+
+        element.papyros.io.output = [
+            ...Array.from({ length: 5 }, (_, i) => text(`line ${i}\n`)),
+            { type: OutputType.img, content: png, contentType: "image/png;base64" },
+            text("after the image\n"),
+        ];
+        await element.updateComplete;
+        await element.shadowRoot!.querySelector("img")!.decode();
+        await nextFrame();
+        await nextFrame();
+        expect(atEnd()).toBe(true);
+
+        element.papyros.io.output = [...element.papyros.io.output, text("one more line\n")];
+        await element.updateComplete;
+        expect(atEnd()).toBe(true);
     });
 
     it("takes the turtle height on the Turtle tab", async () => {

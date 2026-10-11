@@ -39,6 +39,8 @@ export class Output extends PapyrosElement {
                 flex: 1 1 auto;
                 min-height: 0;
                 overflow: auto;
+                /* Scroll anchoring would move the view away from the end that it follows. */
+                overflow-anchor: none;
                 padding: 0.5rem 0.875rem;
                 background-color: var(--md-sys-color-surface-container-highest);
             }
@@ -114,29 +116,69 @@ export class Output extends PapyrosElement {
     /** Replays the turtle patches; kept across renders so following a run stays incremental. */
     private turtleSvg = new TurtleSvgBuilder();
 
-    /** Whether the output was scrolled to its end before this render, so the new end is shown after it. */
-    private followOutput = true;
+    /** Whether the reader is at the end of the output, so new output keeps the end in view. */
+    private following = true;
+
+    /** A scroll position this element set itself, so the scroll event it causes is not taken for the reader's. */
+    private ownScrollTop: number | undefined = undefined;
+
+    /** An image gets its height after the render that inserts it, which moves the end of the output. */
+    private resizeObserver = new ResizeObserver(() => this.scrollToEndIfFollowing());
 
     private get content(): HTMLElement | null {
         return this.renderRoot.querySelector<HTMLElement>(".content");
     }
 
+    private onScroll = (): void => {
+        const content = this.content;
+        if (!content) return;
+        if (content.scrollTop === this.ownScrollTop) {
+            this.ownScrollTop = undefined;
+            return;
+        }
+        this.following = content.scrollHeight - content.scrollTop - content.clientHeight <= 1;
+    };
+
+    private scrollToEndIfFollowing(): void {
+        const content = this.content;
+        if (!content || !this.following) return;
+        const before = content.scrollTop;
+        content.scrollTop = content.scrollHeight;
+        if (content.scrollTop !== before) {
+            this.ownScrollTop = content.scrollTop;
+        }
+    }
+
+    private observeContent(): void {
+        const content = this.content;
+        this.resizeObserver.disconnect();
+        if (!content) return;
+        this.resizeObserver.observe(content);
+        for (const child of Array.from(content.children)) {
+            this.resizeObserver.observe(child);
+        }
+    }
+
+    public override connectedCallback(): void {
+        super.connectedCallback();
+        this.observeContent();
+    }
+
+    public override disconnectedCallback(): void {
+        super.disconnectedCallback();
+        this.resizeObserver.disconnect();
+    }
+
     /** Reflects the active tab on the host, so the turtle height applies to the whole panel. */
     protected override update(changedProperties: PropertyValues): void {
         this.setAttribute("active-tab", this.papyros.io.activeOutputTab);
-        const content = this.content;
-        if (content) {
-            this.followOutput = content.scrollHeight - content.scrollTop - content.clientHeight <= 1;
-        }
         super.update(changedProperties);
     }
 
     protected override updated(changedProperties: PropertyValues): void {
         super.updated(changedProperties);
-        const content = this.content;
-        if (content && this.followOutput) {
-            content.scrollTop = content.scrollHeight;
-        }
+        this.observeContent();
+        this.scrollToEndIfFollowing();
     }
 
     private get maxOutputLength(): number {
@@ -338,6 +380,7 @@ export class Output extends PapyrosElement {
                 role=${showTabs ? "tabpanel" : "region"}
                 aria-labelledby=${showTabs ? `tab-${activeTab}` : "output-title"}
                 tabindex="0"
+                @scroll=${this.onScroll}
             >
                 ${
                     showPlaceholder
