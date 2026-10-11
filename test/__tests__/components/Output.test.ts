@@ -82,6 +82,16 @@ describe("Output", () => {
         expect(atEnd()).toBe(true);
     });
 
+    it("says that nothing was printed yet at the current debug step", async () => {
+        await mount();
+        element.papyros.debugger.active = true;
+        await element.updateComplete;
+
+        expect(element.shadowRoot!.querySelector(".place-holder")!.textContent!.trim()).toBe(
+            "Nothing printed yet at this step",
+        );
+    });
+
     it("takes the turtle height on the Turtle tab", async () => {
         await mount();
         element.papyros.io.hasTurtleOutput = true;

@@ -368,6 +368,9 @@ export class Output extends PapyrosElement {
         const showTurtlePlaceholder = activeTab === TURTLE_TAB && rendered.length === 0;
         const showOverflow = activeTab === OUTPUT_TAB && this.showOverflowWarning;
         const showTabs = this.showTurtleTab;
+        const placeholder = this.papyros.debugger.active
+            ? this.t("Papyros.debug_output_placeholder")
+            : this.t("Papyros.output_placeholder");
         return html`
             <div class="tab-bar">
                 <span class="pane-label" id="output-title">${this.t("Papyros.output")}</span>
@@ -384,7 +387,7 @@ export class Output extends PapyrosElement {
             >
                 ${
                     showPlaceholder
-                        ? html`<pre class="place-holder">${this.t("Papyros.output_placeholder")}</pre>`
+                        ? html`<pre class="place-holder">${placeholder}</pre>`
                         : showTurtlePlaceholder
                           ? html`<div class="turtle-placeholder"></div>`
                           : activeTab === OUTPUT_TAB
