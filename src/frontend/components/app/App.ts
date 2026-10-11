@@ -153,6 +153,8 @@ export class App extends PapyrosElement {
                 align-items: center;
                 padding: 0.5rem 1.5rem;
                 display: flex;
+                flex-wrap: wrap;
+                gap: 0.5rem;
                 justify-content: space-between;
                 background-color: var(--md-sys-color-surface-container);
                 color: var(--md-sys-color-on-surface);
@@ -165,8 +167,10 @@ export class App extends PapyrosElement {
                 color: var(--md-sys-color-primary);
             }
 
+            /* The pickers wrap rather than push the header wider than a narrow window. */
             .header-options {
                 display: flex;
+                flex-wrap: wrap;
                 gap: 0.5rem;
                 align-items: center;
             }
