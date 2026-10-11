@@ -2,7 +2,7 @@ import { customElement, state } from "lit/decorators.js";
 import { PapyrosElement } from "./PapyrosElement";
 import { css, CSSResult, html, PropertyValues, TemplateResult } from "lit";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { CODE_TAB, HOST_TAB } from "../state/InputOutput";
+import { CODE_TAB, EditorTabId, HOST_TAB } from "../state/InputOutput";
 import { arrayBufferToBase64, isTextMimeType } from "../../util/Util";
 import "./code_runner/Code";
 import "./code_runner/RunState";
@@ -255,7 +255,7 @@ export class CodeRunner extends PapyrosElement {
             .join(" ");
     }
 
-    private renderPanel(activeTab: string): TemplateResult {
+    private renderPanel(activeTab: EditorTabId): TemplateResult {
         if (activeTab === CODE_TAB) {
             return html`<p-code .papyros=${this.papyros}></p-code>`;
         }
@@ -287,9 +287,10 @@ export class CodeRunner extends PapyrosElement {
     protected override render(): TemplateResult {
         const files = this.papyros.debugger.active ? this.papyros.debugger.debugFiles : this.papyros.io.files;
         const activeTab = this.papyros.io.activeEditorTab;
-        let panelLabel = activeTab;
+        let panelLabel: string;
         if (activeTab === CODE_TAB) panelLabel = this.t("Papyros.editor_tab_code");
         else if (activeTab === HOST_TAB) panelLabel = this.hostTabText();
+        else panelLabel = activeTab;
 
         return html`
             <div ${ref(this.dropZoneRef)} class="drop-zone ${this.dragOver ? "drag-over" : ""}">

@@ -103,4 +103,15 @@ describe("CodeRunner", () => {
 
         element.remove();
     });
+    it("opens files named like the code and host tabs as files", async () => {
+        const element = await mountRunner(true);
+        for (const name of ["code", "host-tab"]) {
+            element.papyros.io.addFile(name, "hello");
+            await settle(element);
+            const panel = element.shadowRoot!.querySelector(".editor")!;
+            expect(panel.querySelector("p-file-viewer")).not.toBeNull();
+            expect(panel.getAttribute("aria-label")).toBe(name);
+        }
+        element.remove();
+    });
 });

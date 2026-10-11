@@ -60,9 +60,14 @@ export interface FileEntry {
     binary: boolean;
 }
 
-export const CODE_TAB = "code";
+/**
+ * The editor tabs that are not files. Symbols, so no file name can be mistaken for them;
+ * every other value of `activeEditorTab` is the name of a file.
+ */
+export const CODE_TAB = Symbol("code");
 /** The editor tab whose label and content the host supplies through the `host-tab` slots of `p-code-runner`. */
-export const HOST_TAB = "host-tab";
+export const HOST_TAB = Symbol("host-tab");
+export type EditorTabId = string | typeof CODE_TAB | typeof HOST_TAB;
 
 export const OUTPUT_TAB = "output";
 export const TURTLE_TAB = "turtle";
@@ -84,7 +89,7 @@ export class InputOutput extends State {
     @stateProperty
     files: FileEntry[] = [];
     @stateProperty
-    activeEditorTab: string = CODE_TAB;
+    activeEditorTab: EditorTabId = CODE_TAB;
     @stateProperty
     activeOutputTab: OutputTab = OUTPUT_TAB;
     @stateProperty

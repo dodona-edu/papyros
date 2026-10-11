@@ -2,7 +2,7 @@ import { customElement, property } from "lit/decorators.js";
 import { PapyrosElement } from "./PapyrosElement";
 import { css, CSSResult, html, nothing, TemplateResult } from "lit";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { CODE_TAB, FileEntry, HOST_TAB } from "../state/InputOutput";
+import { CODE_TAB, EditorTabId, FileEntry, HOST_TAB } from "../state/InputOutput";
 import "./EditorTab";
 import { EditorTab } from "./EditorTab";
 import "./AddFileButton";
@@ -57,7 +57,7 @@ export class EditorTabs extends PapyrosElement {
     }
 
     /** Roving-tabindex navigation: moves focus only, the tab is opened with Enter or Space. */
-    private focusTab(id: string): void {
+    private focusTab(id: EditorTabId): void {
         if (id === CODE_TAB) {
             this.codeTabRef.value?.focus();
         } else if (id === HOST_TAB) {
@@ -71,7 +71,7 @@ export class EditorTabs extends PapyrosElement {
     }
 
     /** The id of the tab the event came from, which need not be the open one. */
-    private eventTabId(e: KeyboardEvent): string {
+    private eventTabId(e: KeyboardEvent): EditorTabId {
         const path = e.composedPath();
         if (path[0] === this.codeTabRef.value) return CODE_TAB;
         if (path[0] === this.hostTabRef.value) return HOST_TAB;
@@ -84,7 +84,8 @@ export class EditorTabs extends PapyrosElement {
         const originalTarget = e.composedPath()[0] as HTMLElement;
         if (originalTarget.getAttribute("role") !== "tab") return;
 
-        const ids = [CODE_TAB, ...this.files.map((f) => f.name), ...(this.hostTab ? [HOST_TAB] : [])];
+        const ids: EditorTabId[] = [CODE_TAB, ...this.files.map((f) => f.name)];
+        if (this.hostTab) ids.push(HOST_TAB);
         const currentIndex = Math.max(ids.indexOf(this.eventTabId(e)), 0);
 
         let nextIndex: number;

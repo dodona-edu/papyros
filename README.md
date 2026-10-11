@@ -215,7 +215,7 @@ It takes two slots:
 
 The tab appears while the `host-tab` slot has an element and follows the same keyboard pattern as the file tabs.
 Its text names the panel for assistive technology.
-Select it from code with `papyros.io.activeEditorTab = HOST_TAB` (`CODE_TAB` selects the code); starting a run selects the code again.
+Select it from code with `papyros.io.activeEditorTab = HOST_TAB` (`CODE_TAB` selects the code, a file name selects that file); both are symbols, so no file name can select them. Starting a run selects the code again.
 Removing the `host-tab` element while its tab is open selects the code.
 
 Reflects a `backend-ready` attribute once the backend has finished loading, so surrounding pages can style or wait on it.
