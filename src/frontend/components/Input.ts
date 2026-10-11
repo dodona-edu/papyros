@@ -23,6 +23,7 @@ export class Input extends PapyrosElement {
                 background-color: var(--md-sys-color-surface);
                 overflow: hidden;
                 box-sizing: border-box;
+                container: papyros-input / inline-size;
                 --md-outlined-text-field-outline-color: var(--md-sys-color-outline-variant);
                 --md-outlined-button-outline-color: var(--md-sys-color-outline-variant);
             }

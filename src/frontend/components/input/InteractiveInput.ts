@@ -4,6 +4,7 @@ import { css, CSSResult, html, PropertyValues, TemplateResult } from "lit";
 import { PapyrosElement } from "../PapyrosElement";
 import "@material/web/textfield/outlined-text-field";
 import "@material/web/button/outlined-button";
+import "@material/web/iconbutton/outlined-icon-button";
 
 @customElement("p-interactive-input")
 export class InteractiveInput extends PapyrosElement {
@@ -26,6 +27,22 @@ export class InteractiveInput extends PapyrosElement {
 
             md-outlined-text-field {
                 flex-grow: 1;
+            }
+
+            md-outlined-icon-button {
+                display: none;
+                flex-shrink: 0;
+            }
+
+            /* In a narrow input panel the button gives the room of its label to the placeholder. */
+            @container papyros-input (width < 25rem) {
+                md-outlined-button {
+                    display: none;
+                }
+
+                md-outlined-icon-button {
+                    display: inline-flex;
+                }
             }
         `;
     }
@@ -63,6 +80,14 @@ export class InteractiveInput extends PapyrosElement {
                 <span slot="icon">${this.papyros.constants.icons.enter}</span>
                 ${this.t("Papyros.enter")}
             </md-outlined-button>
+            <md-outlined-icon-button
+                aria-label=${this.t("Papyros.enter")}
+                title=${this.t("Papyros.enter")}
+                @click=${() => this.provideInput()}
+                ?disabled=${!this.papyros.io.awaitingInput}
+            >
+                ${this.papyros.constants.icons.enter}
+            </md-outlined-icon-button>
         `;
     }
 }

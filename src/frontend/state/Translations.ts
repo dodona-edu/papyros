@@ -10,7 +10,7 @@ export const ENGLISH_TRANSLATION = {
         github_link: "Papyros on GitHub",
         code_placeholder: "Write your %{programmingLanguage} code here and click 'Run' to execute...",
         input_placeholder: {
-            interactive: "Provide input and press enter to send",
+            interactive: "Type input and press Enter",
             batch:
                 "Provide all input required by your code here.\n" + "You can enter multiple lines by pressing enter.",
         },
@@ -144,7 +144,7 @@ export const DUTCH_TRANSLATION = {
         github_link: "Papyros op GitHub",
         code_placeholder: "Schrijf hier je %{programmingLanguage} code en klik op 'Uitvoeren' om uit te voeren...",
         input_placeholder: {
-            interactive: "Geef invoer in en druk op enter",
+            interactive: "Typ invoer en druk op Enter",
             batch:
                 "Geef hier alle invoer die je code nodig heeft vooraf in.\n" +
                 "Je kan verschillende lijnen ingeven door op enter te drukken.",
