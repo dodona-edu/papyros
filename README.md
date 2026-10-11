@@ -199,6 +199,14 @@ The codebase organized into clear layers:
 A [CodeMirror 6](https://codemirror.net/6/) editor to edit, run, and debug code.
 The Run, Debug and Stop buttons sit in the tab bar, after the file tabs.
 Additional buttons can be added via the `buttons` slot; they follow the run buttons after a divider and are hidden while debugging.
+Below a width of 30rem the run buttons turn into 32px icon buttons, named by an `aria-label` and a tooltip.
+`p-code-runner` is a size container named `papyros-code-runner`, so the host can compact its slotted buttons at the same width:
+
+```css
+@container papyros-code-runner (width < 30rem) {
+  .my-button-label { display: none; }
+}
+```
 
 The host can add one tab of its own next to the file tabs, for content that is not a file (Dodona shows the failing test that is being debugged in it).
 It takes two slots:

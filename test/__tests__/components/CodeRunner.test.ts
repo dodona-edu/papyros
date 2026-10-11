@@ -130,4 +130,16 @@ describe("CodeRunner", () => {
 
         element.remove();
     });
+    it("shows the run buttons as named icon buttons in a narrow column", async () => {
+        const element = await mountRunner(false);
+        element.style.width = "400px";
+        const lint = element.shadowRoot!.querySelector("p-button-lint")!;
+        const shown = Array.from(lint.shadowRoot!.querySelectorAll<HTMLElement>(".buttons > *")).filter(
+            (b) => b.getClientRects().length > 0,
+        );
+        expect(shown.map((b) => b.localName)).toEqual(["md-filled-icon-button", "md-outlined-icon-button"]);
+        expect(shown.map((b) => b.getAttribute("aria-label"))).toEqual(["Run", "Debug"]);
+        expect(shown.map((b) => b.title)).toEqual(["Run", "Debug"]);
+        element.remove();
+    });
 });

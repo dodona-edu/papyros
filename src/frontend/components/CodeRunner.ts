@@ -30,10 +30,12 @@ export class CodeRunner extends PapyrosElement {
 
     static get styles(): CSSResult {
         return css`
+            /* Named, so the run buttons and the host's slotted content can query its width. */
             :host {
                 width: 100%;
                 display: flex;
                 flex-direction: column;
+                container: papyros-code-runner / inline-size;
             }
 
             ${paneStyles}
