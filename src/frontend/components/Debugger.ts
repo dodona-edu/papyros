@@ -206,6 +206,7 @@ export class Debugger extends PapyrosElement {
                               .trace=${this.papyros.debugger.trace}
                               .translations=${this.papyros.i18n.getTranslations("Papyros.debugger")}
                               .selectedFrame=${current}
+                              @frame-change=${(e: CustomEvent) => this.selectFrame(e.detail.frame)}
                           >
                               ${this.renderStepper(current)}
                           </tc-trace>`
