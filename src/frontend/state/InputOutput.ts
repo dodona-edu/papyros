@@ -61,6 +61,8 @@ export interface FileEntry {
 }
 
 export const CODE_TAB = "code";
+/** The editor tab whose label and content the host supplies through the `host-tab` slots of `p-code-runner`. */
+export const HOST_TAB = "host-tab";
 
 export const OUTPUT_TAB = "output";
 export const TURTLE_TAB = "turtle";

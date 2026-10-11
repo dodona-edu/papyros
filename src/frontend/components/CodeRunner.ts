@@ -2,7 +2,7 @@ import { customElement, state } from "lit/decorators.js";
 import { PapyrosElement } from "./PapyrosElement";
 import { css, CSSResult, html, PropertyValues, TemplateResult } from "lit";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { CODE_TAB } from "../state/InputOutput";
+import { CODE_TAB, HOST_TAB } from "../state/InputOutput";
 import { arrayBufferToBase64, isTextMimeType } from "../../util/Util";
 import "./code_runner/Code";
 import "./code_runner/RunState";
@@ -18,6 +18,10 @@ export class CodeRunner extends PapyrosElement {
 
     @state()
     private showEscapeHint = false;
+
+    /** Whether the host put a label in the `host-tab` slot, which is what shows its tab. */
+    @state()
+    private hasHostTab = false;
 
     private dropZoneRef: Ref<HTMLDivElement> = createRef();
 
@@ -72,10 +76,29 @@ export class CodeRunner extends PapyrosElement {
                 justify-content: flex-end;
             }
 
+            ::slotted([slot="host-tab"]) {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.375rem;
+            }
+
             .editor {
                 flex-grow: 1;
                 min-height: 0;
                 position: relative;
+            }
+
+            .host-panel {
+                position: absolute;
+                inset: 0;
+                overflow: auto;
+                padding: 0.5rem 0.75rem;
+                color: var(--md-sys-color-on-surface);
+            }
+
+            .host-panel:focus-visible {
+                outline: 2px solid var(--md-sys-color-primary);
+                outline-offset: -2px;
             }
 
             .footer {
@@ -219,6 +242,33 @@ export class CodeRunner extends PapyrosElement {
         }
     };
 
+    private onHostTabSlotChange(e: Event): void {
+        this.hasHostTab = (e.target as HTMLSlotElement).assignedElements({ flatten: true }).length > 0;
+        if (!this.hasHostTab && this.papyros.io.activeEditorTab === HOST_TAB) {
+            this.papyros.io.activeEditorTab = CODE_TAB;
+        }
+    }
+
+    private hostTabText(): string {
+        return Array.from(this.querySelectorAll(':scope > [slot="host-tab"]'))
+            .map((el) => el.textContent?.trim() ?? "")
+            .join(" ");
+    }
+
+    private renderPanel(activeTab: string): TemplateResult {
+        if (activeTab === CODE_TAB) {
+            return html`<p-code .papyros=${this.papyros}></p-code>`;
+        }
+        if (activeTab === HOST_TAB) {
+            return html`<div class="host-panel" tabindex="0"><slot name="host-tab-panel"></slot></div>`;
+        }
+        const files = this.papyros.debugger.active ? this.papyros.debugger.debugFiles : this.papyros.io.files;
+        return html`<p-file-viewer
+            .papyros=${this.papyros}
+            .file=${files.find((f) => f.name === activeTab)}
+        ></p-file-viewer>`;
+    }
+
     private readAndAddFile(file: File): void {
         const reader = new FileReader();
         if (isTextMimeType(file.type)) {
@@ -237,13 +287,17 @@ export class CodeRunner extends PapyrosElement {
     protected override render(): TemplateResult {
         const files = this.papyros.debugger.active ? this.papyros.debugger.debugFiles : this.papyros.io.files;
         const activeTab = this.papyros.io.activeEditorTab;
-        const activeFile = files.find((f) => f.name === activeTab);
+        let panelLabel = activeTab;
+        if (activeTab === CODE_TAB) panelLabel = this.t("Papyros.editor_tab_code");
+        else if (activeTab === HOST_TAB) panelLabel = this.hostTabText();
 
         return html`
             <div ${ref(this.dropZoneRef)} class="drop-zone ${this.dragOver ? "drag-over" : ""}">
                 <div class="pane ${this.showEscapeHint && activeTab === CODE_TAB ? "show-escape-hint" : ""}">
                     <div class="toolbar">
-                        <p-editor-tabs .papyros=${this.papyros} .files=${files}></p-editor-tabs>
+                        <p-editor-tabs .papyros=${this.papyros} .files=${files} ?host-tab=${this.hasHostTab}>
+                            <slot name="host-tab" slot="host-tab" @slotchange=${this.onHostTabSlotChange}></slot>
+                        </p-editor-tabs>
                         <p-button-lint .papyros=${this.papyros}>
                             <slot name="buttons"></slot>
                         </p-button-lint>
@@ -252,15 +306,11 @@ export class CodeRunner extends PapyrosElement {
                     <div
                         class="editor"
                         role="tabpanel"
-                        aria-label=${activeTab === CODE_TAB ? this.t("Papyros.editor_tab_code") : activeTab}
+                        aria-label=${panelLabel}
                         @focusin=${() => (this.showEscapeHint = this.focusFromKeyboard)}
                         @focusout=${() => (this.showEscapeHint = false)}
                     >
-                        ${
-                            activeTab === CODE_TAB
-                                ? html`<p-code .papyros=${this.papyros}></p-code>`
-                                : html`<p-file-viewer .papyros=${this.papyros} .file=${activeFile}></p-file-viewer>`
-                        }
+                        ${this.renderPanel(activeTab)}
                     </div>
                     <div class="footer">
                         <p-run-state .papyros=${this.papyros}></p-run-state>

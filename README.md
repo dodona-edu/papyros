@@ -200,6 +200,24 @@ A [CodeMirror 6](https://codemirror.net/6/) editor to edit, run, and debug code.
 The Run, Debug and Stop buttons sit in the tab bar, after the file tabs.
 Additional buttons can be added via the `buttons` slot; they follow the run buttons after a divider and are hidden while debugging.
 
+The host can add one tab of its own next to the file tabs, for content that is not a file (Dodona shows the failing test that is being debugged in it).
+It takes two slots:
+
+* `host-tab`: the tab's label. Put the status icon and the text in one element; Papyros lays its children out in a row and colours the text like the other tabs.
+* `host-tab-panel`: the content shown when the tab is selected. The host renders and styles it; Papyros puts it in a scrollable panel below the tabs.
+
+```html
+<p-code-runner>
+  <span slot="host-tab"><i class="icon-error" aria-hidden="true"></i>Test #1</span>
+  <div slot="host-tab-panel"><!-- the test, rendered by the host --></div>
+</p-code-runner>
+```
+
+The tab appears while the `host-tab` slot has an element and follows the same keyboard pattern as the file tabs.
+Its text names the panel for assistive technology.
+Select it from code with `papyros.io.activeEditorTab = HOST_TAB` (`CODE_TAB` selects the code); starting a run selects the code again.
+Removing the `host-tab` element while its tab is open selects the code.
+
 Reflects a `backend-ready` attribute once the backend has finished loading, so surrounding pages can style or wait on it.
 
 #### `<p-input>`
