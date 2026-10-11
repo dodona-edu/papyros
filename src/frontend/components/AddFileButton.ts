@@ -101,6 +101,7 @@ export class AddFileButton extends PapyrosElement {
             e.preventDefault();
             this.confirmAdd();
         } else if (e.key === "Escape") {
+            e.preventDefault();
             this.cancelAdd();
         }
     }
