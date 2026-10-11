@@ -19,11 +19,14 @@ export class CodeRunner extends PapyrosElement {
     @state()
     private showEscapeHint = false;
 
-    /** Whether the host put a label in the `host-tab` slot, which is what shows its tab. */
+    /** The text of the label in the `host-tab` slot, or undefined while that slot is empty and the tab hidden. */
     @state()
-    private hasHostTab = false;
+    private hostTabLabel: string | undefined = undefined;
 
     private dropZoneRef: Ref<HTMLDivElement> = createRef();
+    private hostTabSlotRef: Ref<HTMLSlotElement> = createRef();
+    /** The host can rewrite its label in place, which fires no slotchange. */
+    private hostTabObserver = new MutationObserver(() => this.readHostTabLabel());
 
     static get styles(): CSSResult {
         return css`
@@ -183,6 +186,7 @@ export class CodeRunner extends PapyrosElement {
         // whatever had focus before, which is usually outside this component.
         document.addEventListener("pointerdown", this.onPointerDown, true);
         document.addEventListener("keydown", this.onKeyDown, true);
+        if (this.hasUpdated) this.observeHostTabLabel();
     }
 
     protected override firstUpdated(): void {
@@ -198,6 +202,7 @@ export class CodeRunner extends PapyrosElement {
         super.disconnectedCallback();
         document.removeEventListener("pointerdown", this.onPointerDown, true);
         document.removeEventListener("keydown", this.onKeyDown, true);
+        this.hostTabObserver.disconnect();
         const dropZone = this.dropZoneRef.value;
         if (!dropZone) return;
         dropZone.removeEventListener("dragover", this.onDragOver, true);
@@ -242,17 +247,29 @@ export class CodeRunner extends PapyrosElement {
         }
     };
 
-    private onHostTabSlotChange(e: Event): void {
-        this.hasHostTab = (e.target as HTMLSlotElement).assignedElements({ flatten: true }).length > 0;
-        if (!this.hasHostTab && this.papyros.io.activeEditorTab === HOST_TAB) {
-            this.papyros.io.activeEditorTab = CODE_TAB;
-        }
+    private hostTabElements(): Element[] {
+        return this.hostTabSlotRef.value?.assignedElements({ flatten: true }) ?? [];
     }
 
-    private hostTabText(): string {
-        return Array.from(this.querySelectorAll(':scope > [slot="host-tab"]'))
-            .map((el) => el.textContent?.trim() ?? "")
-            .join(" ");
+    private readHostTabLabel(): void {
+        const elements = this.hostTabElements();
+        this.hostTabLabel =
+            elements.length > 0 ? elements.map((el) => el.textContent?.trim() ?? "").join(" ") : undefined;
+    }
+
+    private observeHostTabLabel(): void {
+        this.hostTabObserver.disconnect();
+        for (const element of this.hostTabElements()) {
+            this.hostTabObserver.observe(element, { subtree: true, childList: true, characterData: true });
+        }
+        this.readHostTabLabel();
+    }
+
+    private onHostTabSlotChange(): void {
+        this.observeHostTabLabel();
+        if (this.hostTabLabel === undefined && this.papyros.io.activeEditorTab === HOST_TAB) {
+            this.papyros.io.activeEditorTab = CODE_TAB;
+        }
     }
 
     private renderPanel(activeTab: EditorTabId): TemplateResult {
@@ -289,15 +306,24 @@ export class CodeRunner extends PapyrosElement {
         const activeTab = this.papyros.io.activeEditorTab;
         let panelLabel: string;
         if (activeTab === CODE_TAB) panelLabel = this.t("Papyros.editor_tab_code");
-        else if (activeTab === HOST_TAB) panelLabel = this.hostTabText();
+        else if (activeTab === HOST_TAB) panelLabel = this.hostTabLabel ?? "";
         else panelLabel = activeTab;
 
         return html`
             <div ${ref(this.dropZoneRef)} class="drop-zone ${this.dragOver ? "drag-over" : ""}">
                 <div class="pane ${this.showEscapeHint && activeTab === CODE_TAB ? "show-escape-hint" : ""}">
                     <div class="toolbar">
-                        <p-editor-tabs .papyros=${this.papyros} .files=${files} ?host-tab=${this.hasHostTab}>
-                            <slot name="host-tab" slot="host-tab" @slotchange=${this.onHostTabSlotChange}></slot>
+                        <p-editor-tabs
+                            .papyros=${this.papyros}
+                            .files=${files}
+                            ?host-tab=${this.hostTabLabel !== undefined}
+                        >
+                            <slot
+                                ${ref(this.hostTabSlotRef)}
+                                name="host-tab"
+                                slot="host-tab"
+                                @slotchange=${this.onHostTabSlotChange}
+                            ></slot>
                         </p-editor-tabs>
                         <p-button-lint .papyros=${this.papyros}>
                             <slot name="buttons"></slot>

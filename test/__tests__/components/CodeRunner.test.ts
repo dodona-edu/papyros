@@ -114,4 +114,20 @@ describe("CodeRunner", () => {
         }
         element.remove();
     });
+    it("renames the open host panel when the host changes or replaces the tab label", async () => {
+        const element = await mountRunner(true);
+        element.papyros.io.activeEditorTab = HOST_TAB;
+        await settle(element);
+        const panel = element.shadowRoot!.querySelector(".editor")!;
+
+        element.querySelector("[slot=host-tab]")!.textContent = "Test #2";
+        await settle(element);
+        expect(panel.getAttribute("aria-label")).toBe("Test #2");
+
+        element.querySelector("[slot=host-tab]")!.outerHTML = `<span slot="host-tab">Test #3</span>`;
+        await settle(element);
+        expect(panel.getAttribute("aria-label")).toBe("Test #3");
+
+        element.remove();
+    });
 });
