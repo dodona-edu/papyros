@@ -1,4 +1,4 @@
-import { customElement } from "lit/decorators.js";
+import { customElement, state } from "lit/decorators.js";
 import { css, CSSResult, html, PropertyValues, TemplateResult } from "lit";
 import { createRef, Ref, ref } from "lit/directives/ref.js";
 import { RunState } from "../../state/Runner";
@@ -15,25 +15,48 @@ type ButtonSet = "run" | "stop" | "stop-debugging";
 
 @customElement("p-button-lint")
 export class ButtonLint extends PapyrosElement {
+    /** Whether the host put anything in the default slot, which is what the divider separates. */
+    @state()
+    private hasSlotted = false;
+
     static get styles(): CSSResult {
         return css`
+            /* A toolbar row of 44px with the hairline of the tab bar next to it, so the two
+               read as one bar, and as two stacked bars once a narrow column wraps them. */
             :host {
                 display: flex;
-                justify-content: space-between;
-                height: fit-content;
-                /* The bottom 4px is the overhang of Material's 48px touch target on a
-                   40px button, not spacing: without it the buttons overflow this host
-                   and any scrolling ancestor grows a scrollbar. */
-                padding: 0.75rem 0 0.25rem;
-                gap: 1rem;
                 flex-wrap: wrap;
+                align-items: center;
+                min-height: 2.75rem;
+                box-sizing: border-box;
+                padding: 0.375rem 0.5rem;
+                gap: 0.5rem;
+                box-shadow: inset 0 -1px 0 var(--md-sys-color-outline-variant);
+                background-color: var(--md-sys-color-surface);
+                --md-filled-button-container-height: 2rem;
+                --md-outlined-button-container-height: 2rem;
+                --md-filled-button-with-leading-icon-leading-space: 0.75rem;
+                --md-filled-button-with-leading-icon-trailing-space: 1rem;
+                --md-outlined-button-with-leading-icon-leading-space: 0.75rem;
+                --md-outlined-button-with-leading-icon-trailing-space: 1rem;
                 --md-outlined-button-outline-color: var(--md-sys-color-outline-variant);
             }
 
             .buttons {
                 display: flex;
-                gap: 0.5rem;
                 flex-wrap: wrap;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            .divider {
+                width: 1px;
+                height: 1.25rem;
+                background-color: var(--md-sys-color-outline-variant);
+            }
+
+            [hidden] {
+                display: none;
             }
         `;
     }
@@ -125,10 +148,17 @@ export class ButtonLint extends PapyrosElement {
         }
     }
 
+    private onSlotChange(e: Event): void {
+        this.hasSlotted = (e.target as HTMLSlotElement).assignedElements({ flatten: true }).length > 0;
+    }
+
     protected override render(): TemplateResult {
+        // While debugging, Stop debugging is the only button in the row.
+        const showSlotted = this.hasSlotted && !this.papyros.debugger.active;
         return html`
             <div class="buttons">${this.buttons}</div>
-            <div class="buttons"><slot></slot></div>
+            <span class="divider" aria-hidden="true" ?hidden=${!showSlotted}></span>
+            <div class="buttons" ?hidden=${!showSlotted}><slot @slotchange=${this.onSlotChange}></slot></div>
         `;
     }
 }

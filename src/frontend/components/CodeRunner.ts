@@ -54,6 +54,24 @@ export class CodeRunner extends PapyrosElement {
                 z-index: 10;
             }
 
+            .toolbar {
+                display: flex;
+                flex-wrap: wrap;
+                flex-shrink: 0;
+            }
+
+            p-editor-tabs {
+                flex: 1 1 auto;
+                min-width: 0;
+            }
+
+            /* Grows rather than being pushed to the end, so a wrapped row keeps its hairline across the pane. */
+            p-button-lint {
+                flex: 1 1 auto;
+                min-width: 0;
+                justify-content: flex-end;
+            }
+
             .editor {
                 flex-grow: 1;
                 min-height: 0;
@@ -224,7 +242,12 @@ export class CodeRunner extends PapyrosElement {
         return html`
             <div ${ref(this.dropZoneRef)} class="drop-zone ${this.dragOver ? "drag-over" : ""}">
                 <div class="pane ${this.showEscapeHint && activeTab === CODE_TAB ? "show-escape-hint" : ""}">
-                    <p-editor-tabs .papyros=${this.papyros} .files=${files}></p-editor-tabs>
+                    <div class="toolbar">
+                        <p-editor-tabs .papyros=${this.papyros} .files=${files}></p-editor-tabs>
+                        <p-button-lint .papyros=${this.papyros}>
+                            <slot name="buttons"></slot>
+                        </p-button-lint>
+                    </div>
                     <!-- The tabs live in another shadow root, so the panel is named directly instead of by aria-labelledby. -->
                     <div
                         class="editor"
@@ -259,9 +282,6 @@ export class CodeRunner extends PapyrosElement {
                         }
                     </div>
                 </div>
-                <p-button-lint .papyros=${this.papyros}>
-                    <slot name="buttons"></slot>
-                </p-button-lint>
             </div>
         `;
     }

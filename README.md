@@ -197,7 +197,9 @@ The codebase organized into clear layers:
 #### `<p-code-runner>`
 
 A [CodeMirror 6](https://codemirror.net/6/) editor to edit, run, and debug code.
-Additional buttons can be added via the `.buttons` slot.
+The Run, Debug and Stop buttons sit in the tab bar, after the file tabs.
+Additional buttons can be added via the `buttons` slot; they follow the run buttons after a divider and are hidden while debugging.
+
 Reflects a `backend-ready` attribute once the backend has finished loading, so surrounding pages can style or wait on it.
 
 #### `<p-input>`

@@ -256,14 +256,13 @@ export class App extends PapyrosElement {
                         <p-theme-picker .papyros=${this.papyros}></p-theme-picker>
                         <p-language-picker .papyros=${this.papyros}></p-language-picker>
                         <p-programming-language-picker .papyros=${this.papyros}></p-programming-language-picker>
+                        <p-example-picker .papyros=${this.papyros}></p-example-picker>
                     </div>
                 </header>
                 <main class="content ${this.papyros.debugger.active ? "debugging" : ""}">
                     <div class="top">
                         <div class="left">
-                            <p-code-runner .papyros=${this.papyros}>
-                                <p-example-picker .papyros=${this.papyros} slot="buttons"></p-example-picker>
-                            </p-code-runner>
+                            <p-code-runner .papyros=${this.papyros}></p-code-runner>
                         </div>
                         <div class="right">
                             <p-output .papyros=${this.papyros} class="grow"></p-output>
