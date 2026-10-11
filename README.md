@@ -198,7 +198,7 @@ The codebase organized into clear layers:
 
 A [CodeMirror 6](https://codemirror.net/6/) editor to edit, run, and debug code.
 The Run, Debug and Stop buttons sit in the tab bar, after the file tabs.
-Additional buttons can be added via the `buttons` slot; they follow the run buttons after a divider and are hidden while debugging.
+Additional buttons can be added via the `buttons` slot; they follow the run buttons after a divider and are hidden while debugging. The run buttons are 32px high, so slotted buttons of the same height keep the bar at 44px.
 Below a width of 30rem the run buttons turn into 32px icon buttons, named by an `aria-label` and a tooltip.
 `p-code-runner` is a size container named `papyros-code-runner`, so the host can compact its slotted buttons at the same width:
 
