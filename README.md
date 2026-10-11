@@ -200,6 +200,10 @@ A [CodeMirror 6](https://codemirror.net/6/) editor to edit, run, and debug code.
 Additional buttons can be added via the `.buttons` slot.
 Reflects a `backend-ready` attribute once the backend has finished loading, so surrounding pages can style or wait on it.
 
+Papyros cancels (`preventDefault()`) the Escape keydowns it acts on: in the code editor, where Escape followed by Tab moves focus out of the editor, and in the inputs that rename or add a file.
+The events still reach the page. A host that closes its own UI on Escape can ignore events whose `defaultPrevented` is true, so Escape, then Tab keeps working in the editor.
+A canceled Escape also does not close a modal `<dialog>` around Papyros.
+
 #### `<p-input>`
 
 Lets users provide input (batch or interactive), passed to `papyros.io`.
