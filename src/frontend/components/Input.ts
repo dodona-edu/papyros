@@ -69,6 +69,10 @@ export class Input extends PapyrosElement {
                 padding: 0.75rem 0.875rem;
             }
 
+            .content.interactive {
+                padding: 0.5rem 0.625rem;
+            }
+
             p-batch-input {
                 flex: 0 1 12.5rem;
                 min-height: 4rem;
@@ -165,7 +169,7 @@ export class Input extends PapyrosElement {
                     ${MODES.map((mode) => this.renderTab(mode))}
                 </div>
             </div>
-            <div class="content" id="input-panel" role="tabpanel" aria-labelledby="tab-${this.mode}">
+            <div class="content ${this.mode}" id="input-panel" role="tabpanel" aria-labelledby="tab-${this.mode}">
                 ${
                     this.mode === InputMode.batch
                         ? html`<p-batch-input .papyros=${this.papyros}></p-batch-input>`

@@ -12,10 +12,16 @@ export class InteractiveInput extends PapyrosElement {
 
     static get styles(): CSSResult {
         return css`
+            /* 40px controls: an outlined text field is 56px by default, and the button
+               stretched along with it. */
             :host {
                 width: 100%;
                 display: flex;
+                align-items: center;
                 gap: 0.5rem;
+                --md-outlined-text-field-top-space: 0.5rem;
+                --md-outlined-text-field-bottom-space: 0.5rem;
+                --md-outlined-button-container-height: 2.5rem;
             }
 
             md-outlined-text-field {
@@ -54,6 +60,7 @@ export class InteractiveInput extends PapyrosElement {
                 ${ref(this.inputRef)}
             ></md-outlined-text-field>
             <md-outlined-button @click=${() => this.provideInput()} ?disabled=${!this.papyros.io.awaitingInput}>
+                <span slot="icon">${this.papyros.constants.icons.enter}</span>
                 ${this.t("Papyros.enter")}
             </md-outlined-button>
         `;
