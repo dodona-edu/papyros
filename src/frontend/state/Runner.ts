@@ -8,6 +8,7 @@ import { State, stateProperty } from "@dodona/lit-state";
 import { Papyros } from "./Papyros";
 import { ProgrammingLanguage } from "../../ProgrammingLanguage";
 import { PapyrosLaunchError } from "./PapyrosErrors";
+import { CODE_TAB, EditorTabId } from "./InputOutput";
 
 /**
  * Enum representing the possible states while processing code
@@ -19,6 +20,15 @@ export enum RunState {
     Stopping = "stopping",
     Ready = "ready",
     Error = "error",
+}
+
+/** Options for a single run, passed to `Runner.start`. */
+export interface RunOptions {
+    /**
+     * The editor tab to select when the run starts, instead of the code. A host that
+     * debugs a failing test passes `HOST_TAB` here to show the test during the run.
+     */
+    editorTab?: EditorTabId;
 }
 
 /**
@@ -477,16 +487,17 @@ export class Runner extends State {
     /**
      * Execute the code in the editor
      * @param {RunMode} mode The mode to run with
+     * @param {RunOptions} options Options for this run
      * @return {Promise<void>} Promise of running the code
      */
-    public async start(mode?: RunMode): Promise<void> {
+    public async start(mode?: RunMode, options: RunOptions = {}): Promise<void> {
         this.papyros.debugger.active = mode === RunMode.Debug;
 
         // Setup pre-run
         this.setState(RunState.Loading);
         // Ensure we go back to Loading after finishing any remaining installs
         this.previousState = RunState.Loading;
-        this.papyros.io.reset();
+        this.papyros.io.reset(options.editorTab ?? CODE_TAB);
         this.papyros.debugger.onRunStart();
         let interrupted = false;
         let terminated = false;

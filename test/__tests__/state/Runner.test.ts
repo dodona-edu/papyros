@@ -4,7 +4,7 @@ import {ProgrammingLanguage} from "../../../src/ProgrammingLanguage";
 import {RunState} from "../../../src/frontend/state/Runner";
 import {RunMode} from "../../../src/backend/Backend";
 import {launchPapyros, settlePapyros, waitForOutput, waitForPapyrosReady} from "../../helpers";
-import {FriendlyError, OutputType} from "../../../src/frontend/state/InputOutput";
+import {CODE_TAB, FriendlyError, HOST_TAB, OutputType} from "../../../src/frontend/state/InputOutput";
 
 // One Pyodide boot for the whole file: instances are isolated now, so the suite
 // shares a single Python instance and settles it between tests.
@@ -32,6 +32,18 @@ const c = a + b;`;
         await waitForPapyrosReady(jsPapyros);
         expect(jsPapyros.runner.stateMessage).toMatch(/^Code executed in/);
         jsPapyros.dispose();
+    });
+
+    it("selects the editor tab a run asks for instead of the code", async () => {
+        papyros.runner.code = "x = 1\ny = x + 1";
+
+        await papyros.runner.start(RunMode.Debug, {editorTab: HOST_TAB});
+        await waitForPapyrosReady(papyros);
+        expect(papyros.debugger.activeFrame).toBeDefined();
+        expect(papyros.io.activeEditorTab).toBe(HOST_TAB);
+
+        await papyros.runner.start(RunMode.Run);
+        expect(papyros.io.activeEditorTab).toBe(CODE_TAB);
     });
 
     it("only reports the backend as ready once it has loaded", async () => {

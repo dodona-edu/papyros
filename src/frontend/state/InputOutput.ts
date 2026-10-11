@@ -290,14 +290,15 @@ export class InputOutput extends State {
         this.inputs = [];
     }
 
-    public reset(): void {
+    /** Clears the state of the previous run and selects the given editor tab. */
+    public reset(editorTab: EditorTabId = CODE_TAB): void {
         this.inputs = [];
         this.output = [];
         this.hasTurtleOutput = false;
         this.prompt = "";
         this.awaitingInput = false;
         this._runActive = false;
-        this.activeEditorTab = CODE_TAB;
+        this.activeEditorTab = editorTab;
         // activeOutputTab is intentionally preserved across reruns: resetting it would make
         // the tab bar flicker (Turtle → Output → Turtle) as a turtle rerun progresses. It is
         // pruned back to OUTPUT_TAB on End when no turtle output was produced.

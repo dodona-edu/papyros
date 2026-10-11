@@ -7,7 +7,7 @@ import { CODE_TAB, HOST_TAB, InputMode } from "./frontend/state/InputOutput";
 import { RunMode, WorkerDiagnostic } from "./backend/Backend";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import { OutputType, FriendlyError, OutputEntry } from "./frontend/state/InputOutput";
-import { RunState } from "./frontend/state/Runner";
+import { RunOptions, RunState } from "./frontend/state/Runner";
 import {
     PapyrosError,
     PapyrosLaunchError,
@@ -30,4 +30,4 @@ export {
     ServiceWorkerRegistrationError,
     ServiceWorkerInputError,
 };
-export type { FriendlyError, OutputEntry, WorkerDiagnostic };
+export type { FriendlyError, OutputEntry, RunOptions, WorkerDiagnostic };
