@@ -60,6 +60,13 @@ describe("Debugger", () => {
         expect(trace().shadowRoot!.querySelector("tc-frame-picker")!.getClientRects().length).toBe(0);
     });
 
+    it("names the step controls after their visible label", async () => {
+        await mount();
+        const label = element.shadowRoot!.getElementById(stepper().getAttribute("aria-labelledby")!)!;
+        expect(label.textContent!.trim()).toBe("Step");
+        expect(label.getAttribute("aria-hidden")).toBe("true");
+    });
+
     it("steps through the trace with the controls in its header bar", async () => {
         await mount();
         expect(stepper().querySelector("output")!.textContent!.trim()).toBe("1 / 3");

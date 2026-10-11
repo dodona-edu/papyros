@@ -150,9 +150,11 @@ export class Debugger extends PapyrosElement {
         const length = this.papyros.debugger.trace.length;
         const last = length - 1;
         const icons = this.papyros.constants.icons;
+        const label = this.t("Papyros.debugger_step");
         return html`
-            <div slot="picker" class="stepper" role="group" aria-label=${this.t("Papyros.debugger.picker_label")}>
-                <span class="stepper-label">${this.t("Papyros.debugger_step")}</span>
+            <div slot="picker" class="stepper" role="group" aria-labelledby="stepper-label">
+                <!-- Names the group, and is hidden itself so it is not read a second time. -->
+                <span class="stepper-label" id="stepper-label" aria-hidden="true">${label}</span>
                 <md-icon-button
                     aria-label=${this.t("Papyros.debugger.first_step")}
                     ?disabled=${current === 0}
