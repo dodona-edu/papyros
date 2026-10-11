@@ -142,11 +142,12 @@ export class App extends PapyrosElement {
                 background-color: var(--md-sys-color-primary);
             }
 
+            /* The debugger scrolls its own memory view, under its step controls. */
             .pane-body {
                 flex: 1;
                 min-height: 0;
-                overflow: auto;
-                padding: 0.75rem 0.875rem;
+                display: flex;
+                flex-direction: column;
             }
 
             /* The 40px controls set the height of this row, so the padding is all there is

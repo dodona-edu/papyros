@@ -17,6 +17,7 @@ export const ENGLISH_TRANSLATION = {
         output_placeholder: "The output of your code will appear here.",
         debug_placeholder: "The debugger output will appear here.",
         debugger_tab: "Debugger",
+        debugger_step: "Step",
         stop: "Stop",
         finished: "Code executed in %{time} s",
         traced: "Code traced in %{time} s",
@@ -153,6 +154,7 @@ export const DUTCH_TRANSLATION = {
         output_placeholder: "Hier komt de uitvoer van je code.",
         debug_placeholder: "Hier komt de uitvoer van de debugger.",
         debugger_tab: "Debugger",
+        debugger_step: "Stap",
         stop: "Stop",
         states: {
             running: "Aan het uitvoeren",
