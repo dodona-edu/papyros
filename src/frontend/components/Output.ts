@@ -1,18 +1,22 @@
 import { customElement } from "lit/decorators.js";
-import { css, CSSResult, html, TemplateResult } from "lit";
+import { css, CSSResult, html, nothing, PropertyValues, TemplateResult } from "lit";
 import { FriendlyError, OutputEntry, OutputTab, OutputType, OUTPUT_TAB, TURTLE_TAB } from "../state/InputOutput";
 import { PapyrosElement } from "./PapyrosElement";
-import { tabBarStyles, tabButtonStyles } from "./shared-styles";
+import { paneLabelStyles, tabBarStyles, tabButtonStyles } from "./shared-styles";
 import { TurtlePatch, TurtleSvgBuilder } from "../state/TurtleSvg";
 import "@material/web/icon/icon";
+
+const OUTPUT_TABS: OutputTab[] = [OUTPUT_TAB, TURTLE_TAB];
 
 @customElement("p-output")
 export class Output extends PapyrosElement {
     static get styles(): CSSResult {
         return css`
+            /* The panel takes the height of its output, up to a maximum that the host can set. */
             :host {
                 width: 100%;
-                height: 100%;
+                max-height: var(--papyros-output-max-height, 10rem);
+                min-height: 0;
                 display: flex;
                 flex-direction: column;
                 border: 1px solid var(--md-sys-color-outline-variant);
@@ -22,13 +26,20 @@ export class Output extends PapyrosElement {
                 box-sizing: border-box;
             }
 
+            /* A drawing needs a fixed height to scale into, whatever it holds. */
+            :host([active-tab="turtle"]) {
+                height: var(--papyros-output-turtle-height, 23.75rem);
+                max-height: none;
+            }
+
             ${tabBarStyles}
+            ${paneLabelStyles}
 
             .content {
-                flex: 1;
+                flex: 1 1 auto;
+                min-height: 0;
                 overflow: auto;
-                container-type: size;
-                padding: 0.625rem 0.875rem;
+                padding: 0.5rem 0.875rem;
                 background-color: var(--md-sys-color-surface-container-highest);
             }
 
@@ -38,8 +49,11 @@ export class Output extends PapyrosElement {
             }
 
             .content.turtle {
-                padding: 0;
-                background-color: transparent;
+                container-type: size;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0.5rem;
             }
 
             img {
@@ -49,27 +63,25 @@ export class Output extends PapyrosElement {
                 margin: 0.5rem 0;
             }
 
-            img.turtle {
+            img.turtle,
+            .turtle-placeholder {
                 max-width: 100cqw;
                 max-height: 100cqh;
                 margin: 0;
                 box-sizing: border-box;
-                background-color: var(--md-sys-color-surface-container-highest);
+                background-color: var(--md-sys-color-surface);
                 border: 1px solid var(--md-sys-color-outline-variant);
             }
 
             .turtle-placeholder {
                 width: 400px;
                 height: 400px;
-                max-width: 100cqw;
-                max-height: 100cqh;
-                margin: 0;
-                background-color: var(--md-sys-color-surface-container-highest);
-                border: 1px solid var(--md-sys-color-outline-variant);
             }
 
             pre {
                 font-family: monospace;
+                font-size: 0.875rem;
+                line-height: 1.4;
                 margin: 0;
             }
 
@@ -78,6 +90,7 @@ export class Output extends PapyrosElement {
             }
 
             .place-holder {
+                white-space: pre-wrap;
                 color: var(--md-sys-color-on-surface-variant);
             }
 
@@ -100,6 +113,31 @@ export class Output extends PapyrosElement {
 
     /** Replays the turtle patches; kept across renders so following a run stays incremental. */
     private turtleSvg = new TurtleSvgBuilder();
+
+    /** Whether the output was scrolled to its end before this render, so the new end is shown after it. */
+    private followOutput = true;
+
+    private get content(): HTMLElement | null {
+        return this.renderRoot.querySelector<HTMLElement>(".content");
+    }
+
+    /** Reflects the active tab on the host, so the turtle height applies to the whole panel. */
+    protected override update(changedProperties: PropertyValues): void {
+        this.setAttribute("active-tab", this.papyros.io.activeOutputTab);
+        const content = this.content;
+        if (content) {
+            this.followOutput = content.scrollHeight - content.scrollTop - content.clientHeight <= 1;
+        }
+        super.update(changedProperties);
+    }
+
+    protected override updated(changedProperties: PropertyValues): void {
+        super.updated(changedProperties);
+        const content = this.content;
+        if (content && this.followOutput) {
+            content.scrollTop = content.scrollHeight;
+        }
+    }
 
     private get maxOutputLength(): number {
         if (this.papyros.debugger.active && this.papyros.debugger.debugOutputs !== undefined) {
@@ -217,13 +255,9 @@ export class Output extends PapyrosElement {
         return this.papyros.io.hasTurtleOutput || this.papyros.io.activeOutputTab === TURTLE_TAB;
     }
 
-    private get visibleTabs(): OutputTab[] {
-        return this.showTurtleTab ? [OUTPUT_TAB, TURTLE_TAB] : [OUTPUT_TAB];
-    }
-
     /** Standard ARIA tabs pattern: arrow keys move focus and select in one step. */
     private handleTabsKeydown(e: KeyboardEvent): void {
-        const tabs = this.visibleTabs;
+        const tabs = OUTPUT_TABS;
         const currentIndex = tabs.indexOf(this.papyros.io.activeOutputTab);
         let nextIndex: number;
         switch (e.key) {
@@ -254,7 +288,7 @@ export class Output extends PapyrosElement {
         const activeTab = this.papyros.io.activeOutputTab;
         return html`
             <div
-                class="tab-bar"
+                class="tablist"
                 role="tablist"
                 aria-label=${this.t("Papyros.output_tabs")}
                 @keydown=${this.handleTabsKeydown}
@@ -268,25 +302,19 @@ export class Output extends PapyrosElement {
                     class=${activeTab === OUTPUT_TAB ? "active" : ""}
                     @click=${() => this.papyros.io.selectOutputTab(OUTPUT_TAB)}
                 >
-                    ${this.t("Papyros.output_tab_output")}
+                    ${this.t("Papyros.output_tab_text")}
                 </button>
-                ${
-                    this.showTurtleTab
-                        ? html`
-                              <button
-                                  id="tab-turtle"
-                                  role="tab"
-                                  aria-selected=${activeTab === TURTLE_TAB}
-                                  aria-controls="output-panel"
-                                  tabindex=${activeTab === TURTLE_TAB ? 0 : -1}
-                                  class=${activeTab === TURTLE_TAB ? "active" : ""}
-                                  @click=${() => this.papyros.io.selectOutputTab(TURTLE_TAB)}
-                              >
-                                  ${this.t("Papyros.output_tab_turtle")}
-                              </button>
-                          `
-                        : html``
-                }
+                <button
+                    id="tab-turtle"
+                    role="tab"
+                    aria-selected=${activeTab === TURTLE_TAB}
+                    aria-controls="output-panel"
+                    tabindex=${activeTab === TURTLE_TAB ? 0 : -1}
+                    class=${activeTab === TURTLE_TAB ? "active" : ""}
+                    @click=${() => this.papyros.io.selectOutputTab(TURTLE_TAB)}
+                >
+                    ${this.t("Papyros.output_tab_turtle")}
+                </button>
             </div>
         `;
     }
@@ -297,13 +325,18 @@ export class Output extends PapyrosElement {
         const showPlaceholder = activeTab === OUTPUT_TAB && rendered.length === 0;
         const showTurtlePlaceholder = activeTab === TURTLE_TAB && rendered.length === 0;
         const showOverflow = activeTab === OUTPUT_TAB && this.showOverflowWarning;
+        const showTabs = this.showTurtleTab;
         return html`
-            ${this.renderTabs()}
+            <div class="tab-bar">
+                <span class="pane-label" id="output-title">${this.t("Papyros.output")}</span>
+                <!-- A tablist may only contain tabs, so the pane label sits outside it. -->
+                ${showTabs ? this.renderTabs() : nothing}
+            </div>
             <div
                 class="content ${activeTab === TURTLE_TAB ? "turtle" : ""}"
                 id="output-panel"
-                role="tabpanel"
-                aria-labelledby="tab-${activeTab}"
+                role=${showTabs ? "tabpanel" : "region"}
+                aria-labelledby=${showTabs ? `tab-${activeTab}` : "output-title"}
                 tabindex="0"
             >
                 ${
@@ -313,7 +346,7 @@ export class Output extends PapyrosElement {
                           ? html`<div class="turtle-placeholder"></div>`
                           : activeTab === OUTPUT_TAB
                             ? html`<pre role="log" aria-live="polite" aria-relevant="additions text">${rendered}</pre>`
-                            : html`<pre>${rendered}</pre>`
+                            : rendered
                 }
                 ${
                     showOverflow

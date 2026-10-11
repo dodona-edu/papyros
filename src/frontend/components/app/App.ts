@@ -101,10 +101,12 @@ export class App extends PapyrosElement {
                 margin: 0.5rem;
             }
 
-            /* Output must not be squeezed away when the debugger claims its share. */
+            /* Output must not be squeezed away when the debugger claims its share. Here it
+               fills its column instead of growing with its output. */
             .grow {
                 flex: 1;
                 min-height: 7rem;
+                --papyros-output-max-height: none;
             }
 
             ${paneStyles}
