@@ -152,6 +152,21 @@ describe("CodeRunner", () => {
 
         element.remove();
     });
+
+    it("makes its tab bar as tall as the run buttons without changing other tab bars", async () => {
+        const element = await mountRunner(false);
+        expect(tabs(element).getBoundingClientRect().height).toBe(44);
+
+        const standalone = document.createElement("p-editor-tabs") as EditorTabs;
+        standalone.papyros = new Papyros();
+        document.body.append(standalone);
+        await standalone.updateComplete;
+        expect(standalone.getBoundingClientRect().height).toBe(36);
+
+        standalone.remove();
+        element.remove();
+    });
+
     it("shows the run buttons as named icon buttons in a narrow column", async () => {
         const element = await mountRunner(false);
         element.style.width = "400px";

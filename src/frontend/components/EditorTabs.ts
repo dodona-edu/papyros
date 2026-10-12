@@ -25,8 +25,8 @@ export class EditorTabs extends PapyrosElement {
             :host {
                 display: flex;
                 flex-direction: row;
-                /* Grows with a taller button row next to it, so the two hairlines stay level. */
-                min-height: 2.75rem;
+                height: 2.25rem;
+                flex-shrink: 0;
                 padding: 0 0.125rem;
                 /* Matches tabBarStyles; an inset shadow survives the clipping overflow-x imposes. */
                 box-shadow: inset 0 -1px 0 var(--md-sys-color-outline-variant);

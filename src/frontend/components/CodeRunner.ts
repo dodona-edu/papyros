@@ -69,9 +69,12 @@ export class CodeRunner extends PapyrosElement {
                 flex-shrink: 0;
             }
 
+            /* Grows with a taller button row next to it, so the two hairlines stay level. */
             p-editor-tabs {
                 flex: 1 1 auto;
                 min-width: 0;
+                height: auto;
+                min-height: 2.75rem;
             }
 
             /* Grows rather than being pushed to the end, so a wrapped row keeps its hairline across the pane. */
