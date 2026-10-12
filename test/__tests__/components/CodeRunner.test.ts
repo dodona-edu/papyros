@@ -4,6 +4,7 @@ import { RunMode } from "../../../src/backend/Backend";
 import { CODE_TAB, HOST_TAB } from "../../../src/frontend/state/InputOutput";
 import type { CodeRunner } from "../../../src/frontend/components/CodeRunner";
 import type { EditorTabs } from "../../../src/frontend/components/EditorTabs";
+import type { ButtonLint } from "../../../src/frontend/components/code_runner/ButtonLint";
 import "../../../src/frontend/components/CodeRunner";
 
 async function mountRunner(hostTab: boolean): Promise<CodeRunner> {
@@ -27,6 +28,21 @@ async function settle(element: CodeRunner): Promise<void> {
 
 function tabs(element: CodeRunner): EditorTabs {
     return element.shadowRoot!.querySelector("p-editor-tabs") as EditorTabs;
+}
+
+function buttons(element: CodeRunner): ButtonLint {
+    return element.shadowRoot!.querySelector("p-button-lint") as ButtonLint;
+}
+
+function shownButtons(element: CodeRunner): HTMLElement[] {
+    return Array.from(buttons(element).shadowRoot!.querySelectorAll<HTMLElement>(".buttons > *")).filter((b) =>
+        b.checkVisibility({ visibilityProperty: true }),
+    );
+}
+
+// The compact choice follows ResizeObserver callbacks, which run between frames.
+async function frames(): Promise<void> {
+    for (let i = 0; i < 3; i++) await new Promise((resolve) => requestAnimationFrame(resolve));
 }
 
 function hostTabButton(element: CodeRunner): HTMLButtonElement | null {
@@ -172,12 +188,47 @@ describe("CodeRunner", () => {
         const element = await mountRunner(false);
         element.style.width = "400px";
         const lint = element.shadowRoot!.querySelector("p-button-lint")!;
-        const shown = Array.from(lint.shadowRoot!.querySelectorAll<HTMLElement>(".buttons > *")).filter(
-            (b) => b.getClientRects().length > 0,
+        const shown = Array.from(lint.shadowRoot!.querySelectorAll<HTMLElement>(".buttons > *")).filter((b) =>
+            b.checkVisibility({ visibilityProperty: true }),
         );
         expect(shown.map((b) => b.localName)).toEqual(["md-filled-icon-button", "md-outlined-icon-button"]);
         expect(shown.map((b) => b.getAttribute("aria-label"))).toEqual(["Run", "Debug"]);
         expect(shown.map((b) => b.title)).toEqual(["Run", "Debug"]);
+        element.remove();
+    });
+
+    it("keeps the run buttons labelled while they fit next to the tabs", async () => {
+        const element = await mountRunner(false);
+        element.style.width = "600px";
+        await frames();
+        expect(shownButtons(element).map((b) => b.localName)).toEqual(["md-filled-button", "md-outlined-button"]);
+        element.remove();
+    });
+
+    it("shows icon run buttons when a wide slotted button would wrap the bar", async () => {
+        const element = await mountRunner(false);
+        element.insertAdjacentHTML(
+            "beforeend",
+            `<button slot="buttons" style="width: 300px; height: 32px">Copy to hand-in</button>`,
+        );
+        element.style.width = "600px";
+        await frames();
+        expect(shownButtons(element).map((b) => b.localName)).toEqual([
+            "md-filled-icon-button",
+            "md-outlined-icon-button",
+        ]);
+        expect(buttons(element).getBoundingClientRect().top).toBe(tabs(element).getBoundingClientRect().top);
+        element.remove();
+    });
+
+    it("keeps the run buttons labelled on their own row when icons would not fit either", async () => {
+        const element = await mountRunner(false);
+        for (let i = 0; i < 8; i++) element.papyros.io.addFile(`data_file_${i}.txt`, "hello");
+        element.style.width = "600px";
+        await settle(element);
+        await frames();
+        expect(shownButtons(element).map((b) => b.localName)).toEqual(["md-filled-button", "md-outlined-button"]);
+        expect(buttons(element).getBoundingClientRect().top).toBeGreaterThan(tabs(element).getBoundingClientRect().top);
         element.remove();
     });
 
@@ -187,8 +238,8 @@ describe("CodeRunner", () => {
         element.style.width = "400px";
         const lint = element.shadowRoot!.querySelector("p-button-lint")!;
         await (lint as unknown as { updateComplete: Promise<unknown> }).updateComplete;
-        const shown = Array.from(lint.shadowRoot!.querySelectorAll<HTMLElement>(".buttons > *")).filter(
-            (b) => b.getClientRects().length > 0,
+        const shown = Array.from(lint.shadowRoot!.querySelectorAll<HTMLElement>(".buttons > *")).filter((b) =>
+            b.checkVisibility({ visibilityProperty: true }),
         );
         expect(shown.map((b) => b.title)).toEqual(["Run", "Debug", "Run doctests"]);
         const icons = shown.map((b) => b.querySelector("path")!.getAttribute("d"));

@@ -1,4 +1,4 @@
-import { customElement, state } from "lit/decorators.js";
+import { customElement, property, state } from "lit/decorators.js";
 import { css, CSSResult, html, nothing, PropertyValues, TemplateResult } from "lit";
 import { createRef, Ref, ref } from "lit/directives/ref.js";
 import { RunState } from "../../state/Runner";
@@ -29,13 +29,19 @@ export class ButtonLint extends PapyrosElement {
     @state()
     private hasSlotted = false;
 
+    /** Shows the run buttons as icon buttons. They always are below 30rem of code runner width. */
+    @property({ type: Boolean, reflect: true })
+    compact = false;
+
     static get styles(): CSSResult {
         return css`
             /* A toolbar row of 44px with the hairline of the tab bar next to it, so the two
                read as one bar, and as two stacked bars once a narrow column wraps them.
-               It never wraps itself, so the divider cannot end a row: below 30rem the
-               buttons turn into icon buttons instead. */
+               It never wraps itself, so the divider cannot end a row: the buttons turn
+               into icon buttons instead. */
             :host {
+                position: relative;
+                overflow: clip;
                 display: flex;
                 align-items: center;
                 min-height: 2.75rem;
@@ -66,17 +72,33 @@ export class ButtonLint extends PapyrosElement {
                 gap: 0.5rem;
             }
 
-            .narrow {
-                display: none;
+            /* The form that is not shown keeps its size, so the code runner can measure both. */
+            .narrow,
+            :host([compact]) .wide {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: max-content;
+                visibility: hidden;
+            }
+
+            :host([compact]) .narrow {
+                position: static;
+                width: auto;
+                visibility: visible;
             }
 
             @container papyros-code-runner (width < 30rem) {
                 .wide {
-                    display: none;
+                    position: absolute;
+                    width: max-content;
+                    visibility: hidden;
                 }
 
                 .narrow {
-                    display: inline-flex;
+                    position: static;
+                    width: auto;
+                    visibility: visible;
                 }
             }
 
@@ -131,7 +153,7 @@ export class ButtonLint extends PapyrosElement {
             requestAnimationFrame(() => {
                 // A render in between can have replaced the button, so take the current one.
                 const button = [this.firstButtonRef.value, this.firstIconButtonRef.value].find(
-                    (b) => b?.isConnected && b.getClientRects().length > 0,
+                    (b) => b?.isConnected && b.checkVisibility({ visibilityProperty: true }),
                 );
                 button?.focus();
             });
@@ -174,38 +196,73 @@ export class ButtonLint extends PapyrosElement {
         ];
     }
 
-    /** Each button in its labelled form and its icon form; the width of p-code-runner picks one. */
     private renderButton(spec: ButtonSpec, first: boolean): TemplateResult {
         const wideRef = first ? ref(this.firstButtonRef) : nothing;
-        const narrowRef = first ? ref(this.firstIconButtonRef) : nothing;
         const icon = html`<span slot="icon">${spec.icon}</span>`;
         return spec.filled
-            ? html`<md-filled-button class="wide" ${wideRef} ?disabled=${spec.disabled} @click=${spec.onClick}>
-                      ${icon}${spec.label}
-                  </md-filled-button>
-                  <md-filled-icon-button
-                      class="narrow"
-                      ${narrowRef}
-                      aria-label=${spec.label}
-                      title=${spec.label}
-                      ?disabled=${spec.disabled}
-                      @click=${spec.onClick}
-                  >
-                      ${spec.icon}
-                  </md-filled-icon-button>`
-            : html`<md-outlined-button class="wide" ${wideRef} ?disabled=${spec.disabled} @click=${spec.onClick}>
-                      ${icon}${spec.label}
-                  </md-outlined-button>
-                  <md-outlined-icon-button
-                      class="narrow"
-                      ${narrowRef}
-                      aria-label=${spec.label}
-                      title=${spec.label}
-                      ?disabled=${spec.disabled}
-                      @click=${spec.onClick}
-                  >
-                      ${spec.icon}
-                  </md-outlined-icon-button>`;
+            ? html`<md-filled-button ${wideRef} ?disabled=${spec.disabled} @click=${spec.onClick}>
+                  ${icon}${spec.label}
+              </md-filled-button>`
+            : html`<md-outlined-button ${wideRef} ?disabled=${spec.disabled} @click=${spec.onClick}>
+                  ${icon}${spec.label}
+              </md-outlined-button>`;
+    }
+
+    private renderIconButton(spec: ButtonSpec, first: boolean): TemplateResult {
+        const narrowRef = first ? ref(this.firstIconButtonRef) : nothing;
+        return spec.filled
+            ? html`<md-filled-icon-button
+                  ${narrowRef}
+                  aria-label=${spec.label}
+                  title=${spec.label}
+                  ?disabled=${spec.disabled}
+                  @click=${spec.onClick}
+              >
+                  ${spec.icon}
+              </md-filled-icon-button>`
+            : html`<md-outlined-icon-button
+                  ${narrowRef}
+                  aria-label=${spec.label}
+                  title=${spec.label}
+                  ?disabled=${spec.disabled}
+                  @click=${spec.onClick}
+              >
+                  ${spec.icon}
+              </md-outlined-icon-button>`;
+    }
+
+    private wideRef: Ref<HTMLElement> = createRef();
+    private narrowRef: Ref<HTMLElement> = createRef();
+    private slottedRef: Ref<HTMLElement> = createRef();
+    private resizeObserver = new ResizeObserver(() => this.dispatchEvent(new Event("p-button-lint-resize")));
+
+    /** The width this row needs with labelled run buttons, or with icon buttons when compact. */
+    public neededWidth(compact: boolean): number {
+        const buttons = (compact ? this.narrowRef : this.wideRef).value;
+        const slotted = this.slottedRef.value;
+        if (!buttons || !slotted) return 0;
+        const style = getComputedStyle(this);
+        const gap = parseFloat(style.columnGap) || 0;
+        let width = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight) + buttons.offsetWidth;
+        if (!slotted.hidden) width += 2 * gap + 1 + slotted.offsetWidth;
+        return Math.ceil(width);
+    }
+
+    override connectedCallback(): void {
+        super.connectedCallback();
+        this.updateComplete.then(() => this.observeSizes());
+    }
+
+    override disconnectedCallback(): void {
+        super.disconnectedCallback();
+        this.resizeObserver.disconnect();
+    }
+
+    private observeSizes(): void {
+        this.resizeObserver.disconnect();
+        for (const element of [this.wideRef.value, this.narrowRef.value, this.slottedRef.value]) {
+            if (element) this.resizeObserver.observe(element);
+        }
     }
 
     private onSlotChange(e: Event): void {
@@ -215,10 +272,18 @@ export class ButtonLint extends PapyrosElement {
     protected override render(): TemplateResult {
         // While debugging, Stop debugging is the only button in the row.
         const showSlotted = this.hasSlotted && !this.papyros.debugger.active;
+        const specs = this.buttonSpecs;
         return html`
-            <div class="buttons">${this.buttonSpecs.map((spec, i) => this.renderButton(spec, i === 0))}</div>
+            <div class="buttons wide" ${ref(this.wideRef)}>
+                ${specs.map((spec, i) => this.renderButton(spec, i === 0))}
+            </div>
+            <div class="buttons narrow" ${ref(this.narrowRef)}>
+                ${specs.map((spec, i) => this.renderIconButton(spec, i === 0))}
+            </div>
             <span class="divider" aria-hidden="true" ?hidden=${!showSlotted}></span>
-            <div class="buttons" ?hidden=${!showSlotted}><slot @slotchange=${this.onSlotChange}></slot></div>
+            <div class="buttons" ${ref(this.slottedRef)} ?hidden=${!showSlotted}>
+                <slot @slotchange=${this.onSlotChange}></slot>
+            </div>
         `;
     }
 }

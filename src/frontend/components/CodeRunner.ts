@@ -7,7 +7,9 @@ import { arrayBufferToBase64, isTextMimeType } from "../../util/Util";
 import "./code_runner/Code";
 import "./code_runner/RunState";
 import "./code_runner/ButtonLint";
+import type { ButtonLint } from "./code_runner/ButtonLint";
 import "./EditorTabs";
+import type { EditorTabs } from "./EditorTabs";
 import "./FileViewer";
 import { paneStyles } from "./shared-styles";
 
@@ -27,6 +29,10 @@ export class CodeRunner extends PapyrosElement {
     private hostTabSlotRef: Ref<HTMLSlotElement> = createRef();
     /** The host can rewrite its label in place, which fires no slotchange. */
     private hostTabObserver = new MutationObserver(() => this.readHostTabLabel());
+    private toolbarRef: Ref<HTMLDivElement> = createRef();
+    private tabsRef: Ref<EditorTabs> = createRef();
+    private buttonsRef: Ref<ButtonLint> = createRef();
+    private toolbarObserver = new ResizeObserver(() => this.updateCompactButtons());
 
     static get styles(): CSSResult {
         return css`
@@ -185,16 +191,32 @@ export class CodeRunner extends PapyrosElement {
         this.focusFromKeyboard = true;
     };
 
+    /** Icon buttons when that keeps the tabs and the buttons on one row; labelled buttons otherwise. */
+    private updateCompactButtons = (): void => {
+        const toolbar = this.toolbarRef.value;
+        const tabs = this.tabsRef.value;
+        const buttons = this.buttonsRef.value;
+        if (!toolbar || !tabs || !buttons) return;
+        const width = toolbar.clientWidth;
+        const tabsWidth = tabs.contentWidth;
+        buttons.compact =
+            tabsWidth + buttons.neededWidth(false) > width && tabsWidth + buttons.neededWidth(true) <= width;
+    };
+
     override connectedCallback(): void {
         super.connectedCallback();
         // Capture phase, on the document: the key that moves focus here is dispatched at
         // whatever had focus before, which is usually outside this component.
         document.addEventListener("pointerdown", this.onPointerDown, true);
         document.addEventListener("keydown", this.onKeyDown, true);
-        if (this.hasUpdated) this.observeHostTabLabel();
+        if (this.hasUpdated) {
+            this.observeHostTabLabel();
+            if (this.toolbarRef.value) this.toolbarObserver.observe(this.toolbarRef.value);
+        }
     }
 
     protected override firstUpdated(): void {
+        if (this.toolbarRef.value) this.toolbarObserver.observe(this.toolbarRef.value);
         const dropZone = this.dropZoneRef.value;
         if (!dropZone) return;
         // Use capture phase so we intercept before CodeMirror handles the drop
@@ -208,6 +230,7 @@ export class CodeRunner extends PapyrosElement {
         document.removeEventListener("pointerdown", this.onPointerDown, true);
         document.removeEventListener("keydown", this.onKeyDown, true);
         this.hostTabObserver.disconnect();
+        this.toolbarObserver.disconnect();
         const dropZone = this.dropZoneRef.value;
         if (!dropZone) return;
         dropZone.removeEventListener("dragover", this.onDragOver, true);
@@ -319,8 +342,10 @@ export class CodeRunner extends PapyrosElement {
         return html`
             <div ${ref(this.dropZoneRef)} class="drop-zone ${this.dragOver ? "drag-over" : ""}">
                 <div class="pane ${this.showEscapeHint && activeTab === CODE_TAB ? "show-escape-hint" : ""}">
-                    <div class="toolbar">
+                    <div class="toolbar" ${ref(this.toolbarRef)}>
                         <p-editor-tabs
+                            ${ref(this.tabsRef)}
+                            @p-editor-tabs-resize=${this.updateCompactButtons}
                             .papyros=${this.papyros}
                             .files=${files}
                             ?host-tab=${this.hostTabLabel !== undefined}
@@ -332,7 +357,11 @@ export class CodeRunner extends PapyrosElement {
                                 @slotchange=${this.onHostTabSlotChange}
                             ></slot>
                         </p-editor-tabs>
-                        <p-button-lint .papyros=${this.papyros}>
+                        <p-button-lint
+                            ${ref(this.buttonsRef)}
+                            @p-button-lint-resize=${this.updateCompactButtons}
+                            .papyros=${this.papyros}
+                        >
                             <slot name="buttons"></slot>
                         </p-button-lint>
                     </div>

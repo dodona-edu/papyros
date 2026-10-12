@@ -1,6 +1,6 @@
 import { customElement, property } from "lit/decorators.js";
 import { PapyrosElement } from "./PapyrosElement";
-import { css, CSSResult, html, nothing, TemplateResult } from "lit";
+import { css, CSSResult, html, nothing, PropertyValues, TemplateResult } from "lit";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { CODE_TAB, EditorTabId, FileEntry, HOST_TAB } from "../state/InputOutput";
 import "./EditorTab";
@@ -19,6 +19,33 @@ export class EditorTabs extends PapyrosElement {
 
     private codeTabRef: Ref<HTMLButtonElement> = createRef();
     private hostTabRef: Ref<HTMLButtonElement> = createRef();
+    private resizeObserver = new ResizeObserver(() => this.dispatchEvent(new Event("p-editor-tabs-resize")));
+
+    /** The width the tabs need, which is more than they get while they scroll. */
+    public get contentWidth(): number {
+        const rects = Array.from(this.renderRoot.children)
+            .map((child) => child.getBoundingClientRect())
+            .filter((rect) => rect.width > 0);
+        if (rects.length === 0) return 0;
+        const style = getComputedStyle(this);
+        const width =
+            Math.max(...rects.map((r) => r.right)) -
+            Math.min(...rects.map((r) => r.left)) +
+            parseFloat(style.paddingLeft) +
+            parseFloat(style.paddingRight);
+        return Math.ceil(width);
+    }
+
+    protected override updated(changedProperties: PropertyValues): void {
+        super.updated(changedProperties);
+        this.resizeObserver.disconnect();
+        for (const child of Array.from(this.renderRoot.children)) this.resizeObserver.observe(child);
+    }
+
+    override disconnectedCallback(): void {
+        super.disconnectedCallback();
+        this.resizeObserver.disconnect();
+    }
 
     static get styles(): CSSResult {
         return css`
