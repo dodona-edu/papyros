@@ -44,7 +44,9 @@ export class Constants extends State {
             <path d="M8,5.14V19.14L19,12.14L8,5.14Z" />
         </svg>`,
         [RunMode.Doctest]: html` <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M8,5.14V19.14L19,12.14L8,5.14Z" />
+            <path
+                d="M14 10H3V12H14V10M14 6H3V8H14V6M3 16H10V14H3V16M21.5 11.5L23 13L16 20L11.5 15.5L13 14L16 17L21.5 11.5Z"
+            />
         </svg>`,
         stop: html` <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
             <path d="M18,18H6V6H18V18Z" />

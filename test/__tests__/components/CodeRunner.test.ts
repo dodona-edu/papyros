@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Papyros } from "../../../src/frontend/state/Papyros";
+import { RunMode } from "../../../src/backend/Backend";
 import { CODE_TAB, HOST_TAB } from "../../../src/frontend/state/InputOutput";
 import type { CodeRunner } from "../../../src/frontend/components/CodeRunner";
 import type { EditorTabs } from "../../../src/frontend/components/EditorTabs";
@@ -177,6 +178,21 @@ describe("CodeRunner", () => {
         expect(shown.map((b) => b.localName)).toEqual(["md-filled-icon-button", "md-outlined-icon-button"]);
         expect(shown.map((b) => b.getAttribute("aria-label"))).toEqual(["Run", "Debug"]);
         expect(shown.map((b) => b.title)).toEqual(["Run", "Debug"]);
+        element.remove();
+    });
+
+    it("gives each run mode its own icon in a narrow column", async () => {
+        const element = await mountRunner(false);
+        element.papyros.runner.runModes = [RunMode.Debug, RunMode.Doctest];
+        element.style.width = "400px";
+        const lint = element.shadowRoot!.querySelector("p-button-lint")!;
+        await (lint as unknown as { updateComplete: Promise<unknown> }).updateComplete;
+        const shown = Array.from(lint.shadowRoot!.querySelectorAll<HTMLElement>(".buttons > *")).filter(
+            (b) => b.getClientRects().length > 0,
+        );
+        expect(shown.map((b) => b.title)).toEqual(["Run", "Debug", "Run doctests"]);
+        const icons = shown.map((b) => b.querySelector("path")!.getAttribute("d"));
+        expect(new Set(icons).size).toBe(icons.length);
         element.remove();
     });
 });
