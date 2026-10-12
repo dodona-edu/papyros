@@ -305,7 +305,9 @@ export class CodeRunner extends PapyrosElement {
 
     protected override render(): TemplateResult {
         const files = this.papyros.debugger.active ? this.papyros.debugger.debugFiles : this.papyros.io.files;
-        const activeTab = this.papyros.io.activeEditorTab;
+        // The code panel stands in for a host tab that has no label yet.
+        const selected = this.papyros.io.activeEditorTab;
+        const activeTab = selected === HOST_TAB && this.hostTabLabel === undefined ? CODE_TAB : selected;
         let panelLabel: string;
         if (activeTab === CODE_TAB) panelLabel = this.t("Papyros.editor_tab_code");
         else if (activeTab === HOST_TAB) panelLabel = this.hostTabLabel ?? "";

@@ -112,7 +112,9 @@ export class EditorTabs extends PapyrosElement {
     }
 
     protected override render(): TemplateResult {
-        const activeTab = this.papyros.io.activeEditorTab;
+        // The code panel stands in for a host tab that has no label yet.
+        const selected = this.papyros.io.activeEditorTab;
+        const activeTab = selected === HOST_TAB && !this.hostTab ? CODE_TAB : selected;
         const debugActive = this.papyros.debugger.active;
         return html`
             <div

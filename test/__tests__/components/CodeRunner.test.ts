@@ -103,6 +103,28 @@ describe("CodeRunner", () => {
 
         element.remove();
     });
+
+    it("shows the code until the host adds the tab it was asked to open", async () => {
+        const element = await mountRunner(false);
+        element.papyros.io.activeEditorTab = HOST_TAB;
+        await settle(element);
+
+        const panel = element.shadowRoot!.querySelector(".editor")!;
+        expect(panel.querySelector("p-code")).not.toBeNull();
+        expect(panel.getAttribute("aria-label")).toBe("Code");
+        const codeTab = tabs(element).shadowRoot!.querySelector<HTMLButtonElement>("[role=tab]")!;
+        expect(codeTab.getAttribute("aria-selected")).toBe("true");
+        expect(codeTab.tabIndex).toBe(0);
+
+        element.insertAdjacentHTML("beforeend", `<span slot="host-tab">Test #1</span>`);
+        await settle(element);
+        expect(element.papyros.io.activeEditorTab).toBe(HOST_TAB);
+        expect(hostTabButton(element)!.getAttribute("aria-selected")).toBe("true");
+        expect(panel.getAttribute("aria-label")).toBe("Test #1");
+
+        element.remove();
+    });
+
     it("opens files named like the code and host tabs as files", async () => {
         const element = await mountRunner(true);
         for (const name of ["code", "host-tab"]) {
