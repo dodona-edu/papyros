@@ -45,6 +45,10 @@ async function settle(): Promise<void> {
     await step?.deepUpdateComplete;
 }
 
+function nextFrame(): Promise<void> {
+    return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+}
+
 afterEach(async () => {
     await settle();
     element.remove();
@@ -78,6 +82,26 @@ describe("Debugger", () => {
         expect(element.papyros.debugger.activeFrame).toBe(1);
         expect(stepper().querySelector("output")!.textContent!.trim()).toBe("2 / 3");
         expect(trace().selectedFrame).toBe(1);
+    });
+
+    it("keeps focus on a step button that it disables, and ignores clicks on it", async () => {
+        await mount();
+        const [, , next, last] = stepper().querySelectorAll<HTMLElement & { updateComplete: Promise<boolean> }>(
+            "md-icon-button",
+        );
+        last.focus();
+        last.click();
+        await element.updateComplete;
+        await last.updateComplete;
+        await nextFrame();
+
+        expect(element.papyros.debugger.activeFrame).toBe(2);
+        expect(last.hasAttribute("soft-disabled")).toBe(true);
+        expect(element.shadowRoot!.activeElement).toBe(last);
+
+        next.click();
+        await element.updateComplete;
+        expect(element.papyros.debugger.activeFrame).toBe(2);
     });
 
     it("follows a step picked in the built-in picker of tc-trace", async () => {

@@ -157,14 +157,14 @@ export class Debugger extends PapyrosElement {
                 <span class="stepper-label" id="stepper-label" aria-hidden="true">${label}</span>
                 <md-icon-button
                     aria-label=${this.t("Papyros.debugger.first_step")}
-                    ?disabled=${current === 0}
+                    ?soft-disabled=${current === 0}
                     @click=${() => this.selectFrame(0)}
                 >
                     <md-icon>${icons.firstStep}</md-icon>
                 </md-icon-button>
                 <md-icon-button
                     aria-label=${this.t("Papyros.debugger.previous_step")}
-                    ?disabled=${current === 0}
+                    ?soft-disabled=${current === 0}
                     @click=${() => this.selectFrame(current - 1)}
                 >
                     <md-icon>${icons.previousStep}</md-icon>
@@ -174,14 +174,14 @@ export class Debugger extends PapyrosElement {
                 </output>
                 <md-icon-button
                     aria-label=${this.t("Papyros.debugger.next_step")}
-                    ?disabled=${current === last}
+                    ?soft-disabled=${current === last}
                     @click=${() => this.selectFrame(current + 1)}
                 >
                     <md-icon>${icons.nextStep}</md-icon>
                 </md-icon-button>
                 <md-icon-button
                     aria-label=${this.t("Papyros.debugger.last_step")}
-                    ?disabled=${current === last}
+                    ?soft-disabled=${current === last}
                     @click=${() => this.selectFrame(last)}
                 >
                     <md-icon>${icons.lastStep}</md-icon>
