@@ -62,4 +62,28 @@ describe("CodeEditor", () => {
         element.remove();
         next.remove();
     });
+
+    it("leaves Escape alone in a read-only editor, where Tab leaves without it", async () => {
+        const element = document.createElement("p-code-editor") as CodeEditor;
+        const next = document.createElement("button");
+        document.body.append(element, next);
+        await element.updateComplete;
+        element.debug = true;
+        const prevented: boolean[] = [];
+        const onKeydown = (e: KeyboardEvent): void => {
+            if (e.key === "Escape") prevented.push(e.defaultPrevented);
+        };
+        window.addEventListener("keydown", onKeydown);
+
+        element.focus();
+        await userEvent.keyboard("{Escape}");
+        expect(prevented).toEqual([false]);
+
+        element.focus();
+        await userEvent.keyboard("{Tab}");
+        expect(document.activeElement).toBe(next);
+        window.removeEventListener("keydown", onKeydown);
+        element.remove();
+        next.remove();
+    });
 });

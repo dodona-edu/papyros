@@ -177,10 +177,11 @@ export class CodeEditor extends CodeMirrorEditor {
      * Escape arms CodeMirror's "Escape, then Tab" exit from the editor without cancelling the
      * event, so a host that closes a dialog or panel on Escape would also close it here. This
      * listener runs on the host, after CodeMirror's own handlers, and only cancels the event:
-     * the page still receives it, with defaultPrevented set.
+     * the page still receives it, with defaultPrevented set. A read-only editor lets Tab leave
+     * without Escape, so its Escape is left alone.
      */
     private cancelEscape = (e: KeyboardEvent): void => {
-        if (e.key === "Escape") e.preventDefault();
+        if (e.key === "Escape" && !this.view?.state.readOnly) e.preventDefault();
     };
 
     public override connectedCallback(): void {
