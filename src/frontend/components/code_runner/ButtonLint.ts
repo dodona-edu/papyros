@@ -1,5 +1,5 @@
 import { customElement, state } from "lit/decorators.js";
-import { css, CSSResult, html, PropertyValues, TemplateResult } from "lit";
+import { css, CSSResult, html, nothing, PropertyValues, TemplateResult } from "lit";
 import { createRef, Ref, ref } from "lit/directives/ref.js";
 import { RunState } from "../../state/Runner";
 import { PapyrosElement } from "../PapyrosElement";
@@ -176,8 +176,8 @@ export class ButtonLint extends PapyrosElement {
 
     /** Each button in its labelled form and its icon form; the width of p-code-runner picks one. */
     private renderButton(spec: ButtonSpec, first: boolean): TemplateResult {
-        const wideRef = ref(first ? this.firstButtonRef : undefined);
-        const narrowRef = ref(first ? this.firstIconButtonRef : undefined);
+        const wideRef = first ? ref(this.firstButtonRef) : nothing;
+        const narrowRef = first ? ref(this.firstIconButtonRef) : nothing;
         const icon = html`<span slot="icon">${spec.icon}</span>`;
         return spec.filled
             ? html`<md-filled-button class="wide" ${wideRef} ?disabled=${spec.disabled} @click=${spec.onClick}>
