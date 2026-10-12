@@ -395,13 +395,15 @@ export class Output extends PapyrosElement {
                 @scroll=${this.onScroll}
             >
                 ${
-                    showPlaceholder
-                        ? html`<pre class="place-holder">${placeholder}</pre>`
+                    activeTab === OUTPUT_TAB
+                        ? html`
+                              ${showPlaceholder ? html`<pre class="place-holder">${placeholder}</pre>` : nothing}
+                              <!-- Screen readers only announce changes to a live region that is already in the page. -->
+                              <pre role="log" aria-live="polite" aria-relevant="additions text">${rendered}</pre>
+                          `
                         : showTurtlePlaceholder
                           ? html`<div class="turtle-placeholder"></div>`
-                          : activeTab === OUTPUT_TAB
-                            ? html`<pre role="log" aria-live="polite" aria-relevant="additions text">${rendered}</pre>`
-                            : rendered
+                          : rendered
                 }
                 ${
                     showOverflow

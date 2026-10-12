@@ -122,6 +122,20 @@ describe("Output", () => {
         expect(atEnd()).toBe(true);
     });
 
+    it("keeps its live region in the page while there is no output, so the first line is announced", async () => {
+        await mount();
+        const log = element.shadowRoot!.querySelector("[role=log]")!;
+        expect(log.textContent).toBe("");
+        expect(log.closest(".place-holder")).toBeNull();
+        expect(log.querySelector(".place-holder")).toBeNull();
+
+        element.papyros.io.output = lines(1);
+        await element.updateComplete;
+        expect(element.shadowRoot!.querySelector("[role=log]")).toBe(log);
+        expect(log.textContent).toBe("line 0\n");
+        expect(element.shadowRoot!.querySelector(".place-holder")).toBeNull();
+    });
+
     it("says that nothing was printed yet at the current debug step", async () => {
         await mount();
         element.papyros.debugger.active = true;
