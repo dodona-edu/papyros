@@ -1,4 +1,4 @@
-import { customElement, state } from "lit/decorators.js";
+import { customElement, property, state } from "lit/decorators.js";
 import { PapyrosElement } from "./PapyrosElement";
 import { css, CSSResult, html, PropertyValues, TemplateResult } from "lit";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
@@ -33,6 +33,12 @@ export class CodeRunner extends PapyrosElement {
     private tabsRef: Ref<EditorTabs> = createRef();
     private buttonsRef: Ref<ButtonLint> = createRef();
     private toolbarObserver = new ResizeObserver(() => this.updateCompactButtons());
+    private labelledSlottedWidth: number | undefined = undefined;
+    private compactSlottedWidth: number | undefined = undefined;
+
+    /** Set when the slotted buttons do not fit with their labels, so the host can compact them. */
+    @property({ type: Boolean, reflect: true, attribute: "compact-slotted" })
+    compactSlotted = false;
 
     static get styles(): CSSResult {
         return css`
@@ -191,16 +197,37 @@ export class CodeRunner extends PapyrosElement {
         this.focusFromKeyboard = true;
     };
 
-    /** Icon buttons when that keeps the tabs and the buttons on one row; labelled buttons otherwise. */
+    /**
+     * Compacts the run buttons first and the slotted buttons second, each only when the
+     * row does not fit otherwise. The row is the whole toolbar when the tabs leave room
+     * for the compacted buttons, and a row of its own below the tabs when they do not.
+     */
     private updateCompactButtons = (): void => {
         const toolbar = this.toolbarRef.value;
         const tabs = this.tabsRef.value;
         const buttons = this.buttonsRef.value;
         if (!toolbar || !tabs || !buttons) return;
+        // The host restyles its slotted buttons when compact-slotted changes, so the width of each form is kept.
+        const current = buttons.slottedWidth;
+        if (current !== undefined) {
+            if (this.compactSlotted) this.compactSlottedWidth = current;
+            else this.labelledSlottedWidth = current;
+        }
+        const labelled = current === undefined ? undefined : this.labelledSlottedWidth;
+        const compacted = current === undefined ? undefined : (this.compactSlottedWidth ?? 0);
         const width = toolbar.clientWidth;
         const tabsWidth = tabs.contentWidth;
-        buttons.compact =
-            tabsWidth + buttons.neededWidth(false) > width && tabsWidth + buttons.neededWidth(true) <= width;
+        const room = tabsWidth + buttons.neededWidth(true, compacted) <= width ? width - tabsWidth : width;
+        const labelledFits = buttons.neededWidth(false, labelled) <= room;
+        const iconsFit = buttons.neededWidth(true, labelled) <= room;
+        buttons.compact = !labelledFits;
+        this.compactSlotted = !labelledFits && !iconsFit;
+    };
+
+    private onButtonsSlotChange = (): void => {
+        this.labelledSlottedWidth = undefined;
+        this.compactSlottedWidth = undefined;
+        this.compactSlotted = false;
     };
 
     override connectedCallback(): void {
@@ -362,7 +389,7 @@ export class CodeRunner extends PapyrosElement {
                             @p-button-lint-resize=${this.updateCompactButtons}
                             .papyros=${this.papyros}
                         >
-                            <slot name="buttons"></slot>
+                            <slot name="buttons" @slotchange=${this.onButtonsSlotChange}></slot>
                         </p-button-lint>
                     </div>
                     <!-- The tabs live in another shadow root, so the panel is named directly instead of by aria-labelledby. -->

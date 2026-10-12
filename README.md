@@ -199,15 +199,20 @@ The codebase organized into clear layers:
 A [CodeMirror 6](https://codemirror.net/6/) editor to edit, run, and debug code.
 The Run, Debug and Stop buttons sit in the tab bar, after the file tabs.
 Additional buttons can be added via the `buttons` slot; they follow the run buttons after a divider and are hidden while debugging. The run buttons are 32px high, so slotted buttons of the same height keep the bar at 44px.
-The run buttons turn into 32px icon buttons, named by an `aria-label` and a tooltip, when that keeps the tabs and the buttons on one row, and always below a width of 30rem.
-Slotted buttons count toward that width, so a slotted button keeps its label while the run buttons are already icons.
-`p-code-runner` is a size container named `papyros-code-runner`, so the host can compact its slotted buttons in a narrower column, for example from 30rem:
+The bar stays on one row as long as it can. When the tabs and the buttons do not fit, the run buttons turn into 32px icon buttons, named by an `aria-label` and a tooltip; below a width of 30rem they always are.
+When that is not enough either, `p-code-runner` sets the `compact-slotted` attribute on itself, and the host can compact its slotted buttons:
 
 ```css
-@container papyros-code-runner (width < 30rem) {
-  .my-button-label { display: none; }
+p-code-runner[compact-slotted] .my-button-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
 }
 ```
+
+The slotted buttons should change size only through this attribute: Papyros remembers their width with and without it to decide when to set it.
 
 The host can add one tab of its own next to the file tabs, for content that is not a file (Dodona shows the failing test that is being debugged in it).
 It takes two slots:

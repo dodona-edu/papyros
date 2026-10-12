@@ -221,6 +221,32 @@ describe("CodeRunner", () => {
         element.remove();
     });
 
+    it("compacts the slotted buttons only after the run buttons, when they still do not fit", async () => {
+        const style = document.createElement("style");
+        style.textContent = `.copy { width: 150px; height: 32px; } p-code-runner[compact-slotted] .copy { width: 32px; }`;
+        document.head.append(style);
+        const element = await mountRunner(false);
+        element.insertAdjacentHTML("beforeend", `<button class="copy" slot="buttons">Copy to hand-in</button>`);
+        element.style.width = "400px";
+        await frames();
+        expect(shownButtons(element).map((b) => b.localName)).toEqual([
+            "md-filled-icon-button",
+            "md-outlined-icon-button",
+        ]);
+        expect(element.hasAttribute("compact-slotted")).toBe(false);
+
+        element.style.width = "300px";
+        await frames();
+        expect(element.hasAttribute("compact-slotted")).toBe(true);
+        expect(buttons(element).getBoundingClientRect().top).toBe(tabs(element).getBoundingClientRect().top);
+
+        element.style.width = "400px";
+        await frames();
+        expect(element.hasAttribute("compact-slotted")).toBe(false);
+        element.remove();
+        style.remove();
+    });
+
     it("keeps the run buttons labelled on their own row when icons would not fit either", async () => {
         const element = await mountRunner(false);
         for (let i = 0; i < 8; i++) element.papyros.io.addFile(`data_file_${i}.txt`, "hello");

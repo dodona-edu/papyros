@@ -236,15 +236,20 @@ export class ButtonLint extends PapyrosElement {
     private slottedRef: Ref<HTMLElement> = createRef();
     private resizeObserver = new ResizeObserver(() => this.dispatchEvent(new Event("p-button-lint-resize")));
 
-    /** The width this row needs with labelled run buttons, or with icon buttons when compact. */
-    public neededWidth(compact: boolean): number {
-        const buttons = (compact ? this.narrowRef : this.wideRef).value;
+    /** The width of the slotted buttons as they are laid out now, or undefined while they are hidden. */
+    public get slottedWidth(): number | undefined {
         const slotted = this.slottedRef.value;
-        if (!buttons || !slotted) return 0;
+        return slotted && !slotted.hidden ? slotted.offsetWidth : undefined;
+    }
+
+    /** The width this row needs with labelled or icon run buttons and slotted buttons of the given width. */
+    public neededWidth(compact: boolean, slottedWidth: number | undefined): number {
+        const buttons = (compact ? this.narrowRef : this.wideRef).value;
+        if (!buttons) return 0;
         const style = getComputedStyle(this);
         const gap = parseFloat(style.columnGap) || 0;
         let width = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight) + buttons.offsetWidth;
-        if (!slotted.hidden) width += 2 * gap + 1 + slotted.offsetWidth;
+        if (slottedWidth !== undefined) width += 2 * gap + 1 + slottedWidth;
         return Math.ceil(width);
     }
 
