@@ -141,7 +141,10 @@ export class Output extends PapyrosElement {
 
     private scrollToEndIfFollowing(): void {
         const content = this.content;
-        if (!content || !this.following) return;
+        if (!content) return;
+        // Output that fits has no end to scroll away from, so the next output is followed again.
+        if (content.scrollHeight <= content.clientHeight) this.following = true;
+        if (!this.following) return;
         const before = content.scrollTop;
         content.scrollTop = content.scrollHeight;
         if (content.scrollTop !== before) {
@@ -167,6 +170,12 @@ export class Output extends PapyrosElement {
     public override disconnectedCallback(): void {
         super.disconnectedCallback();
         this.resizeObserver.disconnect();
+    }
+
+    protected override willUpdate(changedProperties: PropertyValues): void {
+        super.willUpdate(changedProperties);
+        // A new run empties the output, and its output is followed from the start.
+        if (this.papyros.io.output.length === 0) this.following = true;
     }
 
     /** Reflects the active tab on the host, so the turtle height applies to the whole panel. */

@@ -22,8 +22,21 @@ function atEnd(): boolean {
     return content().scrollTop + content().clientHeight >= content().scrollHeight - 1;
 }
 
+function lines(count: number): OutputEntry[] {
+    return Array.from({ length: count }, (_, i) => ({ type: OutputType.stdout, content: `line ${i}\n` }));
+}
+
 function nextFrame(): Promise<void> {
     return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+}
+
+/** Scrolls up the way a reader does, after the panel has settled at the end. */
+async function scrollToTop(): Promise<void> {
+    await nextFrame();
+    await nextFrame();
+    content().scrollTop = 0;
+    await nextFrame();
+    await nextFrame();
 }
 
 afterEach(() => {
@@ -78,6 +91,33 @@ describe("Output", () => {
         expect(atEnd()).toBe(true);
 
         element.papyros.io.output = [...element.papyros.io.output, text("one more line\n")];
+        await element.updateComplete;
+        expect(atEnd()).toBe(true);
+    });
+
+    it("follows the output of a new run after the reader scrolled up in the previous one", async () => {
+        await mount();
+        element.papyros.io.output = lines(20);
+        await element.updateComplete;
+        await scrollToTop();
+        expect(atEnd()).toBe(false);
+
+        element.papyros.io.output = [];
+        await element.updateComplete;
+        element.papyros.io.output = lines(20);
+        await element.updateComplete;
+        expect(atEnd()).toBe(true);
+    });
+
+    it("follows the output again once it fits in the panel", async () => {
+        await mount();
+        element.papyros.io.output = lines(20);
+        await element.updateComplete;
+        await scrollToTop();
+
+        element.papyros.io.output = lines(1);
+        await element.updateComplete;
+        element.papyros.io.output = lines(20);
         await element.updateComplete;
         expect(atEnd()).toBe(true);
     });
