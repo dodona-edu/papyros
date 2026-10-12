@@ -167,6 +167,16 @@ at the same time, even in the same language. The one service worker registration
 have is shared between them. Call `papyros.dispose()` to terminate an instance's workers
 when it is removed from the page.
 
+### Keyboard
+
+Papyros cancels (`preventDefault()`) the Escape keydowns it acts on: in a code editor that can be edited, where Escape followed by Tab moves focus out of the editor, and in the inputs that rename or add a file.
+The events still reach the page. A host that closes its own UI on Escape can ignore events whose `defaultPrevented` is true, so Escape, then Tab keeps working in the editor:
+
+* Listen on an ancestor of Papyros in the bubble phase. A capture listener on `window` or `document` runs before Papyros and sees `defaultPrevented` as false.
+* Built-in Escape handling of a UI framework, such as Bootstrap's `keyboard: true` on a modal or offcanvas, ignores `defaultPrevented`. Turn it off and close from your own listener.
+
+A canceled Escape also does not close a modal `<dialog>` around Papyros.
+
 ---
 
 ## Theming
@@ -199,10 +209,6 @@ The codebase organized into clear layers:
 A [CodeMirror 6](https://codemirror.net/6/) editor to edit, run, and debug code.
 Additional buttons can be added via the `.buttons` slot.
 Reflects a `backend-ready` attribute once the backend has finished loading, so surrounding pages can style or wait on it.
-
-Papyros cancels (`preventDefault()`) the Escape keydowns it acts on: in the code editor, where Escape followed by Tab moves focus out of the editor, and in the inputs that rename or add a file.
-The events still reach the page. A host that closes its own UI on Escape can ignore events whose `defaultPrevented` is true, so Escape, then Tab keeps working in the editor.
-A canceled Escape also does not close a modal `<dialog>` around Papyros.
 
 #### `<p-input>`
 
