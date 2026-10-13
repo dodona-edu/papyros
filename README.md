@@ -112,6 +112,12 @@ just in case.
 
 If a backend needs the channel and it cannot be created, the error is passed to
 `papyros.errorHandler` and the channel stays null. Code still runs; only reading input fails.
+A browser without the Service Worker API in a secure context (such as an in-app browser on iOS
+or a Firefox private window) is passed to the handler as an `UnsupportedBrowserError`. The
+channel stays null as well, and when `launch()` needs the channel up front, the runner shows a
+message asking the user to open the page in a full browser or a normal window. A page served
+over plain HTTP (other than `localhost`) has no Service Worker API either; that is a
+`ServiceWorkerRegistrationError`, and the runner asks for HTTPS.
 
 Interrupting is a separate axis. A program waiting on input or sleeping is always interrupted
 cheaply, whichever transport it uses. A program in a busy loop needs Pyodide's interrupt buffer,
@@ -171,9 +177,18 @@ when it is removed from the page.
 
 Errors that do not surface through a promise, such as a failed launch, are passed to the
 handler set with `papyros.setErrorHandler()`. They extend `PapyrosError`, and all classes are
-exported. `UnsupportedBrowserError` means the browser downloaded Pyodide but cannot run it:
-Papyros shows a message asking the user to update or switch browsers instead of offering a
-retry. A host can skip reporting this one to its error tracker. Any other failed launch is a
+exported. `UnsupportedBrowserError` means the browser lacks something Papyros needs, so a
+retry will not help. It has two causes:
+
+* The browser downloaded Pyodide but cannot run it. Papyros shows a message asking the user to
+  update or switch browsers instead of offering a retry.
+* A backend needs the input channel, but the browser has neither `SharedArrayBuffer` nor the
+  Service Worker API, in a secure context. This happens in in-app browsers and private windows.
+  Code still runs and only reading input fails, unless `launch()` needs the channel up front:
+  then Papyros shows a message asking the user to open the page in a full browser or a normal
+  window.
+
+A host can skip reporting this one to its error tracker. Any other failed launch is a
 `PapyrosLaunchError`.
 
 ### Keyboard

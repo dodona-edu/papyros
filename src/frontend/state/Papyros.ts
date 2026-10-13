@@ -58,8 +58,14 @@ export class Papyros extends State {
         if (!this.canDeferChannel() && !(await this.ensureChannel())) {
             // Without a channel the backend is never launched, so the controls must not
             // offer a run or stop that has nothing to act on
-            this.runner.setState(RunState.Error, this.i18n.t("Papyros.service_worker_error"));
-            alert(this.i18n.t("Papyros.service_worker_error"));
+            let message = this.i18n.t("Papyros.service_worker_error");
+            if (!isSecureContext) {
+                message = this.i18n.t("Papyros.insecure_context_error");
+            } else if (!("serviceWorker" in navigator)) {
+                message = this.i18n.t("Papyros.service_worker_unsupported");
+            }
+            this.runner.setState(RunState.Error, message);
+            alert(message);
         } else {
             try {
                 await this.runner.launch();
@@ -150,11 +156,19 @@ export class Papyros extends State {
             this.channel = makeChannel({ atomics: {} })!;
             return this.channel;
         }
-        if (!this.serviceWorkerName || !("serviceWorker" in navigator)) {
+        if (!this.serviceWorkerName) {
+            this.errorHandler(new ServiceWorkerRegistrationError("No service worker configured to handle input"));
+            return null;
+        }
+        if (!isSecureContext) {
+            this.errorHandler(new ServiceWorkerRegistrationError("Service workers need a secure context (HTTPS)"));
+            return null;
+        }
+        if (!("serviceWorker" in navigator)) {
             this.errorHandler(
-                new ServiceWorkerRegistrationError("No service worker available to handle input", {
-                    cause: new Error(`serviceWorkerName=${this.serviceWorkerName}`),
-                }),
+                new UnsupportedBrowserError(
+                    "The Service Worker API is unavailable (e.g. in an in-app browser or a private window)",
+                ),
             );
             return null;
         }

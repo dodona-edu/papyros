@@ -59,6 +59,9 @@ export const ENGLISH_TRANSLATION = {
         output_overflow: "Output truncated. No more results will be shown.",
         output_overflow_download: "Click here to download the results.",
         service_worker_error: "The service worker failed to load. Try reloading the page.",
+        service_worker_unsupported:
+            "This browser does not support everything needed to run code. If you opened this page from another app, open it in Safari, Chrome or another full browser instead. In a private window, open it in a normal window instead. Reloading the page will not help.",
+        insecure_context_error: "This page must be served over HTTPS to run code.",
         launch_error: "Papyros failed to load. Do you want to reload?",
         url_fetch_error: "Failed to fetch URL: %{url}",
         loading: "Loading %{packages}.",
@@ -198,6 +201,9 @@ export const DUTCH_TRANSLATION = {
         output_overflow: "Uitvoer ingekort. Er zullen geen nieuwe resultaten getoond worden.",
         output_overflow_download: "Klik hier om de resultaten te downloaden.",
         service_worker_error: "Er liep iets fout bij het laden van de service worker. Probeer de pagina te herladen.",
+        service_worker_unsupported:
+            "Deze browser ondersteunt niet alles wat nodig is om code uit te voeren. Als je deze pagina vanuit een andere app hebt geopend, open ze dan in Safari, Chrome of een andere volwaardige browser. Zit je in een privévenster, open ze dan in een gewoon venster. De pagina herladen helpt niet.",
+        insecure_context_error: "Deze pagina moet via HTTPS geladen worden om code uit te voeren.",
         launch_error: "Er liep iets fout bij het laden van Papyros. Wil je herladen?",
         url_fetch_error: "Kon URL niet ophalen: %{url}",
         loading: "Bezig met het installeren van %{packages}.",

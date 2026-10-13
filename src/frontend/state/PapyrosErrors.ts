@@ -7,7 +7,7 @@ export class PapyrosError extends Error {
 
 export class PapyrosLaunchError extends PapyrosError {}
 /**
- * The runtime cannot start in this browser, so a retry or a bug fix in Papyros will not help
+ * This browser lacks something Papyros needs, so a retry or a bug fix in Papyros will not help
  */
 export class UnsupportedBrowserError extends PapyrosError {}
 export class ServiceWorkerRegistrationError extends PapyrosError {}
