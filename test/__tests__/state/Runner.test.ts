@@ -105,6 +105,29 @@ const c = a + b;`;
         expect((papyros.io.output[0].content as FriendlyError).traceback).toMatch(/ValueError: test/);
     });
 
+    // Exceptions FriendlyTraceback cannot handle get a plain traceback without info
+    it.each([
+        ["ModuleNotFoundError", "raise ModuleNotFoundError()", false],
+        ["ModuleNotFoundError", "raise ModuleNotFoundError(name='math')", false],
+        ["ImportError", "raise ImportError()", false],
+        ["AttributeError", "raise AttributeError()", false],
+        ["NameError", "raise NameError()", false],
+        ["SystemExit", "raise SystemExit(2)", false],
+        ["SystemExit", "import sys\nsys.exit(2)", true],
+        ["ValueError", "raise ValueError()", true],
+    ])("should report %s as an error: %j", async (name, code, friendly) => {
+        papyros.runner.code = code + "\n";
+        await papyros.runner.start();
+        await waitForPapyrosReady(papyros);
+        await waitForOutput(papyros);
+        expect(papyros.runner.stateMessage).toMatch(/^Code executed in/);
+        expect(papyros.io.output).toHaveLength(1);
+        const error = papyros.io.output[0].content as FriendlyError;
+        expect(error.name).toBe(name);
+        expect(error.traceback).toMatch(new RegExp(`^${name}\\b`, "m"));
+        expect(error.info !== "").toBe(friendly);
+    });
+
     it("should finish a run that fails to compile", async () => {
         papyros.runner.code = "print 'hello'\n";
         await papyros.runner.start();
