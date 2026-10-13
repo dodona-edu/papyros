@@ -36,10 +36,10 @@ export class FileEditor extends CodeMirrorEditor {
         super();
         this.configure({
             language: [],
+            history: history(),
             fileExtensions: [
                 lineNumbers(),
                 highlightSpecialChars(),
-                history(),
                 foldGutter(),
                 drawSelection(),
                 EditorState.allowMultipleSelections.of(true),

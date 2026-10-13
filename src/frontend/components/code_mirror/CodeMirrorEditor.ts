@@ -1,7 +1,7 @@
 import { LitElement } from "lit";
 import { customElement } from "lit/decorators.js";
 import { EditorView, ViewUpdate, placeholder } from "@codemirror/view";
-import { Compartment, EditorSelection, EditorState, Extension, StateEffect } from "@codemirror/state";
+import { Compartment, EditorSelection, EditorState, Extension, StateEffect, Transaction } from "@codemirror/state";
 
 // Keep gutters out of native text selection: with drawSelection() active the
 // browser's own selection is invisible over the code, so a page-wide select-all
@@ -40,6 +40,7 @@ export class CodeMirrorEditor extends LitElement {
 
     protected dispatchChange(): void {
         if (!this.view) return;
+        this.resetHistory();
         this.configure({ readonly: EditorState.readOnly.of(true) });
         this.view.dispatch({
             changes: {
@@ -49,8 +50,18 @@ export class CodeMirrorEditor extends LitElement {
             },
             // Mapped through a full replace, a selection inside the document comes out inverted
             selection: EditorSelection.cursor(Math.min(this.view.state.selection.main.head, this.__value.length)),
+            annotations: [Transaction.addToHistory.of(false)],
         });
         this.configure({ readonly: EditorState.readOnly.of(this.__readonly) });
+    }
+
+    // Edits made before a value set from outside do not apply to it, so undo starts over.
+    // Removing and re-adding the extension in separate transactions clears its state.
+    private resetHistory(): void {
+        const history = this.extensions.get("history");
+        if (history === undefined) return;
+        this.configure({ history: [] });
+        this.configure({ history });
     }
 
     public get value(): string {

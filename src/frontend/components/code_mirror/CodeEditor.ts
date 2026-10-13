@@ -318,10 +318,10 @@ export class CodeEditor extends CodeMirrorEditor {
         this.addEventListener("keydown", this.cancelEscape);
         this.configure({
             language: [],
+            history: history(),
             codingExtensions: [
                 lineNumbers(),
                 highlightSpecialChars(),
-                history(),
                 foldGutter(),
                 drawSelection(),
                 EditorState.allowMultipleSelections.of(true),
