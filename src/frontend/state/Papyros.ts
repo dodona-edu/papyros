@@ -58,10 +58,12 @@ export class Papyros extends State {
         if (!this.canDeferChannel() && !(await this.ensureChannel())) {
             // Without a channel the backend is never launched, so the controls must not
             // offer a run or stop that has nothing to act on
-            const message =
-                "serviceWorker" in navigator
-                    ? this.i18n.t("Papyros.service_worker_error")
-                    : this.i18n.t("Papyros.service_worker_unsupported");
+            let message = this.i18n.t("Papyros.service_worker_error");
+            if (!isSecureContext) {
+                message = this.i18n.t("Papyros.insecure_context_error");
+            } else if (!("serviceWorker" in navigator)) {
+                message = this.i18n.t("Papyros.service_worker_unsupported");
+            }
             this.runner.setState(RunState.Error, message);
             alert(message);
         } else {
@@ -156,6 +158,10 @@ export class Papyros extends State {
         }
         if (!this.serviceWorkerName) {
             this.errorHandler(new ServiceWorkerRegistrationError("No service worker configured to handle input"));
+            return null;
+        }
+        if (!isSecureContext) {
+            this.errorHandler(new ServiceWorkerRegistrationError("Service workers need a secure context (HTTPS)"));
             return null;
         }
         if (!("serviceWorker" in navigator)) {

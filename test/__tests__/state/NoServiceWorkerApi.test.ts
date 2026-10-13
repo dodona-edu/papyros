@@ -36,6 +36,7 @@ describe("browser without the Service Worker API", () => {
     it("tells the user to switch browsers without reporting an error", async () => {
         removeServiceWorkerApi();
         expect("serviceWorker" in navigator).toBe(false);
+        expect(isSecureContext).toBe(true);
         const { papyros, errorHandler } = papyrosNeedingChannel();
 
         await papyros.launch();
@@ -55,6 +56,25 @@ describe("browser without the Service Worker API", () => {
 
         expect(await papyros.ensureChannel()).toBe(false);
         expect(errorHandler).not.toHaveBeenCalled();
+    });
+
+    it("reports an insecure context and asks for HTTPS", async () => {
+        // Browsers hide the Service Worker API outside a secure context
+        removeServiceWorkerApi();
+        vi.stubGlobal("isSecureContext", false);
+        const { papyros, errorHandler } = papyrosNeedingChannel();
+
+        await papyros.launch();
+
+        expect(errorHandler).toHaveBeenCalledOnce();
+        const error = errorHandler.mock.calls[0][0];
+        expect(error).toBeInstanceOf(ServiceWorkerRegistrationError);
+        expect(error.message).toMatch(/secure context/);
+        const message = papyros.i18n.t("Papyros.insecure_context_error");
+        expect(message).toMatch(/HTTPS/);
+        expect(papyros.runner.state).toBe(RunState.Error);
+        expect(papyros.runner.stateMessage).toBe(message);
+        expect(alert).toHaveBeenCalledExactlyOnceWith(message);
     });
 
     it("still reports a missing service worker name", async () => {
