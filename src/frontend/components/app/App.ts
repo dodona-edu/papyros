@@ -101,10 +101,12 @@ export class App extends PapyrosElement {
                 margin: 0.5rem;
             }
 
-            /* Output must not be squeezed away when the debugger claims its share. */
+            /* Output must not be squeezed away when the debugger claims its share. Here it
+               fills its column instead of growing with its output. */
             .grow {
                 flex: 1;
                 min-height: 7rem;
+                --papyros-output-max-height: none;
             }
 
             ${paneStyles}
@@ -140,11 +142,12 @@ export class App extends PapyrosElement {
                 background-color: var(--md-sys-color-primary);
             }
 
+            /* The debugger scrolls its own memory view, under its step controls. */
             .pane-body {
                 flex: 1;
                 min-height: 0;
-                overflow: auto;
-                padding: 0.75rem 0.875rem;
+                display: flex;
+                flex-direction: column;
             }
 
             /* The 40px controls set the height of this row, so the padding is all there is

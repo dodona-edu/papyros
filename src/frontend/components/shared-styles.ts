@@ -21,6 +21,43 @@ export const tabBarStyles: CSSResult = css`
     }
 `;
 
+/**
+ * A caption that names a pane at the start of its tab bar, followed by a divider and the
+ * tablist. A caption rather than a tab-sized label, so it is not read as a tab.
+ */
+export const paneLabelStyles: CSSResult = css`
+    .pane-label {
+        display: flex;
+        align-items: center;
+        gap: 0.625rem;
+        flex-shrink: 0;
+        padding: 0 0.375rem 0 0.875rem;
+        font-size: 0.6875rem;
+        font-weight: 500;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        white-space: nowrap;
+        color: var(--md-sys-color-on-surface-variant);
+    }
+
+    .pane-label::after {
+        content: "";
+        width: 1px;
+        height: 1rem;
+        background-color: var(--md-sys-color-outline-variant);
+    }
+
+    .pane-label:only-child::after {
+        display: none;
+    }
+
+    .tablist {
+        display: flex;
+        flex-direction: row;
+        height: 100%;
+    }
+`;
+
 export const tabButtonStyles: CSSResult = css`
     button {
         position: relative;
