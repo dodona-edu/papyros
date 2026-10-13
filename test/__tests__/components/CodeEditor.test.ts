@@ -7,6 +7,9 @@ import type { CodeEditor } from "../../../src/frontend/components/code_mirror/Co
 import type { CodeMirrorEditor } from "../../../src/frontend/components/code_mirror/CodeMirrorEditor";
 import "../../../src/frontend/components/code_mirror/CodeEditor";
 import "../../../src/frontend/components/code_mirror/FileEditor";
+import type { Code } from "../../../src/frontend/components/code_runner/Code";
+import "../../../src/frontend/components/code_runner/Code";
+import { Papyros } from "../../../src/frontend/state/Papyros";
 
 describe("CodeEditor", () => {
     it("describes how to leave the editor on the editable content", async () => {
@@ -46,7 +49,7 @@ describe("CodeEditor", () => {
     });
 
     it.each(["p-code-editor", "p-file-editor"])(
-        "%s keeps a value set from outside as its own undo step",
+        "%s does not undo a value set from outside or the edits before it",
         async (tag) => {
             const element = document.createElement(tag) as CodeMirrorEditor;
             element.value = "original";
@@ -55,7 +58,8 @@ describe("CodeEditor", () => {
             const view = (element as unknown as { view: EditorView }).view;
 
             element.focus();
-            await userEvent.keyboard("0");
+            await userEvent.keyboard("{Delete}0");
+            expect(element.value).toBe("0riginal");
             element.value = "external";
             await userEvent.keyboard("abc");
             expect(element.value).toBe("eabcxternal");
@@ -63,12 +67,34 @@ describe("CodeEditor", () => {
             undo(view);
             expect(element.value).toBe("external");
             undo(view);
-            expect(element.value).toBe("0original");
-            undo(view);
-            expect(element.value).toBe("original");
+            expect(element.value).toBe("external");
             element.remove();
         },
     );
+
+    it("keeps the code intact when undo follows adding test code", async () => {
+        const element = document.createElement("p-code") as Code;
+        element.papyros = new Papyros();
+        element.papyros.runner.code = "x = 12\nfoo";
+        document.body.append(element);
+        await element.updateComplete;
+        const editor = element.shadowRoot!.querySelector("p-code-editor") as CodeEditor;
+        const view = (editor as unknown as { view: EditorView }).view;
+
+        view.dispatch({ selection: { anchor: view.state.doc.length } });
+        editor.focus();
+        await userEvent.keyboard("{Backspace}{Backspace}{Backspace}");
+        expect(element.papyros.runner.code).toBe("x = 12\n");
+
+        element.papyros.test.testCode = "assert x";
+        await element.updateComplete;
+        expect(editor.value).toBe("x = 12\n\n\nassert x");
+
+        undo(view);
+        expect(editor.value).toBe("x = 12\n\n\nassert x");
+        expect(element.papyros.runner.code).toBe("x = 12\n");
+        element.remove();
+    });
 
     it("cancels Escape and still leaves the editor on Escape followed by Tab", async () => {
         const element = document.createElement("p-code-editor") as CodeEditor;
