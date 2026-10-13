@@ -239,7 +239,7 @@ export class InputOutput extends State {
 
     public provideInput(input: string): void {
         this.inputs = [...this.inputs, input];
-        this.papyros.runner.provideInput(input);
+        void this.papyros.runner.provideInput(input);
         this.prompt = "";
         this.awaitingInput = false;
     }

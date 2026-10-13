@@ -107,7 +107,7 @@ export class Input extends PapyrosElement {
         e.preventDefault();
         const nextMode = MODES[nextIndex];
         this.selectMode(nextMode);
-        this.updateComplete.then(() => {
+        void this.updateComplete.then(() => {
             this.renderRoot.querySelector<HTMLElement>(`#tab-${nextMode}`)?.focus();
         });
     }

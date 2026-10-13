@@ -103,7 +103,7 @@ export class Debugger extends State {
             // a tracer that streams past its step budget
             if (this.frameStates.length + this.pendingFrameStates.length > this.papyros.constants.maxDebugFrames) {
                 this.flushFrames();
-                this.papyros.runner.stop();
+                void this.papyros.runner.stop();
             } else if (!this.runActive) {
                 // frame delivery is not ordered with respect to the run's
                 // end: stragglers arriving after the run must not wait for

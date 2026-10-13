@@ -207,7 +207,7 @@ export class Papyros extends State {
                 () => reject(new Error("Timed out waiting for activated service worker")),
                 timeout,
             );
-            navigator.serviceWorker.ready.then((registration) => {
+            void navigator.serviceWorker.ready.then((registration) => {
                 clearTimeout(timeoutHandle);
                 resolve(registration);
             });

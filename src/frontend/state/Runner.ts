@@ -769,7 +769,7 @@ export class Runner extends State {
     }
     private updateRunModes(): void {
         // Launch failures surface through launch(), so only they are swallowed here
-        this.backend
+        void this.backend
             .catch(() => undefined)
             .then(async (backend) => {
                 const proxy = backend?.workerProxy;

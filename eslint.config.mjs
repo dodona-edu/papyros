@@ -26,6 +26,20 @@ export default defineConfig(
             "@typescript-eslint/no-non-null-assertion": "off",
         },
     },
+    {
+        files: ["src/**/*.ts"],
+        languageOptions: {
+            parserOptions: {
+                projectService: true,
+                tsconfigRootDir: import.meta.dirname,
+            },
+        },
+        rules: {
+            "@typescript-eslint/no-floating-promises": "error",
+            "@typescript-eslint/no-misused-promises": "error",
+            "@typescript-eslint/await-thenable": "error",
+        },
+    },
     eslintPluginLit.configs["flat/recommended"],
     eslintPluginWc.configs["flat/recommended"],
     eslintPluginPrettierRecommended,

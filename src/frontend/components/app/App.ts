@@ -196,7 +196,7 @@ export class App extends PapyrosElement {
 
     constructor() {
         super();
-        this.papyros.launch();
+        void this.papyros.launch();
     }
 
     public override connectedCallback(): void {
