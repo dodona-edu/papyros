@@ -165,7 +165,11 @@ export class Papyros extends State {
             return null;
         }
         if (!("serviceWorker" in navigator)) {
-            // A limitation of the browser (e.g. in-app browsers on iOS), so nothing to report
+            this.errorHandler(
+                new UnsupportedBrowserError(
+                    "The Service Worker API is unavailable (e.g. in an in-app browser or a private window)",
+                ),
+            );
             return null;
         }
         try {
