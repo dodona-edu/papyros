@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { userEvent } from "vitest/browser";
 import type { EditorView } from "@codemirror/view";
+import { undo } from "@codemirror/commands";
 import { DUTCH_TRANSLATION, ENGLISH_TRANSLATION } from "../../../src/frontend/state/Translations";
 import type { CodeEditor } from "../../../src/frontend/components/code_mirror/CodeEditor";
+import type { CodeMirrorEditor } from "../../../src/frontend/components/code_mirror/CodeMirrorEditor";
 import "../../../src/frontend/components/code_mirror/CodeEditor";
+import "../../../src/frontend/components/code_mirror/FileEditor";
 
 describe("CodeEditor", () => {
     it("describes how to leave the editor on the editable content", async () => {
@@ -41,6 +44,31 @@ describe("CodeEditor", () => {
         expect(element.value).toBe("y".repeat(20) + "z" + "y".repeat(78));
         element.remove();
     });
+
+    it.each(["p-code-editor", "p-file-editor"])(
+        "%s keeps a value set from outside as its own undo step",
+        async (tag) => {
+            const element = document.createElement(tag) as CodeMirrorEditor;
+            element.value = "original";
+            document.body.append(element);
+            await element.updateComplete;
+            const view = (element as unknown as { view: EditorView }).view;
+
+            element.focus();
+            await userEvent.keyboard("0");
+            element.value = "external";
+            await userEvent.keyboard("abc");
+            expect(element.value).toBe("eabcxternal");
+
+            undo(view);
+            expect(element.value).toBe("external");
+            undo(view);
+            expect(element.value).toBe("0original");
+            undo(view);
+            expect(element.value).toBe("original");
+            element.remove();
+        },
+    );
 
     it("cancels Escape and still leaves the editor on Escape followed by Tab", async () => {
         const element = document.createElement("p-code-editor") as CodeEditor;
