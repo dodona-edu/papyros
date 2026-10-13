@@ -11,6 +11,7 @@ import { RunOptions, RunState } from "./frontend/state/Runner";
 import {
     PapyrosError,
     PapyrosLaunchError,
+    UnsupportedBrowserError,
     ServiceWorkerRegistrationError,
     ServiceWorkerInputError,
 } from "./frontend/state/PapyrosErrors";
@@ -27,6 +28,7 @@ export {
     papyros,
     PapyrosError,
     PapyrosLaunchError,
+    UnsupportedBrowserError,
     ServiceWorkerRegistrationError,
     ServiceWorkerInputError,
 };

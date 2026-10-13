@@ -7,7 +7,6 @@ import { arrayBufferToBase64, isTextMimeType, isValidFileName, parseData } from 
 import { State, stateProperty } from "@dodona/lit-state";
 import { Papyros } from "./Papyros";
 import { ProgrammingLanguage } from "../../ProgrammingLanguage";
-import { PapyrosLaunchError } from "./PapyrosErrors";
 import { CODE_TAB, EditorTabId } from "./InputOutput";
 
 /**
@@ -97,9 +96,7 @@ export class Runner extends State {
                 if (launchId !== this.launchId) {
                     return;
                 }
-                this.papyros.errorHandler(
-                    new PapyrosLaunchError("Error launching papyros after a language switch", { cause: error }),
-                );
+                this.papyros.reportLaunchFailure(error, "Error launching papyros after a language switch");
             });
         }
     }

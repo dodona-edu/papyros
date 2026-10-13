@@ -2,7 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 import { Papyros } from "../../../src/frontend/state/Papyros";
 import { ProgrammingLanguage } from "../../../src/ProgrammingLanguage";
 import { RunState } from "../../../src/frontend/state/Runner";
-import { PapyrosLaunchError } from "../../../src/frontend/state/PapyrosErrors";
+import { PapyrosLaunchError, UnsupportedBrowserError } from "../../../src/frontend/state/PapyrosErrors";
+import { PyodideBootError } from "../../../src/sync/errors";
 // eslint-disable-next-line jest/no-mocks-import
 import { MockBackend } from "../../__mocks__/MockBackend";
 
@@ -27,7 +28,7 @@ const working = (): any =>
 
 describe("Papyros launch failure", () => {
     it("surfaces a failed backend launch instead of hanging", async () => {
-        vi.spyOn(window, "confirm").mockReturnValue(false);
+        const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
 
         const papyros = new Papyros();
         papyros.runner.registerBackend(
@@ -47,14 +48,81 @@ describe("Papyros launch failure", () => {
         expect(errorHandler).toHaveBeenCalledOnce();
         const error = errorHandler.mock.calls[0][0];
         expect(error).toBeInstanceOf(PapyrosLaunchError);
+        expect(error.message).toBe("Error launching the runtime");
         expect((error.cause as Error).message).toBe("worker failed to start");
         expect(papyros.runner.state).toBe(RunState.Error);
         expect(papyros.runner.backendReady).toBe(false);
+        expect(confirm).toHaveBeenCalledOnce();
 
         // Callers awaiting the backend must reject instead of waiting forever
         await expect(withTimeout(papyros.runner.backend, 2000, "runner.backend")).rejects.toThrow(
             "worker failed to start",
         );
+    });
+
+    it("reports a browser that cannot boot Pyodide without offering a retry", async () => {
+        const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
+        confirm.mockClear();
+        // What Comlink hands the main thread: a plain Error that kept the name
+        const crossed = (): Error => {
+            const bootError = new PyodideBootError(new WebAssembly.RuntimeError("call_indirect to a null table entry"));
+            return Object.assign(new Error(bootError.message), { name: bootError.name, stack: bootError.stack });
+        };
+
+        const papyros = new Papyros();
+        papyros.runner.registerBackend(
+            ProgrammingLanguage.Python,
+            () =>
+                ({
+                    workerProxy: {
+                        launch: () => Promise.reject(crossed()),
+                    },
+                }) as any,
+        );
+        const errorHandler = vi.fn();
+        papyros.setErrorHandler(errorHandler);
+
+        await withTimeout(papyros.launch(), 2000, "Papyros.launch()");
+
+        expect(errorHandler).toHaveBeenCalledOnce();
+        const error = errorHandler.mock.calls[0][0];
+        expect(error).toBeInstanceOf(UnsupportedBrowserError);
+        expect(error).not.toBeInstanceOf(PapyrosLaunchError);
+        expect((error.cause as Error).message).toBe("RuntimeError: call_indirect to a null table entry");
+        expect(confirm).not.toHaveBeenCalled();
+        expect(papyros.runner.state).toBe(RunState.Error);
+        expect(papyros.runner.stateMessage).toBe(papyros.i18n.t("Papyros.unsupported_browser"));
+        expect(papyros.runner.stateMessage).toContain("This browser cannot run Python");
+
+        papyros.dispose();
+    });
+
+    it("reports a browser that cannot boot Pyodide after a language switch", async () => {
+        const papyros = new Papyros();
+        const errorHandler = vi.fn();
+        papyros.setErrorHandler(errorHandler);
+        papyros.runner.registerBackend(ProgrammingLanguage.JavaScript, working);
+        papyros.runner.registerBackend(
+            ProgrammingLanguage.Python,
+            () =>
+                ({
+                    workerProxy: {
+                        launch: () => Promise.reject(new PyodideBootError(new Error("Failed to import _pyodide_core"))),
+                    },
+                }) as any,
+        );
+
+        try {
+            papyros.runner.programmingLanguage = ProgrammingLanguage.JavaScript;
+            papyros.runner.programmingLanguage = ProgrammingLanguage.Python;
+            await vi.waitFor(() => expect(errorHandler).toHaveBeenCalledOnce());
+
+            expect(errorHandler.mock.calls[0][0]).toBeInstanceOf(UnsupportedBrowserError);
+            expect(papyros.runner.state).toBe(RunState.Error);
+            expect(papyros.runner.stateMessage).toBe(papyros.i18n.t("Papyros.unsupported_browser"));
+        } finally {
+            papyros.dispose();
+        }
     });
 
     it("launches a fresh backend after a failed one", async () => {

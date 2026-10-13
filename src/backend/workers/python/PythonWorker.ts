@@ -2,8 +2,9 @@ import { Backend, RunMode, WorkerDiagnostic } from "../../Backend";
 import { BackendEvent } from "../../../communication/BackendEvent";
 import { loadPyodide, PyodideInterface } from "pyodide";
 import { PyProxy } from "pyodide/ffi";
-import { loadPyodideAndPackage } from "../../../sync/pyodide";
+import { defaultPyodideLoader, loadPyodideAndPackage } from "../../../sync/pyodide";
 import { SyncExtras } from "../../../sync/expose";
+import { toPyodideBootError } from "../../../sync/errors";
 
 const pythonPackageUrl = new URL("./python_package.tar.gz.load_by_url", import.meta.url).href;
 
@@ -29,10 +30,13 @@ export class PythonWorker extends Backend {
     }
 
     private static async getPyodide(indexURL: string | undefined): Promise<PyodideInterface> {
-        if (indexURL === undefined) {
-            return await loadPyodideAndPackage({ url: pythonPackageUrl, format: ".tgz" });
-        }
-        return await loadPyodideAndPackage({ url: pythonPackageUrl, format: ".tgz" }, () => loadPyodide({ indexURL }));
+        const load = (): Promise<PyodideInterface> =>
+            indexURL === undefined ? defaultPyodideLoader() : loadPyodide({ indexURL });
+        return await loadPyodideAndPackage({ url: pythonPackageUrl, format: ".tgz" }, () =>
+            load().catch((error) => {
+                throw toPyodideBootError(error);
+            }),
+        );
     }
 
     public async launch(
