@@ -23,7 +23,6 @@
     "pyodide": "^314.0.0"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3.2.0",
     "@eslint/js": "^10.0.1",
     "@types/node": "^26.0.1",
     "@types/node-polyglot": "^2.5.0",
@@ -37,7 +36,6 @@
     "eslint-plugin-lit": "^2.1.1",
     "eslint-plugin-prettier": "^5.5.4",
     "eslint-plugin-wc": "^3.0.2",
-    "globals": "^17.3.0",
     "playwright": "^1.55.1",
     "prettier": "^3.6.2",
     "typescript": "^6.0.3",
