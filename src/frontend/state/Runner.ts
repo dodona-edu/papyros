@@ -8,6 +8,8 @@ import { State, stateProperty } from "@dodona/lit-state";
 import { Papyros } from "./Papyros";
 import { ProgrammingLanguage } from "../../ProgrammingLanguage";
 import { CODE_TAB, EditorTabId } from "./InputOutput";
+import { UnsupportedBrowserError } from "./PapyrosErrors";
+import { isPyodideBootError } from "../../sync/errors";
 
 /**
  * Enum representing the possible states while processing code
@@ -346,9 +348,10 @@ export class Runner extends State {
     /**
      * Start the backend to enable running code.
      *
-     * Resolves once the backend can run code and rejects when it fails to start, so
-     * awaiting this waits for the whole runtime to download. `backend` is assigned
-     * before that, so a caller that does not await can already queue runs.
+     * Resolves once the backend can run code and rejects when it fails to start, with an
+     * UnsupportedBrowserError when this browser cannot run the runtime at all. Awaiting this
+     * waits for the whole runtime to download. `backend` is assigned before that, so a caller
+     * that does not await can already queue runs.
      */
     public async launch(): Promise<void> {
         if (this.disposed) {
@@ -368,7 +371,12 @@ export class Runner extends State {
             await backendLaunched;
         } catch (error) {
             if (launchId === this.launchId) {
-                this.setState(RunState.Error);
+                this.setState(
+                    RunState.Error,
+                    error instanceof UnsupportedBrowserError
+                        ? this.papyros.i18n.t("Papyros.unsupported_browser")
+                        : undefined,
+                );
             }
             throw error;
         }
@@ -461,6 +469,9 @@ export class Runner extends State {
                 } catch {
                     // An injected or never-started client has no worker to terminate
                 }
+            }
+            if (isPyodideBootError(error)) {
+                throw new UnsupportedBrowserError("This browser cannot run Python", { cause: error });
             }
             throw error;
         }

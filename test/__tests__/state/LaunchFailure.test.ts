@@ -26,6 +26,12 @@ const working = (): any =>
         },
     }) as any;
 
+// What Comlink hands the main thread for a boot failure: a plain Error that kept the name
+const crossed = (): Error => {
+    const bootError = new PyodideBootError(new WebAssembly.RuntimeError("call_indirect to a null table entry"));
+    return Object.assign(new Error(bootError.message), { name: bootError.name, stack: bootError.stack });
+};
+
 describe("Papyros launch failure", () => {
     it("surfaces a failed backend launch instead of hanging", async () => {
         const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
@@ -63,12 +69,6 @@ describe("Papyros launch failure", () => {
     it("reports a browser that cannot boot Pyodide without offering a retry", async () => {
         const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
         confirm.mockClear();
-        // What Comlink hands the main thread: a plain Error that kept the name
-        const crossed = (): Error => {
-            const bootError = new PyodideBootError(new WebAssembly.RuntimeError("call_indirect to a null table entry"));
-            return Object.assign(new Error(bootError.message), { name: bootError.name, stack: bootError.stack });
-        };
-
         const papyros = new Papyros();
         papyros.runner.registerBackend(
             ProgrammingLanguage.Python,
@@ -120,6 +120,35 @@ describe("Papyros launch failure", () => {
             expect(errorHandler.mock.calls[0][0]).toBeInstanceOf(UnsupportedBrowserError);
             expect(papyros.runner.state).toBe(RunState.Error);
             expect(papyros.runner.stateMessage).toBe(papyros.i18n.t("Papyros.unsupported_browser"));
+        } finally {
+            papyros.dispose();
+        }
+    });
+
+    it("rejects a direct runner launch on a browser that cannot boot Pyodide", async () => {
+        const papyros = new Papyros();
+        const errorHandler = vi.fn();
+        papyros.setErrorHandler(errorHandler);
+        papyros.runner.registerBackend(
+            ProgrammingLanguage.Python,
+            () =>
+                ({
+                    workerProxy: {
+                        launch: () => Promise.reject(crossed()),
+                    },
+                }) as any,
+        );
+
+        try {
+            const error = await withTimeout(papyros.runner.launch(), 2000, "runner.launch()").catch((e) => e);
+
+            expect(error).toBeInstanceOf(UnsupportedBrowserError);
+            expect((error.cause as Error).name).toBe("PyodideBootError");
+            expect(papyros.runner.state).toBe(RunState.Error);
+            expect(papyros.runner.stateMessage).toBe(papyros.i18n.t("Papyros.unsupported_browser"));
+            // The caller owns the rejection, so nothing is reported on its behalf
+            expect(errorHandler).not.toHaveBeenCalled();
+            await expect(papyros.runner.backend).rejects.toBeInstanceOf(UnsupportedBrowserError);
         } finally {
             papyros.dispose();
         }

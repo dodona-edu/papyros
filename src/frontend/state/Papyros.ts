@@ -12,7 +12,6 @@ import { ProgrammingLanguage } from "../../ProgrammingLanguage";
 import { I18n } from "./I18n";
 import { Test } from "./Test";
 import { PapyrosLaunchError, ServiceWorkerRegistrationError, UnsupportedBrowserError } from "./PapyrosErrors";
-import { isPyodideBootError } from "../../sync/errors";
 
 /**
  * In flight service worker registrations, shared between instances: a page can only
@@ -83,16 +82,12 @@ export class Papyros extends State {
      * @return {boolean} Whether launching again can help
      */
     public reportLaunchFailure(error: unknown, message: string): boolean {
-        if (!isPyodideBootError(error)) {
-            this.errorHandler(new PapyrosLaunchError(message, { cause: error }));
-            return true;
+        if (error instanceof UnsupportedBrowserError) {
+            this.errorHandler(error);
+            return false;
         }
-        this.errorHandler(new UnsupportedBrowserError("This browser cannot run Python", { cause: error }));
-        // A superseded launch leaves the state to the launch that replaced it
-        if (this.runner.state === RunState.Error) {
-            this.runner.setState(RunState.Error, this.i18n.t("Papyros.unsupported_browser"));
-        }
-        return false;
+        this.errorHandler(new PapyrosLaunchError(message, { cause: error }));
+        return true;
     }
 
     /**
