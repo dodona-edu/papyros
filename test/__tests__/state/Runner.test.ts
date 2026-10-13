@@ -5,6 +5,7 @@ import {RunState} from "../../../src/frontend/state/Runner";
 import {RunMode} from "../../../src/backend/Backend";
 import {launchPapyros, settlePapyros, waitForOutput, waitForPapyrosReady} from "../../helpers";
 import {CODE_TAB, FriendlyError, HOST_TAB, OutputType} from "../../../src/frontend/state/InputOutput";
+import {BackendEvent, BackendEventType} from "../../../src/communication/BackendEvent";
 
 // One Pyodide boot for the whole file: instances are isolated now, so the suite
 // shares a single Python instance and settles it between tests.
@@ -175,6 +176,37 @@ print("to stderr", file=sys.stderr)`;
         papyros.runner.code = "import this_module_truly_does_not_exist_xyz\n";
         const diagnostics = await papyros.runner.lintSource();
         expect(diagnostics.some((d) => /import-error|Unable to import/.test(d.message))).toBe(true);
+    }, 60000);
+
+    it("should try to install a missing module only once", async () => {
+        papyros.runner.code = "import papyros_missing_module_once\n";
+        await papyros.runner.lintSource();
+
+        const loadingEvents: BackendEvent[] = [];
+        const unsubscribe = papyros.events.subscribe(BackendEventType.Loading, (e) => loadingEvents.push(e));
+        try {
+            const diagnostics = await papyros.runner.lintSource();
+            expect(diagnostics.some((d) => /import-error|Unable to import/.test(d.message))).toBe(true);
+            await papyros.runner.start();
+            await waitForPapyrosReady(papyros, 60000);
+            await waitForOutput(papyros);
+        } finally {
+            unsubscribe();
+        }
+        expect(loadingEvents).toEqual([]);
+        const error = papyros.io.output[0].content as FriendlyError;
+        expect(error.name).toBe("ModuleNotFoundError");
+        expect(error.traceback).not.toMatch(/During handling/);
+    }, 60000);
+
+    it("should not rerun code when a missing module cannot be installed", async () => {
+        // math is importable, so installing it changes nothing and a rerun would loop
+        papyros.runner.code = "raise ModuleNotFoundError(\"No module named 'math'\", name='math')\n";
+        await papyros.runner.start();
+        await waitForPapyrosReady(papyros, 60000);
+        await waitForOutput(papyros);
+        expect(papyros.runner.stateMessage).toMatch(/^Code executed in/);
+        expect((papyros.io.output[0].content as FriendlyError).name).toBe("ModuleNotFoundError");
     }, 60000);
 
     it("should not flag stdlib modules astroid cannot build (os) as unimportable", async () => {
