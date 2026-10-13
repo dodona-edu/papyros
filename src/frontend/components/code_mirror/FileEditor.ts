@@ -26,8 +26,8 @@ export class FileEditor extends CodeMirrorEditor {
         `;
     }
 
-    // Lit reuses this element across file tabs, so the language follows the
-    // file name rather than being set once.
+    // A viewer can be handed another file, so the language follows the file
+    // name rather than being set once.
     set fileName(name: string) {
         this.configure({ language: languageForFileName(name) });
     }

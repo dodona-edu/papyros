@@ -1,15 +1,20 @@
 import { describe, expect, it } from "vitest";
+import { undo } from "@codemirror/commands";
+import type { EditorView } from "@codemirror/view";
 import { Papyros } from "../../../src/frontend/state/Papyros";
 import { RunMode } from "../../../src/backend/Backend";
-import { CODE_TAB, HOST_TAB } from "../../../src/frontend/state/InputOutput";
+import { BackendEvent, BackendEventType } from "../../../src/communication/BackendEvent";
+import { CODE_TAB, EditorTabId, HOST_TAB } from "../../../src/frontend/state/InputOutput";
 import type { CodeRunner } from "../../../src/frontend/components/CodeRunner";
 import type { EditorTabs } from "../../../src/frontend/components/EditorTabs";
+import type { FileViewer } from "../../../src/frontend/components/FileViewer";
 import type { ButtonLint } from "../../../src/frontend/components/code_runner/ButtonLint";
 import "../../../src/frontend/components/CodeRunner";
 
-async function mountRunner(hostTab: boolean): Promise<CodeRunner> {
+async function mountRunner(hostTab: boolean, code = ""): Promise<CodeRunner> {
     const element = document.createElement("p-code-runner") as CodeRunner;
     element.papyros = new Papyros();
+    element.papyros.runner.code = code;
     if (hostTab) {
         element.innerHTML = `<span slot="host-tab">Test #1</span><p slot="host-tab-panel">Expected output</p>`;
     }
@@ -270,6 +275,147 @@ describe("CodeRunner", () => {
         expect(shown.map((b) => b.title)).toEqual(["Run", "Debug", "Run doctests"]);
         const icons = shown.map((b) => b.querySelector("path")!.getAttribute("d"));
         expect(new Set(icons).size).toBe(icons.length);
+        element.remove();
+    });
+});
+
+describe("CodeRunner tab switches", () => {
+    const lines = (prefix: string): string => Array.from({ length: 200 }, (_, i) => `${prefix}${i} = ${i}`).join("\n");
+
+    async function mountTall(hostTab = false): Promise<CodeRunner> {
+        const element = await mountRunner(hostTab, lines("x"));
+        element.style.height = "300px";
+        await settle(element);
+        return element;
+    }
+
+    async function openTab(element: CodeRunner, tab: EditorTabId): Promise<void> {
+        element.papyros.io.activeEditorTab = tab;
+        await settle(element);
+        await frames();
+    }
+
+    function codeView(element: CodeRunner): EditorView {
+        const editor = element.shadowRoot!.querySelector("p-code")!.shadowRoot!.querySelector("p-code-editor");
+        return (editor as unknown as { view: EditorView }).view;
+    }
+
+    function fileView(element: CodeRunner, name: string): EditorView {
+        const viewer = Array.from(element.shadowRoot!.querySelectorAll<FileViewer>("p-file-viewer")).find(
+            (v) => v.file?.name === name,
+        )!;
+        return (viewer.shadowRoot!.querySelector("p-file-editor") as unknown as { view: EditorView }).view;
+    }
+
+    async function scrollTo(view: EditorView, top: number): Promise<void> {
+        view.scrollDOM.scrollTop = top;
+        await frames();
+    }
+
+    function debugLineInView(view: EditorView): boolean {
+        const marker = Array.from(view.dom.querySelectorAll(".cm-gutterElement")).find((g) => g.textContent === "▶");
+        if (!marker) return false;
+        const line = marker.getBoundingClientRect();
+        const scroller = view.scrollDOM.getBoundingClientRect();
+        return line.top >= scroller.top && line.bottom <= scroller.bottom;
+    }
+
+    const frame = (line: number): BackendEvent => ({
+        type: BackendEventType.Frame,
+        contentType: "application/json",
+        data: JSON.stringify({
+            line,
+            event: "step_line",
+            func_name: "<module>",
+            globals: {},
+            ordered_globals: [],
+            stack_to_render: [],
+            heap: {},
+        }),
+    });
+
+    it("keeps the code's scroll position and undo history across a file tab", async () => {
+        const element = await mountTall();
+        element.papyros.io.addFile("data.txt", "hello");
+        await openTab(element, CODE_TAB);
+        const view = codeView(element);
+        view.dispatch({ changes: { from: 0, insert: "# edited\n" } });
+        await scrollTo(view, 1500);
+
+        await openTab(element, "data.txt");
+        await openTab(element, CODE_TAB);
+
+        expect(codeView(element).scrollDOM.scrollTop).toBe(1500);
+        expect(undo(codeView(element))).toBe(true);
+        expect(element.papyros.runner.code).toBe(lines("x"));
+        element.remove();
+    });
+
+    it("keeps each file's scroll position across the other tabs", async () => {
+        const element = await mountTall();
+        element.papyros.io.addFile("a.txt", lines("a"));
+        element.papyros.io.addFile("b.txt", lines("b"));
+        await openTab(element, "a.txt");
+        await scrollTo(fileView(element, "a.txt"), 1200);
+        await openTab(element, "b.txt");
+        await scrollTo(fileView(element, "b.txt"), 600);
+
+        await openTab(element, CODE_TAB);
+        await openTab(element, "a.txt");
+        expect(fileView(element, "a.txt").scrollDOM.scrollTop).toBe(1200);
+        await openTab(element, "b.txt");
+        expect(fileView(element, "b.txt").scrollDOM.scrollTop).toBe(600);
+        element.remove();
+    });
+
+    it("focuses a file's editor when its tab is opened", async () => {
+        const element = await mountTall();
+        element.papyros.io.addFile("data.txt", "hello");
+        await openTab(element, CODE_TAB);
+
+        await openTab(element, "data.txt");
+        expect(fileView(element, "data.txt").hasFocus).toBe(true);
+        element.remove();
+    });
+
+    it("keeps the host panel's scroll position across the code tab", async () => {
+        const element = await mountTall(true);
+        element.querySelector("[slot=host-tab-panel]")!.textContent = lines("y");
+        await openTab(element, HOST_TAB);
+        const panel = element.shadowRoot!.querySelector<HTMLElement>(".host-panel")!;
+        panel.scrollTop = 400;
+
+        await openTab(element, CODE_TAB);
+        await openTab(element, HOST_TAB);
+        expect(panel.scrollTop).toBe(400);
+        element.remove();
+    });
+
+    it("keeps the debug line marked and in view across a file tab", async () => {
+        const element = await mountTall();
+        const papyros = element.papyros;
+        papyros.debugger.active = true;
+        papyros.events.publish({
+            type: BackendEventType.Files,
+            contentType: "text/json",
+            data: JSON.stringify({ "data.txt": { content: "hello", binary: false } }),
+        });
+        papyros.events.publish(frame(150));
+        papyros.events.publish(frame(30));
+        await settle(element);
+        await frames();
+        expect(debugLineInView(codeView(element))).toBe(true);
+
+        await openTab(element, "data.txt");
+        await openTab(element, CODE_TAB);
+        expect(debugLineInView(codeView(element))).toBe(true);
+
+        // A step taken while the code is hidden is scrolled to once it is shown.
+        await openTab(element, "data.txt");
+        papyros.debugger.activeFrame = 1;
+        await settle(element);
+        await openTab(element, CODE_TAB);
+        expect(debugLineInView(codeView(element))).toBe(true);
         element.remove();
     });
 });

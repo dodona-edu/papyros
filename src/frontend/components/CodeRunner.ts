@@ -2,7 +2,8 @@ import { customElement, property, state } from "lit/decorators.js";
 import { PapyrosElement } from "./PapyrosElement";
 import { css, CSSResult, html, PropertyValues, TemplateResult } from "lit";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { CODE_TAB, EditorTabId, HOST_TAB } from "../state/InputOutput";
+import { repeat } from "lit/directives/repeat.js";
+import { CODE_TAB, EditorTabId, FileEntry, HOST_TAB } from "../state/InputOutput";
 import { arrayBufferToBase64, isTextMimeType } from "../../util/Util";
 import "./code_runner/Code";
 import "./code_runner/RunState";
@@ -327,18 +328,24 @@ export class CodeRunner extends PapyrosElement {
         }
     }
 
-    private renderPanel(activeTab: EditorTabId): TemplateResult {
-        if (activeTab === CODE_TAB) {
-            return html`<p-code .papyros=${this.papyros}></p-code>`;
-        }
-        if (activeTab === HOST_TAB) {
-            return html`<div class="host-panel" tabindex="0"><slot name="host-tab-panel"></slot></div>`;
-        }
-        const files = this.papyros.debugger.active ? this.papyros.debugger.debugFiles : this.papyros.io.files;
-        return html`<p-file-viewer
-            .papyros=${this.papyros}
-            .file=${files.find((f) => f.name === activeTab)}
-        ></p-file-viewer>`;
+    /** Every panel stays mounted and only the active one is shown, so each keeps its scroll position and undo history. */
+    private renderPanels(activeTab: EditorTabId, files: FileEntry[]): TemplateResult {
+        return html`
+            <p-code .papyros=${this.papyros} ?hidden=${activeTab !== CODE_TAB}></p-code>
+            ${repeat(
+                files,
+                (file) => file.name,
+                (file) =>
+                    html`<p-file-viewer
+                        .papyros=${this.papyros}
+                        .file=${file}
+                        .active=${file.name === activeTab}
+                    ></p-file-viewer>`,
+            )}
+            <div class="host-panel" tabindex="0" ?hidden=${activeTab !== HOST_TAB}>
+                <slot name="host-tab-panel"></slot>
+            </div>
+        `;
     }
 
     private readAndAddFile(file: File): void {
@@ -400,7 +407,7 @@ export class CodeRunner extends PapyrosElement {
                         @focusin=${() => (this.showEscapeHint = this.focusFromKeyboard)}
                         @focusout=${() => (this.showEscapeHint = false)}
                     >
-                        ${this.renderPanel(activeTab)}
+                        ${this.renderPanels(activeTab, files)}
                     </div>
                     <div class="footer">
                         <p-run-state .papyros=${this.papyros}></p-run-state>
