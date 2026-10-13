@@ -148,15 +148,9 @@ class Papyros(python_runner.PyodideRunner):
         except ModuleNotFoundError:
             pass
 
-    async def install_imports(self, source_code, ignore_missing=True):
+    async def install_imports(self, source_code):
         """Install missing modules that were not installed before, return whether anything was installed."""
-        if isinstance(source_code, str):
-            try:
-                imports = find_imports(source_code)
-            except SyntaxError:
-                return False
-        else:
-            imports = source_code
+        imports = find_imports(source_code) if isinstance(source_code, str) else source_code
         new_imports = [m for m in imports if m and m not in self._installed_imports]
         modules = [entry["module"] for entry in find_imports_to_install(new_imports)]
         if not modules:
@@ -164,11 +158,8 @@ class Papyros(python_runner.PyodideRunner):
         try:
             await install_imports(modules, self.import_callback)
         except (ValueError, JsException):
-            # Notify of import failure
-            self.callback("loading", data=dict(status="failed", modules=[]), contentType="application/json")
             # Occurs when trying to fetch PyPi files for misspelled imports
-            if not ignore_missing:
-                raise
+            self.callback("loading", data=dict(status="failed", modules=[]), contentType="application/json")
             return False
         return True
 
