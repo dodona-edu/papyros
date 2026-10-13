@@ -199,6 +199,18 @@ print("to stderr", file=sys.stderr)`;
         expect(error.traceback).not.toMatch(/During handling/);
     }, 60000);
 
+    it("should still install a module after an earlier module in the same batch failed", async () => {
+        // The missing module sorts first, so its failed install ends the batch before regex
+        papyros.runner.code = "import aaaa_papyros_missing_first\nimport regex\n";
+        await papyros.runner.lintSource();
+
+        papyros.runner.code = "import regex\nprint(regex.findall(r'\\d', 'a1b2'))";
+        await papyros.runner.start();
+        await waitForPapyrosReady(papyros, 60000);
+        await waitForOutput(papyros);
+        expect(papyros.io.output[0].content).toBe("['1', '2']\n");
+    }, 60000);
+
     it("should not rerun code when a missing module cannot be installed", async () => {
         // math is importable, so installing it changes nothing and a rerun would loop
         papyros.runner.code = "raise ModuleNotFoundError(\"No module named 'math'\", name='math')\n";

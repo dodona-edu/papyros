@@ -161,7 +161,6 @@ class Papyros(python_runner.PyodideRunner):
         modules = [entry["module"] for entry in find_imports_to_install(new_imports)]
         if not modules:
             return False
-        self._attempted_imports.update(modules)
         try:
             await install_imports(modules, self.import_callback)
         except (ValueError, JsException):
@@ -174,6 +173,9 @@ class Papyros(python_runner.PyodideRunner):
         return True
 
     def import_callback(self, typ, modules):
+        if typ == "loading_one":
+            # A failed install stops the batch, so only modules that were reached count
+            self._attempted_imports.add(modules["module"])
         if typ in ["loading_one", "loaded_all"]:
             # Can ignore these types and focus on loading_all and loaded_one
             return
