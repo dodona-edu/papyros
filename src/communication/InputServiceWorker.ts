@@ -10,8 +10,9 @@ import { CLAIM_CLIENTS_MESSAGE, InputWorker } from "./InputWorker";
 const domain = ""; // Disable SharedArrayBuffers to use same environment as Dodona
 const inputHandler = new InputWorker(domain);
 
-addEventListener("fetch", async function (event: FetchEvent) {
-    if (!(await inputHandler.handleInputRequest(event))) {
+// respondWith must be called synchronously during dispatch
+addEventListener("fetch", function (event: FetchEvent) {
+    if (!inputHandler.handleInputRequest(event)) {
         // Not a Papyros-specific request
         // Fetch as we would handle a normal request
         // Default action is to let browser handle it by not responding here

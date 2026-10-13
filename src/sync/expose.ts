@@ -32,6 +32,10 @@ export interface SyncExtras {
 
 export type SyncMessageCallbackStatus = "init" | "reading" | "sleeping" | "slept";
 export type SyncMessageCallback = (status: SyncMessageCallbackStatus) => void;
+/**
+ * A SyncMessageCallback as the worker sees it: wrapped in Comlink.proxy, so a call returns a Promise
+ */
+export type RemoteSyncMessageCallback = (status: SyncMessageCallbackStatus) => void | Promise<void>;
 
 export function makeMessageId(base: string, seq: number): string {
     return `${base}-${seq}`;
@@ -45,26 +49,30 @@ export function expose<T extends any[], R>(
     func: (extras: SyncExtras, ...args: T) => R,
 ): (
     channel: Channel | null,
-    syncMessageCallback: SyncMessageCallback,
+    syncMessageCallback: RemoteSyncMessageCallback,
     messageIdBase: string,
     interruptBuffer: Int32Array | null,
     ...args: T
 ) => Promise<R> {
     return async function (
         channel: Channel | null,
-        syncMessageCallback: SyncMessageCallback,
+        syncMessageCallback: RemoteSyncMessageCallback,
         messageIdBase: string,
         interruptBuffer: Int32Array | null,
         ...args: T
     ): Promise<R> {
+        // Resolves once the main thread has handled "init"
         await syncMessageCallback("init");
         let messageIdSeq = 0;
+        // Fire and forget: the client's callback only updates its state
+        const reportStatus = (status: Exclude<SyncMessageCallbackStatus, "init">): void =>
+            void syncMessageCallback(status);
 
         function block(status: "reading" | "sleeping", options?: { timeout: number }): any {
             if (!channel) {
                 throw new NoChannelError();
             }
-            syncMessageCallback(status);
+            reportStatus(status);
             const messageId = makeMessageId(messageIdBase, ++messageIdSeq);
             const response = readMessage(channel, messageId, options);
             if (response) {
@@ -74,14 +82,14 @@ export function expose<T extends any[], R>(
                 }
                 return message;
             } else if (status === "sleeping") {
-                syncMessageCallback("slept");
+                reportStatus("slept");
             }
         }
 
         const extras: SyncExtras = {
             channel,
             interruptBuffer,
-            reportStatus: syncMessageCallback,
+            reportStatus,
             readMessage(): any {
                 return block("reading");
             },

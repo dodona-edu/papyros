@@ -330,7 +330,7 @@ export class Output extends PapyrosElement {
         e.preventDefault();
         const nextTab = tabs[nextIndex];
         this.papyros.io.selectOutputTab(nextTab);
-        this.updateComplete.then(() => {
+        void this.updateComplete.then(() => {
             this.renderRoot.querySelector<HTMLElement>(`#tab-${nextTab}`)?.focus();
         });
     }

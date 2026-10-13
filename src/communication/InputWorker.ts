@@ -32,7 +32,7 @@ export class InputWorker {
      * @param {FetchEvent} event The event denoting a request to a url
      * @return {boolean} Whether the event was handled
      */
-    public async handleInputRequest(event: FetchEvent): Promise<boolean> {
+    public handleInputRequest(event: FetchEvent): boolean {
         // Special requests targeted at getting input from the user
         if (this.syncMessageListener(event)) {
             return true;

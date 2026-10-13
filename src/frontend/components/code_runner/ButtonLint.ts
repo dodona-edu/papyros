@@ -255,7 +255,7 @@ export class ButtonLint extends PapyrosElement {
 
     override connectedCallback(): void {
         super.connectedCallback();
-        this.updateComplete.then(() => this.observeSizes());
+        void this.updateComplete.then(() => this.observeSizes());
     }
 
     override disconnectedCallback(): void {

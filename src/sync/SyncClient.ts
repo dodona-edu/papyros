@@ -63,7 +63,7 @@ export class SyncClient<T = any> {
         }
 
         if (this.interrupter) {
-            await this.interrupter();
+            this.interrupter();
             return;
         }
 
