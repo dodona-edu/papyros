@@ -50,8 +50,8 @@ class Papyros(python_runner.PyodideRunner):
         self._original_open = builtins.open
         self._last_emitted_snapshot = None
         self._turtle_hook = TurtleImportHook()
-        # An install can succeed without making the module importable, so never retry one
-        self._attempted_imports = set()
+        # An install can succeed without making the module importable, so never repeat one
+        self._installed_imports = set()
         self._install_open_tracking()
         self.limit = limit
         self.override_globals()
@@ -149,7 +149,7 @@ class Papyros(python_runner.PyodideRunner):
             pass
 
     async def install_imports(self, source_code, ignore_missing=True):
-        """Install missing modules at most once per session, return whether anything was installed."""
+        """Install missing modules that were not installed before, return whether anything was installed."""
         if isinstance(source_code, str):
             try:
                 imports = find_imports(source_code)
@@ -157,7 +157,7 @@ class Papyros(python_runner.PyodideRunner):
                 return False
         else:
             imports = source_code
-        new_imports = [m for m in imports if m and m not in self._attempted_imports]
+        new_imports = [m for m in imports if m and m not in self._installed_imports]
         modules = [entry["module"] for entry in find_imports_to_install(new_imports)]
         if not modules:
             return False
@@ -173,9 +173,9 @@ class Papyros(python_runner.PyodideRunner):
         return True
 
     def import_callback(self, typ, modules):
-        if typ == "loading_one":
-            # A failed install stops the batch, so only modules that were reached count
-            self._attempted_imports.add(modules["module"])
+        if typ == "loaded_one":
+            # Only finished installs count, so a failed one is retried
+            self._installed_imports.add(modules["module"])
         if typ in ["loading_one", "loaded_all"]:
             # Can ignore these types and focus on loading_all and loaded_one
             return
