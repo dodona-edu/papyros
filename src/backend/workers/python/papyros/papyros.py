@@ -8,6 +8,7 @@ import json
 import base64
 import doctest
 import re
+import traceback
 import python_runner
 import friendly_traceback
 
@@ -336,17 +337,27 @@ if __name__ == "{MODULE_NAME}":
         # Allow friendly_traceback to inspect the code
         friendly_traceback.source_cache.cache.add(self.filename, self.source_code)
 
-        # Initialize traceback
-        fr = FriendlyTraceback(type(exc), exc, exc.__traceback__)
-        fr.assign_generic()
-        fr.assign_cause()
-        # Translate properties to FriendlyError interface
-        tb = fr.info.get("shortened_traceback", "")
-        info = fr.info.get("generic", "")
-        why = fr.info.get("cause", "")
-        if why.startswith("No information is known about this exception."):
-            why = ""
-        what = fr.info.get("message", "")
+        try:
+            # friendly_traceback prints and calls sys.exit() on internal errors
+            with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+                fr = FriendlyTraceback(type(exc), exc, exc.__traceback__)
+                fr.assign_generic()
+                fr.assign_cause()
+            # Translate properties to FriendlyError interface
+            tb = fr.info.get("shortened_traceback", "")
+            info = fr.info.get("generic", "")
+            why = fr.info.get("cause", "")
+            if why.startswith("No information is known about this exception."):
+                why = ""
+            what = fr.info.get("message", "")
+        except BaseException:
+            # Plain traceback, starting at the first frame in the user's code
+            user_tb = exc.__traceback__
+            while user_tb is not None and user_tb.tb_frame.f_code.co_filename != self.filename:
+                user_tb = user_tb.tb_next
+            tb = "".join(traceback.format_exception(type(exc), exc, user_tb or exc.__traceback__))
+            info = why = ""
+            what = "".join(traceback.format_exception_only(type(exc), exc))
 
         name = type(exc).__name__
         user_start = 0

@@ -105,6 +105,25 @@ const c = a + b;`;
         expect((papyros.io.output[0].content as FriendlyError).traceback).toMatch(/ValueError: test/);
     });
 
+    it.each([
+        ["ModuleNotFoundError", "raise ModuleNotFoundError()"],
+        ["ModuleNotFoundError", "raise ModuleNotFoundError(name='math')"],
+        ["ImportError", "raise ImportError()"],
+        ["AttributeError", "raise AttributeError()"],
+        ["NameError", "raise NameError()"],
+        ["ValueError", "raise ValueError()"],
+    ])("should report %s without a message as an error: %s", async (name, code) => {
+        papyros.runner.code = code + "\n";
+        await papyros.runner.start();
+        await waitForPapyrosReady(papyros);
+        await waitForOutput(papyros);
+        expect(papyros.runner.stateMessage).toMatch(/^Code executed in/);
+        expect(papyros.io.output).toHaveLength(1);
+        const error = papyros.io.output[0].content as FriendlyError;
+        expect(error.name).toBe(name);
+        expect(error.traceback).toMatch(new RegExp(`^${name}\\b`, "m"));
+    });
+
     it("should finish a run that fails to compile", async () => {
         papyros.runner.code = "print 'hello'\n";
         await papyros.runner.start();
