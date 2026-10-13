@@ -112,6 +112,9 @@ just in case.
 
 If a backend needs the channel and it cannot be created, the error is passed to
 `papyros.errorHandler` and the channel stays null. Code still runs; only reading input fails.
+A browser without the Service Worker API (such as an in-app browser on iOS) is not reported:
+the channel stays null as well, and when `launch()` needs the channel up front, the runner
+shows a message asking the user to open the page in another browser.
 
 Interrupting is a separate axis. A program waiting on input or sleeping is always interrupted
 cheaply, whichever transport it uses. A program in a busy loop needs Pyodide's interrupt buffer,

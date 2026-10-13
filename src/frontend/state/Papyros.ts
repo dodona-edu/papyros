@@ -58,8 +58,12 @@ export class Papyros extends State {
         if (!this.canDeferChannel() && !(await this.ensureChannel())) {
             // Without a channel the backend is never launched, so the controls must not
             // offer a run or stop that has nothing to act on
-            this.runner.setState(RunState.Error, this.i18n.t("Papyros.service_worker_error"));
-            alert(this.i18n.t("Papyros.service_worker_error"));
+            const message =
+                "serviceWorker" in navigator
+                    ? this.i18n.t("Papyros.service_worker_error")
+                    : this.i18n.t("Papyros.service_worker_unsupported");
+            this.runner.setState(RunState.Error, message);
+            alert(message);
         } else {
             try {
                 await this.runner.launch();
@@ -150,12 +154,12 @@ export class Papyros extends State {
             this.channel = makeChannel({ atomics: {} })!;
             return this.channel;
         }
-        if (!this.serviceWorkerName || !("serviceWorker" in navigator)) {
-            this.errorHandler(
-                new ServiceWorkerRegistrationError("No service worker available to handle input", {
-                    cause: new Error(`serviceWorkerName=${this.serviceWorkerName}`),
-                }),
-            );
+        if (!this.serviceWorkerName) {
+            this.errorHandler(new ServiceWorkerRegistrationError("No service worker configured to handle input"));
+            return null;
+        }
+        if (!("serviceWorker" in navigator)) {
+            // A limitation of the browser (e.g. in-app browsers on iOS), so nothing to report
             return null;
         }
         try {
