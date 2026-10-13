@@ -12,6 +12,10 @@ export class FileViewer extends PapyrosElement {
     @property({ type: Object })
     file: FileEntry | undefined = undefined;
 
+    /** Whether this file's tab is open. Viewers of the other files stay mounted, hidden. */
+    @property({ type: Boolean })
+    active = true;
+
     private editorRef: Ref<FileEditor> = createRef();
 
     private debouncedUpdateFile = debounce((name: string, content: string) => {
@@ -25,6 +29,10 @@ export class FileViewer extends PapyrosElement {
                 width: 100%;
                 height: 100%;
                 overflow: auto;
+            }
+
+            :host([hidden]) {
+                display: none;
             }
 
             p-file-editor {
@@ -71,8 +79,15 @@ export class FileViewer extends PapyrosElement {
         setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
 
+    protected override willUpdate(): void {
+        this.hidden = !this.active;
+    }
+
     protected override updated(changedProperties: Map<PropertyKey, unknown>): void {
-        if (changedProperties.has("file") && this.file && !this.file.binary) {
+        const opened =
+            changedProperties.has("active") ||
+            (changedProperties.has("file") && changedProperties.get("file") === undefined);
+        if (opened && this.active && this.file && !this.file.binary) {
             this.editorRef.value?.focus();
         }
     }

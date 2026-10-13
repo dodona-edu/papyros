@@ -1,7 +1,18 @@
 import { LitElement } from "lit";
 import { customElement } from "lit/decorators.js";
 import { EditorView, ViewUpdate, placeholder } from "@codemirror/view";
-import { Compartment, EditorSelection, EditorState, Extension, StateEffect, Transaction } from "@codemirror/state";
+import {
+    Annotation,
+    Compartment,
+    EditorSelection,
+    EditorState,
+    Extension,
+    StateEffect,
+    Transaction,
+} from "@codemirror/state";
+
+// Marks the transaction that loads a new `value`, which is not an edit to report as a change.
+const valueSync = Annotation.define<boolean>();
 
 // Keep gutters out of native text selection: with drawSelection() active the
 // browser's own selection is invisible over the code, so a page-wide select-all
@@ -50,7 +61,7 @@ export class CodeMirrorEditor extends LitElement {
             },
             // Mapped through a full replace, a selection inside the document comes out inverted
             selection: EditorSelection.cursor(Math.min(this.view.state.selection.main.head, this.__value.length)),
-            annotations: [Transaction.addToHistory.of(false)],
+            annotations: [valueSync.of(true), Transaction.addToHistory.of(false)],
         });
         this.configure({ readonly: EditorState.readOnly.of(this.__readonly) });
     }
@@ -107,7 +118,9 @@ export class CodeMirrorEditor extends LitElement {
     private onViewUpdate(v: ViewUpdate): void {
         if (v.docChanged) {
             this.__value = v.state.doc.toString();
-            this.dispatchEvent(new CustomEvent("change", { detail: this.value }));
+            if (!v.transactions.some((tr) => tr.annotation(valueSync))) {
+                this.dispatchEvent(new CustomEvent("change", { detail: this.value }));
+            }
         }
     }
 
