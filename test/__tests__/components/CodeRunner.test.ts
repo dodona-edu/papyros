@@ -1,8 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { undo } from "@codemirror/commands";
 import type { EditorView } from "@codemirror/view";
 import { Papyros } from "../../../src/frontend/state/Papyros";
 import { RunMode } from "../../../src/backend/Backend";
+import { ProgrammingLanguage } from "../../../src/ProgrammingLanguage";
+import { launchPapyros, settlePapyros, waitForPapyrosReady, wipeWorkspace } from "../../helpers";
 import { BackendEvent, BackendEventType } from "../../../src/communication/BackendEvent";
 import { CODE_TAB, EditorTabId, HOST_TAB } from "../../../src/frontend/state/InputOutput";
 import type { CodeRunner } from "../../../src/frontend/components/CodeRunner";
@@ -368,6 +370,54 @@ describe("CodeRunner tab switches", () => {
         element.remove();
     });
 
+    it("keeps a file's editor when a snapshot lists the files in another order", async () => {
+        const element = await mountTall();
+        element.papyros.io.addFile("output.txt", "out");
+        element.papyros.io.addFile("another.txt", "other");
+        await openTab(element, "output.txt");
+        const view = fileView(element, "output.txt");
+        view.dispatch({ changes: { from: 3, insert: "put" } });
+        await settle(element);
+
+        element.papyros.events.publish({
+            type: BackendEventType.Files,
+            contentType: "text/json",
+            data: JSON.stringify({
+                "another.txt": { content: "other", binary: false },
+                "output.txt": { content: "output", binary: false },
+            }),
+        });
+        await settle(element);
+
+        expect(fileView(element, "output.txt")).toBe(view);
+        expect(undo(view)).toBe(true);
+        expect(view.state.doc.toString()).toBe("out");
+        element.remove();
+    });
+
+    it("does not send a file's new content back to the backend as an edit", async () => {
+        const element = await mountTall();
+        element.papyros.io.addFile("data.txt", "old");
+        await openTab(element, CODE_TAB);
+        const updateFile = vi.spyOn(element.papyros.runner, "updateFile").mockResolvedValue();
+
+        element.papyros.events.publish({
+            type: BackendEventType.Files,
+            contentType: "text/json",
+            data: JSON.stringify({ "data.txt": { content: "new", binary: false } }),
+        });
+        await settle(element);
+        await new Promise((resolve) => setTimeout(resolve, 400));
+        const view = fileView(element, "data.txt");
+        expect(view.state.doc.toString()).toBe("new");
+        expect(updateFile).not.toHaveBeenCalled();
+
+        view.dispatch({ changes: { from: 3, insert: "er" } });
+        await new Promise((resolve) => setTimeout(resolve, 400));
+        expect(updateFile).toHaveBeenCalledWith("data.txt", "newer", false);
+        element.remove();
+    });
+
     it("focuses a file's editor when its tab is opened", async () => {
         const element = await mountTall();
         element.papyros.io.addFile("data.txt", "hello");
@@ -416,6 +466,44 @@ describe("CodeRunner tab switches", () => {
         await settle(element);
         await openTab(element, CODE_TAB);
         expect(debugLineInView(codeView(element))).toBe(true);
+        element.remove();
+    });
+});
+
+describe.sequential("CodeRunner with a Python backend", () => {
+    let papyros: Papyros;
+
+    beforeAll(async () => {
+        papyros = await launchPapyros(ProgrammingLanguage.Python);
+    }, 180000);
+
+    afterAll(() => papyros.dispose());
+
+    it("leaves the files of consecutive runs to the backend", async () => {
+        await settlePapyros(papyros);
+        await wipeWorkspace(papyros);
+        const element = document.createElement("p-code-runner") as CodeRunner;
+        element.papyros = papyros;
+        document.body.append(element);
+        await settle(element);
+
+        for (const content of ["first", "second"]) {
+            papyros.runner.code = `with open("out.txt", "w") as f:\n    f.write("${content}")`;
+            await papyros.runner.start();
+            await waitForPapyrosReady(papyros, 60000);
+            await settle(element);
+        }
+        papyros.runner.code = [
+            "import asyncio",
+            `with open("out.txt", "w") as f:`,
+            `    f.write("third")`,
+            "await asyncio.sleep(0.6)",
+            `print(open("out.txt").read())`,
+        ].join("\n");
+        await papyros.runner.start();
+        await waitForPapyrosReady(papyros, 60000);
+
+        expect(papyros.io.output.map((o) => o.content).join("")).toBe("third\n");
         element.remove();
     });
 });

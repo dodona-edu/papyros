@@ -330,10 +330,12 @@ export class CodeRunner extends PapyrosElement {
 
     /** Every panel stays mounted and only the active one is shown, so each keeps its scroll position and undo history. */
     private renderPanels(activeTab: EditorTabId, files: FileEntry[]): TemplateResult {
+        // Sorted by name: the file list can arrive in another order, and moving a viewer remounts its editor.
+        const sorted = [...files].sort((a, b) => (a.name < b.name ? -1 : 1));
         return html`
             <p-code .papyros=${this.papyros} ?hidden=${activeTab !== CODE_TAB}></p-code>
             ${repeat(
-                files,
+                sorted,
                 (file) => file.name,
                 (file) =>
                     html`<p-file-viewer
