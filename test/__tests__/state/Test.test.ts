@@ -1,5 +1,5 @@
-import {test, expect} from "vitest";
-import {Papyros} from "../../../src/frontend/state/Papyros";
+import { test, expect } from "vitest";
+import { Papyros } from "../../../src/frontend/state/Papyros";
 
 // These tests only exercise code/testCode string state, so nothing is launched
 test("testcode is appended to the end of the code", async () => {
@@ -45,4 +45,4 @@ bar`);
 bar`;
     expect(papyros.runner.code).toBe("baz");
     expect(papyros.test.testCode).toBe("bar");
-})
+});

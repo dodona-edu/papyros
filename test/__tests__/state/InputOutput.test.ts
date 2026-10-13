@@ -1,9 +1,9 @@
-import {Papyros} from "../../../src/frontend/state/Papyros";
-import {expect, it, describe, beforeAll, beforeEach, afterAll} from "vitest";
-import {ProgrammingLanguage} from "../../../src/ProgrammingLanguage";
-import {FriendlyError, InputMode, OutputType} from "../../../src/frontend/state/InputOutput";
-import {BackendEventType} from "../../../src/communication/BackendEvent";
-import {RunState} from "../../../src/frontend/state/Runner";
+import { Papyros } from "../../../src/frontend/state/Papyros";
+import { expect, it, describe, beforeAll, beforeEach, afterAll } from "vitest";
+import { ProgrammingLanguage } from "../../../src/ProgrammingLanguage";
+import { FriendlyError, InputMode, OutputType } from "../../../src/frontend/state/InputOutput";
+import { BackendEventType } from "../../../src/communication/BackendEvent";
+import { RunState } from "../../../src/frontend/state/Runner";
 import {
     launchPapyros,
     settlePapyros,
@@ -30,7 +30,7 @@ describe.sequential("InputOutput", () => {
 
     it("can log output", async () => {
         const jsPapyros = await launchPapyros(ProgrammingLanguage.JavaScript);
-        jsPapyros.runner.code = `console.log("hello world!");`; // eslint-disable-line quotes
+        jsPapyros.runner.code = `console.log("hello world!");`;
         await jsPapyros.runner.start();
         await waitForOutput(jsPapyros);
         expect(jsPapyros.io.output.length).toBe(2);
@@ -55,9 +55,12 @@ console.log("world!");
 
     it("can read input", async () => {
         const jsPapyros = await launchPapyros(ProgrammingLanguage.JavaScript);
-        jsPapyros.runner.code = `console.log("hello", prompt("input"));`; // eslint-disable-line quotes
+        jsPapyros.runner.code = `console.log("hello", prompt("input"));`;
         await waitForInputReady(jsPapyros);
-        const unsubscribe = jsPapyros.io.subscribe(() => jsPapyros.io.awaitingInput ? jsPapyros.io.provideInput("foo") : "", "awaitingInput");
+        const unsubscribe = jsPapyros.io.subscribe(
+            () => (jsPapyros.io.awaitingInput ? jsPapyros.io.provideInput("foo") : ""),
+            "awaitingInput",
+        );
         await jsPapyros.runner.start();
         await waitForOutput(jsPapyros);
         expect(jsPapyros.io.output[0].content).toBe("hello foo\n");
@@ -66,9 +69,12 @@ console.log("world!");
     });
 
     it("can read input in python", async () => {
-        papyros.runner.code = `print("hello " + input())`; // eslint-disable-line quotes
+        papyros.runner.code = `print("hello " + input())`;
         await waitForInputReady(papyros);
-        const unsubscribe = papyros.io.subscribe(() => papyros.io.awaitingInput ? papyros.io.provideInput("foo") : "", "awaitingInput");
+        const unsubscribe = papyros.io.subscribe(
+            () => (papyros.io.awaitingInput ? papyros.io.provideInput("foo") : ""),
+            "awaitingInput",
+        );
         await papyros.runner.start();
         await waitForOutput(papyros);
         expect(papyros.io.output[0].content).toBe("hello foo");
@@ -98,7 +104,7 @@ console.log("world!");
     });
 
     it("stops asking for input on stop", async () => {
-        papyros.runner.code = `print("hello " + input())`; // eslint-disable-line quotes
+        papyros.runner.code = `print("hello " + input())`;
         await waitForInputReady(papyros);
         const runPromise = papyros.runner.start();
         await waitForAwaitingInput(papyros);
@@ -122,12 +128,12 @@ console.log("world!");
 
     it("ignores an input request that arrives after its run ended", async () => {
         const jsPapyros = await launchPapyros(ProgrammingLanguage.JavaScript);
-        jsPapyros.runner.code = `console.log("done");`; // eslint-disable-line quotes
+        jsPapyros.runner.code = `console.log("done");`;
         await jsPapyros.runner.start();
         await waitForPapyrosReady(jsPapyros);
         jsPapyros.io.inputMode = InputMode.batch;
         jsPapyros.io.inputBuffer = "stale\n";
-        jsPapyros.events.publish({type: BackendEventType.Input, data: "input", contentType: "text/plain"});
+        jsPapyros.events.publish({ type: BackendEventType.Input, data: "input", contentType: "text/plain" });
         expect(jsPapyros.io.inputs).toEqual([]);
         expect(jsPapyros.runner.state).toBe(RunState.Ready);
         jsPapyros.dispose();
@@ -135,7 +141,7 @@ console.log("world!");
 
     it("can log friendly errors", async () => {
         const jsPapyros = await launchPapyros(ProgrammingLanguage.JavaScript);
-        jsPapyros.runner.code = `throw new Error("test error")`; // eslint-disable-line quotes
+        jsPapyros.runner.code = `throw new Error("test error")`;
         await jsPapyros.runner.start();
         await waitForOutput(jsPapyros);
         expect(jsPapyros.io.output.length).toBe(1);
@@ -151,7 +157,7 @@ print("world! " + input("input2"))
 `;
         let inputCount = 0;
         const unsubscribe = papyros.io.subscribe(async () => {
-            await new Promise(r => setTimeout(r, 50));
+            await new Promise((r) => setTimeout(r, 50));
             if (papyros.io.awaitingInput) {
                 inputCount++;
                 papyros.io.provideInput("foo" + inputCount);

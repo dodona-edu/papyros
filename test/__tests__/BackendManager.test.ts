@@ -1,6 +1,5 @@
 import { ProgrammingLanguage } from "../../src/ProgrammingLanguage";
 import { BackendManager } from "../../src/communication/BackendManager";
-// eslint-disable-next-line jest/no-mocks-import
 import { MockBackend } from "../__mocks__/MockBackend";
 import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
 

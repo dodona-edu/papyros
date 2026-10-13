@@ -50,7 +50,7 @@
     "build:sw": "vite build --config vite.sw.config.ts",
     "build:lib": "bash scripts/build_library.sh",
     "test": "vitest",
-    "lint": "eslint src",
+    "lint": "eslint src test",
     "typecheck": "tsc --noEmit",
     "prepack": "yarn build:lib"
   },

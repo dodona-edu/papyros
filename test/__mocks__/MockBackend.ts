@@ -22,7 +22,8 @@ export class MockBackend extends Backend {
         this.extras = extras;
         this.onEvent({
             type: BackendEventType.Output,
-            data: `Running code: ${code}`, contentType: "text/plain"
+            data: `Running code: ${code}`,
+            contentType: "text/plain",
         });
         return Promise.resolve();
     }
@@ -30,7 +31,8 @@ export class MockBackend extends Backend {
     override async lintCode(code: string): Promise<Array<WorkerDiagnostic>> {
         this.onEvent({
             type: BackendEventType.Output,
-            data: `Linting code: ${code}`, contentType: "text/plain"
+            data: `Linting code: ${code}`,
+            contentType: "text/plain",
         });
         return Promise.resolve([]);
     }
