@@ -84,7 +84,9 @@ export class FileViewer extends PapyrosElement {
     }
 
     protected override updated(changedProperties: Map<PropertyKey, unknown>): void {
-        const opened = changedProperties.has("file") || changedProperties.has("active");
+        const opened =
+            changedProperties.has("active") ||
+            (changedProperties.has("file") && changedProperties.get("file") === undefined);
         if (opened && this.active && this.file && !this.file.binary) {
             this.editorRef.value?.focus();
         }

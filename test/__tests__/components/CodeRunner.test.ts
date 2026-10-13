@@ -428,6 +428,27 @@ describe("CodeRunner tab switches", () => {
         element.remove();
     });
 
+    it("leaves focus outside an open file's editor when the file gets new content", async () => {
+        const element = await mountTall();
+        element.papyros.io.addFile("data.txt", "hello");
+        await openTab(element, "data.txt");
+        const button = document.createElement("button");
+        document.body.append(button);
+        button.focus();
+
+        element.papyros.events.publish({
+            type: BackendEventType.Files,
+            contentType: "text/json",
+            data: JSON.stringify({ "data.txt": { content: "bye", binary: false } }),
+        });
+        await settle(element);
+
+        expect(fileView(element, "data.txt").state.doc.toString()).toBe("bye");
+        expect(document.activeElement).toBe(button);
+        button.remove();
+        element.remove();
+    });
+
     it("keeps the host panel's scroll position across the code tab", async () => {
         const element = await mountTall(true);
         element.querySelector("[slot=host-tab-panel]")!.textContent = lines("y");
