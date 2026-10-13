@@ -144,6 +144,7 @@ export class EditorTab extends PapyrosElement {
             e.preventDefault();
             if (this.confirmRename()) this.refocusTab();
         } else if (e.key === "Escape") {
+            e.preventDefault();
             this.cancelRename();
             this.refocusTab();
         }

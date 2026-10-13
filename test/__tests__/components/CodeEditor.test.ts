@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { userEvent } from "vitest/browser";
 import type { EditorView } from "@codemirror/view";
 import { DUTCH_TRANSLATION, ENGLISH_TRANSLATION } from "../../../src/frontend/state/Translations";
 import type { CodeEditor } from "../../../src/frontend/components/code_mirror/CodeEditor";
@@ -39,5 +40,50 @@ describe("CodeEditor", () => {
 
         expect(element.value).toBe("y".repeat(20) + "z" + "y".repeat(78));
         element.remove();
+    });
+
+    it("cancels Escape and still leaves the editor on Escape followed by Tab", async () => {
+        const element = document.createElement("p-code-editor") as CodeEditor;
+        const next = document.createElement("button");
+        document.body.append(element, next);
+        await element.updateComplete;
+        const prevented: boolean[] = [];
+        const onKeydown = (e: KeyboardEvent): void => {
+            if (e.key === "Escape") prevented.push(e.defaultPrevented);
+        };
+        window.addEventListener("keydown", onKeydown);
+
+        element.focus();
+        await userEvent.keyboard("{Escape}{Tab}");
+
+        expect(prevented).toEqual([true]);
+        expect(document.activeElement).toBe(next);
+        window.removeEventListener("keydown", onKeydown);
+        element.remove();
+        next.remove();
+    });
+
+    it("leaves Escape alone in a read-only editor, where Tab leaves without it", async () => {
+        const element = document.createElement("p-code-editor") as CodeEditor;
+        const next = document.createElement("button");
+        document.body.append(element, next);
+        await element.updateComplete;
+        element.debug = true;
+        const prevented: boolean[] = [];
+        const onKeydown = (e: KeyboardEvent): void => {
+            if (e.key === "Escape") prevented.push(e.defaultPrevented);
+        };
+        window.addEventListener("keydown", onKeydown);
+
+        element.focus();
+        await userEvent.keyboard("{Escape}");
+        expect(prevented).toEqual([false]);
+
+        element.focus();
+        await userEvent.keyboard("{Tab}");
+        expect(document.activeElement).toBe(next);
+        window.removeEventListener("keydown", onKeydown);
+        element.remove();
+        next.remove();
     });
 });
