@@ -197,7 +197,41 @@ The codebase organized into clear layers:
 #### `<p-code-runner>`
 
 A [CodeMirror 6](https://codemirror.net/6/) editor to edit, run, and debug code.
-Additional buttons can be added via the `.buttons` slot.
+The Run, Debug and Stop buttons sit in the tab bar, after the file tabs.
+Additional buttons can be added via the `buttons` slot; they follow the run buttons after a divider and are hidden while debugging. The run buttons are 32px high, so slotted buttons of the same height keep the bar at 44px.
+The bar stays on one row as long as it can. When the tabs and the buttons do not fit, the run buttons turn into 32px icon buttons, named by an `aria-label` and a tooltip; below a width of 30rem they always are.
+When that is not enough either, `p-code-runner` sets the `compact-slotted` attribute on itself, and the host can compact its slotted buttons:
+
+```css
+p-code-runner[compact-slotted] .my-button-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+```
+
+The slotted buttons should change size only through this attribute: Papyros remembers their width with and without it to decide when to set it.
+
+The host can add one tab of its own next to the file tabs, for content that is not a file (Dodona shows the failing test that is being debugged in it).
+It takes two slots:
+
+* `host-tab`: the tab's label. Put the status icon and the text in one element; Papyros lays its children out in a row and colours the text like the other tabs.
+* `host-tab-panel`: the content shown when the tab is selected. The host renders and styles it; Papyros puts it in a scrollable panel below the tabs.
+
+```html
+<p-code-runner>
+  <span slot="host-tab"><i class="icon-error" aria-hidden="true"></i>Test #1</span>
+  <div slot="host-tab-panel"><!-- the test, rendered by the host --></div>
+</p-code-runner>
+```
+
+The tab appears while the `host-tab` slot has an element and follows the same keyboard pattern as the file tabs.
+Its text names the panel for assistive technology.
+Select it from code with `papyros.io.activeEditorTab = HOST_TAB` (`CODE_TAB` selects the code, a file name selects that file); both are symbols, so no file name can select them. Starting a run selects the code again, unless the run says otherwise: a host that debugs a failing test starts it with `papyros.runner.start(RunMode.Debug, { editorTab: HOST_TAB })`, so the test stays visible during the run. Setting `activeEditorTab` after `start()` does not work, because `start()` selects the tab before its first `await` and its promise only settles when the run ends.
+Removing the `host-tab` element while its tab is open selects the code.
+
 Reflects a `backend-ready` attribute once the backend has finished loading, so surrounding pages can style or wait on it.
 
 #### `<p-input>`

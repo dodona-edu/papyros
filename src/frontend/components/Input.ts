@@ -23,6 +23,7 @@ export class Input extends PapyrosElement {
                 background-color: var(--md-sys-color-surface);
                 overflow: hidden;
                 box-sizing: border-box;
+                container: papyros-input / inline-size;
                 --md-outlined-text-field-outline-color: var(--md-sys-color-outline-variant);
                 --md-outlined-button-outline-color: var(--md-sys-color-outline-variant);
             }
@@ -67,6 +68,10 @@ export class Input extends PapyrosElement {
                 flex: 0 1 auto;
                 min-height: 0;
                 padding: 0.75rem 0.875rem;
+            }
+
+            .content.interactive {
+                padding: 0.5rem 0.625rem;
             }
 
             p-batch-input {
@@ -165,7 +170,7 @@ export class Input extends PapyrosElement {
                     ${MODES.map((mode) => this.renderTab(mode))}
                 </div>
             </div>
-            <div class="content" id="input-panel" role="tabpanel" aria-labelledby="tab-${this.mode}">
+            <div class="content ${this.mode}" id="input-panel" role="tabpanel" aria-labelledby="tab-${this.mode}">
                 ${
                     this.mode === InputMode.batch
                         ? html`<p-batch-input .papyros=${this.papyros}></p-batch-input>`

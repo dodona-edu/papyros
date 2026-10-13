@@ -1,13 +1,15 @@
-import { customElement, state } from "lit/decorators.js";
+import { customElement, property, state } from "lit/decorators.js";
 import { PapyrosElement } from "./PapyrosElement";
 import { css, CSSResult, html, PropertyValues, TemplateResult } from "lit";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { CODE_TAB } from "../state/InputOutput";
+import { CODE_TAB, EditorTabId, HOST_TAB } from "../state/InputOutput";
 import { arrayBufferToBase64, isTextMimeType } from "../../util/Util";
 import "./code_runner/Code";
 import "./code_runner/RunState";
 import "./code_runner/ButtonLint";
+import type { ButtonLint } from "./code_runner/ButtonLint";
 import "./EditorTabs";
+import type { EditorTabs } from "./EditorTabs";
 import "./FileViewer";
 import { paneStyles } from "./shared-styles";
 
@@ -19,14 +21,33 @@ export class CodeRunner extends PapyrosElement {
     @state()
     private showEscapeHint = false;
 
+    /** The text of the label in the `host-tab` slot, or undefined while that slot is empty and the tab hidden. */
+    @state()
+    private hostTabLabel: string | undefined = undefined;
+
     private dropZoneRef: Ref<HTMLDivElement> = createRef();
+    private hostTabSlotRef: Ref<HTMLSlotElement> = createRef();
+    /** The host can rewrite its label in place, which fires no slotchange. */
+    private hostTabObserver = new MutationObserver(() => this.readHostTabLabel());
+    private toolbarRef: Ref<HTMLDivElement> = createRef();
+    private tabsRef: Ref<EditorTabs> = createRef();
+    private buttonsRef: Ref<ButtonLint> = createRef();
+    private toolbarObserver = new ResizeObserver(() => this.updateCompactButtons());
+    private labelledSlottedWidth: number | undefined = undefined;
+    private compactSlottedWidth: number | undefined = undefined;
+
+    /** Set when the slotted buttons do not fit with their labels, so the host can compact them. */
+    @property({ type: Boolean, reflect: true, attribute: "compact-slotted" })
+    compactSlotted = false;
 
     static get styles(): CSSResult {
         return css`
+            /* Named, so the run buttons and the host's slotted content can query its width. */
             :host {
                 width: 100%;
                 display: flex;
                 flex-direction: column;
+                container: papyros-code-runner / inline-size;
             }
 
             ${paneStyles}
@@ -54,10 +75,50 @@ export class CodeRunner extends PapyrosElement {
                 z-index: 10;
             }
 
+            .toolbar {
+                display: flex;
+                flex-wrap: wrap;
+                flex-shrink: 0;
+            }
+
+            /* Grows with a taller button row next to it, so the two hairlines stay level. */
+            p-editor-tabs {
+                flex: 1 1 auto;
+                min-width: 0;
+                height: auto;
+                min-height: 2.75rem;
+            }
+
+            /* Grows rather than being pushed to the end, so a wrapped row keeps its hairline across the pane. */
+            p-button-lint {
+                flex: 1 1 auto;
+                min-width: 0;
+                justify-content: flex-end;
+            }
+
+            ::slotted([slot="host-tab"]) {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.375rem;
+            }
+
             .editor {
                 flex-grow: 1;
                 min-height: 0;
                 position: relative;
+            }
+
+            .host-panel {
+                position: absolute;
+                inset: 0;
+                overflow: auto;
+                padding: 0.5rem 0.75rem;
+                color: var(--md-sys-color-on-surface);
+            }
+
+            .host-panel:focus-visible {
+                outline: 2px solid var(--md-sys-color-primary);
+                outline-offset: -2px;
             }
 
             .footer {
@@ -136,15 +197,53 @@ export class CodeRunner extends PapyrosElement {
         this.focusFromKeyboard = true;
     };
 
+    /**
+     * Compacts the run buttons first and the slotted buttons second, each only when the
+     * row does not fit otherwise. The row is the whole toolbar when the tabs leave room
+     * for the compacted buttons, and a row of its own below the tabs when they do not.
+     */
+    private updateCompactButtons = (): void => {
+        const toolbar = this.toolbarRef.value;
+        const tabs = this.tabsRef.value;
+        const buttons = this.buttonsRef.value;
+        if (!toolbar || !tabs || !buttons) return;
+        // The host restyles its slotted buttons when compact-slotted changes, so the width of each form is kept.
+        const current = buttons.slottedWidth;
+        if (current !== undefined) {
+            if (this.compactSlotted) this.compactSlottedWidth = current;
+            else this.labelledSlottedWidth = current;
+        }
+        const labelled = current === undefined ? undefined : this.labelledSlottedWidth;
+        const compacted = current === undefined ? undefined : (this.compactSlottedWidth ?? 0);
+        const width = toolbar.clientWidth;
+        const tabsWidth = tabs.contentWidth;
+        const room = tabsWidth + buttons.neededWidth(true, compacted) <= width ? width - tabsWidth : width;
+        const labelledFits = buttons.neededWidth(false, labelled) <= room;
+        const iconsFit = buttons.neededWidth(true, labelled) <= room;
+        buttons.compact = !labelledFits;
+        this.compactSlotted = !labelledFits && !iconsFit;
+    };
+
+    private onButtonsSlotChange = (): void => {
+        this.labelledSlottedWidth = undefined;
+        this.compactSlottedWidth = undefined;
+        this.compactSlotted = false;
+    };
+
     override connectedCallback(): void {
         super.connectedCallback();
         // Capture phase, on the document: the key that moves focus here is dispatched at
         // whatever had focus before, which is usually outside this component.
         document.addEventListener("pointerdown", this.onPointerDown, true);
         document.addEventListener("keydown", this.onKeyDown, true);
+        if (this.hasUpdated) {
+            this.observeHostTabLabel();
+            if (this.toolbarRef.value) this.toolbarObserver.observe(this.toolbarRef.value);
+        }
     }
 
     protected override firstUpdated(): void {
+        if (this.toolbarRef.value) this.toolbarObserver.observe(this.toolbarRef.value);
         const dropZone = this.dropZoneRef.value;
         if (!dropZone) return;
         // Use capture phase so we intercept before CodeMirror handles the drop
@@ -157,6 +256,8 @@ export class CodeRunner extends PapyrosElement {
         super.disconnectedCallback();
         document.removeEventListener("pointerdown", this.onPointerDown, true);
         document.removeEventListener("keydown", this.onKeyDown, true);
+        this.hostTabObserver.disconnect();
+        this.toolbarObserver.disconnect();
         const dropZone = this.dropZoneRef.value;
         if (!dropZone) return;
         dropZone.removeEventListener("dragover", this.onDragOver, true);
@@ -201,6 +302,45 @@ export class CodeRunner extends PapyrosElement {
         }
     };
 
+    private hostTabElements(): Element[] {
+        return this.hostTabSlotRef.value?.assignedElements({ flatten: true }) ?? [];
+    }
+
+    private readHostTabLabel(): void {
+        const elements = this.hostTabElements();
+        this.hostTabLabel =
+            elements.length > 0 ? elements.map((el) => el.textContent?.trim() ?? "").join(" ") : undefined;
+    }
+
+    private observeHostTabLabel(): void {
+        this.hostTabObserver.disconnect();
+        for (const element of this.hostTabElements()) {
+            this.hostTabObserver.observe(element, { subtree: true, childList: true, characterData: true });
+        }
+        this.readHostTabLabel();
+    }
+
+    private onHostTabSlotChange(): void {
+        this.observeHostTabLabel();
+        if (this.hostTabLabel === undefined && this.papyros.io.activeEditorTab === HOST_TAB) {
+            this.papyros.io.activeEditorTab = CODE_TAB;
+        }
+    }
+
+    private renderPanel(activeTab: EditorTabId): TemplateResult {
+        if (activeTab === CODE_TAB) {
+            return html`<p-code .papyros=${this.papyros}></p-code>`;
+        }
+        if (activeTab === HOST_TAB) {
+            return html`<div class="host-panel" tabindex="0"><slot name="host-tab-panel"></slot></div>`;
+        }
+        const files = this.papyros.debugger.active ? this.papyros.debugger.debugFiles : this.papyros.io.files;
+        return html`<p-file-viewer
+            .papyros=${this.papyros}
+            .file=${files.find((f) => f.name === activeTab)}
+        ></p-file-viewer>`;
+    }
+
     private readAndAddFile(file: File): void {
         const reader = new FileReader();
         if (isTextMimeType(file.type)) {
@@ -218,26 +358,49 @@ export class CodeRunner extends PapyrosElement {
 
     protected override render(): TemplateResult {
         const files = this.papyros.debugger.active ? this.papyros.debugger.debugFiles : this.papyros.io.files;
-        const activeTab = this.papyros.io.activeEditorTab;
-        const activeFile = files.find((f) => f.name === activeTab);
+        // The code panel stands in for a host tab that has no label yet.
+        const selected = this.papyros.io.activeEditorTab;
+        const activeTab = selected === HOST_TAB && this.hostTabLabel === undefined ? CODE_TAB : selected;
+        let panelLabel: string;
+        if (activeTab === CODE_TAB) panelLabel = this.t("Papyros.editor_tab_code");
+        else if (activeTab === HOST_TAB) panelLabel = this.hostTabLabel ?? "";
+        else panelLabel = activeTab;
 
         return html`
             <div ${ref(this.dropZoneRef)} class="drop-zone ${this.dragOver ? "drag-over" : ""}">
                 <div class="pane ${this.showEscapeHint && activeTab === CODE_TAB ? "show-escape-hint" : ""}">
-                    <p-editor-tabs .papyros=${this.papyros} .files=${files}></p-editor-tabs>
+                    <div class="toolbar" ${ref(this.toolbarRef)}>
+                        <p-editor-tabs
+                            ${ref(this.tabsRef)}
+                            @p-editor-tabs-resize=${this.updateCompactButtons}
+                            .papyros=${this.papyros}
+                            .files=${files}
+                            ?host-tab=${this.hostTabLabel !== undefined}
+                        >
+                            <slot
+                                ${ref(this.hostTabSlotRef)}
+                                name="host-tab"
+                                slot="host-tab"
+                                @slotchange=${this.onHostTabSlotChange}
+                            ></slot>
+                        </p-editor-tabs>
+                        <p-button-lint
+                            ${ref(this.buttonsRef)}
+                            @p-button-lint-resize=${this.updateCompactButtons}
+                            .papyros=${this.papyros}
+                        >
+                            <slot name="buttons" @slotchange=${this.onButtonsSlotChange}></slot>
+                        </p-button-lint>
+                    </div>
                     <!-- The tabs live in another shadow root, so the panel is named directly instead of by aria-labelledby. -->
                     <div
                         class="editor"
                         role="tabpanel"
-                        aria-label=${activeTab === CODE_TAB ? this.t("Papyros.editor_tab_code") : activeTab}
+                        aria-label=${panelLabel}
                         @focusin=${() => (this.showEscapeHint = this.focusFromKeyboard)}
                         @focusout=${() => (this.showEscapeHint = false)}
                     >
-                        ${
-                            activeTab === CODE_TAB
-                                ? html`<p-code .papyros=${this.papyros}></p-code>`
-                                : html`<p-file-viewer .papyros=${this.papyros} .file=${activeFile}></p-file-viewer>`
-                        }
+                        ${this.renderPanel(activeTab)}
                     </div>
                     <div class="footer">
                         <p-run-state .papyros=${this.papyros}></p-run-state>
@@ -259,9 +422,6 @@ export class CodeRunner extends PapyrosElement {
                         }
                     </div>
                 </div>
-                <p-button-lint .papyros=${this.papyros}>
-                    <slot name="buttons"></slot>
-                </p-button-lint>
             </div>
         `;
     }

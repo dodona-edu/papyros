@@ -2,7 +2,7 @@ import { BackendEventType } from "../../communication/BackendEvent";
 import { Frame } from "@dodona/trace-component/dist/trace_types";
 import { State, stateProperty } from "@dodona/lit-state";
 import { Papyros } from "./Papyros";
-import { CODE_TAB, FileEntry, parseFileEntries } from "./InputOutput";
+import { CODE_TAB, FileEntry, HOST_TAB, parseFileEntries } from "./InputOutput";
 import { materializeFrame } from "./DebuggerFrames";
 import { parseData } from "../../util/Util";
 export type FrameState = {
@@ -177,7 +177,7 @@ export class Debugger extends State {
 
     private validateActiveTab(): void {
         const tab = this.papyros.io.activeEditorTab;
-        if (tab !== CODE_TAB && !this.debugFiles.some((f) => f.name === tab)) {
+        if (tab !== CODE_TAB && tab !== HOST_TAB && !this.debugFiles.some((f) => f.name === tab)) {
             this.papyros.io.activeEditorTab = CODE_TAB;
         }
     }

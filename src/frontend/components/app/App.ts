@@ -153,6 +153,8 @@ export class App extends PapyrosElement {
                 align-items: center;
                 padding: 0.5rem 1.5rem;
                 display: flex;
+                flex-wrap: wrap;
+                gap: 0.5rem;
                 justify-content: space-between;
                 background-color: var(--md-sys-color-surface-container);
                 color: var(--md-sys-color-on-surface);
@@ -165,8 +167,10 @@ export class App extends PapyrosElement {
                 color: var(--md-sys-color-primary);
             }
 
+            /* The pickers wrap rather than push the header wider than a narrow window. */
             .header-options {
                 display: flex;
+                flex-wrap: wrap;
                 gap: 0.5rem;
                 align-items: center;
             }
@@ -256,14 +260,13 @@ export class App extends PapyrosElement {
                         <p-theme-picker .papyros=${this.papyros}></p-theme-picker>
                         <p-language-picker .papyros=${this.papyros}></p-language-picker>
                         <p-programming-language-picker .papyros=${this.papyros}></p-programming-language-picker>
+                        <p-example-picker .papyros=${this.papyros}></p-example-picker>
                     </div>
                 </header>
                 <main class="content ${this.papyros.debugger.active ? "debugging" : ""}">
                     <div class="top">
                         <div class="left">
-                            <p-code-runner .papyros=${this.papyros}>
-                                <p-example-picker .papyros=${this.papyros} slot="buttons"></p-example-picker>
-                            </p-code-runner>
+                            <p-code-runner .papyros=${this.papyros}></p-code-runner>
                         </div>
                         <div class="right">
                             <p-output .papyros=${this.papyros} class="grow"></p-output>

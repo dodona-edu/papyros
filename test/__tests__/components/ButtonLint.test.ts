@@ -82,4 +82,24 @@ describe("ButtonLint", () => {
         input.remove();
         element.remove();
     });
+    it("shows the host's buttons after a divider, except while debugging", async () => {
+        const element = document.createElement("p-button-lint") as ButtonLint;
+        element.papyros = new Papyros();
+        document.body.append(element);
+        await element.updateComplete;
+        const divider = element.shadowRoot!.querySelector(".divider")!;
+        expect(divider.hasAttribute("hidden")).toBe(true);
+
+        element.append(document.createElement("button"));
+        await new Promise((resolve) => setTimeout(resolve));
+        await element.updateComplete;
+        expect(divider.hasAttribute("hidden")).toBe(false);
+
+        element.papyros.debugger.active = true;
+        await element.updateComplete;
+        expect(divider.hasAttribute("hidden")).toBe(true);
+        expect(element.shadowRoot!.querySelector("slot")!.parentElement!.hasAttribute("hidden")).toBe(true);
+
+        element.remove();
+    });
 });
