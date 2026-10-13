@@ -70,11 +70,12 @@
     "@lezer/python" "^1.1.4"
 
 "@codemirror/language@^6.0.0", "@codemirror/language@^6.6.0", "@codemirror/language@^6.8.0", "@codemirror/language@^6.9.3":
-  version "6.12.4"
-  resolved "https://registry.yarnpkg.com/@codemirror/language/-/language-6.12.4.tgz#01e70fd5aa3a8a067ff1dfec75d5b6394cdfa058"
-  integrity sha512-1q4PaT+o6PbgpkJt4Q8Fv5XJxTy4FUZ4MWETtyiDw3J0Pyr9E2vqcKL+k9wcvjNTIsauxvE7OfmWj3FRPHQ76A==
+  version "6.13.1"
+  resolved "https://registry.yarnpkg.com/@codemirror/language/-/language-6.13.1.tgz#61eb04c0265102ff9bb24d9a3ee633d37e84e324"
+  integrity sha512-zfvU2r3TyylQLMj/te+5CnQ0rSqZi8B1oTCBbQkagcLW4Xc6imab6qN+pEJhsuNOLaJqiRyBXp9UhWA1DhVvDw==
   dependencies:
     "@codemirror/state" "^6.0.0"
+    "@codemirror/streamparser" "^6.0.0"
     "@codemirror/view" "^6.23.0"
     "@lezer/common" "^1.5.0"
     "@lezer/highlight" "^1.0.0"
@@ -106,10 +107,15 @@
   dependencies:
     "@marijn/find-cluster-break" "^1.0.0"
 
+"@codemirror/streamparser@^6.0.0":
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/@codemirror/streamparser/-/streamparser-6.0.0.tgz#cc48a8f67e9001222d69938fabab157d68ce59d6"
+  integrity sha512-JTFPF6xrfjt0mnfGPgzcLiMwYmvIyNaoizp8BYzv8FE8KrT6GBGDZ190rtt+O7Wke3gG/MFHyiY9YGNeimof4w==
+
 "@codemirror/view@^6.17.0", "@codemirror/view@^6.23.0", "@codemirror/view@^6.27.0", "@codemirror/view@^6.28.0", "@codemirror/view@^6.37.0", "@codemirror/view@^6.42.0":
-  version "6.43.13"
-  resolved "https://registry.yarnpkg.com/@codemirror/view/-/view-6.43.13.tgz#a2d0286bf9e6051cb89076fd1c8dd58b907008d0"
-  integrity sha512-sihaFrUzAsYBQsL9J2t69y8nfMQGwcYmggAZsk+kjPbjYZMyuf2hU8tUNTZ+P+isb6XRr8JE22TZlJxBoVdH1A==
+  version "6.43.14"
+  resolved "https://registry.yarnpkg.com/@codemirror/view/-/view-6.43.14.tgz#a4b76ca6a47ef7c371b41f5c5222ba0815e36991"
+  integrity sha512-hC45YnmJNR1rz42OF57BLoQNFMV12/13drnvibDsR2quNDmldcb4WvYVV81hFQg56i9lcqQMEDqilhX2QDcGQQ==
   dependencies:
     "@codemirror/state" "^6.7.0"
     crelt "^1.0.6"
