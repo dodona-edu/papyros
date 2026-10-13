@@ -4,6 +4,7 @@
  */
 import * as Comlink from "comlink";
 import { loadPyodide, PyodideInterface, version as npmVersion } from "pyodide";
+import { isPyodideBootError } from "./errors";
 
 export type PyodideLoader = () => Promise<PyodideInterface>;
 
@@ -22,14 +23,18 @@ const RETRY_BASE_DELAY = 1000;
 /**
  * Retry on failure with exponential backoff, matching what p-retry did by default.
  * The failure this absorbs is a transient network error, so retrying without a delay
- * would just fail four times against the same blip.
+ * would just fail four times against the same blip. A PyodideBootError is permanent and
+ * is thrown at once.
  */
-async function withRetries<T>(fn: () => Promise<T>): Promise<T> {
+export async function withRetries<T>(fn: () => Promise<T>): Promise<T> {
     let lastError: unknown;
     for (let attempt = 0; attempt <= RETRIES; attempt++) {
         try {
             return await fn();
         } catch (e) {
+            if (isPyodideBootError(e)) {
+                throw e;
+            }
             lastError = e;
             if (attempt < RETRIES) {
                 await new Promise((resolve) => setTimeout(resolve, RETRY_BASE_DELAY * 2 ** attempt));

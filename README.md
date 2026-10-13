@@ -167,6 +167,15 @@ at the same time, even in the same language. The one service worker registration
 have is shared between them. Call `papyros.dispose()` to terminate an instance's workers
 when it is removed from the page.
 
+### Error handling
+
+Errors that do not surface through a promise, such as a failed launch, are passed to the
+handler set with `papyros.setErrorHandler()`. They extend `PapyrosError`, and all classes are
+exported. `UnsupportedBrowserError` means the browser downloaded Pyodide but cannot run it:
+Papyros shows a message asking the user to update or switch browsers instead of offering a
+retry. A host can skip reporting this one to its error tracker. Any other failed launch is a
+`PapyrosLaunchError`.
+
 ### Keyboard
 
 Papyros cancels (`preventDefault()`) the Escape keydowns it acts on: in a code editor that can be edited, where Escape followed by Tab moves focus out of the editor, and in the inputs that rename or add a file.

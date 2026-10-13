@@ -62,6 +62,7 @@ export const ENGLISH_TRANSLATION = {
         launch_error: "Papyros failed to load. Do you want to reload?",
         url_fetch_error: "Failed to fetch URL: %{url}",
         loading: "Loading %{packages}.",
+        unsupported_browser: "This browser cannot run Python. Update your browser or use another one.",
         run_modes: {
             doctest: "Run doctests",
             debug: "Debug",
@@ -200,6 +201,8 @@ export const DUTCH_TRANSLATION = {
         launch_error: "Er liep iets fout bij het laden van Papyros. Wil je herladen?",
         url_fetch_error: "Kon URL niet ophalen: %{url}",
         loading: "Bezig met het installeren van %{packages}.",
+        unsupported_browser:
+            "Deze browser kan geen Python uitvoeren. Werk je browser bij of gebruik een andere browser.",
         run_modes: {
             doctest: "Doctests uitvoeren",
             debug: "Debuggen",

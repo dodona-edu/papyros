@@ -11,7 +11,7 @@ import { CLAIM_CLIENTS_MESSAGE } from "../../communication/InputWorker";
 import { ProgrammingLanguage } from "../../ProgrammingLanguage";
 import { I18n } from "./I18n";
 import { Test } from "./Test";
-import { PapyrosLaunchError, ServiceWorkerRegistrationError } from "./PapyrosErrors";
+import { PapyrosLaunchError, ServiceWorkerRegistrationError, UnsupportedBrowserError } from "./PapyrosErrors";
 
 /**
  * In flight service worker registrations, shared between instances: a page can only
@@ -49,8 +49,8 @@ export class Papyros extends State {
      * Launch this instance of Papyros, making it ready to run code.
      *
      * Resolves once the runtime can run code, so awaiting this waits for the whole
-     * runtime to download. A failed launch is reported to the error handler and
-     * offered as a retry instead of being thrown.
+     * runtime to download. A failed launch is reported to the error handler and, unless
+     * this browser cannot run the runtime at all, offered as a retry instead of being thrown.
      *
      * @return {Promise<Papyros>} Promise of launching, chainable
      */
@@ -64,15 +64,30 @@ export class Papyros extends State {
             try {
                 await this.runner.launch();
             } catch (e) {
-                this.errorHandler(
-                    new PapyrosLaunchError("Error launching papyros after registering service worker", { cause: e }),
-                );
-                if (confirm(this.i18n.t("Papyros.launch_error"))) {
+                if (
+                    this.reportLaunchFailure(e, "Error launching the runtime") &&
+                    confirm(this.i18n.t("Papyros.launch_error"))
+                ) {
                     return this.launch();
                 }
             }
         }
         return this;
+    }
+
+    /**
+     * Pass a failed launch to the error handler.
+     * @param {unknown} error What the launch rejected with
+     * @param {string} message Message for the PapyrosLaunchError wrapping it
+     * @return {boolean} Whether launching again can help
+     */
+    public reportLaunchFailure(error: unknown, message: string): boolean {
+        if (error instanceof UnsupportedBrowserError) {
+            this.errorHandler(error);
+            return false;
+        }
+        this.errorHandler(new PapyrosLaunchError(message, { cause: error }));
+        return true;
     }
 
     /**
