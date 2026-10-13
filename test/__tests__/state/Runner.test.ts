@@ -3,7 +3,7 @@ import { Papyros } from "../../../src/frontend/state/Papyros";
 import { ProgrammingLanguage } from "../../../src/ProgrammingLanguage";
 import { RunState } from "../../../src/frontend/state/Runner";
 import { RunMode } from "../../../src/backend/Backend";
-import { launchPapyros, settlePapyros, waitForOutput, waitForPapyrosReady } from "../../helpers";
+import { launchPapyros, settlePapyros, stdoutText, waitForOutput, waitForPapyrosReady } from "../../helpers";
 import { CODE_TAB, FriendlyError, HOST_TAB, OutputType } from "../../../src/frontend/state/InputOutput";
 import { BackendEventType } from "../../../src/communication/BackendEvent";
 import { parseData } from "../../../src/util/Util";
@@ -197,7 +197,7 @@ print("to stderr", file=sys.stderr)`;
         await waitForOutput(papyros);
         expect(papyros.runner.state).toBe(RunState.Ready);
         expect(papyros.runner.stateMessage).toMatch(/^Code executed in/);
-        expect(papyros.io.output[0].content).toBe("['1', '2', '3']\n");
+        expect(stdoutText(papyros)).toBe("['1', '2', '3']\n");
     });
 
     it("should lint bare import re", async () => {
@@ -296,7 +296,7 @@ print("to stderr", file=sys.stderr)`;
             loading.stop();
         }
         expect(loading.events).toContainEqual({ status: "loaded", modules: ["tabulate"] });
-        expect(papyros.io.output[0].content).toBe("tabulate\n");
+        expect(stdoutText(papyros)).toBe("tabulate\n");
     }, 60000);
 
     it("should still install a module after an earlier module in the same batch failed", async () => {
@@ -308,7 +308,7 @@ print("to stderr", file=sys.stderr)`;
         await papyros.runner.start();
         await waitForPapyrosReady(papyros, 60000);
         await waitForOutput(papyros);
-        expect(papyros.io.output[0].content).toBe("['1', '2']\n");
+        expect(stdoutText(papyros)).toBe("['1', '2']\n");
     }, 60000);
 
     it("should not rerun code when a missing module cannot be installed", async () => {

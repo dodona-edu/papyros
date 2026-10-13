@@ -77,7 +77,9 @@ describe.sequential("JSPI input transport", () => {
         await papyros.runner.start();
         await waitForPapyrosReady(papyros);
         expect(papyros.runner.state).toBe(RunState.Ready);
-        expect(papyros.runner.stateMessage).toMatch(/^Code executed in 2/);
+        // The sleep is timed in the worker and the run on the main thread, so allow for rounding
+        const seconds = Number(/^Code executed in ([\d.]+) s/.exec(papyros.runner.stateMessage)?.[1]);
+        expect(seconds).toBeGreaterThanOrEqual(1.9);
     });
 
     it("keeps tracing frames across a suspended input in debug mode", async () => {

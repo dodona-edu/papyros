@@ -1,7 +1,7 @@
 import { Papyros } from "../src/frontend/state/Papyros";
 import { RunState } from "../src/frontend/state/Runner";
 import { ProgrammingLanguage } from "../src/ProgrammingLanguage";
-import { InputMode } from "../src/frontend/state/InputOutput";
+import { InputMode, OutputType } from "../src/frontend/state/InputOutput";
 
 /**
  * Create and launch a Papyros for the given language. Selecting the language before
@@ -54,6 +54,16 @@ export async function wipeWorkspace(papyros: Papyros): Promise<void> {
     await papyros.runner.start();
     await waitForPapyrosReady(papyros, 60000);
     papyros.runner.code = code;
+}
+
+/**
+ * Everything a run printed to stdout. One print can arrive as several outputs, so compare the joined text.
+ */
+export function stdoutText(papyros: Papyros): string {
+    return papyros.io.output
+        .filter((o) => o.type === OutputType.stdout)
+        .map((o) => o.content)
+        .join("");
 }
 
 export async function waitForOutput(papyros: Papyros, count: number = 1, timeout = 2000): Promise<void> {
