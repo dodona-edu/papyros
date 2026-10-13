@@ -5,6 +5,22 @@ import {RunState} from "../../../src/frontend/state/Runner";
 import {RunMode} from "../../../src/backend/Backend";
 import {launchPapyros, settlePapyros, waitForOutput, waitForPapyrosReady} from "../../helpers";
 import {CODE_TAB, FriendlyError, HOST_TAB, OutputType} from "../../../src/frontend/state/InputOutput";
+import {BackendEventType} from "../../../src/communication/BackendEvent";
+import {parseData} from "../../../src/util/Util";
+
+type LoadingData = {status: string; modules: string[]};
+
+function recordLoadingEvents(papyros: Papyros): {
+    events: LoadingData[];
+    statuses: () => string[];
+    stop: () => void;
+} {
+    const events: LoadingData[] = [];
+    const stop = papyros.events.subscribe(BackendEventType.Loading, (e) =>
+        events.push(parseData(e.data, e.contentType)),
+    );
+    return {events, statuses: () => events.map((e) => e.status), stop};
+}
 
 // One Pyodide boot for the whole file: instances are isolated now, so the suite
 // shares a single Python instance and settles it between tests.
@@ -175,6 +191,107 @@ print("to stderr", file=sys.stderr)`;
         papyros.runner.code = "import this_module_truly_does_not_exist_xyz\n";
         const diagnostics = await papyros.runner.lintSource();
         expect(diagnostics.some((d) => /import-error|Unable to import/.test(d.message))).toBe(true);
+    }, 60000);
+
+    it("should retry a failed install without emitting loaded", async () => {
+        papyros.runner.code = "import papyros_missing_module\n";
+        const loading = recordLoadingEvents(papyros);
+        try {
+            const diagnostics = await papyros.runner.lintSource();
+            expect(diagnostics.some((d) => /import-error|Unable to import/.test(d.message))).toBe(true);
+            await papyros.runner.start();
+            await waitForPapyrosReady(papyros, 60000);
+            await waitForOutput(papyros);
+        } finally {
+            loading.stop();
+        }
+        // The editor only re-lints on loaded, so retrying a failed install cannot loop
+        expect(loading.statuses()).toContain("failed");
+        expect(loading.statuses()).not.toContain("loaded");
+        expect(papyros.runner.stateMessage).toMatch(/^Code executed in/);
+        const error = papyros.io.output[0].content as FriendlyError;
+        expect(error.name).toBe("ModuleNotFoundError");
+        expect(error.traceback).not.toMatch(/During handling/);
+    }, 60000);
+
+    it("should install a package that does not provide its module only once", async () => {
+        // The xxx package on PyPI installs, but does not provide a module xxx
+        papyros.runner.code = "import xxx\n";
+        const first = recordLoadingEvents(papyros);
+        let diagnostics: Awaited<ReturnType<typeof papyros.runner.lintSource>>;
+        try {
+            diagnostics = await papyros.runner.lintSource();
+        } finally {
+            first.stop();
+        }
+        expect(first.events).toContainEqual({status: "loaded", modules: ["xxx"]});
+        expect(diagnostics.some((d) => /import-error|Unable to import/.test(d.message))).toBe(true);
+
+        // The editor re-lints after every loaded event
+        const second = recordLoadingEvents(papyros);
+        try {
+            await papyros.runner.lintSource();
+            await papyros.runner.start();
+            await waitForPapyrosReady(papyros, 60000);
+            await waitForOutput(papyros);
+        } finally {
+            second.stop();
+        }
+        expect(second.events).toEqual([]);
+        expect(papyros.runner.stateMessage).toMatch(/^Code executed in/);
+        expect((papyros.io.output[0].content as FriendlyError).name).toBe("ModuleNotFoundError");
+    }, 60000);
+
+    it("should retry an install after it failed once", async () => {
+        // The next micropip.install fails, as it would on a network error
+        papyros.runner.code = [
+            "import micropip",
+            "__install = micropip.install",
+            "async def __fail_once(*args, **kwargs):",
+            "    micropip.install = __install",
+            "    raise ValueError('simulated network error')",
+            "micropip.install = __fail_once",
+        ].join("\n");
+        await papyros.runner.start();
+        await waitForPapyrosReady(papyros, 60000);
+
+        papyros.runner.code = "import tabulate\nprint(tabulate.__name__)";
+        const loading = recordLoadingEvents(papyros);
+        try {
+            await papyros.runner.lintSource();
+            expect(loading.statuses()).toContain("failed");
+            expect(loading.statuses()).not.toContain("loaded");
+
+            await papyros.runner.start();
+            await waitForPapyrosReady(papyros, 60000);
+            await waitForOutput(papyros);
+        } finally {
+            loading.stop();
+        }
+        expect(loading.events).toContainEqual({status: "loaded", modules: ["tabulate"]});
+        expect(papyros.io.output[0].content).toBe("tabulate\n");
+    }, 60000);
+
+    it("should still install a module after an earlier module in the same batch failed", async () => {
+        // The missing module sorts first, so its failed install ends the batch before regex
+        papyros.runner.code = "import aaaa_papyros_missing_first\nimport regex\n";
+        await papyros.runner.lintSource();
+
+        papyros.runner.code = "import regex\nprint(regex.findall(r'\\d', 'a1b2'))";
+        await papyros.runner.start();
+        await waitForPapyrosReady(papyros, 60000);
+        await waitForOutput(papyros);
+        expect(papyros.io.output[0].content).toBe("['1', '2']\n");
+    }, 60000);
+
+    it("should not rerun code when a missing module cannot be installed", async () => {
+        // math is importable, so installing it changes nothing and a rerun would loop
+        papyros.runner.code = "raise ModuleNotFoundError(\"No module named 'math'\", name='math')\n";
+        await papyros.runner.start();
+        await waitForPapyrosReady(papyros, 60000);
+        await waitForOutput(papyros);
+        expect(papyros.runner.stateMessage).toMatch(/^Code executed in/);
+        expect((papyros.io.output[0].content as FriendlyError).name).toBe("ModuleNotFoundError");
     }, 60000);
 
     it("should not flag stdlib modules astroid cannot build (os) as unimportable", async () => {

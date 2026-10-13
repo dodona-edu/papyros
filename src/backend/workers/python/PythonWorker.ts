@@ -104,10 +104,7 @@ export class PythonWorker extends Backend {
      */
     private async installImports(code: string): Promise<void> {
         const install = (): Promise<void> | undefined =>
-            this.papyros?.install_imports.callKwargs({
-                source_code: code,
-                ignore_missing: true,
-            });
+            this.papyros?.install_imports.callKwargs({ source_code: code });
         // Chain onto any in-flight install (ignoring its outcome) so this call's
         // imports are installed after it, without concurrent double-downloads.
         this.installPromise = (this.installPromise ?? Promise.resolve()).then(install, install);

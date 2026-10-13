@@ -14,7 +14,7 @@ import friendly_traceback
 from friendly_traceback.core import FriendlyTraceback
 from collections.abc import Awaitable
 from contextlib import contextmanager, redirect_stdout, redirect_stderr
-from pyodide_worker_runner import install_imports
+from pyodide_worker_runner import find_imports, find_imports_to_install, install_imports
 from pyodide.ffi import JsException, create_proxy
 from .util import to_py
 from .turtle_hook import TurtleImportHook
@@ -50,6 +50,8 @@ class Papyros(python_runner.PyodideRunner):
         self._original_open = builtins.open
         self._last_emitted_snapshot = None
         self._turtle_hook = TurtleImportHook()
+        # An install can succeed without making the module importable, so never repeat one
+        self._installed_imports = set()
         self._install_open_tracking()
         self.limit = limit
         self.override_globals()
@@ -146,17 +148,25 @@ class Papyros(python_runner.PyodideRunner):
         except ModuleNotFoundError:
             pass
 
-    async def install_imports(self, source_code, ignore_missing=True):
+    async def install_imports(self, source_code):
+        """Install missing modules that were not installed before, return whether anything was installed."""
+        imports = find_imports(source_code) if isinstance(source_code, str) else source_code
+        new_imports = [m for m in imports if m and m not in self._installed_imports]
+        modules = [entry["module"] for entry in find_imports_to_install(new_imports)]
+        if not modules:
+            return False
         try:
-            await install_imports(source_code, self.import_callback)
+            await install_imports(modules, self.import_callback)
         except (ValueError, JsException):
-            # Notify of import failure
-            self.callback("loading", data=dict(status="failed", modules=[]), contentType="application/json")
             # Occurs when trying to fetch PyPi files for misspelled imports
-            if not ignore_missing:
-                raise
+            self.callback("loading", data=dict(status="failed", modules=[]), contentType="application/json")
+            return False
+        return True
 
     def import_callback(self, typ, modules):
+        if typ == "loaded_one":
+            # Only finished installs count, so a failed one is retried
+            self._installed_imports.add(modules["module"])
         if typ in ["loading_one", "loaded_all"]:
             # Can ignore these types and focus on loading_all and loaded_one
             return
@@ -306,11 +316,8 @@ if __name__ == "{MODULE_NAME}":
             except ModuleNotFoundError as mnf:
                 # Try to automatically install missing dependencies
                 # As they sometimes might be hidden within libraries
-                try:
-                    await self.install_imports([mnf.name], ignore_missing=False)
-                except:
-                    # If the module is truly not findable, raise the error again
-                    raise mnf
+                if not await self.install_imports([mnf.name]):
+                    raise
                 return await self.run_async(source_code, mode=mode, top_level_await=top_level_await, max_steps=max_steps)
             except BaseException as e:
                 # Sometimes KeyboardInterrupt is caught by Pyodide and raised as a PythonError
