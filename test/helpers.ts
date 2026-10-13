@@ -1,7 +1,7 @@
 import { Papyros } from "../src/frontend/state/Papyros";
 import { RunState } from "../src/frontend/state/Runner";
 import { ProgrammingLanguage } from "../src/ProgrammingLanguage";
-import { InputMode } from "../src/frontend/state/InputOutput";
+import { InputMode, OutputType } from "../src/frontend/state/InputOutput";
 
 /**
  * Create and launch a Papyros for the given language. Selecting the language before
@@ -56,13 +56,23 @@ export async function wipeWorkspace(papyros: Papyros): Promise<void> {
     papyros.runner.code = code;
 }
 
+/**
+ * Everything a run printed to stdout. One print can arrive as several outputs, so compare the joined text.
+ */
+export function stdoutText(papyros: Papyros): string {
+    return papyros.io.output
+        .filter((o) => o.type === OutputType.stdout)
+        .map((o) => o.content)
+        .join("");
+}
+
 export async function waitForOutput(papyros: Papyros, count: number = 1, timeout = 2000): Promise<void> {
     const start = Date.now();
     while (papyros.io.output.length < count) {
         if (Date.now() - start > timeout) {
             throw new Error(`Timeout waiting for ${count} outputs`);
         }
-        await new Promise(r => setTimeout(r, 10));
+        await new Promise((r) => setTimeout(r, 10));
     }
 }
 
@@ -72,7 +82,7 @@ export async function waitForPapyrosReady(papyros: Papyros, timeout = 2000): Pro
         if (Date.now() - start > timeout) {
             throw new Error("Timeout waiting for runner to be ready");
         }
-        await new Promise(r => setTimeout(r, 10));
+        await new Promise((r) => setTimeout(r, 10));
     }
 }
 
@@ -97,7 +107,7 @@ export async function waitForInputReady(papyros: Papyros, timeout = 5000): Promi
         if (Date.now() - start > timeout) {
             return;
         }
-        await new Promise(r => setTimeout(r, 20));
+        await new Promise((r) => setTimeout(r, 20));
     }
 }
 
@@ -107,7 +117,7 @@ export async function waitForRunning(papyros: Papyros, timeout = 60000): Promise
         if (Date.now() - start > timeout) {
             throw new Error(`Timeout waiting for runner to run, still ${papyros.runner.state}`);
         }
-        await new Promise(r => setTimeout(r, 10));
+        await new Promise((r) => setTimeout(r, 10));
     }
 }
 
@@ -117,7 +127,7 @@ export async function waitForAwaitingInput(papyros: Papyros, timeout: number = 5
         if (Date.now() - start > timeout) {
             throw new Error("Timeout waiting for awaiting input");
         }
-        await new Promise(r => setTimeout(r, 10));
+        await new Promise((r) => setTimeout(r, 10));
     }
 }
 
@@ -127,7 +137,7 @@ export async function waitForFiles(papyros: Papyros, count: number = 1, timeout 
         if (Date.now() - start > timeout) {
             throw new Error(`Timeout waiting for ${count} files`);
         }
-        await new Promise(r => setTimeout(r, 10));
+        await new Promise((r) => setTimeout(r, 10));
     }
 }
 
@@ -137,6 +147,6 @@ export async function waitForSleeping(papyros: Papyros, timeout = 60000): Promis
         if (Date.now() - start > timeout) {
             throw new Error("Timeout waiting for the backend to sleep");
         }
-        await new Promise(r => setTimeout(r, 10));
+        await new Promise((r) => setTimeout(r, 10));
     }
 }

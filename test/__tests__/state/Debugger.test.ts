@@ -1,11 +1,18 @@
-import {describe, it, expect, beforeAll, beforeEach, afterAll} from "vitest";
-import {ProgrammingLanguage} from "../../../src/ProgrammingLanguage";
-import {Papyros} from "../../../src/frontend/state/Papyros";
-import {RunMode} from "../../../src/backend/Backend";
-import {RunState} from "../../../src/frontend/state/Runner";
-import {NonExceptionFrame} from "@dodona/trace-component/dist/trace_types";
-import {launchPapyros, settlePapyros, waitForInputReady, waitForOutput, waitForPapyrosReady, wipeWorkspace} from "../../helpers";
-import {BackendEvent, BackendEventType} from "../../../src/communication/BackendEvent";
+import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
+import { ProgrammingLanguage } from "../../../src/ProgrammingLanguage";
+import { Papyros } from "../../../src/frontend/state/Papyros";
+import { RunMode } from "../../../src/backend/Backend";
+import { RunState } from "../../../src/frontend/state/Runner";
+import { NonExceptionFrame } from "@dodona/trace-component/dist/trace_types";
+import {
+    launchPapyros,
+    settlePapyros,
+    waitForInputReady,
+    waitForOutput,
+    waitForPapyrosReady,
+    wipeWorkspace,
+} from "../../helpers";
+import { BackendEvent, BackendEventType } from "../../../src/communication/BackendEvent";
 
 // One Pyodide boot for the whole file: the tests share a Python instance. The frame
 // history records a file snapshot per run, so the workspace is wiped between tests.
@@ -32,7 +39,7 @@ y = 2
 z = x + y
 print(z)`;
         const runPromise = papyros.runner.start(RunMode.Debug);
-        await new Promise(r => setTimeout(r, 100));
+        await new Promise((r) => setTimeout(r, 100));
         expect(papyros.debugger.active).toBe(true);
         await runPromise;
         await waitForOutput(papyros);
@@ -49,19 +56,23 @@ print(z)`;
 input("input: ")
 print("world")
 z = 1 + 2`;
-        const unsubscribe = papyros.io.subscribe(() => papyros.io.awaitingInput ? papyros.io.provideInput("foo") : "", "awaitingInput");
+        const unsubscribe = papyros.io.subscribe(
+            () => (papyros.io.awaitingInput ? papyros.io.provideInput("foo") : ""),
+            "awaitingInput",
+        );
         await waitForInputReady(papyros);
         await papyros.runner.start(RunMode.Debug);
         await waitForOutput(papyros);
         // waitForOutput returns on the first output, but the assertions below need every frame
         await waitForPapyrosReady(papyros);
 
-        const firstNOutputs = (n: number): string => "".concat(
-            ...papyros.io.output
-                .slice(0, n)
-                .filter(o => o.type === "stdout")
-                .map(o => o.content as string)
-        );
+        const firstNOutputs = (n: number): string =>
+            "".concat(
+                ...papyros.io.output
+                    .slice(0, n)
+                    .filter((o) => o.type === "stdout")
+                    .map((o) => o.content as string),
+            );
 
         expect(papyros.debugger.trace.length).toBe(5);
         papyros.debugger.activeFrame = 0;
@@ -146,7 +157,6 @@ print(z)`;
         papyros.debugger.active = false;
         expect(papyros.debugger.trace.length).toBe(0);
     });
-
 });
 
 // The events a worker sends during a debug run, replayed by hand on an instance
@@ -189,7 +199,7 @@ describe("Debugger run boundaries", () => {
         papyros.events.publish(frame(1));
         papyros.events.publish(exception);
         papyros.events.publish(end);
-        expect(papyros.debugger.trace.map(f => f.event)).toEqual(["step_line", "uncaught_exception"]);
+        expect(papyros.debugger.trace.map((f) => f.event)).toEqual(["step_line", "uncaught_exception"]);
 
         // the next run starts while the previous one is still delivering its last frame
         papyros.debugger.onRunStart();
@@ -199,7 +209,7 @@ describe("Debugger run boundaries", () => {
         papyros.events.publish(start);
         papyros.events.publish(frame(1));
         papyros.events.publish(end);
-        expect(papyros.debugger.trace.map(f => f.event)).toEqual(["step_line"]);
+        expect(papyros.debugger.trace.map((f) => f.event)).toEqual(["step_line"]);
     });
 
     it("ignores anything sent after the uncaught_exception frame of a run", () => {
@@ -209,7 +219,7 @@ describe("Debugger run boundaries", () => {
         papyros.events.publish(exception);
         papyros.events.publish(frame(3));
         papyros.events.publish(end);
-        expect(papyros.debugger.trace.map(f => f.event)).toEqual(["step_line", "uncaught_exception"]);
+        expect(papyros.debugger.trace.map((f) => f.event)).toEqual(["step_line", "uncaught_exception"]);
     });
 
     it("keeps batching frames when the previous run ends after the next one started", () => {
@@ -220,6 +230,6 @@ describe("Debugger run boundaries", () => {
         papyros.events.publish(frame(1));
         expect(papyros.debugger.trace).toEqual([]);
         papyros.events.publish(end);
-        expect(papyros.debugger.trace.map(f => f.line)).toEqual([1]);
+        expect(papyros.debugger.trace.map((f) => f.line)).toEqual([1]);
     });
 });

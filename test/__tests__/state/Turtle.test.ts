@@ -1,18 +1,18 @@
-import {describe, expect, it, beforeAll, beforeEach, afterAll} from "vitest";
-import {Papyros} from "../../../src/frontend/state/Papyros";
-import {ProgrammingLanguage} from "../../../src/ProgrammingLanguage";
-import {RunState} from "../../../src/frontend/state/Runner";
-import {RunMode} from "../../../src/backend/Backend";
-import {OutputType} from "../../../src/frontend/state/InputOutput";
-import {buildTurtleSvg, TurtlePatch} from "../../../src/frontend/state/TurtleSvg";
-import {launchPapyros, settlePapyros, waitForOutput, waitForPapyrosReady} from "../../helpers";
+import { describe, expect, it, beforeAll, beforeEach, afterAll } from "vitest";
+import { Papyros } from "../../../src/frontend/state/Papyros";
+import { ProgrammingLanguage } from "../../../src/ProgrammingLanguage";
+import { RunState } from "../../../src/frontend/state/Runner";
+import { RunMode } from "../../../src/backend/Backend";
+import { OutputType } from "../../../src/frontend/state/InputOutput";
+import { buildTurtleSvg, TurtlePatch } from "../../../src/frontend/state/TurtleSvg";
+import { launchPapyros, settlePapyros, waitForOutput, waitForPapyrosReady } from "../../helpers";
 
 /**
  * The drawing is streamed as incremental patches, so the document a user sees
  * is the replay of every patch produced so far.
  */
 function turtlePatches(papyros: Papyros): TurtlePatch[] {
-    return papyros.io.output.filter(o => o.type === OutputType.turtle).map(o => o.content as TurtlePatch);
+    return papyros.io.output.filter((o) => o.type === OutputType.turtle).map((o) => o.content as TurtlePatch);
 }
 
 function turtleSvg(papyros: Papyros): string {
@@ -73,7 +73,7 @@ turtle.done()`;
         }
         // Only the first patch carries the document itself; the rest are increments.
         expect(patches[0].open).toBeDefined();
-        expect(patches.slice(1).every(p => p.open === undefined)).toBe(true);
+        expect(patches.slice(1).every((p) => p.open === undefined)).toBe(true);
     });
 
     it("honors turtle.setup() canvas dimensions", async () => {

@@ -4,7 +4,6 @@ import { ProgrammingLanguage } from "../../../src/ProgrammingLanguage";
 import { RunState } from "../../../src/frontend/state/Runner";
 import { PapyrosLaunchError, UnsupportedBrowserError } from "../../../src/frontend/state/PapyrosErrors";
 import { PyodideBootError } from "../../../src/sync/errors";
-// eslint-disable-next-line jest/no-mocks-import
 import { MockBackend } from "../../__mocks__/MockBackend";
 
 // Fails fast instead of letting a regression hit the suite timeout

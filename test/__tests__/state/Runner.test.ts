@@ -1,14 +1,14 @@
-import {describe, expect, it, beforeAll, beforeEach, afterAll} from "vitest";
-import {Papyros} from "../../../src/frontend/state/Papyros";
-import {ProgrammingLanguage} from "../../../src/ProgrammingLanguage";
-import {RunState} from "../../../src/frontend/state/Runner";
-import {RunMode} from "../../../src/backend/Backend";
-import {launchPapyros, settlePapyros, waitForOutput, waitForPapyrosReady} from "../../helpers";
-import {CODE_TAB, FriendlyError, HOST_TAB, OutputType} from "../../../src/frontend/state/InputOutput";
-import {BackendEventType} from "../../../src/communication/BackendEvent";
-import {parseData} from "../../../src/util/Util";
+import { describe, expect, it, beforeAll, beforeEach, afterAll } from "vitest";
+import { Papyros } from "../../../src/frontend/state/Papyros";
+import { ProgrammingLanguage } from "../../../src/ProgrammingLanguage";
+import { RunState } from "../../../src/frontend/state/Runner";
+import { RunMode } from "../../../src/backend/Backend";
+import { launchPapyros, settlePapyros, stdoutText, waitForOutput, waitForPapyrosReady } from "../../helpers";
+import { CODE_TAB, FriendlyError, HOST_TAB, OutputType } from "../../../src/frontend/state/InputOutput";
+import { BackendEventType } from "../../../src/communication/BackendEvent";
+import { parseData } from "../../../src/util/Util";
 
-type LoadingData = {status: string; modules: string[]};
+type LoadingData = { status: string; modules: string[] };
 
 function recordLoadingEvents(papyros: Papyros): {
     events: LoadingData[];
@@ -19,7 +19,7 @@ function recordLoadingEvents(papyros: Papyros): {
     const stop = papyros.events.subscribe(BackendEventType.Loading, (e) =>
         events.push(parseData(e.data, e.contentType)),
     );
-    return {events, statuses: () => events.map((e) => e.status), stop};
+    return { events, statuses: () => events.map((e) => e.status), stop };
 }
 
 // One Pyodide boot for the whole file: instances are isolated now, so the suite
@@ -53,7 +53,7 @@ const c = a + b;`;
     it("selects the editor tab a run asks for instead of the code", async () => {
         papyros.runner.code = "x = 1\ny = x + 1";
 
-        await papyros.runner.start(RunMode.Debug, {editorTab: HOST_TAB});
+        await papyros.runner.start(RunMode.Debug, { editorTab: HOST_TAB });
         await waitForPapyrosReady(papyros);
         expect(papyros.debugger.activeFrame).toBeDefined();
         expect(papyros.io.activeEditorTab).toBe(HOST_TAB);
@@ -97,7 +97,7 @@ const c = a + b;`;
     }, 180000);
 
     it("should run code that raises an error", async () => {
-        papyros.runner.code = "raise ValueError(\"test\")\n";
+        papyros.runner.code = 'raise ValueError("test")\n';
         await papyros.runner.start();
         await waitForPapyrosReady(papyros);
         await waitForOutput(papyros);
@@ -151,8 +151,8 @@ console.log("done");`;
         await runPromise;
         await waitForPapyrosReady(jsPapyros);
         expect(jsPapyros.io.output[0].type).toBe(OutputType.stderr);
-        expect(jsPapyros.io.output.slice(1).every(o => o.type === OutputType.stdout)).toBe(true);
-        expect(jsPapyros.io.output.map(o => o.content).join("")).toMatch(/started[\s\S]*done/);
+        expect(jsPapyros.io.output.slice(1).every((o) => o.type === OutputType.stdout)).toBe(true);
+        expect(jsPapyros.io.output.map((o) => o.content).join("")).toMatch(/started[\s\S]*done/);
         jsPapyros.dispose();
     });
 
@@ -165,7 +165,11 @@ print("to stderr", file=sys.stderr)`;
         await waitForOutput(papyros, 2);
         expect(papyros.runner.stateMessage).toMatch(/^Code executed in/);
         // output streams in chunks, so compare the text per stream
-        const text = (type: OutputType) => papyros.io.output.filter(o => o.type === type).map(o => o.content).join("");
+        const text = (type: OutputType): string =>
+            papyros.io.output
+                .filter((o) => o.type === type)
+                .map((o) => o.content)
+                .join("");
         expect(text(OutputType.stdout)).toBe("to stdout\n");
         expect(text(OutputType.stderr)).toBe("to stderr\n");
     });
@@ -175,7 +179,7 @@ print("to stderr", file=sys.stderr)`;
         const jsPapyros = await launchPapyros(ProgrammingLanguage.JavaScript);
         jsPapyros.runner.code = "while(true) {}";
         const runPromise = jsPapyros.runner.start();
-        await new Promise(r => setTimeout(r, 100));
+        await new Promise((r) => setTimeout(r, 100));
         expect(jsPapyros.runner.state).toBe(RunState.Running);
         await jsPapyros.runner.stop();
         await runPromise;
@@ -193,7 +197,7 @@ print("to stderr", file=sys.stderr)`;
         await waitForOutput(papyros);
         expect(papyros.runner.state).toBe(RunState.Ready);
         expect(papyros.runner.stateMessage).toMatch(/^Code executed in/);
-        expect(papyros.io.output[0].content).toBe("['1', '2', '3']\n");
+        expect(stdoutText(papyros)).toBe("['1', '2', '3']\n");
     });
 
     it("should lint bare import re", async () => {
@@ -247,7 +251,7 @@ print("to stderr", file=sys.stderr)`;
         } finally {
             first.stop();
         }
-        expect(first.events).toContainEqual({status: "loaded", modules: ["xxx"]});
+        expect(first.events).toContainEqual({ status: "loaded", modules: ["xxx"] });
         expect(diagnostics.some((d) => /import-error|Unable to import/.test(d.message))).toBe(true);
 
         // The editor re-lints after every loaded event
@@ -291,8 +295,8 @@ print("to stderr", file=sys.stderr)`;
         } finally {
             loading.stop();
         }
-        expect(loading.events).toContainEqual({status: "loaded", modules: ["tabulate"]});
-        expect(papyros.io.output[0].content).toBe("tabulate\n");
+        expect(loading.events).toContainEqual({ status: "loaded", modules: ["tabulate"] });
+        expect(stdoutText(papyros)).toBe("tabulate\n");
     }, 60000);
 
     it("should still install a module after an earlier module in the same batch failed", async () => {
@@ -304,7 +308,7 @@ print("to stderr", file=sys.stderr)`;
         await papyros.runner.start();
         await waitForPapyrosReady(papyros, 60000);
         await waitForOutput(papyros);
-        expect(papyros.io.output[0].content).toBe("['1', '2']\n");
+        expect(stdoutText(papyros)).toBe("['1', '2']\n");
     }, 60000);
 
     it("should not rerun code when a missing module cannot be installed", async () => {
@@ -399,7 +403,10 @@ print
     });
 
     it("can work with provided files in python", async () => {
-        await papyros.runner.provideFiles({"test.txt": "Hello from file!"}, {"readme.md": "https://raw.githubusercontent.com/dodona-edu/papyros/refs/heads/main/README.md"});
+        await papyros.runner.provideFiles(
+            { "test.txt": "Hello from file!" },
+            { "readme.md": "https://raw.githubusercontent.com/dodona-edu/papyros/refs/heads/main/README.md" },
+        );
         papyros.runner.code = `
 with open("test.txt", "r") as f:
     print(f.read())

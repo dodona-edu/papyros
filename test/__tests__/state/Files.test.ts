@@ -1,19 +1,32 @@
 import { Papyros } from "../../../src/frontend/state/Papyros";
 import { expect, it, describe, beforeAll, beforeEach, afterAll } from "vitest";
 import { ProgrammingLanguage } from "../../../src/ProgrammingLanguage";
-import { launchPapyros, settlePapyros, waitForFiles, waitForPapyrosReady, waitForInputReady, waitForOutput, waitForAwaitingInput, wipeWorkspace } from "../../helpers";
+import {
+    launchPapyros,
+    settlePapyros,
+    waitForFiles,
+    waitForPapyrosReady,
+    waitForInputReady,
+    waitForOutput,
+    waitForAwaitingInput,
+    wipeWorkspace,
+} from "../../helpers";
 import { isValidFileName } from "../../../src/util/Util";
 
 describe("isValidFileName", () => {
-    it.each(["../escape", "/absolute", "trailing/", "a//b", ".", "a/./b", "a/../b", ""])
-        ("rejects invalid name: %s", (name) => {
+    it.each(["../escape", "/absolute", "trailing/", "a//b", ".", "a/./b", "a/../b", ""])(
+        "rejects invalid name: %s",
+        (name) => {
             expect(isValidFileName(name)).toBe(false);
-        });
+        },
+    );
 
-    it.each(["file.py", "subdir/file.py", "a/b/c/file.py", ".gitignore", "file name.txt"])
-        ("accepts valid name: %s", (name) => {
+    it.each(["file.py", "subdir/file.py", "a/b/c/file.py", ".gitignore", "file name.txt"])(
+        "accepts valid name: %s",
+        (name) => {
             expect(isValidFileName(name)).toBe(true);
-        });
+        },
+    );
 });
 
 // One Pyodide boot for the whole file: the tests that execute code share a Python
