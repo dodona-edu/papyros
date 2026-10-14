@@ -20,6 +20,12 @@ export class EditorTabs extends PapyrosElement {
     private codeTabRef: Ref<HTMLButtonElement> = createRef();
     private hostTabRef: Ref<HTMLButtonElement> = createRef();
     private resizeObserver = new ResizeObserver(() => this.dispatchEvent(new Event("p-editor-tabs-resize")));
+    /**
+     * Observing an element again starts a new observation with a notification of its own. An update
+     * during a ResizeObserver callback (the code runner re-renders when it compacts the slotted
+     * buttons) would then leave that notification undelivered, so each child is observed once.
+     */
+    private observedChildren = new Set<Element>();
 
     /** The width the tabs need, which is more than they get while they scroll. */
     public get contentWidth(): number {
@@ -38,13 +44,20 @@ export class EditorTabs extends PapyrosElement {
 
     protected override updated(changedProperties: PropertyValues): void {
         super.updated(changedProperties);
-        this.resizeObserver.disconnect();
-        for (const child of Array.from(this.renderRoot.children)) this.resizeObserver.observe(child);
+        const children = new Set(Array.from(this.renderRoot.children));
+        for (const child of this.observedChildren) {
+            if (!children.has(child)) this.resizeObserver.unobserve(child);
+        }
+        for (const child of children) {
+            if (!this.observedChildren.has(child)) this.resizeObserver.observe(child);
+        }
+        this.observedChildren = children;
     }
 
     override disconnectedCallback(): void {
         super.disconnectedCallback();
         this.resizeObserver.disconnect();
+        this.observedChildren.clear();
     }
 
     static get styles(): CSSResult {

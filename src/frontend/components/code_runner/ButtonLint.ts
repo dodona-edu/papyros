@@ -66,7 +66,9 @@ export class ButtonLint extends PapyrosElement {
                 --md-outlined-icon-button-outline-color: var(--md-sys-color-outline-variant);
             }
 
-            .buttons {
+            .buttons,
+            .slotted,
+            .slotted > slot {
                 display: flex;
                 align-items: center;
                 gap: 0.5rem;
@@ -220,6 +222,13 @@ export class ButtonLint extends PapyrosElement {
     private wideRef: Ref<HTMLElement> = createRef();
     private narrowRef: Ref<HTMLElement> = createRef();
     private slottedRef: Ref<HTMLElement> = createRef();
+    /**
+     * Observed instead of slottedRef: it is one level deeper than the rows of run buttons, so
+     * when the host resizes its buttons for compact-slotted in response to a change of those
+     * rows, the browser still delivers that change in the same frame instead of reporting a
+     * ResizeObserver loop.
+     */
+    private slotRef: Ref<HTMLSlotElement> = createRef();
     private resizeObserver = new ResizeObserver(() => this.dispatchEvent(new Event("p-button-lint-resize")));
 
     /** The width of the slotted buttons as they are laid out now, or undefined while they are hidden. */
@@ -251,7 +260,7 @@ export class ButtonLint extends PapyrosElement {
 
     private observeSizes(): void {
         this.resizeObserver.disconnect();
-        for (const element of [this.wideRef.value, this.narrowRef.value, this.slottedRef.value]) {
+        for (const element of [this.wideRef.value, this.narrowRef.value, this.slotRef.value]) {
             if (element) this.resizeObserver.observe(element);
         }
     }
@@ -272,8 +281,8 @@ export class ButtonLint extends PapyrosElement {
                 ${specs.map((spec, i) => this.renderIconButton(spec, i === 0))}
             </div>
             <span class="divider" aria-hidden="true" ?hidden=${!showSlotted}></span>
-            <div class="buttons" ${ref(this.slottedRef)} ?hidden=${!showSlotted}>
-                <slot @slotchange=${this.onSlotChange}></slot>
+            <div class="slotted" ${ref(this.slottedRef)} ?hidden=${!showSlotted}>
+                <slot ${ref(this.slotRef)} @slotchange=${this.onSlotChange}></slot>
             </div>
         `;
     }

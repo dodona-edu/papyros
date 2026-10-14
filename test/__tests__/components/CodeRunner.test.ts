@@ -260,6 +260,35 @@ describe("CodeRunner", () => {
         style.remove();
     });
 
+    it("compacts the buttons for the debugger without a ResizeObserver loop", async () => {
+        const style = document.createElement("style");
+        style.textContent = `.copy { width: 150px; height: 32px; } p-code-runner[compact-slotted] .copy { width: 32px; }`;
+        document.head.append(style);
+        const element = await mountRunner(false);
+        element.insertAdjacentHTML("beforeend", `<button class="copy" slot="buttons">Copy to hand-in</button>`);
+        element.style.width = "300px";
+        await frames();
+        expect(element.hasAttribute("compact-slotted")).toBe(true);
+        const errors: string[] = [];
+        const onError = (e: ErrorEvent): void => {
+            errors.push(e.message);
+        };
+        window.addEventListener("error", onError);
+
+        // From a task of their own, like a click: the browser then measures the new buttons in the next frame.
+        for (const active of [true, false]) {
+            await new Promise((resolve) => setTimeout(resolve));
+            element.papyros.debugger.active = active;
+            await frames();
+        }
+        expect(element.hasAttribute("compact-slotted")).toBe(true);
+        expect(errors).toEqual([]);
+
+        window.removeEventListener("error", onError);
+        element.remove();
+        style.remove();
+    });
+
     it("labels Stop debugging in a narrow column where Run and Debug are icons", async () => {
         const element = await mountRunner(false);
         element.insertAdjacentHTML(
