@@ -29,7 +29,7 @@ export class ButtonLint extends PapyrosElement {
     @state()
     private hasSlotted = false;
 
-    /** Shows the run buttons as icon buttons. They always are below 30rem of code runner width. */
+    /** Shows the run buttons as icon buttons. The code runner sets it when the labelled buttons do not fit. */
     @property({ type: Boolean, reflect: true })
     compact = false;
 
@@ -86,20 +86,6 @@ export class ButtonLint extends PapyrosElement {
                 position: static;
                 width: auto;
                 visibility: visible;
-            }
-
-            @container papyros-code-runner (width < 30rem) {
-                .wide {
-                    position: absolute;
-                    width: max-content;
-                    visibility: hidden;
-                }
-
-                .narrow {
-                    position: static;
-                    width: auto;
-                    visibility: visible;
-                }
             }
 
             .divider {

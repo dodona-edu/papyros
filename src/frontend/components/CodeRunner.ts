@@ -31,6 +31,7 @@ export class CodeRunner extends PapyrosElement {
     /** The host can rewrite its label in place, which fires no slotchange. */
     private hostTabObserver = new MutationObserver(() => this.readHostTabLabel());
     private toolbarRef: Ref<HTMLDivElement> = createRef();
+    private toolbarWidthRef: Ref<HTMLDivElement> = createRef();
     private tabsRef: Ref<EditorTabs> = createRef();
     private buttonsRef: Ref<ButtonLint> = createRef();
     private toolbarObserver = new ResizeObserver(() => this.updateCompactButtons());
@@ -43,7 +44,7 @@ export class CodeRunner extends PapyrosElement {
 
     static get styles(): CSSResult {
         return css`
-            /* Named, so the run buttons and the host's slotted content can query its width. */
+            /* Named, so the host's slotted content can query its width. */
             :host {
                 width: 100%;
                 display: flex;
@@ -77,9 +78,19 @@ export class CodeRunner extends PapyrosElement {
             }
 
             .toolbar {
+                position: relative;
                 display: flex;
                 flex-wrap: wrap;
                 flex-shrink: 0;
+            }
+
+            /* Observed for the width of the toolbar. It has no height, so compacting the buttons does
+               not resize it when that unwraps the toolbar; observing the toolbar itself made a
+               ResizeObserver loop. */
+            .toolbar-width {
+                position: absolute;
+                inset-inline: 0;
+                height: 0;
             }
 
             /* Grows with a taller button row next to it, so the two hairlines stay level. */
@@ -239,12 +250,12 @@ export class CodeRunner extends PapyrosElement {
         document.addEventListener("keydown", this.onKeyDown, true);
         if (this.hasUpdated) {
             this.observeHostTabLabel();
-            if (this.toolbarRef.value) this.toolbarObserver.observe(this.toolbarRef.value);
+            if (this.toolbarWidthRef.value) this.toolbarObserver.observe(this.toolbarWidthRef.value);
         }
     }
 
     protected override firstUpdated(): void {
-        if (this.toolbarRef.value) this.toolbarObserver.observe(this.toolbarRef.value);
+        if (this.toolbarWidthRef.value) this.toolbarObserver.observe(this.toolbarWidthRef.value);
         const dropZone = this.dropZoneRef.value;
         if (!dropZone) return;
         // Use capture phase so we intercept before CodeMirror handles the drop
@@ -379,6 +390,7 @@ export class CodeRunner extends PapyrosElement {
             <div ${ref(this.dropZoneRef)} class="drop-zone ${this.dragOver ? "drag-over" : ""}">
                 <div class="pane ${this.showEscapeHint && activeTab === CODE_TAB ? "show-escape-hint" : ""}">
                     <div class="toolbar" ${ref(this.toolbarRef)}>
+                        <div class="toolbar-width" ${ref(this.toolbarWidthRef)}></div>
                         <p-editor-tabs
                             ${ref(this.tabsRef)}
                             @p-editor-tabs-resize=${this.updateCompactButtons}
