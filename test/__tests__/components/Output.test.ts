@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { Papyros } from "../../../src/frontend/state/Papyros";
-import { OutputEntry, OutputType, TURTLE_TAB } from "../../../src/frontend/state/InputOutput";
+import { OUTPUT_TAB, OutputEntry, OutputType, TURTLE_TAB } from "../../../src/frontend/state/InputOutput";
 import type { Output } from "../../../src/frontend/components/Output";
 import "../../../src/frontend/components/Output";
 
@@ -28,6 +28,12 @@ function lines(count: number): OutputEntry[] {
 
 function nextFrame(): Promise<void> {
     return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+}
+
+/** Lets the panel finish resizing into a new tab. */
+async function settle(): Promise<void> {
+    await nextFrame();
+    element.getAnimations().forEach((animation) => animation.finish());
 }
 
 /** Scrolls up the way a reader does, after the panel has settled at the end. */
@@ -151,8 +157,27 @@ describe("Output", () => {
         element.papyros.io.hasTurtleOutput = true;
         element.papyros.io.selectOutputTab(TURTLE_TAB);
         await element.updateComplete;
+        // The panel resizes into the new tab; the turtle height is where it comes to rest.
+        await settle();
 
         expect(element.getAttribute("active-tab")).toBe(TURTLE_TAB);
         expect(element.getBoundingClientRect().height).toBe(380);
+    });
+
+    it("resizes from the turtle height back to the text height", async () => {
+        await mount();
+        const textHeight = element.getBoundingClientRect().height;
+        element.papyros.io.hasTurtleOutput = true;
+        element.papyros.io.selectOutputTab(TURTLE_TAB);
+        await element.updateComplete;
+        await settle();
+
+        element.papyros.io.selectOutputTab(OUTPUT_TAB);
+        await element.updateComplete;
+        // The Text tab's max-height must not cut the turtle height short before the animation starts.
+        expect(element.getBoundingClientRect().height).toBe(380);
+
+        await settle();
+        expect(element.getBoundingClientRect().height).toBe(textHeight);
     });
 });

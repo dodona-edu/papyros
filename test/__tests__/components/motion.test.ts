@@ -37,6 +37,29 @@ describe("HeightTransition", () => {
         element.remove();
     });
 
+    it("starts from the captured height when the new content brings a lower max-height", async () => {
+        const { element, setContent } = host(300);
+        const transition = new HeightTransition(element);
+        const style = document.createElement("style");
+        style.textContent = ".capped { max-height: 120px; }";
+        document.head.append(style);
+
+        transition.capture();
+        // The way p-output caps its Text tab but not its Turtle tab.
+        element.classList.add("capped");
+        setContent(200);
+        expect(element.getBoundingClientRect().height).toBeCloseTo(300, 0);
+
+        await transition.play();
+        const animation = element.getAnimations()[0];
+        expect(element.getBoundingClientRect().height).toBeCloseTo(300, 0);
+
+        animation.finish();
+        expect(element.getBoundingClientRect().height).toBeCloseTo(120, 0);
+        element.remove();
+        style.remove();
+    });
+
     it("waits a frame before measuring, so a child that lays out late is not undershot", async () => {
         const { element, setContent } = host(100);
         const transition = new HeightTransition(element);
@@ -122,7 +145,14 @@ describe("HeightTransition", () => {
 
         expect(element.getAnimations()).toHaveLength(0);
         expect(element.style.height).toBe("");
+        expect(element.style.maxHeight).toBe("");
         expect(element.getBoundingClientRect().height).toBeCloseTo(300, 0);
+
+        // Cancelled while the next swap holds the height, before it plays.
+        transition.capture();
+        transition.cancel();
+        expect(element.style.height).toBe("");
+        expect(element.style.maxHeight).toBe("");
         element.remove();
     });
 });
