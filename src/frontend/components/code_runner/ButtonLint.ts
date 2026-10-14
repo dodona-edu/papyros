@@ -29,7 +29,7 @@ export class ButtonLint extends PapyrosElement {
     @state()
     private hasSlotted = false;
 
-    /** Shows the run buttons as icon buttons. They always are below 30rem of code runner width. */
+    /** Shows the run buttons as icon buttons. Several of them always are below 30rem of code runner width. */
     @property({ type: Boolean, reflect: true })
     compact = false;
 
@@ -88,14 +88,15 @@ export class ButtonLint extends PapyrosElement {
                 visibility: visible;
             }
 
+            /* A single button, such as Stop debugging, keeps its label for as long as it fits. */
             @container papyros-code-runner (width < 30rem) {
-                .wide {
+                .wide.several {
                     position: absolute;
                     width: max-content;
                     visibility: hidden;
                 }
 
-                .narrow {
+                .narrow.several {
                     position: static;
                     width: auto;
                     visibility: visible;
@@ -278,11 +279,12 @@ export class ButtonLint extends PapyrosElement {
         // While debugging, Stop debugging is the only button in the row.
         const showSlotted = this.hasSlotted && !this.papyros.debugger.active;
         const specs = this.buttonSpecs;
+        const several = specs.length > 1 ? "several" : "";
         return html`
-            <div class="buttons wide" ${ref(this.wideRef)}>
+            <div class="buttons wide ${several}" ${ref(this.wideRef)}>
                 ${specs.map((spec, i) => this.renderButton(spec, i === 0))}
             </div>
-            <div class="buttons narrow" ${ref(this.narrowRef)}>
+            <div class="buttons narrow ${several}" ${ref(this.narrowRef)}>
                 ${specs.map((spec, i) => this.renderIconButton(spec, i === 0))}
             </div>
             <span class="divider" aria-hidden="true" ?hidden=${!showSlotted}></span>

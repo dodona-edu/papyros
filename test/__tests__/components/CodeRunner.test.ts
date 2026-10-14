@@ -254,6 +254,32 @@ describe("CodeRunner", () => {
         style.remove();
     });
 
+    it("labels Stop debugging in a narrow column where Run and Debug are icons", async () => {
+        const element = await mountRunner(false);
+        element.insertAdjacentHTML(
+            "beforeend",
+            `<button slot="buttons" style="width: 150px; height: 32px">Copy to hand-in</button>`,
+        );
+        element.style.width = "446px";
+        await frames();
+        expect(shownButtons(element).map((b) => b.localName)).toEqual([
+            "md-filled-icon-button",
+            "md-outlined-icon-button",
+        ]);
+
+        element.papyros.debugger.active = true;
+        await frames();
+        expect(shownButtons(element).map((b) => b.localName)).toEqual(["md-outlined-button"]);
+
+        element.papyros.debugger.active = false;
+        await frames();
+        expect(shownButtons(element).map((b) => b.localName)).toEqual([
+            "md-filled-icon-button",
+            "md-outlined-icon-button",
+        ]);
+        element.remove();
+    });
+
     it("keeps the run buttons labelled on their own row when icons would not fit either", async () => {
         const element = await mountRunner(false);
         for (let i = 0; i < 8; i++) element.papyros.io.addFile(`data_file_${i}.txt`, "hello");
