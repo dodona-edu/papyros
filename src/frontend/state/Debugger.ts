@@ -56,9 +56,19 @@ export class Debugger extends State {
     private _active: boolean = false;
     @stateProperty
     private fileHistory: FileEntry[][] = [];
+    /**
+     * Whether debugging was ever started on this instance. Unlike the trace, it survives
+     * a stop, so the debugger pane can say that the debugger stopped, even when the host
+     * created its element anew.
+     */
+    @stateProperty
+    public hasDebugged: boolean = false;
 
     public set active(active: boolean) {
         this._active = active;
+        if (active) {
+            this.hasDebugged = true;
+        }
 
         this.reset();
     }
