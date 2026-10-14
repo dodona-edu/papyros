@@ -114,7 +114,14 @@ export class Debugger extends State {
             }
         });
         for (const type of [BackendEventType.End, BackendEventType.Interrupt]) {
-            this.papyros.events.subscribe(type, () => this.onRunEnd());
+            this.papyros.events.subscribe(type, () => {
+                // the end of the previous run can still arrive after the next one started
+                if (this.awaitingWorkerStart) {
+                    this.onRunEnd();
+                } else {
+                    this.onRunOver();
+                }
+            });
         }
     }
 
@@ -143,6 +150,19 @@ export class Debugger extends State {
     public onRunEnd(): void {
         this.runActive = false;
         this.flushFrames();
+    }
+
+    /**
+     * Called when a run is over: through the bus when the worker reports its end, and
+     * by the Runner when it stopped or replaced the worker. A debug run without a
+     * single step leaves nothing to step through, so it ends debug mode, and the code
+     * bar, the debugger pane and the host all leave debug mode together.
+     */
+    public onRunOver(): void {
+        this.onRunEnd();
+        if (this._active && this.trace.length === 0) {
+            this.active = false;
+        }
     }
 
     private flushFrames(): void {
