@@ -153,6 +153,23 @@ describe("Debugger", () => {
         expect(debugButton().hasAttribute("disabled")).toBe(true);
     });
 
+    it("keeps focus in the pane from its Debug button to the first step control", async () => {
+        await mount(false);
+        debugButton().focus();
+        expect(element.shadowRoot!.activeElement).toBe(debugButton());
+
+        element.papyros.debugger.active = true;
+        element.papyros.runner.setState(RunState.Loading);
+        await element.updateComplete;
+        await nextFrame();
+        expect(element.shadowRoot!.activeElement).toBe(element.shadowRoot!.querySelector(".body"));
+
+        element.papyros.debugger.trace = [frame(1), frame(2)];
+        await element.updateComplete;
+        await nextFrame();
+        expect(element.shadowRoot!.activeElement).toBe(stepper().querySelector("md-icon-button"));
+    });
+
     it("shows a named progress bar until the first step of a debug run arrives", async () => {
         await mount(false);
         element.papyros.debugger.active = true;

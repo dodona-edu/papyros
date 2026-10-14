@@ -177,10 +177,18 @@ export class Debugger extends PapyrosElement {
     private renderedView: View | undefined = undefined;
     /** Whether this pane has shown a debug run, so its empty state can say that the debugger stopped. */
     private hasDebugged = false;
+    /**
+     * Whether focus was inside this pane right before the view changes, so focus only
+     * follows into the new view when the user was working in the pane, never when
+     * e.g. typing in the editor.
+     */
+    private shouldRefocus = false;
 
     protected override willUpdate(changedProperties: PropertyValues): void {
         super.willUpdate(changedProperties);
         if (this.papyros.debugger.active) this.hasDebugged = true;
+        const focusWasInside = this.shadowRoot?.activeElement != null;
+        this.shouldRefocus = focusWasInside && this.view !== this.renderedView;
     }
 
     /**
@@ -195,6 +203,20 @@ export class Debugger extends PapyrosElement {
             if (region) fadeIn(region);
         }
         this.renderedView = view;
+        if (this.shouldRefocus) {
+            // The view was just replaced, with the focused element in it: a freshly
+            // minted md-* element renders its focusable internals a microtask later.
+            requestAnimationFrame(() => this.focusView());
+        }
+    }
+
+    /**
+     * Focuses the first control of the current view: the first step button, the Debug
+     * button, or the pane itself while a debug run has no steps yet.
+     */
+    private focusView(): void {
+        const control = this.renderRoot.querySelector<HTMLElement>(".stepper md-icon-button, md-outlined-button");
+        (control ?? this.renderRoot.querySelector<HTMLElement>(".body"))?.focus();
     }
 
     private get view(): View {
@@ -319,7 +341,8 @@ export class Debugger extends PapyrosElement {
     protected override render(): TemplateResult {
         const view = this.view;
         return html`
-            <div class="body">
+            <!-- Out of the tab order: it only holds focus while a view has no controls of its own. -->
+            <div class="body" tabindex="-1">
                 ${
                     view === "trace"
                         ? this.renderTrace()
