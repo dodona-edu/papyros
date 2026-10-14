@@ -191,13 +191,11 @@ describe("CodeRunner", () => {
         element.remove();
     });
 
-    it("shows the run buttons as named icon buttons in a narrow column", async () => {
+    it("shows the run buttons as named icon buttons when their labels do not fit", async () => {
         const element = await mountRunner(false);
-        element.style.width = "400px";
-        const lint = element.shadowRoot!.querySelector("p-button-lint")!;
-        const shown = Array.from(lint.shadowRoot!.querySelectorAll<HTMLElement>(".buttons > *")).filter((b) =>
-            b.checkVisibility({ visibilityProperty: true }),
-        );
+        element.style.width = "240px";
+        await frames();
+        const shown = shownButtons(element);
         expect(shown.map((b) => b.localName)).toEqual(["md-filled-icon-button", "md-outlined-icon-button"]);
         expect(shown.map((b) => b.getAttribute("aria-label"))).toEqual(["Run", "Debug"]);
         expect(shown.map((b) => b.title)).toEqual(["Run", "Debug"]);
@@ -207,6 +205,14 @@ describe("CodeRunner", () => {
     it("keeps the run buttons labelled while they fit next to the tabs", async () => {
         const element = await mountRunner(false);
         element.style.width = "600px";
+        await frames();
+        expect(shownButtons(element).map((b) => b.localName)).toEqual(["md-filled-button", "md-outlined-button"]);
+        element.remove();
+    });
+
+    it("keeps the run buttons labelled in a narrow column while they fit", async () => {
+        const element = await mountRunner(false);
+        element.style.width = "358px";
         await frames();
         expect(shownButtons(element).map((b) => b.localName)).toEqual(["md-filled-button", "md-outlined-button"]);
         element.remove();
@@ -258,7 +264,7 @@ describe("CodeRunner", () => {
         const element = await mountRunner(false);
         element.insertAdjacentHTML(
             "beforeend",
-            `<button slot="buttons" style="width: 150px; height: 32px">Copy to hand-in</button>`,
+            `<button slot="buttons" style="width: 200px; height: 32px">Copy to hand-in</button>`,
         );
         element.style.width = "446px";
         await frames();
@@ -294,12 +300,10 @@ describe("CodeRunner", () => {
     it("gives each run mode its own icon in a narrow column", async () => {
         const element = await mountRunner(false);
         element.papyros.runner.runModes = [RunMode.Debug, RunMode.Doctest];
-        element.style.width = "400px";
-        const lint = element.shadowRoot!.querySelector("p-button-lint")!;
-        await (lint as unknown as { updateComplete: Promise<unknown> }).updateComplete;
-        const shown = Array.from(lint.shadowRoot!.querySelectorAll<HTMLElement>(".buttons > *")).filter((b) =>
-            b.checkVisibility({ visibilityProperty: true }),
-        );
+        element.style.width = "300px";
+        await buttons(element).updateComplete;
+        await frames();
+        const shown = shownButtons(element);
         expect(shown.map((b) => b.title)).toEqual(["Run", "Debug", "Run doctests"]);
         const icons = shown.map((b) => b.querySelector("path")!.getAttribute("d"));
         expect(new Set(icons).size).toBe(icons.length);

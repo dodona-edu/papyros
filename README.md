@@ -233,7 +233,7 @@ The codebase organized into clear layers:
 A [CodeMirror 6](https://codemirror.net/6/) editor to edit, run, and debug code.
 The Run, Debug and Stop buttons sit in the tab bar, after the file tabs.
 Additional buttons can be added via the `buttons` slot; they follow the run buttons after a divider and are hidden while debugging. The run buttons are 32px high, so slotted buttons of the same height keep the bar at 44px.
-The bar stays on one row as long as it can. When the tabs and the buttons do not fit, the run buttons turn into 32px icon buttons, named by an `aria-label` and a tooltip; below a width of 30rem they always are, unless there is only one of them, such as Stop or Stop debugging.
+The bar stays on one row as long as it can. When the tabs and the buttons do not fit, the run buttons turn into 32px icon buttons, named by an `aria-label` and a tooltip. This depends only on the room the buttons need, not on a fixed width, so they keep their labels in a narrow column when they fit.
 When that is not enough either, `p-code-runner` sets the `compact-slotted` attribute on itself, and the host can compact its slotted buttons:
 
 ```css

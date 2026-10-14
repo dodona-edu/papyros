@@ -43,7 +43,7 @@ export class CodeRunner extends PapyrosElement {
 
     static get styles(): CSSResult {
         return css`
-            /* Named, so the run buttons and the host's slotted content can query its width. */
+            /* Named, so the host's slotted content can query its width. */
             :host {
                 width: 100%;
                 display: flex;
