@@ -10,7 +10,7 @@ import { customElement } from "lit/decorators.js";
 import { RunMode } from "../../backend/Backend";
 import { RunState } from "../state/Runner";
 import { PapyrosElement } from "./PapyrosElement";
-import { fadeIn } from "./motion";
+import { fadeIn, prefersReducedMotion } from "./motion";
 
 /** What the pane shows: an invitation to debug, a debug run that has no steps yet, or its trace. */
 type View = "empty" | "starting" | "trace";
@@ -315,12 +315,19 @@ export class Debugger extends PapyrosElement {
 
     private renderStarting(): TemplateResult {
         const label = this.t("Papyros.debugger_preparing");
+        // The indeterminate bar cannot be stilled from outside its shadow root, so it is
+        // left out for people who ask for reduced motion, and the text names the state.
+        const showProgress = !prefersReducedMotion();
         return html`
-            <md-linear-progress indeterminate aria-label=${label}></md-linear-progress>
+            ${
+                showProgress
+                    ? html`<md-linear-progress indeterminate aria-label=${label}></md-linear-progress>`
+                    : nothing
+            }
             <div class="message">
                 <div class="message-content">
-                    <!-- The progress bar is named after this text, so it is not read a second time. -->
-                    <p class="message-text" aria-hidden="true">${label}</p>
+                    <!-- A progress bar is named after this text, so it is not read a second time. -->
+                    <p class="message-text" aria-hidden=${showProgress ? "true" : nothing}>${label}</p>
                 </div>
             </div>
         `;

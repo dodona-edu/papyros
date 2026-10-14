@@ -5,7 +5,11 @@ import { Papyros } from "../../../src/frontend/state/Papyros";
 import { RunState } from "../../../src/frontend/state/Runner";
 import { RunMode } from "../../../src/backend/Backend";
 import type { Debugger } from "../../../src/frontend/components/Debugger";
+import { prefersReducedMotion } from "../../../src/frontend/components/motion";
 import "../../../src/frontend/components/Debugger";
+
+// Spies that call through, so a single test can ask for reduced motion
+vi.mock("../../../src/frontend/components/motion", { spy: true });
 
 function frame(line: number): Frame {
     return {
@@ -183,5 +187,19 @@ describe("Debugger", () => {
         await element.updateComplete;
         expect(element.shadowRoot!.querySelector("md-linear-progress")).toBeNull();
         expect(trace()).not.toBeNull();
+    });
+
+    it("leaves the progress bar out under reduced motion, and lets its text name the state", async () => {
+        vi.mocked(prefersReducedMotion).mockReturnValue(true);
+        await mount(false);
+        element.papyros.debugger.active = true;
+        element.papyros.runner.setState(RunState.Loading);
+        await element.updateComplete;
+
+        expect(element.shadowRoot!.querySelector("md-linear-progress")).toBeNull();
+        const text = element.shadowRoot!.querySelector(".message-text")!;
+        expect(text.textContent!.trim()).toBe("Preparing the debugger\u2026");
+        expect(text.hasAttribute("aria-hidden")).toBe(false);
+        vi.mocked(prefersReducedMotion).mockRestore();
     });
 });
