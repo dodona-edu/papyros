@@ -136,6 +136,12 @@ export class Runner extends State {
     @stateProperty
     public state: RunState = RunState.Ready;
     /**
+     * Whether a run can be started now: none is in progress, and the backend did not fail to load
+     */
+    public get canStart(): boolean {
+        return this.state === RunState.Ready;
+    }
+    /**
      * An explanatory message about the current state
      */
     @stateProperty

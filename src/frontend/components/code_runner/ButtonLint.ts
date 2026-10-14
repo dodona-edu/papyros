@@ -165,7 +165,7 @@ export class ButtonLint extends PapyrosElement {
         if (state === RunState.Ready || state === RunState.Error) {
             // Without a backend there is nothing to run or stop, so the run
             // controls stay in place but inert
-            const disabled = state === RunState.Error;
+            const disabled = !this.papyros.runner.canStart;
             if (this.papyros.debugger.active) {
                 return [
                     {
