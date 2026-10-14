@@ -2,6 +2,7 @@ import { customElement } from "lit/decorators.js";
 import { PapyrosElement } from "../PapyrosElement";
 import { RunState } from "../../state/Runner";
 import { css, CSSResult, html, nothing, PropertyValues, TemplateResult } from "lit";
+import { prefersReducedMotion } from "../motion";
 import "@material/web/progress/circular-progress";
 
 @customElement("p-run-state")
@@ -43,7 +44,13 @@ export class RunStateEl extends PapyrosElement {
 
     protected override render(): TemplateResult {
         const message = this.papyros.runner.stateMessage;
-        const showSpinner = !!message && ![RunState.Ready, RunState.Error].includes(this.papyros.runner.state);
+        // The spinner cannot be stilled from outside its shadow root, so it is left out
+        // for people who ask for reduced motion. It is hidden from assistive technology
+        // either way: the message names the state.
+        const showSpinner =
+            !!message &&
+            ![RunState.Ready, RunState.Error].includes(this.papyros.runner.state) &&
+            !prefersReducedMotion();
 
         return html`
             <div role="status" aria-live="polite">
