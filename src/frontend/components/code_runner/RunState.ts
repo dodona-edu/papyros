@@ -2,7 +2,7 @@ import { customElement } from "lit/decorators.js";
 import { PapyrosElement } from "../PapyrosElement";
 import { RunState } from "../../state/Runner";
 import { css, CSSResult, html, nothing, PropertyValues, TemplateResult } from "lit";
-import { prefersReducedMotion } from "../motion";
+import { prefersReducedMotion, ReducedMotionController } from "../motion";
 import "@material/web/progress/circular-progress";
 
 @customElement("p-run-state")
@@ -34,6 +34,9 @@ export class RunStateEl extends PapyrosElement {
             }
         `;
     }
+
+    /** The spinner is left out under reduced motion. */
+    private reducedMotion = new ReducedMotionController(this);
 
     // Always mounted so the aria-live region exists before content changes,
     // otherwise screen readers can miss the first announcement.

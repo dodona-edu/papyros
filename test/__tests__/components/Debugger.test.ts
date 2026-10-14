@@ -7,6 +7,7 @@ import { RunMode } from "../../../src/backend/Backend";
 import type { Debugger } from "../../../src/frontend/components/Debugger";
 import { prefersReducedMotion } from "../../../src/frontend/components/motion";
 import "../../../src/frontend/components/Debugger";
+import { emulateReducedMotion } from "../../helpers";
 
 // Spies that call through, so a single test can ask for reduced motion
 vi.mock("../../../src/frontend/components/motion", { spy: true });
@@ -69,6 +70,7 @@ function nextFrame(): Promise<void> {
 afterEach(async () => {
     await settle();
     element.remove();
+    await emulateReducedMotion(false);
 });
 
 describe("Debugger", () => {
@@ -201,5 +203,20 @@ describe("Debugger", () => {
         expect(text.textContent!.trim()).toBe("Preparing the debugger\u2026");
         expect(text.hasAttribute("aria-hidden")).toBe(false);
         vi.mocked(prefersReducedMotion).mockRestore();
+    });
+
+    it("follows a change of the reduced-motion preference while the debugger starts", async () => {
+        await mount(false);
+        element.papyros.debugger.active = true;
+        element.papyros.runner.setState(RunState.Loading);
+        await element.updateComplete;
+        const progress = (): Element | null => element.shadowRoot!.querySelector("md-linear-progress");
+        expect(progress()).not.toBeNull();
+
+        await emulateReducedMotion(true);
+        await expect.poll(progress).toBeNull();
+
+        await emulateReducedMotion(false);
+        await expect.poll(progress).not.toBeNull();
     });
 });

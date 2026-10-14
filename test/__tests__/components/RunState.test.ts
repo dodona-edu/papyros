@@ -4,6 +4,7 @@ import { RunState } from "../../../src/frontend/state/Runner";
 import { prefersReducedMotion } from "../../../src/frontend/components/motion";
 import type { RunStateEl } from "../../../src/frontend/components/code_runner/RunState";
 import "../../../src/frontend/components/code_runner/RunState";
+import { emulateReducedMotion } from "../../helpers";
 
 // Spies that call through, so a single test can ask for reduced motion
 vi.mock("../../../src/frontend/components/motion", { spy: true });
@@ -19,9 +20,14 @@ async function mountRunning(): Promise<RunStateEl> {
     return element;
 }
 
-afterEach(() => {
+function spinner(): Element | null {
+    return element.shadowRoot!.querySelector("md-circular-progress");
+}
+
+afterEach(async () => {
     element.remove();
     vi.mocked(prefersReducedMotion).mockRestore();
+    await emulateReducedMotion(false);
 });
 
 describe("RunState", () => {
@@ -36,5 +42,16 @@ describe("RunState", () => {
         await mountRunning();
         expect(element.shadowRoot!.querySelector("md-circular-progress")).toBeNull();
         expect(element.shadowRoot!.querySelector('[role="status"] .message')!.textContent).toBe("Running");
+    });
+
+    it("follows a change of the preference during a run", async () => {
+        await mountRunning();
+        expect(spinner()).not.toBeNull();
+
+        await emulateReducedMotion(true);
+        await expect.poll(spinner).toBeNull();
+
+        await emulateReducedMotion(false);
+        await expect.poll(spinner).not.toBeNull();
     });
 });

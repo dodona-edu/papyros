@@ -10,7 +10,7 @@ import { customElement } from "lit/decorators.js";
 import { RunMode } from "../../backend/Backend";
 import { RunState } from "../state/Runner";
 import { PapyrosElement } from "./PapyrosElement";
-import { fadeIn, prefersReducedMotion } from "./motion";
+import { fadeIn, prefersReducedMotion, ReducedMotionController } from "./motion";
 
 /** What the pane shows: an invitation to debug, a debug run that has no steps yet, or its trace. */
 type View = "empty" | "starting" | "trace";
@@ -174,6 +174,8 @@ export class Debugger extends PapyrosElement {
         `;
     }
 
+    /** The starting view leaves its progress bar out under reduced motion. */
+    private reducedMotion = new ReducedMotionController(this);
     private renderedView: View | undefined = undefined;
     /** Whether this pane has shown a debug run, so its empty state can say that the debugger stopped. */
     private hasDebugged = false;

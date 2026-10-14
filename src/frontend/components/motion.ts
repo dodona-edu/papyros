@@ -1,3 +1,5 @@
+import type { ReactiveController, ReactiveControllerHost } from "lit";
+
 /**
  * Motion that answers something the user just did. Everything here is a no-op for
  * people who ask for reduced motion, so the change still happens, just instantly.
@@ -6,6 +8,27 @@ const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
 export function prefersReducedMotion(): boolean {
     return reducedMotion.matches;
+}
+
+/**
+ * Renders its host again when the reduced-motion preference changes. For components
+ * that leave an endless animation out under reduced motion: they decide while
+ * rendering, and a change of the preference alone would not render them again.
+ */
+export class ReducedMotionController implements ReactiveController {
+    constructor(private readonly host: ReactiveControllerHost) {
+        host.addController(this);
+    }
+
+    private readonly onChange = (): void => this.host.requestUpdate();
+
+    hostConnected(): void {
+        reducedMotion.addEventListener("change", this.onChange);
+    }
+
+    hostDisconnected(): void {
+        reducedMotion.removeEventListener("change", this.onChange);
+    }
 }
 
 /**

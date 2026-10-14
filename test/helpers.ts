@@ -1,3 +1,4 @@
+import { cdp } from "vitest/browser";
 import { Papyros } from "../src/frontend/state/Papyros";
 import { RunState } from "../src/frontend/state/Runner";
 import { ProgrammingLanguage } from "../src/ProgrammingLanguage";
@@ -149,4 +150,14 @@ export async function waitForSleeping(papyros: Papyros, timeout = 60000): Promis
         }
         await new Promise((r) => setTimeout(r, 10));
     }
+}
+
+/**
+ * Switch the reduced-motion preference of the page the way the operating system does,
+ * so the media query changes and fires its change event. Pass false to undo it.
+ */
+export async function emulateReducedMotion(reduce: boolean): Promise<void> {
+    await cdp().send("Emulation.setEmulatedMedia", {
+        features: [{ name: "prefers-reduced-motion", value: reduce ? "reduce" : "" }],
+    });
 }
