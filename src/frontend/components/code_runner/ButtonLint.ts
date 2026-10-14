@@ -115,6 +115,11 @@ export class ButtonLint extends PapyrosElement {
      * was actually driving this component, never when e.g. typing elsewhere.
      */
     private shouldRefocus = false;
+    /**
+     * The position of the focused button in the row that compact is about to hide, so
+     * focus can move to the same button in the other row instead of being dropped.
+     */
+    private focusedIndexInHiddenRow: number | undefined = undefined;
 
     private get buttonSet(): ButtonSet {
         const state = this.papyros.runner.state;
@@ -130,10 +135,22 @@ export class ButtonLint extends PapyrosElement {
         const focusWasInside = this.shadowRoot?.activeElement != null;
         this.shouldRefocus = focusWasInside && newSet !== this.renderedSet;
         this.renderedSet = newSet;
+        if (changedProperties.has("compact")) {
+            const hiddenRow = (this.compact ? this.wideRef : this.narrowRef).value;
+            const children = Array.from(hiddenRow?.children ?? []);
+            const index = children.indexOf(this.shadowRoot?.activeElement as Element);
+            this.focusedIndexInHiddenRow = index >= 0 ? index : undefined;
+        }
     }
 
     protected override updated(changedProperties: PropertyValues): void {
         super.updated(changedProperties);
+        if (this.focusedIndexInHiddenRow !== undefined) {
+            // The measurement can switch rows right after the refocus below, or while a run button has focus.
+            const shownRow = (this.compact ? this.narrowRef : this.wideRef).value;
+            (shownRow?.children[this.focusedIndexInHiddenRow] as HTMLElement | undefined)?.focus();
+            this.focusedIndexInHiddenRow = undefined;
+        }
         if (this.shouldRefocus) {
             // The button set was just (re)created: a freshly minted md-* element has
             // not rendered its own focusable internals yet. Its own render is queued

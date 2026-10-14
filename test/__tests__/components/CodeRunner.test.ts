@@ -315,6 +315,35 @@ describe("CodeRunner", () => {
         element.remove();
     });
 
+    it("keeps focus on the run buttons when they switch between labels and icons", async () => {
+        const element = await mountRunner(false);
+        element.insertAdjacentHTML(
+            "beforeend",
+            `<button slot="buttons" style="width: 200px; height: 32px">Copy to hand-in</button>`,
+        );
+        element.style.width = "446px";
+        await frames();
+        const focused = (): Element | null => buttons(element).shadowRoot!.activeElement;
+        // Set from a task of its own, like a click handler: the next button set is then
+        // focused in the frame before the code runner measures it.
+        const debug = async (active: boolean): Promise<void> => {
+            await new Promise((resolve) => setTimeout(resolve));
+            element.papyros.debugger.active = active;
+            await frames();
+        };
+
+        shownButtons(element)[1].focus();
+        expect(focused()?.getAttribute("aria-label")).toBe("Debug");
+        await debug(true);
+        expect(focused()?.localName).toBe("md-outlined-button");
+        expect(focused()?.textContent?.trim()).toBe("Stop debugging");
+
+        await debug(false);
+        expect(focused()?.localName).toBe("md-filled-icon-button");
+        expect(focused()?.getAttribute("aria-label")).toBe("Run");
+        element.remove();
+    });
+
     it("keeps the run buttons labelled on their own row when icons would not fit either", async () => {
         const element = await mountRunner(false);
         for (let i = 0; i < 8; i++) element.papyros.io.addFile(`data_file_${i}.txt`, "hello");

@@ -177,8 +177,6 @@ export class Debugger extends PapyrosElement {
     /** The starting view leaves its progress bar out under reduced motion. */
     private reducedMotion = new ReducedMotionController(this);
     private renderedView: View | undefined = undefined;
-    /** Whether this pane has shown a debug run, so its empty state can say that the debugger stopped. */
-    private hasDebugged = false;
     /**
      * Whether focus was inside this pane right before the view changes, so focus only
      * follows into the new view when the user was working in the pane, never when
@@ -188,7 +186,6 @@ export class Debugger extends PapyrosElement {
 
     protected override willUpdate(changedProperties: PropertyValues): void {
         super.willUpdate(changedProperties);
-        if (this.papyros.debugger.active) this.hasDebugged = true;
         const focusWasInside = this.shadowRoot?.activeElement != null;
         this.shouldRefocus = focusWasInside && this.view !== this.renderedView;
     }
@@ -290,15 +287,16 @@ export class Debugger extends PapyrosElement {
     private renderEmpty(): TemplateResult {
         const icons = this.papyros.constants.icons;
         const runner = this.papyros.runner;
+        const stopped = this.papyros.debugger.hasDebugged;
         return html`
             <div class="message">
                 <div class="message-content">
                     <md-icon aria-hidden="true">${icons.bug}</md-icon>
                     <p class="message-title">
-                        ${this.hasDebugged ? this.t("Papyros.debugger_stopped_title") : this.t("Papyros.debugger_empty_title")}
+                        ${stopped ? this.t("Papyros.debugger_stopped_title") : this.t("Papyros.debugger_empty_title")}
                     </p>
                     <p class="message-text">
-                        ${this.hasDebugged ? this.t("Papyros.debugger_stopped_text") : this.t("Papyros.debugger_empty_text")}
+                        ${stopped ? this.t("Papyros.debugger_stopped_text") : this.t("Papyros.debugger_empty_text")}
                     </p>
                     ${
                         runner.runModes.includes(RunMode.Debug)
