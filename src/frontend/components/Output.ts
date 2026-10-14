@@ -4,6 +4,7 @@ import { FriendlyError, OutputEntry, OutputTab, OutputType, OUTPUT_TAB, TURTLE_T
 import { PapyrosElement } from "./PapyrosElement";
 import { paneLabelStyles, tabBarStyles, tabButtonStyles } from "./shared-styles";
 import { TurtlePatch, TurtleSvgBuilder } from "../state/TurtleSvg";
+import { HeightTransition } from "./motion";
 import "@material/web/icon/icon";
 
 const OUTPUT_TABS: OutputTab[] = [OUTPUT_TAB, TURTLE_TAB];
@@ -113,6 +114,10 @@ export class Output extends PapyrosElement {
         `;
     }
 
+    /** The Turtle tab has a fixed height and the Text tab grows with its output, so the panel resizes into the new one. */
+    private heightTransition = new HeightTransition(this);
+    private renderedTab: OutputTab | undefined = undefined;
+
     /** Replays the turtle patches; kept across renders so following a run stays incremental. */
     private turtleSvg = new TurtleSvgBuilder();
 
@@ -170,12 +175,19 @@ export class Output extends PapyrosElement {
     public override disconnectedCallback(): void {
         super.disconnectedCallback();
         this.resizeObserver.disconnect();
+        this.heightTransition.cancel();
     }
 
     protected override willUpdate(changedProperties: PropertyValues): void {
         super.willUpdate(changedProperties);
         // A new run empties the output, and its output is followed from the start.
         if (this.papyros.io.output.length === 0) this.following = true;
+        // Only the tab swap changes the height on its own; new output grows the panel line by line.
+        const tab = this.papyros.io.activeOutputTab;
+        if (this.renderedTab !== undefined && this.renderedTab !== tab) {
+            this.heightTransition.capture();
+        }
+        this.renderedTab = tab;
     }
 
     /** Reflects the active tab on the host, so the turtle height applies to the whole panel. */
@@ -188,6 +200,7 @@ export class Output extends PapyrosElement {
         super.updated(changedProperties);
         this.observeContent();
         this.scrollToEndIfFollowing();
+        void this.heightTransition.play();
     }
 
     private get maxOutputLength(): number {

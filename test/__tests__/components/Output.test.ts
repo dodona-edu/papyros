@@ -151,6 +151,9 @@ describe("Output", () => {
         element.papyros.io.hasTurtleOutput = true;
         element.papyros.io.selectOutputTab(TURTLE_TAB);
         await element.updateComplete;
+        // The panel resizes into the new tab; the turtle height is where it comes to rest.
+        await nextFrame();
+        element.getAnimations().forEach((animation) => animation.finish());
 
         expect(element.getAttribute("active-tab")).toBe(TURTLE_TAB);
         expect(element.getBoundingClientRect().height).toBe(380);

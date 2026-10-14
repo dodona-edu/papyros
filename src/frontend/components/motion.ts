@@ -38,8 +38,10 @@ export class HeightTransition {
         this.animation?.cancel();
         this.animation = undefined;
         // Hold that height while the new content renders, so nothing is ever painted at
-        // a size that is about to change.
+        // a size that is about to change. A max-height that only the new content has (the
+        // Text tab of p-output, say) must not cut the held height short.
         this.host.style.height = `${this.from}px`;
+        this.host.style.maxHeight = "none";
     }
 
     /** Call once the DOM has changed, to animate to the new natural height. */
@@ -56,10 +58,17 @@ export class HeightTransition {
         if (generation !== this.generation) return;
 
         this.host.style.height = "";
+        this.host.style.maxHeight = "";
         const to = this.host.getBoundingClientRect().height;
         if (Math.abs(to - from) < 1) return;
 
-        this.animation = this.host.animate([{ height: `${from}px` }, { height: `${to}px` }], {
+        // Both measured heights already respect the max-height of their own state, so the
+        // animation lifts it in between rather than let the new one clamp the start.
+        const keyframes = [
+            { height: `${from}px`, maxHeight: "none" },
+            { height: `${to}px`, maxHeight: "none" },
+        ];
+        this.animation = this.host.animate(keyframes, {
             duration: this.duration,
             easing: "ease-out",
         });
@@ -71,6 +80,7 @@ export class HeightTransition {
         this.animation = undefined;
         this.from = undefined;
         this.host.style.height = "";
+        this.host.style.maxHeight = "";
     }
 }
 
