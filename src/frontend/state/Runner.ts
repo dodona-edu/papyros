@@ -556,6 +556,8 @@ export class Runner extends State {
                 await this.launch();
             }
             if (interrupted || terminated) {
+                // A worker that was replaced never reports the end of the stopped run
+                this.papyros.debugger.onRunOver();
                 this.setState(
                     RunState.Ready,
                     this.papyros.i18n.t("Papyros.interrupted", {

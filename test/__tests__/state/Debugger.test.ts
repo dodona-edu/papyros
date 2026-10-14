@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, beforeEach, afterAll, vi } from "vitest";
 import { ProgrammingLanguage } from "../../../src/ProgrammingLanguage";
 import { Papyros } from "../../../src/frontend/state/Papyros";
 import { RunMode } from "../../../src/backend/Backend";
@@ -222,6 +222,13 @@ describe("Debugger run boundaries", () => {
         expect(papyros.debugger.trace.map((f) => f.event)).toEqual(["step_line", "uncaught_exception"]);
     });
 
+    it("ends debug mode when a debug run ends without a single step", () => {
+        papyros.debugger.onRunStart();
+        papyros.events.publish(start);
+        papyros.events.publish(end);
+        expect(papyros.debugger.active).toBe(false);
+    });
+
     it("keeps batching frames when the previous run ends after the next one started", () => {
         papyros.debugger.onRunStart();
         // the end event of the previous run lands after the reset
@@ -231,5 +238,34 @@ describe("Debugger run boundaries", () => {
         expect(papyros.debugger.trace).toEqual([]);
         papyros.events.publish(end);
         expect(papyros.debugger.trace.map((f) => f.line)).toEqual([1]);
+    });
+});
+
+describe("Debugger stopped before its first step", () => {
+    it("ends debug mode, as the code bar and the host follow it", async () => {
+        let finishRun!: () => void;
+        // Stands in for a worker whose debug run is still starting when Stop is clicked
+        const client: any = {
+            workerProxy: {
+                launch: () => Promise.resolve(),
+                usesJspi: () => Promise.resolve(true),
+                runModes: () => Promise.resolve([RunMode.Debug]),
+                runCode: () => new Promise<void>((resolve) => (finishRun = resolve)),
+            },
+            call: (method: (...args: any[]) => Promise<any>, ...args: any[]) => method(...args),
+            interrupt: vi.fn(() => finishRun()),
+        };
+        const papyros = new Papyros();
+        papyros.runner.registerBackend(ProgrammingLanguage.Python, () => client);
+        await papyros.runner.launch();
+
+        const run = papyros.runner.start(RunMode.Debug);
+        expect(papyros.debugger.active).toBe(true);
+        await papyros.runner.stop();
+        await run;
+
+        expect(papyros.debugger.active).toBe(false);
+        expect(papyros.runner.state).toBe(RunState.Ready);
+        papyros.dispose();
     });
 });
