@@ -129,10 +129,10 @@
   dependencies:
     lit "^3.3.3"
 
-"@dodona/trace-component@1.7.1":
-  version "1.7.1"
-  resolved "https://registry.yarnpkg.com/@dodona/trace-component/-/trace-component-1.7.1.tgz#908709a367fd8fbd492a08ec192b086630daafab"
-  integrity sha512-rV9bclD5niicIijjQVBQ84FineJGehomhZZmbyS0olVzOGJSqudx4wHdBrV2c0qnCn97nqaT8CN2Uy31ip/T4A==
+"@dodona/trace-component@1.7.2":
+  version "1.7.2"
+  resolved "https://registry.yarnpkg.com/@dodona/trace-component/-/trace-component-1.7.2.tgz#ca1bcb3ff1eb8f66a0439d9899e4b90aac2a7911"
+  integrity sha512-OkprjU7RiBfKKSYsNbU5veh/cOZGUilVJWd2BJhA013+zFvVVxSmdX/Wa3JU1a3ty4ud1e/ajerfmnpwOpHXuQ==
   dependencies:
     lit "^3.3.3"
 
