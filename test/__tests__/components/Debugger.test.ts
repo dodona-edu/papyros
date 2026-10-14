@@ -152,6 +152,21 @@ describe("Debugger", () => {
         expect(title()).toBe("The debugger has stopped");
     });
 
+    it("says that the debugger stopped in a pane that the host created after the stop", async () => {
+        await mount(false);
+        expect(title()).toBe("Debug your code");
+        const papyros = element.papyros;
+        papyros.debugger.active = true;
+        papyros.debugger.active = false;
+        element.remove();
+
+        element = document.createElement("p-debugger") as Debugger;
+        element.papyros = papyros;
+        document.body.append(element);
+        await element.updateComplete;
+        expect(title()).toBe("The debugger has stopped");
+    });
+
     it("disables its Debug button while another run is in progress", async () => {
         await mount(false);
         element.papyros.runner.setState(RunState.Running);
