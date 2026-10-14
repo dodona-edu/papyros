@@ -145,7 +145,14 @@ describe("HeightTransition", () => {
 
         expect(element.getAnimations()).toHaveLength(0);
         expect(element.style.height).toBe("");
+        expect(element.style.maxHeight).toBe("");
         expect(element.getBoundingClientRect().height).toBeCloseTo(300, 0);
+
+        // Cancelled while the next swap holds the height, before it plays.
+        transition.capture();
+        transition.cancel();
+        expect(element.style.height).toBe("");
+        expect(element.style.maxHeight).toBe("");
         element.remove();
     });
 });
