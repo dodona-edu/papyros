@@ -91,7 +91,7 @@ describe("Papyros launch failure", () => {
         expect(confirm).not.toHaveBeenCalled();
         expect(papyros.runner.state).toBe(RunState.Error);
         expect(papyros.runner.stateMessage).toBe(papyros.i18n.t("Papyros.unsupported_browser"));
-        expect(papyros.runner.stateMessage).toContain("This browser cannot run Python");
+        expect(papyros.runner.stateMessage).toContain("Python could not start in this browser");
 
         papyros.dispose();
     });
