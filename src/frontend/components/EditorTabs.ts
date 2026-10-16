@@ -7,6 +7,7 @@ import "./EditorTab";
 import { EditorTab } from "./EditorTab";
 import "./AddFileButton";
 import { tabButtonStyles } from "./shared-styles";
+import { nextTabIndex } from "./tabs";
 
 @customElement("p-editor-tabs")
 export class EditorTabs extends PapyrosElement {
@@ -129,23 +130,8 @@ export class EditorTabs extends PapyrosElement {
         if (this.hostTab) ids.push(HOST_TAB);
         const currentIndex = Math.max(ids.indexOf(this.eventTabId(e)), 0);
 
-        let nextIndex: number;
-        switch (e.key) {
-            case "ArrowRight":
-                nextIndex = (currentIndex + 1) % ids.length;
-                break;
-            case "ArrowLeft":
-                nextIndex = (currentIndex - 1 + ids.length) % ids.length;
-                break;
-            case "Home":
-                nextIndex = 0;
-                break;
-            case "End":
-                nextIndex = ids.length - 1;
-                break;
-            default:
-                return;
-        }
+        const nextIndex = nextTabIndex(e.key, currentIndex, ids.length);
+        if (nextIndex === undefined) return;
 
         e.preventDefault();
         this.focusTab(ids[nextIndex]);

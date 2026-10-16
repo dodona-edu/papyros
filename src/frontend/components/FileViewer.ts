@@ -19,7 +19,10 @@ export class FileViewer extends PapyrosElement {
     private editorRef: Ref<FileEditor> = createRef();
 
     private debouncedUpdateFile = debounce((name: string, content: string) => {
-        void this.papyros.runner.updateFile(name, content, false);
+        // Writing a file that was closed while its edit was pending would recreate it in the backend
+        if (this.papyros.io.files.some((f) => f.name === name)) {
+            void this.papyros.runner.updateFile(name, content, false);
+        }
     }, 300);
 
     static get styles(): CSSResult {
@@ -77,6 +80,13 @@ export class FileViewer extends PapyrosElement {
         a.download = this.file.name;
         a.click();
         setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    public override disconnectedCallback(): void {
+        super.disconnectedCallback();
+        // Removed with its code runner, or by a debug frame that lacks the file: the edit still has to
+        // reach the backend. A deleted or renamed file is skipped by debouncedUpdateFile.
+        this.debouncedUpdateFile.flush();
     }
 
     protected override willUpdate(): void {

@@ -12,6 +12,7 @@ import type { ButtonLint } from "./code_runner/ButtonLint";
 import "./EditorTabs";
 import type { EditorTabs } from "./EditorTabs";
 import "./FileViewer";
+import "@material/web/icon/icon";
 import { paneStyles } from "./shared-styles";
 
 @customElement("p-code-runner")
@@ -26,7 +27,6 @@ export class CodeRunner extends PapyrosElement {
     @state()
     private hostTabLabel: string | undefined = undefined;
 
-    private dropZoneRef: Ref<HTMLDivElement> = createRef();
     private hostTabSlotRef: Ref<HTMLSlotElement> = createRef();
     /** The host can rewrite its label in place, which fires no slotchange. */
     private hostTabObserver = new MutationObserver(() => this.readHostTabLabel());
@@ -256,12 +256,6 @@ export class CodeRunner extends PapyrosElement {
 
     protected override firstUpdated(): void {
         if (this.toolbarWidthRef.value) this.toolbarObserver.observe(this.toolbarWidthRef.value);
-        const dropZone = this.dropZoneRef.value;
-        if (!dropZone) return;
-        // Use capture phase so we intercept before CodeMirror handles the drop
-        dropZone.addEventListener("dragover", this.onDragOver, true);
-        dropZone.addEventListener("dragleave", this.onDragLeave, true);
-        dropZone.addEventListener("drop", this.onDrop, true);
     }
 
     override disconnectedCallback(): void {
@@ -270,28 +264,35 @@ export class CodeRunner extends PapyrosElement {
         document.removeEventListener("keydown", this.onKeyDown, true);
         this.hostTabObserver.disconnect();
         this.toolbarObserver.disconnect();
-        const dropZone = this.dropZoneRef.value;
-        if (!dropZone) return;
-        dropZone.removeEventListener("dragover", this.onDragOver, true);
-        dropZone.removeEventListener("dragleave", this.onDragLeave, true);
-        dropZone.removeEventListener("drop", this.onDrop, true);
     }
 
-    private onDragOver = (e: DragEvent): void => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (this.papyros.debugger.active) return;
-        if (!this.dragOver) this.dragOver = true;
+    // The drop zone listens in the capture phase, so it intercepts drops before CodeMirror handles them.
+    private onDragOver = {
+        capture: true,
+        handleEvent: (e: DragEvent): void => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (this.papyros.debugger.active) return;
+            if (!this.dragOver) this.dragOver = true;
+        },
     };
 
-    private onDragLeave = (e: DragEvent): void => {
-        const dropZone = this.dropZoneRef.value;
-        // Only react if leaving the drop zone, not moving between children
-        if (e.relatedTarget && dropZone?.contains(e.relatedTarget as Node)) return;
-        this.dragOver = false;
+    private onDragLeave = {
+        capture: true,
+        handleEvent: (e: DragEvent): void => {
+            const dropZone = e.currentTarget as HTMLElement;
+            // Only react if leaving the drop zone, not moving between children
+            if (e.relatedTarget && dropZone.contains(e.relatedTarget as Node)) return;
+            this.dragOver = false;
+        },
     };
 
-    private onDrop = (e: DragEvent): void => {
+    private onDrop = {
+        capture: true,
+        handleEvent: (e: DragEvent): void => this.drop(e),
+    };
+
+    private drop(e: DragEvent): void {
         e.preventDefault();
         e.stopPropagation();
         this.dragOver = false;
@@ -312,7 +313,7 @@ export class CodeRunner extends PapyrosElement {
                 void this.papyros.runner.fetchAndAddUrl(url);
             }
         }
-    };
+    }
 
     private hostTabElements(): Element[] {
         return this.hostTabSlotRef.value?.assignedElements({ flatten: true }) ?? [];
@@ -387,7 +388,12 @@ export class CodeRunner extends PapyrosElement {
         else panelLabel = activeTab;
 
         return html`
-            <div ${ref(this.dropZoneRef)} class="drop-zone ${this.dragOver ? "drag-over" : ""}">
+            <div
+                class="drop-zone ${this.dragOver ? "drag-over" : ""}"
+                @dragover=${this.onDragOver}
+                @dragleave=${this.onDragLeave}
+                @drop=${this.onDrop}
+            >
                 <div class="pane ${this.showEscapeHint && activeTab === CODE_TAB ? "show-escape-hint" : ""}">
                     <div class="toolbar" ${ref(this.toolbarRef)}>
                         <div class="toolbar-width" ${ref(this.toolbarWidthRef)}></div>

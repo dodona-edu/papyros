@@ -10,10 +10,24 @@ import {
 } from "@codemirror/view";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { bracketMatching, foldGutter, indentOnInput } from "@codemirror/language";
-import { EditorState } from "@codemirror/state";
+import { EditorState, Extension } from "@codemirror/state";
 import { highlightSelectionMatches } from "@codemirror/search";
 import { css, CSSResult } from "lit";
 import { languageForFileName } from "./Languages";
+
+const fileExtensions: Extension = [
+    lineNumbers(),
+    highlightSpecialChars(),
+    foldGutter(),
+    drawSelection(),
+    EditorState.allowMultipleSelections.of(true),
+    indentOnInput(),
+    bracketMatching(),
+    highlightSelectionMatches(),
+    highlightActiveLineGutter(),
+    highlightActiveLine(),
+    keymap.of([...defaultKeymap, ...historyKeymap]),
+];
 
 @customElement("p-file-editor")
 export class FileEditor extends CodeMirrorEditor {
@@ -26,8 +40,8 @@ export class FileEditor extends CodeMirrorEditor {
         `;
     }
 
-    // A viewer can be handed another file, so the language follows the file
-    // name rather than being set once.
+    // The language depends on the file name, which the viewer only passes in after the
+    // editor is constructed.
     set fileName(name: string) {
         this.configure({ language: languageForFileName(name) });
     }
@@ -37,19 +51,7 @@ export class FileEditor extends CodeMirrorEditor {
         this.configure({
             language: [],
             history: history(),
-            fileExtensions: [
-                lineNumbers(),
-                highlightSpecialChars(),
-                foldGutter(),
-                drawSelection(),
-                EditorState.allowMultipleSelections.of(true),
-                indentOnInput(),
-                bracketMatching(),
-                highlightSelectionMatches(),
-                highlightActiveLineGutter(),
-                highlightActiveLine(),
-                keymap.of([...defaultKeymap, ...historyKeymap]),
-            ],
+            fileExtensions,
         });
     }
 }
