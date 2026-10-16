@@ -14,6 +14,10 @@ export class EditorTab extends PapyrosElement {
     @property({ attribute: false })
     file!: FileEntry;
 
+    /** No renaming or closing */
+    @property({ type: Boolean })
+    readonly = false;
+
     @state()
     private renaming = false;
 
@@ -149,11 +153,11 @@ export class EditorTab extends PapyrosElement {
     }
 
     private onDblClick(): void {
-        if (!this.papyros.debugger.active) this.startRenaming();
+        if (!this.readonly) this.startRenaming();
     }
 
     private onAuxClick(e: MouseEvent): void {
-        if (!this.papyros.debugger.active && e.button === 1) this.closeFile(e);
+        if (!this.readonly && e.button === 1) this.closeFile(e);
     }
 
     private onRenameClick(e: Event): void {
@@ -163,7 +167,7 @@ export class EditorTab extends PapyrosElement {
 
     // The rename and close controls are pointer-only, so the tab itself carries their keys.
     private onTabKeydown(e: KeyboardEvent): void {
-        if (this.papyros.debugger.active) return;
+        if (this.readonly) return;
         if (e.key === "F2") {
             e.preventDefault();
             this.startRenaming();
@@ -185,9 +189,8 @@ export class EditorTab extends PapyrosElement {
 
     protected override render(): TemplateResult {
         const active = this.papyros.io.activeEditorTab === this.file.name;
-        const debugActive = this.papyros.debugger.active;
 
-        if (!debugActive && this.renaming) {
+        if (!this.readonly && this.renaming) {
             return html`<input
                     ${ref(this.renameInputRef)}
                     class=${this.invalid ? "inline-input invalid" : "inline-input"}
@@ -215,7 +218,7 @@ export class EditorTab extends PapyrosElement {
                 role="tab"
                 aria-selected=${active ? "true" : "false"}
                 tabindex=${active ? "0" : "-1"}
-                aria-describedby=${ifDefined(debugActive ? undefined : this.hintId)}
+                aria-describedby=${ifDefined(this.readonly ? undefined : this.hintId)}
                 @click=${this.setTab}
                 @dblclick=${this.onDblClick}
                 @auxclick=${this.onAuxClick}
@@ -223,7 +226,7 @@ export class EditorTab extends PapyrosElement {
             >
                 ${this.file.name}
                 ${
-                    debugActive
+                    this.readonly
                         ? ""
                         : html`<span
                                   class="rename-btn"
@@ -243,7 +246,7 @@ export class EditorTab extends PapyrosElement {
                 }
             </button>
             ${
-                debugActive
+                this.readonly
                     ? ""
                     : html`<span id=${this.hintId} class="visually-hidden">${this.t("Papyros.file_tab_hint")}</span>`
             }
