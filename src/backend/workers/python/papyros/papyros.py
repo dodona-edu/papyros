@@ -42,10 +42,7 @@ class Papyros(python_runner.PyodideRunner):
             self.OutputBufferClass = lambda f: buffer_constructor(create_proxy(f))
         super().__init__(source_code=source_code, filename=filename)
         self.workspace = "/home/pyodide/workspace"
-        if os.path.exists(self.workspace):
-            shutil.rmtree(self.workspace)
-        os.makedirs(self.workspace)
-        os.chdir(self.workspace)
+        self._reset_workspace()
         self._tracked_files = set()
         self._tracking_files = False
         self._original_open = builtins.open
@@ -424,6 +421,18 @@ if __name__ == "{MODULE_NAME}":
         path = self._safe_path(name)
         os.remove(path)
         self._cleanup_empty_dirs(os.path.dirname(path))
+
+    def _reset_workspace(self):
+        # Emscripten's filesystem refuses to remove the working directory
+        os.chdir("/")
+        if os.path.exists(self.workspace):
+            shutil.rmtree(self.workspace)
+        os.makedirs(self.workspace)
+        os.chdir(self.workspace)
+
+    def clear_workspace(self):
+        with self._without_file_tracking():
+            self._reset_workspace()
 
     def rename_file(self, old_name, new_name):
         with self._without_file_tracking():

@@ -8,7 +8,6 @@ import "@material/web/slider/slider";
 import type { MdSlider } from "@material/web/slider/slider";
 import { customElement } from "lit/decorators.js";
 import { RunMode } from "../../backend/Backend";
-import { RunState } from "../state/Runner";
 import { PapyrosElement } from "./PapyrosElement";
 import { fadeIn, prefersReducedMotion, ReducedMotionController } from "./motion";
 
@@ -222,8 +221,7 @@ export class Debugger extends PapyrosElement {
         const { active, trace } = this.papyros.debugger;
         if (active && trace.length > 0) return "trace";
         // A debug run that ended without a single step has nothing to prepare any more.
-        const running = ![RunState.Ready, RunState.Error].includes(this.papyros.runner.state);
-        return active && running ? "starting" : "empty";
+        return active && this.papyros.runtime.isRunning(this.papyros) ? "starting" : "empty";
     }
 
     private selectFrame(frame: number): void {
