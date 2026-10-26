@@ -17,7 +17,7 @@ import { fakeClient } from "../../fakeClient";
 
 // One Pyodide boot for the whole file: the tests share a Python instance. The frame
 // history records a file snapshot per run, so the workspace is wiped between tests.
-describe.sequential("Debugger", () => {
+describe("Debugger", () => {
     let papyros: Papyros;
     let defaultMaxDebugFrames: number;
 

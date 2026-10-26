@@ -14,7 +14,7 @@ async function javascriptPapyros(): Promise<Papyros> {
     return papyros;
 }
 
-describe.sequential("multiple Papyros instances", () => {
+describe("multiple Papyros instances", () => {
     it("run the same language concurrently with isolated output", async () => {
         const first = await javascriptPapyros();
         const second = await javascriptPapyros();

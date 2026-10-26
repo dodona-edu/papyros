@@ -54,7 +54,7 @@ describe("isFileNameAvailable", () => {
 // instance whose workspace is wiped between tests, since the emitted file snapshots
 // cover everything in the workspace. The pure state tests below keep their own
 // unlaunched instances.
-describe.sequential("Files", () => {
+describe("Files", () => {
     let papyros: Papyros;
 
     beforeAll(async () => {

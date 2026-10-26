@@ -167,6 +167,7 @@ export class PlaygroundOutput implements ReactiveController {
     private onInputKeydown(e: KeyboardEvent): void {
         // An IME confirms composed text with Enter, which must not submit the line.
         // Safari sends that Enter with isComposing false and keyCode 229.
+        // eslint-disable-next-line @typescript-eslint/no-deprecated -- Safari's IME Enter is only recognisable by keyCode
         if (e.key !== "Enter" || e.isComposing || e.keyCode === 229) {
             return;
         }

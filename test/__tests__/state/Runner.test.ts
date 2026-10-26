@@ -24,7 +24,7 @@ function recordLoadingEvents(papyros: Papyros): {
 
 // One Pyodide boot for the whole file: instances are isolated now, so the suite
 // shares a single Python instance and settles it between tests.
-describe.sequential("Runner", () => {
+describe("Runner", () => {
     let papyros: Papyros;
 
     beforeAll(async () => {
@@ -85,7 +85,7 @@ const c = a + b;`;
         const current = racePapyros.runner.backend;
 
         let currentLoaded = false;
-        current.then(() => (currentLoaded = true));
+        void current.then(() => (currentLoaded = true));
 
         // Only the current backend may flip the flag, whichever finishes first
         await superseded;

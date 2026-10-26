@@ -68,6 +68,7 @@ export class InteractiveInput extends PapyrosElement {
                 @keydown=${(e: KeyboardEvent) => {
                     // An IME confirms composed text with Enter, which must not submit the line.
                     // Safari sends that Enter with isComposing false and keyCode 229.
+                    // eslint-disable-next-line @typescript-eslint/no-deprecated -- Safari's IME Enter is only recognisable by keyCode
                     if (e.key === "Enter" && !e.isComposing && e.keyCode !== 229) {
                         e.preventDefault();
                         this.provideInput();

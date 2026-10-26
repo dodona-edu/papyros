@@ -47,7 +47,7 @@ describe("BackendManager.setWorkerUrl", () => {
 
     it("falls back to the default Worker when no URL is set for the language", () => {
         BackendManager.createBackend(ProgrammingLanguage.Python);
-        expect(workerSpy).toBeCalled();
+        expect(workerSpy).toHaveBeenCalled();
 
         const [bundledUrl] = workerSpy.mock.calls[0];
         expect((bundledUrl as URL).toString()).toContain("backend/workers/python/worker");
@@ -58,14 +58,14 @@ describe("BackendManager.setWorkerUrl", () => {
         const sameOriginUrl = new URL("/same-origin-worker.js", window.location.href);
         BackendManager.setWorkerUrl(ProgrammingLanguage.Python, sameOriginUrl);
         BackendManager.createBackend(ProgrammingLanguage.Python);
-        expect(workerSpy).toBeCalledWith(sameOriginUrl, { type: "module" });
+        expect(workerSpy).toHaveBeenCalledWith(sameOriginUrl, { type: "module" });
     });
 
     it("bootstraps a cross-origin URL through a same-origin blob module", async () => {
         const crossOriginUrl = "https://cross-origin.example.com/worker.js";
         BackendManager.setWorkerUrl(ProgrammingLanguage.Python, crossOriginUrl);
         BackendManager.createBackend(ProgrammingLanguage.Python);
-        expect(workerSpy).toBeCalledTimes(1);
+        expect(workerSpy).toHaveBeenCalledTimes(1);
 
         const [blobUrl, options] = workerSpy.mock.calls[0];
         expect(blobUrl).toMatch(/^blob:/);

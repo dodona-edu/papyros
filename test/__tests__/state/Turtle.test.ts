@@ -22,7 +22,7 @@ function turtleSvg(papyros: Papyros): string {
 }
 
 // One Pyodide boot for the whole file: the tests share a Python instance
-describe.sequential("Turtle", () => {
+describe("Turtle", () => {
     let papyros: Papyros;
 
     beforeAll(async () => {
