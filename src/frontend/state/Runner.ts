@@ -371,8 +371,9 @@ export class Runner extends State {
      * Start the backend to enable running code.
      *
      * Resolves once the backend can run code and rejects when it fails to start, with an
-     * UnsupportedBrowserError when this browser cannot run the runtime at all. Awaiting this
-     * waits for the whole runtime to download. The state is Loading until then. `backend` is
+     * UnsupportedBrowserError when this browser cannot run the runtime at all. Resolves
+     * quietly when the runner is disposed during the launch. Awaiting this waits for the
+     * whole runtime to download. The state is Loading until then. `backend` is
      * assigned before that, so a caller that does not await can already start a run, which
      * waits for the backend.
      */
@@ -391,6 +392,10 @@ export class Runner extends State {
         try {
             await backendLaunched;
         } catch (error) {
+            if (this.disposed) {
+                // Disposing a private runtime terminates the worker mid-boot, which fails the launch
+                return;
+            }
             if (launchId === this.launchId) {
                 this.launching = false;
                 this.setState(

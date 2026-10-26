@@ -1175,6 +1175,21 @@ describe("p-code-playground preload", () => {
         expect(client.workerProxy.launch).not.toHaveBeenCalled();
     });
 
+    it("stays quiet when the instance is disposed while the preload boots", async () => {
+        const client = fakeClient();
+        const launch = client.holdLaunch();
+        const el = await mount({ client, visible: true });
+        const handler = vi.fn();
+        el.papyros.setErrorHandler(handler);
+        await vi.waitFor(() => expect(client.workerProxy.launch).toHaveBeenCalled());
+
+        el.papyros.dispose();
+        launch.fail(new Error("launch failed"));
+        await settle(el);
+
+        expect(handler).not.toHaveBeenCalled();
+    });
+
     it("reports a failed preload once and lets Run retry", async () => {
         const failing = failingClient();
         const working = fakeClient();
