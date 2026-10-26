@@ -5,6 +5,7 @@ import { RunState } from "../../../src/frontend/state/Runner";
 import { PapyrosLaunchError, UnsupportedBrowserError } from "../../../src/frontend/state/PapyrosErrors";
 import { PyodideBootError } from "../../../src/sync/errors";
 import { MockBackend } from "../../__mocks__/MockBackend";
+import { fakeClient } from "../../fakeClient";
 
 // Fails fast instead of letting a regression hit the suite timeout
 function withTimeout<T>(promise: Promise<T>, ms: number, what: string): Promise<T> {
@@ -292,5 +293,26 @@ describe("Papyros launch failure", () => {
         expect(pythonCreator).toHaveBeenCalledTimes(2);
 
         papyros.dispose();
+    });
+
+    it("stays quiet when an instance is disposed while Python boots", async () => {
+        const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
+        confirm.mockClear();
+        const client = fakeClient();
+        client.holdLaunch();
+        const papyros = new Papyros();
+        papyros.runner.registerBackend(ProgrammingLanguage.Python, () => client);
+        const errorHandler = vi.fn();
+        papyros.setErrorHandler(errorHandler);
+
+        const launching = papyros.launch();
+        await vi.waitFor(() => expect(client.workerProxy.launch).toHaveBeenCalled());
+        // Terminating the worker fails the held launch, as it does for a real worker
+        papyros.dispose();
+        await withTimeout(launching, 2000, "Papyros.launch()");
+
+        expect(errorHandler).not.toHaveBeenCalled();
+        expect(confirm).not.toHaveBeenCalled();
+        expect(client.workerProxy.launch).toHaveBeenCalledOnce();
     });
 });
