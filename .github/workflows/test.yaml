@@ -18,7 +18,7 @@ jobs:
     - name: Install dependencies
       run: |
         yarn install
-        yarn playwright install
+        yarn playwright install chromium
     - name: Build service worker
       run: |
         yarn build:sw
