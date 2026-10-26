@@ -4,7 +4,7 @@ import { css, CSSResult, html, TemplateResult } from "lit";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { ifDefined } from "lit/directives/if-defined.js";
 import { inlineInputStyles, visuallyHiddenStyles } from "./shared-styles";
-import { isValidFileName } from "../../util/Util";
+import { isFileNameAvailable } from "../../util/Util";
 
 let nextErrorId = 0;
 
@@ -55,7 +55,7 @@ export class AddFileButton extends PapyrosElement {
     }
 
     private isInvalidName(name: string): boolean {
-        return !isValidFileName(name) || this.papyros.io.files.some((f) => f.name === name);
+        return !isFileNameAvailable(name, this.papyros.io.files);
     }
 
     private startAdding(): void {

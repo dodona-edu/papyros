@@ -33,12 +33,23 @@ export class SyncClient<T = any> {
 
     private _awaitingMessageResolve?: () => void;
 
+    private _terminated?: Promise<never>;
+    private _rejectTerminated?: (reason: InterruptError) => void;
+
     public get worker(): Worker {
         return this._worker!;
     }
 
     public get workerProxy(): Comlink.Remote<T> {
         return this._workerProxy!;
+    }
+
+    /**
+     * Rejects once the current worker is terminated or replaced. Comlink leaves the calls
+     * pending on a terminated worker unsettled, so a caller races them against this.
+     */
+    public get terminated(): Promise<never> {
+        return this._terminated!;
     }
 
     public constructor(
@@ -155,6 +166,7 @@ export class SyncClient<T = any> {
 
     public terminate(): void {
         this._interruptRejector?.(new InterruptError("Worker terminated"));
+        this._rejectTerminated?.(new InterruptError("Worker terminated"));
         // A client that was already terminated has nothing left to release, so
         // terminating it again is a no-op rather than an error
         this._workerProxy?.[Comlink.releaseProxy]();
@@ -193,6 +205,8 @@ export class SyncClient<T = any> {
         this._reset();
         this._worker = this.workerCreator();
         this._workerProxy = Comlink.wrap<T>(this._worker);
+        this._terminated = new Promise<never>((_, reject) => (this._rejectTerminated = reject));
+        this._terminated.catch(() => undefined);
     }
 
     private _reset(): void {

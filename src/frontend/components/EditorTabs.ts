@@ -7,6 +7,7 @@ import "./EditorTab";
 import { EditorTab } from "./EditorTab";
 import "./AddFileButton";
 import { tabButtonStyles } from "./shared-styles";
+import { nextTabIndex } from "./tabs";
 
 @customElement("p-editor-tabs")
 export class EditorTabs extends PapyrosElement {
@@ -16,6 +17,10 @@ export class EditorTabs extends PapyrosElement {
     /** Whether to show the tab the host supplies through the `host-tab` slot. */
     @property({ type: Boolean, attribute: "host-tab" })
     hostTab = false;
+
+    /** Hides the add-file button and makes the tabs unrenamable and unclosable */
+    @property({ type: Boolean })
+    readonly = false;
 
     private codeTabRef: Ref<HTMLButtonElement> = createRef();
     private hostTabRef: Ref<HTMLButtonElement> = createRef();
@@ -129,23 +134,8 @@ export class EditorTabs extends PapyrosElement {
         if (this.hostTab) ids.push(HOST_TAB);
         const currentIndex = Math.max(ids.indexOf(this.eventTabId(e)), 0);
 
-        let nextIndex: number;
-        switch (e.key) {
-            case "ArrowRight":
-                nextIndex = (currentIndex + 1) % ids.length;
-                break;
-            case "ArrowLeft":
-                nextIndex = (currentIndex - 1 + ids.length) % ids.length;
-                break;
-            case "Home":
-                nextIndex = 0;
-                break;
-            case "End":
-                nextIndex = ids.length - 1;
-                break;
-            default:
-                return;
-        }
+        const nextIndex = nextTabIndex(e.key, currentIndex, ids.length);
+        if (nextIndex === undefined) return;
 
         e.preventDefault();
         this.focusTab(ids[nextIndex]);
@@ -155,7 +145,7 @@ export class EditorTabs extends PapyrosElement {
         // The code panel stands in for a host tab that has no label yet.
         const selected = this.papyros.io.activeEditorTab;
         const activeTab = selected === HOST_TAB && !this.hostTab ? CODE_TAB : selected;
-        const debugActive = this.papyros.debugger.active;
+        const locked = this.readonly || this.papyros.debugger.active;
         return html`
             <div
                 class="tablist"
@@ -174,9 +164,11 @@ export class EditorTabs extends PapyrosElement {
                 >
                     ${this.t("Papyros.editor_tab_code")}
                 </button>
-                ${this.files.map((f) => html`<p-editor-tab .papyros=${this.papyros} .file=${f}></p-editor-tab>`)}
+                ${this.files.map(
+                    (f) => html`<p-editor-tab .papyros=${this.papyros} .file=${f} .readonly=${locked}></p-editor-tab>`,
+                )}
             </div>
-            ${debugActive ? "" : html`<p-add-file-button .papyros=${this.papyros}></p-add-file-button>`}
+            ${locked ? "" : html`<p-add-file-button .papyros=${this.papyros}></p-add-file-button>`}
             ${
                 // The add-file button sits between the file tabs and this tab, and a tablist may
                 // only contain tabs, so the tablist claims this tab through aria-owns instead.

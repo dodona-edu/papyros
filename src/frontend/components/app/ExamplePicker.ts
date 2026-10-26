@@ -3,7 +3,6 @@ import { PapyrosElement } from "../PapyrosElement";
 import { css, CSSResult, html, TemplateResult } from "lit";
 import "@material/web/select/outlined-select";
 import "@material/web/select/select-option";
-import { RunState } from "../../state/Runner";
 
 @customElement("p-example-picker")
 export class ExamplePicker extends PapyrosElement {
@@ -18,7 +17,7 @@ export class ExamplePicker extends PapyrosElement {
     protected override render(): TemplateResult {
         return html`
             <md-outlined-select
-                ?disabled=${this.papyros.runner.state !== RunState.Ready || this.papyros.debugger.active}
+                ?disabled=${!this.papyros.runner.canStart || this.papyros.debugger.active}
                 label=${this.t("Papyros.examples")}
                 @input=${(e: InputEvent) => {
                     this.papyros.runner.code = this.papyros.examples.getExampleCode(

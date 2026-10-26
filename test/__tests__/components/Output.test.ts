@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { Papyros } from "../../../src/frontend/state/Papyros";
 import { OUTPUT_TAB, OutputEntry, OutputType, TURTLE_TAB } from "../../../src/frontend/state/InputOutput";
 import type { Output } from "../../../src/frontend/components/Output";
+import type { FriendlyErrorElement } from "../../../src/frontend/components/FriendlyError";
 import "../../../src/frontend/components/Output";
 
 let element: Output;
@@ -126,6 +127,50 @@ describe("Output", () => {
         element.papyros.io.output = lines(20);
         await element.updateComplete;
         expect(atEnd()).toBe(true);
+    });
+
+    it("follows a friendly error, which renders after the output", async () => {
+        await mount();
+        element.papyros.io.output = [
+            ...lines(20),
+            {
+                type: OutputType.stderr,
+                content: { name: "NameError", what: "name 'x' is not defined", traceback: "line 1" },
+            },
+        ];
+        await element.updateComplete;
+        await element.shadowRoot!.querySelector<FriendlyErrorElement>("p-friendly-error")!.updateComplete;
+        await nextFrame();
+        await nextFrame();
+
+        expect(atEnd()).toBe(true);
+    });
+
+    it("keeps the traceback toggle in view when the reader opens the traceback at the end", async () => {
+        await mount();
+        const traceback = Array.from({ length: 30 }, (_, i) => `  File "/__main__.py", line ${i}`).join("\n");
+        element.papyros.io.output = [
+            ...lines(3),
+            { type: OutputType.stderr, content: { name: "NameError", what: "name 'x' is not defined", traceback } },
+        ];
+        await element.updateComplete;
+        const error = element.shadowRoot!.querySelector<FriendlyErrorElement>("p-friendly-error")!;
+        await error.updateComplete;
+        await nextFrame();
+        await nextFrame();
+        expect(atEnd()).toBe(true);
+
+        const toggle = error.shadowRoot!.querySelector<HTMLButtonElement>(".traceback-toggle")!;
+        toggle.focus();
+        toggle.click();
+        await error.updateComplete;
+        await nextFrame();
+        await nextFrame();
+
+        const panel = content().getBoundingClientRect();
+        const button = toggle.getBoundingClientRect();
+        expect(button.top).toBeGreaterThanOrEqual(panel.top);
+        expect(button.bottom).toBeLessThanOrEqual(panel.bottom);
     });
 
     it("keeps its live region in the page while there is no output, so the first line is announced", async () => {

@@ -150,7 +150,8 @@ console.log(papyros.runner.io.output[0].content);
 ### Minimal setup with components
 
 Papyros provides four web components for visualization.
-Each expects a `papyros` state instance, but defaults to the global `papyros`.
+Each expects a `papyros` state instance, but defaults to the global `papyros`
+(`<p-code-playground>` defaults to an instance of its own, see [Code playgrounds](#code-playgrounds)).
 
 ```html
 <script type="module">
@@ -173,6 +174,72 @@ at the same time, even in the same language. The one service worker registration
 have is shared between them. Call `papyros.dispose()` to terminate an instance's workers
 when it is removed from the page.
 
+Instances can also share one set of workers, so a page with many small editors boots
+Pyodide only once. Pass the same `PapyrosRuntime` to each of them:
+
+```javascript
+import { Papyros, PapyrosRuntime } from "@dodona/papyros";
+
+const runtime = new PapyrosRuntime();
+const first = new Papyros({ runtime });
+const second = new Papyros({ runtime });
+```
+
+Each instance keeps its own code, output, input and debugger, but only one of them can run
+code at a time: `runner.start()` does nothing while another instance on the runtime is
+running, and `runtime.currentRun?.owner` tells which one is. Files are shared as well, so
+pass the files a run needs as `runner.start(mode, { files })`, which starts it from a
+workspace holding only those. `files` can also be a promise: the run claims the runtime
+right away and waits for the files, and ends without running when the promise rejects or
+when `runner.stop()` is called before the files arrive.
+Disposing an instance leaves the workers to the others; call
+`runtime.dispose()` to terminate them.
+
+### Code playgrounds
+
+`<p-code-playground>` is a small, self-contained Python editor with Run, Reset, input and
+output, for embedding runnable examples in a page. Every playground runs on its own `Papyros`
+instance, and playgrounds share one `PapyrosRuntime`: Python then boots once, as soon as the
+first playground scrolls into view, and while one playground runs the others wait. A
+playground without a `.papyros` gets an instance on a runtime shared by every such
+playground, with Papyros's defaults: no error handler, so its errors are not reported, the
+default asset URLs and English. To configure them yourself, give every playground its own
+configured `Papyros` on one runtime:
+
+```javascript
+import { html, render } from "lit";
+import { Papyros, PapyrosRuntime } from "@dodona/papyros";
+
+const runtime = new PapyrosRuntime();
+const examples = ['print("Hello")', 'name = input("Name: ")\nprint(f"Hi {name}")'];
+
+render(
+    examples.map(
+        (code) => html`<p-code-playground .papyros=${new Papyros({ runtime })} .code=${code}></p-code-playground>`,
+    ),
+    document.body,
+);
+```
+
+`code` is the code the playground starts with. Reset restores it and clears the output.
+`label` replaces the "Try it yourself" title, and an empty label hides it. Every run starts
+from an empty workspace. A playground's editor cancels the Escape keydowns it acts on, like
+the editor of `<p-code-runner>` (see [Keyboard](#keyboard)).
+
+`files` declares data files the code can `open()`: space-separated paths, resolved against
+the document's base URL. The playground then shows a read-only tab per file above the
+editor, and every run starts with exactly those files. Every path must end in a valid file
+name (`media/` does not) and the names must be unique; otherwise the playground shows a
+configuration error instead. A file that fails to load shows an alert and stops the run;
+opening its tab again or the next Run retries it. Binary files and text over 100 kB are not
+previewed; their tab links to the file instead.
+
+```html
+<p-code-playground files="media/grades.txt media/names.csv"></p-code-playground>
+```
+
+A demo page with a fixed set of scenarios is deployed with the app at `/playground.html` (run `yarn start` to open it locally).
+
 ### Error handling
 
 Errors that do not surface through a promise, such as a failed launch, are passed to the
@@ -181,7 +248,7 @@ exported. `UnsupportedBrowserError` means the browser lacks something Papyros ne
 retry will not help. It has two causes:
 
 * The browser downloaded Pyodide but cannot run it. Papyros shows a message asking the user to
-  update or switch browsers instead of offering a retry.
+  close other tabs, update or switch browsers instead of offering a retry.
 * A backend needs the input channel, but the browser has neither `SharedArrayBuffer` nor the
   Service Worker API, in a secure context. This happens in in-app browsers and private windows.
   Code still runs and only reading input fails, unless `launch()` needs the channel up front:
@@ -276,6 +343,10 @@ Lets users provide input (batch or interactive), passed to `papyros.io`.
 
 Visualizes program output: stdout, stderr, and images.
 
+#### `<p-code-playground>`
+
+An inline, runnable Python block, see [Code playgrounds](#code-playgrounds).
+
 #### `<p-debugger>`
 
 Displays execution traces using [`@dodona/json-tracer`](https://github.com/dodona-edu/json-tracer).
@@ -291,7 +362,7 @@ A `Papyros` instance contains multiple logical parts:
 * `papyros.i18n`: translations (extend or override as needed).
 * `papyros.io`: input/output handling. Subscribe to `awaitingInput` to supply input when needed.
 * `papyros.runner`: code, execution state, programming language. Run code with `papyros.runner.start()`.
-  Subscribe to `backendReady` to know when the backend has loaded; runs started before that are queued.
+  Subscribe to `backendReady` to know when the backend has loaded; the state is `Loading` until then, and runs started before that are queued.
 * `papyros.test`: test code (appended to the code document).
 
 ---

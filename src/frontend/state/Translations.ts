@@ -69,7 +69,8 @@ export const ENGLISH_TRANSLATION = {
         launch_error: "Papyros failed to load. Do you want to reload?",
         url_fetch_error: "Failed to fetch URL: %{url}",
         loading: "Loading %{packages}.",
-        unsupported_browser: "This browser cannot run Python. Update your browser or use another one.",
+        unsupported_browser:
+            "Python could not start in this browser. Close other tabs, update your browser or use another one.",
         run_modes: {
             doctest: "Run doctests",
             debug: "Debug",
@@ -122,6 +123,8 @@ export const ENGLISH_TRANSLATION = {
         add_file_placeholder: "filename\u2026",
         files_download: "Download",
         files_binary: "Binary file",
+        file_not_previewable: "The file %{name} can't be shown here.",
+        open_file: "Open %{name} (opens in a new tab)",
         output: "Output",
         output_tab_text: "Text",
         output_tab_turtle: "Turtle",
@@ -129,6 +132,29 @@ export const ENGLISH_TRANSLATION = {
         error_prefix: "Error: ",
         turtle_alt: "Turtle drawing",
         image_alt: "Image output",
+        traceback: {
+            hide: "Hide traceback",
+            show: "Show traceback",
+        },
+        playground: {
+            config_error_title: "Configuration error",
+            duplicate_file_name: 'Files in a code playground need different names (got "%{name}" more than once).',
+            error: "Python failed to load. Try again, or reload the page.",
+            file_load_failed: "The file %{name} failed to load. Try again, or reload the page.",
+            file_loading: "Loading file…",
+            input_label: "Program input",
+            input_placeholder: "Type input and press Enter",
+            invalid_file_name: 'Files in a code playground need a valid file name (got "%{path}").',
+            other_running: "Another code block is running",
+            output_label: "Program output",
+            output_panel_label: "Output",
+            reset: "Reset",
+            reset_hint: "Restore the original code and clear the output",
+            run: "Run",
+            stop: "Stop",
+            title: "Try it yourself",
+            unsupported_language: 'Only Python is supported in code playgrounds (got "%{language}").',
+        },
     },
     CodeMirror: {
         // Papyros
@@ -216,7 +242,7 @@ export const DUTCH_TRANSLATION = {
         url_fetch_error: "Kon URL niet ophalen: %{url}",
         loading: "Bezig met het installeren van %{packages}.",
         unsupported_browser:
-            "Deze browser kan geen Python uitvoeren. Werk je browser bij of gebruik een andere browser.",
+            "Python kon niet starten in deze browser. Sluit andere tabbladen, werk je browser bij of gebruik een andere browser.",
         run_modes: {
             doctest: "Doctests uitvoeren",
             debug: "Debuggen",
@@ -269,6 +295,8 @@ export const DUTCH_TRANSLATION = {
         add_file_placeholder: "bestandsnaam\u2026",
         files_download: "Downloaden",
         files_binary: "Binair bestand",
+        file_not_previewable: "Het bestand %{name} kan hier niet getoond worden.",
+        open_file: "%{name} openen (opent in een nieuw tabblad)",
         output: "Uitvoer",
         output_tab_text: "Tekst",
         output_tab_turtle: "Turtle",
@@ -276,6 +304,31 @@ export const DUTCH_TRANSLATION = {
         error_prefix: "Fout: ",
         turtle_alt: "Turtle-tekening",
         image_alt: "Afbeelding als uitvoer",
+        traceback: {
+            hide: "Verberg traceback",
+            show: "Toon traceback",
+        },
+        playground: {
+            config_error_title: "Configuratiefout",
+            duplicate_file_name:
+                'Bestanden in een code playground moeten elk een andere naam hebben (kreeg "%{name}" meer dan één keer).',
+            error: "Python kon niet laden. Probeer opnieuw of herlaad de pagina.",
+            file_load_failed: "Het bestand %{name} kon niet geladen worden. Probeer opnieuw of herlaad de pagina.",
+            file_loading: "Bestand laden…",
+            input_label: "Programma-invoer",
+            input_placeholder: "Typ invoer en druk op Enter",
+            invalid_file_name:
+                'Bestanden in een code playground moeten een geldige bestandsnaam hebben (kreeg "%{path}").',
+            other_running: "Er wordt al een ander codeblok uitgevoerd",
+            output_label: "Programma-uitvoer",
+            output_panel_label: "Uitvoer",
+            reset: "Reset",
+            reset_hint: "Oorspronkelijke code herstellen en uitvoer wissen",
+            run: "Uitvoeren",
+            stop: "Stoppen",
+            title: "Probeer het zelf",
+            unsupported_language: 'Enkel Python wordt ondersteund in een code playground (kreeg "%{language}").',
+        },
     },
     CodeMirror: {
         // Papyros

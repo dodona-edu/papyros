@@ -154,3 +154,9 @@ export const visuallyHiddenStyles: CSSResult = css`
         white-space: nowrap;
     }
 `;
+
+export const placeholderStyles: CSSResult = css`
+    .place-holder {
+        color: var(--md-sys-color-on-surface-variant);
+    }
+`;

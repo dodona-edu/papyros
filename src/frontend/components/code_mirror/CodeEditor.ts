@@ -12,7 +12,7 @@ import {
 } from "@codemirror/view";
 import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
 import { bracketMatching, foldGutter, indentOnInput, indentUnit } from "@codemirror/language";
-import { EditorState, StateEffect } from "@codemirror/state";
+import { EditorState, Extension, StateEffect } from "@codemirror/state";
 import {
     acceptCompletion,
     autocompletion,
@@ -21,7 +21,7 @@ import {
     completionKeymap,
 } from "@codemirror/autocomplete";
 import { highlightSelectionMatches, searchKeymap } from "@codemirror/search";
-import { linter, lintGutter, lintKeymap, forceLinting } from "@codemirror/lint";
+import { linter, lintGutter, lintKeymap, forceLinting, forEachDiagnostic } from "@codemirror/lint";
 import { css, CSSResult } from "lit";
 import { WorkerDiagnostic } from "../../../backend/Backend";
 import { ProgrammingLanguage } from "../../../ProgrammingLanguage";
@@ -46,6 +46,40 @@ const tabCompletionKeyMap = [{ key: "Tab", run: acceptCompletion }];
 const ESCAPE_HINT_ID = "escape-hint";
 // Dispatched to ask the linter to re-run without a document change (see needsRefresh).
 const forceLintEffect = StateEffect.define<null>();
+// Pylint's message id for an import it cannot resolve
+const IMPORT_ERROR = "E0401";
+
+function showsImportError(state: EditorState): boolean {
+    let found = false;
+    forEachDiagnostic(state, (d) => {
+        found ||= "code" in d && d.code === IMPORT_ERROR;
+    });
+    return found;
+}
+
+const codingExtensions: Extension = [
+    lineNumbers(),
+    highlightSpecialChars(),
+    foldGutter(),
+    drawSelection(),
+    EditorState.allowMultipleSelections.of(true),
+    indentOnInput(),
+    bracketMatching(),
+    closeBrackets(),
+    autocompletion(),
+    rectangularSelection(),
+    highlightSelectionMatches(),
+    keymap.of([
+        ...closeBracketsKeymap,
+        ...defaultKeymap,
+        ...searchKeymap,
+        ...historyKeymap,
+        ...completionKeymap,
+        ...tabCompletionKeyMap,
+        ...lintKeymap,
+        indentWithTab,
+    ]),
+];
 
 @customElement("p-code-editor")
 export class CodeEditor extends CodeMirrorEditor {
@@ -130,8 +164,10 @@ export class CodeEditor extends CodeMirrorEditor {
         // so code linted while a package is still downloading is wrongly flagged as
         // "unable to import X". The editor does not re-lint on its own, so when a
         // package finishes installing, force a re-lint to clear those stale errors.
+        // Every editor on a shared runtime gets this event, so only one that shows such
+        // an error lints again.
         const loadingData = parseData(e.data, e.contentType);
-        if (loadingData.status === "loaded" && this.view) {
+        if (loadingData.status === "loaded" && this.view && showsImportError(this.view.state)) {
             // forceLinting only runs an already-scheduled lint, so first dispatch
             // forceLintEffect to schedule one (via the linter's needsRefresh).
             this.view.dispatch({ effects: forceLintEffect.of(null) });
@@ -320,27 +356,7 @@ export class CodeEditor extends CodeMirrorEditor {
             language: [],
             history: history(),
             codingExtensions: [
-                lineNumbers(),
-                highlightSpecialChars(),
-                foldGutter(),
-                drawSelection(),
-                EditorState.allowMultipleSelections.of(true),
-                indentOnInput(),
-                bracketMatching(),
-                closeBrackets(),
-                autocompletion(),
-                rectangularSelection(),
-                highlightSelectionMatches(),
-                keymap.of([
-                    ...closeBracketsKeymap,
-                    ...defaultKeymap,
-                    ...searchKeymap,
-                    ...historyKeymap,
-                    ...completionKeymap,
-                    ...tabCompletionKeyMap,
-                    ...lintKeymap,
-                    indentWithTab,
-                ]),
+                codingExtensions,
                 EditorView.contentAttributes.of({ "aria-describedby": ESCAPE_HINT_ID }),
             ],
             debugging: [highlightActiveLineGutter(), lintGutter(), highlightActiveLine()],

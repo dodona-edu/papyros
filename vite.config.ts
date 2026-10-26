@@ -3,6 +3,7 @@ import { playwright } from "@vitest/browser-playwright";
 import browserslistToEsbuild from "browserslist-to-esbuild";
 
 export default defineConfig({
+    appType: "mpa",
     oxc: {
         supported: {
             "import-attributes": true,
@@ -11,6 +12,12 @@ export default defineConfig({
     },
     build: {
         target: browserslistToEsbuild(),
+        rolldownOptions: {
+            input: {
+                main: "index.html",
+                playground: "playground.html",
+            },
+        },
     },
     worker: {
         format: "es",

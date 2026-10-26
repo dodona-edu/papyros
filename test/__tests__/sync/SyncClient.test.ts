@@ -70,6 +70,20 @@ describe("SyncClient", () => {
         await expect(write).rejects.toThrow("No active call to send a message to.");
     });
 
+    it("rejects terminated of the worker that a restart replaces, and not of its replacement", async () => {
+        const client = idleClient();
+        const first = client.terminated;
+        let replacementEnded = false;
+        client.restart();
+        client.terminated.catch(() => (replacementEnded = true));
+
+        await expect(first).rejects.toBeInstanceOf(InterruptError);
+        expect(replacementEnded).toBe(false);
+
+        client.terminate();
+        await expect(client.terminated).rejects.toBeInstanceOf(InterruptError);
+    });
+
     it("rejects the in-flight call with an InterruptError when terminated", async () => {
         const client = idleClient();
         const call = client.call(() => new Promise(() => undefined));

@@ -2,7 +2,12 @@ import "./frontend/components/Input";
 import "./frontend/components/Output";
 import "./frontend/components/CodeRunner";
 import "./frontend/components/Debugger";
+import "./frontend/components/CodePlayground";
+import type { CodePlayground } from "./frontend/components/CodePlayground";
 import { Papyros, papyros } from "./frontend/state/Papyros";
+import type { PapyrosOptions } from "./frontend/state/Papyros";
+import { PapyrosRuntime } from "./frontend/state/PapyrosRuntime";
+import type { Run } from "./frontend/state/PapyrosRuntime";
 import { CODE_TAB, HOST_TAB, InputMode } from "./frontend/state/InputOutput";
 import { RunMode, WorkerDiagnostic } from "./backend/Backend";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
@@ -20,6 +25,7 @@ export {
     CODE_TAB,
     HOST_TAB,
     Papyros,
+    PapyrosRuntime,
     InputMode,
     RunMode,
     RunState,
@@ -32,4 +38,4 @@ export {
     ServiceWorkerRegistrationError,
     ServiceWorkerInputError,
 };
-export type { FriendlyError, OutputEntry, RunOptions, WorkerDiagnostic };
+export type { FriendlyError, OutputEntry, RunOptions, WorkerDiagnostic, PapyrosOptions, Run, CodePlayground };

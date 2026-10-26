@@ -1,6 +1,6 @@
 import { State, stateProperty } from "@dodona/lit-state";
 import { BackendEventType } from "../../communication/BackendEvent";
-import { isValidFileName, parseData } from "../../util/Util";
+import { isFileNameAvailable, isValidFileName, parseData } from "../../util/Util";
 import { Papyros } from "./Papyros";
 import { RunState } from "./Runner";
 import { ServiceWorkerInputError } from "./PapyrosErrors";
@@ -60,6 +60,8 @@ export interface FileEntry {
     binary: boolean;
 }
 
+export const DEFAULT_IMAGE_CONTENT_TYPE = "image/png;base64";
+
 /**
  * The editor tabs that are not files. Symbols, so no file name can be mistaken for them;
  * every other value of `activeEditorTab` is the name of a file.
@@ -101,9 +103,9 @@ export class InputOutput extends State {
     @stateProperty
     inputMode: InputMode = InputMode.interactive;
     /**
-     * Whether the worker has started the current run and not finished it. Input
-     * requests outside that window come from a run that is already over: they can
-     * still be in flight when it is stopped or when the next run begins.
+     * Whether the worker has started the current run and not finished it. An input
+     * request outside that window comes from a stopped run: it can still be in flight
+     * after stop() closed the prompt.
      */
     private _runActive: boolean = false;
     public get runActive(): boolean {
@@ -204,7 +206,7 @@ export class InputOutput extends State {
         this.output = [...this.output, { type: OutputType.stderr, content: error }];
     }
 
-    public logImage(imageData: string, contentType: string = "image/png"): void {
+    public logImage(imageData: string, contentType: string = DEFAULT_IMAGE_CONTENT_TYPE): void {
         this.output = [...this.output, { type: OutputType.img, content: imageData, contentType }];
     }
 
@@ -252,7 +254,7 @@ export class InputOutput extends State {
     }
 
     public addFile(name: string, content: string = "", binary: boolean = false): boolean {
-        if (!isValidFileName(name) || this.files.some((f) => f.name === name)) {
+        if (!isFileNameAvailable(name, this.files)) {
             return false;
         }
         this.files = [...this.files, { name, content, binary }];

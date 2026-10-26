@@ -11,7 +11,7 @@ import {
     waitForAwaitingInput,
     wipeWorkspace,
 } from "../../helpers";
-import { isValidFileName } from "../../../src/util/Util";
+import { isFileNameAvailable, isValidFileName } from "../../../src/util/Util";
 
 describe("isValidFileName", () => {
     it.each(["../escape", "/absolute", "trailing/", "a//b", ".", "a/./b", "a/../b", ""])(
@@ -27,6 +27,27 @@ describe("isValidFileName", () => {
             expect(isValidFileName(name)).toBe(true);
         },
     );
+});
+
+describe("isFileNameAvailable", () => {
+    const files = [{ name: "a.txt" }, { name: "b.txt" }];
+
+    it("accepts a valid name no file has", () => {
+        expect(isFileNameAvailable("c.txt", files)).toBe(true);
+    });
+
+    it("rejects an invalid name", () => {
+        expect(isFileNameAvailable("../c.txt", files)).toBe(false);
+    });
+
+    it("rejects a name another file has", () => {
+        expect(isFileNameAvailable("a.txt", files)).toBe(false);
+        expect(isFileNameAvailable("a.txt", files, "b.txt")).toBe(false);
+    });
+
+    it("accepts the name being replaced", () => {
+        expect(isFileNameAvailable("a.txt", files, "a.txt")).toBe(true);
+    });
 });
 
 // One Pyodide boot for the whole file: the tests that execute code share a Python
@@ -368,5 +389,53 @@ with open("new.txt", "r") as f:
         await waitForOutput(papyros);
         await waitForPapyrosReady(papyros);
         expect(papyros.io.output[0].content).toBe("renamed content");
+    });
+
+    it("a run given files starts from a workspace that holds only those files", async () => {
+        papyros.runner.code = `
+import os
+os.makedirs("sub", exist_ok=True)
+open("sub/nested.txt", "w").write("nested content")
+`;
+        await waitForInputReady(papyros);
+        await papyros.runner.start();
+        await waitForFiles(papyros, 1);
+        await papyros.runner.provideFiles({ "root.txt": "root content" }, {});
+        await waitForFiles(papyros, 2);
+
+        papyros.runner.code = `import os; print(sorted(os.listdir()), end="")`;
+        await papyros.runner.start(undefined, { files: [{ name: "data.txt", content: "x", binary: false }] });
+        await waitForOutput(papyros);
+        await waitForPapyrosReady(papyros);
+        expect(papyros.io.output[0].content).toBe("['data.txt']");
+        expect(papyros.io.files).toEqual([{ name: "data.txt", content: "x", binary: false }]);
+    });
+
+    it("a run given files starts in the workspace after a run changed the working directory", async () => {
+        papyros.runner.code = `
+import os
+os.makedirs("sub", exist_ok=True)
+os.chdir("sub")
+`;
+        await waitForInputReady(papyros);
+        await papyros.runner.start();
+        await waitForPapyrosReady(papyros);
+
+        papyros.runner.code = `import os; print(os.getcwd(), end="")`;
+        await papyros.runner.start(undefined, { files: [] });
+        await waitForOutput(papyros);
+        await waitForPapyrosReady(papyros);
+        expect(papyros.io.output[0].content).toBe("/home/pyodide/workspace");
+    });
+
+    it("a run given a binary file can read its bytes", async () => {
+        papyros.runner.code = `print(list(open("b.bin", "rb").read()), end="")`;
+        await waitForInputReady(papyros);
+        await papyros.runner.start(undefined, {
+            files: [{ name: "b.bin", content: btoa("\x00\x01\x02"), binary: true }],
+        });
+        await waitForOutput(papyros);
+        await waitForPapyrosReady(papyros);
+        expect(papyros.io.output[0].content).toBe("[0, 1, 2]");
     });
 });
