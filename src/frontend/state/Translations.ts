@@ -361,5 +361,7 @@ export const DUTCH_TRANSLATION = {
         // @codemirror/lint
         Diagnostics: "Problemen",
         "No diagnostics": "Geen problemen",
+        // @codemirror/autocomplete
+        Completions: "Suggesties",
     },
 };
