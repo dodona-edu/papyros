@@ -23,7 +23,7 @@ function answerInput(papyros: Papyros, value: string): () => void {
 }
 
 // One Pyodide boot per describe block: the tests share a Python instance
-describe.sequential("JSPI input transport", () => {
+describe("JSPI input transport", () => {
     let papyros: Papyros;
 
     beforeAll(async () => {
@@ -160,7 +160,7 @@ describe.sequential("JSPI input transport", () => {
     }, 180000);
 });
 
-describe.sequential("channel input transport", () => {
+describe("channel input transport", () => {
     let papyros: Papyros;
 
     beforeAll(async () => {

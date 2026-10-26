@@ -43,7 +43,7 @@ async function sharingJavaScript(): Promise<{ runtime: PapyrosRuntime; a: Papyro
     return { runtime, a, b };
 }
 
-describe.sequential("Papyros instances sharing a runtime", () => {
+describe("Papyros instances sharing a runtime", () => {
     it("launch a single worker", async () => {
         const client = fakeClient();
         const creator = vi.fn(() => client);
@@ -885,7 +885,7 @@ async function explore(seed: number, steps: number): Promise<void> {
     }
 }
 
-describe.sequential("Papyros instances sharing a runtime, driven by random sequences", () => {
+describe("Papyros instances sharing a runtime, driven by random sequences", () => {
     // Each of these seeds fails when any one of these checks is taken out: the dropping of
     // earlier run ids and of events without an id in dispatch(), the Loading filter of the
     // Runner, the checks after the awaits in stop() and provideInput(), detach() giving up the

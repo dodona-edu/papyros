@@ -7,7 +7,7 @@ import { waitForInputReady, waitForOutput, waitForPapyrosReady } from "../../hel
  * The channel and the backend clients are owned by the instance, so a fresh Papyros
  * per test observes what its own launch actually needed.
  */
-describe.sequential("lazy channel setup", () => {
+describe("lazy channel setup", () => {
     it("does not build a channel for python when the stack can be suspended", async () => {
         const papyros = new Papyros();
         await papyros.launch();

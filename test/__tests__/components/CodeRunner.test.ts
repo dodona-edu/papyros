@@ -601,7 +601,7 @@ describe("CodeRunner tab switches", () => {
     });
 });
 
-describe.sequential("CodeRunner with a Python backend", () => {
+describe("CodeRunner with a Python backend", () => {
     let papyros: Papyros;
 
     beforeAll(async () => {

@@ -146,7 +146,7 @@ function occupy(runtime: PapyrosRuntime): () => Promise<void> {
     const run = runtime.currentRun!;
     expect(run.owner).toBe(other);
     return async () => {
-        const client = await other.runner.backend;
+        const client: ReturnType<typeof fakeClient> = await other.runner.backend;
         await vi.waitFor(() => expect(client.runId).toBe(run.id));
         client.finishRun();
         await vi.waitFor(() => expect(runtime.currentRun).toBeNull());

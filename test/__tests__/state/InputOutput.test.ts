@@ -22,7 +22,7 @@ function stdout(papyros: Papyros): string {
 
 // One Pyodide boot for the whole file: the Python tests share an instance, and the
 // JavaScript tests get cheap throwaway instances that never boot Pyodide at all.
-describe.sequential("InputOutput", () => {
+describe("InputOutput", () => {
     let papyros: Papyros;
 
     beforeAll(async () => {
@@ -163,12 +163,13 @@ print("hello " + input("input1"))
 print("world! " + input("input2"))
 `;
         let inputCount = 0;
-        const unsubscribe = papyros.io.subscribe(async () => {
-            await new Promise((r) => setTimeout(r, 50));
-            if (papyros.io.awaitingInput) {
-                inputCount++;
-                papyros.io.provideInput("foo" + inputCount);
-            }
+        const unsubscribe = papyros.io.subscribe(() => {
+            setTimeout(() => {
+                if (papyros.io.awaitingInput) {
+                    inputCount++;
+                    papyros.io.provideInput("foo" + inputCount);
+                }
+            }, 50);
         });
         await waitForInputReady(papyros);
         await papyros.runner.start();

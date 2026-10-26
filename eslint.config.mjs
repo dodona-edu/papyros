@@ -27,7 +27,7 @@ export default defineConfig(
         },
     },
     {
-        files: ["src/**/*.ts"],
+        files: ["src/**/*.ts", "test/**/*.ts"],
         languageOptions: {
             parserOptions: {
                 projectService: true,
@@ -38,6 +38,8 @@ export default defineConfig(
             "@typescript-eslint/no-floating-promises": "error",
             "@typescript-eslint/no-misused-promises": "error",
             "@typescript-eslint/await-thenable": "error",
+            "@typescript-eslint/no-deprecated": "error",
+            "@typescript-eslint/require-array-sort-compare": "error",
         },
     },
     eslintPluginLit.configs["flat/recommended"],

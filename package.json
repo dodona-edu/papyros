@@ -51,7 +51,7 @@
     "build:lib": "bash scripts/build_library.sh",
     "test": "vitest",
     "lint": "eslint src test",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc -p test",
     "prepack": "yarn build:lib"
   },
   "description": "Scratchpad for multiple programming languages in the browser.",
