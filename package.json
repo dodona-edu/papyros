@@ -47,7 +47,7 @@
     "start": "yarn build:sw && vite",
     "setup": "bash scripts/setup.sh",
     "build:app": "yarn build:sw && vite build",
-    "build:sw": "vite build --config vite.sw.config.ts",
+    "build:sw": "vite build --config vite.sw.config.mts",
     "build:lib": "bash scripts/build_library.sh",
     "test": "vitest",
     "lint": "eslint src test",
