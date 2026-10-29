@@ -1,9 +1,9 @@
 import { describe, expect, it, beforeAll, beforeEach, afterAll } from "vitest";
 import { Papyros } from "../../../src/frontend/state/Papyros";
 import { ProgrammingLanguage } from "../../../src/ProgrammingLanguage";
-import { RunState } from "../../../src/frontend/state/Runner";
 import { RunMode } from "../../../src/backend/Backend";
 import { OutputType } from "../../../src/frontend/state/InputOutput";
+import { RunOutcome, RunStatus } from "../../../src/frontend/state/Runner";
 import { buildTurtleSvg, TurtlePatch } from "../../../src/frontend/state/TurtleSvg";
 import { launchPapyros, settlePapyros, waitForOutput, waitForPapyrosReady } from "../../helpers";
 
@@ -45,7 +45,7 @@ turtle.done()`;
         await papyros.runner.start();
         await waitForPapyrosReady(papyros);
         await waitForOutput(papyros);
-        expect(papyros.runner.state).toBe(RunState.Ready);
+        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
         expect(turtlePatches(papyros).length).toBeGreaterThan(0);
         const svg = turtleSvg(papyros);
         expect(svg).toContain("<svg");

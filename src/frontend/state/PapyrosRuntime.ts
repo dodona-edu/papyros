@@ -304,11 +304,7 @@ export class PapyrosRuntime extends State {
         }
         this.recovering = true;
         try {
-            // A run suspended in input() dies with its worker, so close its prompt
-            // and flush its frames the way stop() does
-            const owner = this.currentRun?.owner ?? requester;
-            owner.io.onRunEnd();
-            owner.debugger.onRunEnd();
+            // A run on the worker fails as interrupted, which ends it
             this.restartWorker(language);
             await requester.runner.launch();
             return true;

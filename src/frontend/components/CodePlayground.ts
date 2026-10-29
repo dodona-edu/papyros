@@ -3,11 +3,13 @@ import { CSSResultGroup, html, nothing, TemplateResult } from "lit";
 import { createRef, ref } from "lit/directives/ref.js";
 import { PapyrosElement } from "./PapyrosElement";
 import { RunMode } from "../../backend/Backend";
+import { RunStatus } from "../state/Runner";
 import { PlaygroundFiles } from "./playground/files";
 import { PlaygroundInstance } from "./playground/instance";
 import { PlaygroundOutput } from "./playground/output";
 import { cardStyles, configErrorStyles, fileStyles, outputPanelStyles } from "./playground/styles";
-import { statusStyles } from "./playground/status";
+import { renderToolbarStatus, statusStyles } from "./playground/status";
+import { ReducedMotionController } from "./motion";
 import { outputStyles } from "./output/renderOutput";
 import "./code_runner/Code";
 
@@ -52,6 +54,9 @@ export class CodePlayground extends PapyrosElement {
     @property({ type: String })
     files = "";
 
+    /** The spinners of the status lines are left out under reduced motion. */
+    private readonly reducedMotion = new ReducedMotionController(this);
+
     private readonly runStopButton = createRef<HTMLButtonElement>();
 
     private readonly instance = new PlaygroundInstance(this, () => this.supported);
@@ -63,7 +68,7 @@ export class CodePlayground extends PapyrosElement {
     }
 
     private get isActive(): boolean {
-        return this.papyros.runtime.isRunning(this.papyros);
+        return this.papyros.runner.inProgress;
     }
 
     private get otherRunning(): boolean {
@@ -72,14 +77,13 @@ export class CodePlayground extends PapyrosElement {
     }
 
     /**
-     * Whether Reset has something to undo: edited code, or anything shown below the editor
+     * Whether Reset has something to undo: edited code, a run to wipe, or a failed file
      */
     private get canReset(): boolean {
         return (
             !this.isActive &&
             (this.papyros.runner.code !== this.code ||
-                this.papyros.io.output.length > 0 ||
-                this.output.launchFailed ||
+                this.papyros.runner.run.status !== RunStatus.Idle ||
                 this.dataFiles.failed)
         );
     }
@@ -99,7 +103,6 @@ export class CodePlayground extends PapyrosElement {
         // still loads waits for it
         this.papyros.runner.ensureLaunched().catch((error: unknown) => {
             this.papyros.reportLaunchFailure(error, "Launching the code playground runtime failed");
-            this.output.onLaunchFailed(error);
         });
         // Passing the files, even none, starts every run from a workspace holding only those
         this.papyros.runner
@@ -131,7 +134,7 @@ export class CodePlayground extends PapyrosElement {
             void this.updateComplete.then(() => this.focusRunStop());
         }
         this.papyros.runner.code = this.code;
-        this.output.reset();
+        void this.papyros.runner.reset();
         this.dataFiles.clearFailures();
     }
 
@@ -157,6 +160,7 @@ export class CodePlayground extends PapyrosElement {
             <div class="card" role="group" aria-labelledby=${this.titleText ? "title" : nothing}>
                 <div class="toolbar">
                     ${this.titleText ? html`<span class="title" id="title">${this.titleText}</span>` : nothing}
+                    ${renderToolbarStatus(active ? this.papyros.runner.statusMessage : "")}
                     <div class="actions">
                         <button
                             class="text-button reset"

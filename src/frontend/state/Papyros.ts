@@ -1,6 +1,6 @@
 import { State } from "@dodona/lit-state";
 import { Debugger } from "./Debugger";
-import { Runner, RunState } from "./Runner";
+import { BackendFailure, BackendStatus, Runner } from "./Runner";
 import { InputOutput } from "./InputOutput";
 import { Constants } from "./Constants";
 import { Examples } from "./Examples";
@@ -81,14 +81,14 @@ export class Papyros extends State {
         if (!this.canDeferChannel() && !(await this.ensureChannel())) {
             // Without a channel the backend is never launched, so the controls must not
             // offer a run or stop that has nothing to act on
-            let message = this.i18n.t("Papyros.service_worker_error");
+            let reason: BackendFailure = BackendFailure.ServiceWorkerError;
             if (!isSecureContext) {
-                message = this.i18n.t("Papyros.insecure_context_error");
+                reason = BackendFailure.InsecureContext;
             } else if (!("serviceWorker" in navigator)) {
-                message = this.i18n.t("Papyros.service_worker_unsupported");
+                reason = BackendFailure.NoServiceWorkerApi;
             }
-            this.runner.setState(RunState.Error, message);
-            alert(message);
+            this.runner.backendStatus = { status: BackendStatus.Failed, reason };
+            alert(this.runner.statusMessage);
         } else {
             try {
                 await this.runner.launch();

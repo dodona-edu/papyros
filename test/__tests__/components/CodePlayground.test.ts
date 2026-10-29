@@ -14,7 +14,9 @@ import type { CodeEditor } from "../../../src/frontend/components/code_mirror/Co
 import "../../../src/frontend/components/CodePlayground";
 import { fakeClient } from "../../fakeClient";
 import { emulateReducedMotion } from "../../helpers";
+import { RunStatus } from "../../../src/frontend/state/Runner";
 
+const start: BackendEvent = { type: BackendEventType.Start, data: "RunCode", contentType: "text/plain" };
 const end: BackendEvent = { type: BackendEventType.End, data: "CodeFinished", contentType: "text/plain" };
 const output = (data: string): BackendEvent => ({ type: BackendEventType.Output, data, contentType: "text/plain" });
 
@@ -108,6 +110,15 @@ function button(el: CodePlayground, selector: string = "button.pill"): HTMLButto
     return $<HTMLButtonElement>(el, selector)!;
 }
 
+/** The live region in the toolbar that tells how the run is going */
+function toolbarStatus(el: CodePlayground): HTMLElement {
+    return $(el, ".toolbar [role='status']")!;
+}
+
+function toolbarSpinner(el: CodePlayground): Element | null {
+    return toolbarStatus(el).querySelector("md-circular-progress");
+}
+
 function clientOf(el: CodePlayground): Promise<any> {
     return el.papyros.runner.backend;
 }
@@ -130,7 +141,7 @@ async function finishRun(el: CodePlayground, client: any): Promise<void> {
 
 async function awaitInput(el: CodePlayground, client: any, prompt: string = ""): Promise<void> {
     // Input requests only count once the worker has reported the start of the run
-    client.emit({ type: BackendEventType.Start, data: "RunCode", contentType: "text/plain" });
+    client.emit(start);
     client.emit({ type: BackendEventType.Input, data: prompt, contentType: "text/plain" });
     await settle(el);
 }
@@ -508,7 +519,7 @@ describe("p-code-playground", () => {
 
         expect(pill.textContent).toContain("Stop");
         expect(pill.hasAttribute("aria-disabled")).toBe(false);
-        expect($(el, ".output-body .status-line")!.textContent).toContain("Loading");
+        expect(toolbarStatus(el).textContent).toContain("Loading");
 
         pill.click();
         launch.finish();
@@ -606,20 +617,25 @@ describe("p-code-playground", () => {
     });
 
     it("shows the input row only while its own run awaits input", async () => {
-        const el = await mount();
+        const runtime = sharedRuntime(fakeClient());
+        const el = await mount({ runtime });
+        const other = await mount({ runtime });
         const client = await startRun(el);
 
         await awaitInput(el, client, "Name: ");
         expect($(el, ".input-row")).not.toBeNull();
 
-        el.papyros.io.awaitingInput = false;
+        el.papyros.io.provideInput("Alice");
         await settle(el);
+        expect(el.papyros.runner.run.status).toBe(RunStatus.Running);
         expect($(el, ".input-row")).toBeNull();
 
         await finishRun(el, client);
-        el.papyros.io.awaitingInput = true;
-        await settle(el);
+        const otherClient = await startRun(other);
+        await awaitInput(other, otherClient, "Name: ");
+        expect($(other, ".input-row")).not.toBeNull();
         expect($(el, ".input-row")).toBeNull();
+        await finishRun(other, otherClient);
     });
 
     it("describes the input by its prompt, and only when there is one", async () => {
@@ -631,7 +647,7 @@ describe("p-code-playground", () => {
         const described = el.shadowRoot!.getElementById(input.getAttribute("aria-describedby")!)!;
         expect(described.textContent).toContain("Name: ");
 
-        el.papyros.io.prompt = "";
+        el.papyros.runner.run = { status: RunStatus.AwaitingInput, prompt: "" };
         await settle(el);
         expect($<HTMLInputElement>(el, ".input-row input")!.hasAttribute("aria-describedby")).toBe(false);
         await finishRun(el, client);
@@ -698,7 +714,7 @@ describe("p-code-playground", () => {
         await finishRun(el, client);
     });
 
-    it("shows the loading status line inside the output panel while launching", async () => {
+    it("shows Loading with a spinner in the toolbar while launching, and none in the output panel", async () => {
         const client = fakeClient();
         const launch = client.holdLaunch();
         const el = await mount({ client });
@@ -706,48 +722,170 @@ describe("p-code-playground", () => {
         button(el, "button.run").click();
         await el.updateComplete;
 
-        const statusLine = $(el, ".output-body .status-line")!;
-        expect(statusLine.textContent).toContain("Loading");
+        expect(toolbarStatus(el).textContent).toContain("Loading");
+        expect(toolbarSpinner(el)).not.toBeNull();
+        expect($(el, ".output-body .status-line")).toBeNull();
 
         launch.finish();
         await vi.waitFor(() => expect(client.workerProxy.runCode).toHaveBeenCalled());
         await finishRun(el, client);
     });
 
-    it("leaves the spinner out of the status line under reduced motion, also when the preference changes", async () => {
+    it("shows Running in the toolbar while running with no output, and keeps the output body empty", async () => {
         const el = await mount();
         const client = await startRun(el);
-        const spinner = (): Element | null => $(el, ".output-body .status-line md-circular-progress");
-        expect(spinner()).not.toBeNull();
+        client.emit(start);
+        await settle(el);
+
+        expect(toolbarStatus(el).textContent).toContain("Running");
+        expect($(el, ".output-body")!.textContent!.trim()).toBe("");
+        expect($(el, ".output-body .status-line")).toBeNull();
+
+        client.emit(output("hi\n"));
+        await settle(el);
+
+        expect(toolbarStatus(el).textContent).toContain("Running");
+        expect($(el, ".output-body .status-line")).toBeNull();
+        expect($(el, ".output-body .transcript")!.textContent).toContain("hi");
+        await finishRun(el, client);
+    });
+
+    it("keeps spinning in the toolbar while the run awaits input", async () => {
+        const el = await mount();
+        const client = await startRun(el);
+
+        await awaitInput(el, client, "Name: ");
+
+        expect(toolbarStatus(el).textContent).toContain("Awaiting input");
+        expect(toolbarSpinner(el)).not.toBeNull();
+        await finishRun(el, client);
+    });
+
+    it("leaves the spinner out of the toolbar status under reduced motion, also when the preference changes", async () => {
+        const el = await mount();
+        const client = await startRun(el);
+        client.emit(start);
+        await settle(el);
+        expect(toolbarSpinner(el)).not.toBeNull();
 
         try {
             await emulateReducedMotion(true);
-            await expect.poll(spinner).toBeNull();
-            expect($(el, ".output-body .status-line")!.textContent).toContain("Loading");
+            await expect.poll(() => toolbarSpinner(el)).toBeNull();
+            expect(toolbarStatus(el).textContent).toContain("Running");
 
             await emulateReducedMotion(false);
-            await expect.poll(spinner).not.toBeNull();
+            await expect.poll(() => toolbarSpinner(el)).not.toBeNull();
         } finally {
             await emulateReducedMotion(false);
         }
         await finishRun(el, client);
     });
 
-    it("shows the status line while running with no output, gone once output arrives", async () => {
+    it("keeps the toolbar status as a live region between the title and the buttons, empty unless a run is in progress", async () => {
         const el = await mount();
-        const client = await startRun(el);
-        client.emit({ type: BackendEventType.Start, data: "RunCode", contentType: "text/plain" });
-        await settle(el);
+        const status = toolbarStatus(el);
+        expect(status.getAttribute("aria-live")).toBe("polite");
+        expect(status.textContent!.trim()).toBe("");
+        const children = Array.from($(el, ".toolbar")!.children);
+        expect(children.indexOf(status)).toBe(children.indexOf($(el, ".title")!) + 1);
+        expect(children.indexOf(status)).toBe(children.indexOf($(el, ".actions")!) - 1);
 
-        const statusLine = $(el, ".output-body .status-line")!;
-        expect(statusLine.textContent).toContain("Running");
-        expect(statusLine.closest(".toolbar")).toBeNull();
+        const client = await startRun(el);
+        expect(toolbarStatus(el)).toBe(status);
+        expect(status.textContent).toContain("Loading");
+        client.emit(start);
+        await settle(el);
+        expect(status.textContent).toContain("Running");
 
         client.emit(output("hi\n"));
+        await finishRun(el, client);
+        expect(toolbarStatus(el)).toBe(status);
+        expect(status.textContent!.trim()).toBe("");
+        expect(toolbarSpinner(el)).toBeNull();
+        expect(el.shadowRoot!.textContent).not.toContain("Code executed");
+    });
+
+    it("shows nothing in the toolbar status while idle after a stopped run", async () => {
+        const el = await mount();
+        const client = await startRun(el);
+
+        button(el, "button.stop").click();
+        await vi.waitFor(() => expect(client.interrupt).toHaveBeenCalledTimes(1));
+        await finishRun(el, client);
+
+        expect(toolbarStatus(el).textContent!.trim()).toBe("");
+    });
+
+    it("adds no gap for an empty toolbar status while idle, even when the title has to shrink", async () => {
+        const el = await mount({ label: "A long exercise title that has to shrink on a narrow card" });
+        el.style.width = "240px";
+        await settle(el);
+        const status = toolbarStatus(el);
+        expect(status.matches(":empty")).toBe(true);
+        expect(status.getBoundingClientRect().width).toBe(0);
+        const titleRight = $(el, ".title")!.getBoundingClientRect().right;
+        const actionsLeft = $(el, ".actions")!.getBoundingClientRect().left;
+        expect(titleRight + 12).toBeCloseTo(actionsLeft, 0);
+    });
+
+    it("truncates a long toolbar status with an ellipsis, without moving the buttons or growing the toolbar", async () => {
+        const client = fakeClient();
+        const launch = client.holdLaunch();
+        const el = await mount({ client });
+        el.style.width = "300px";
+        await settle(el);
+        const toolbar = $(el, ".toolbar")!;
+        const actions = $(el, ".actions")!;
+        const before = { right: actions.getBoundingClientRect().right, height: toolbar.getBoundingClientRect().height };
+
+        el.papyros.runner.loadingPackages = ["a-package-with-a-very-long-name", "another-quite-long-package-name"];
+        button(el, "button.run").click();
         await settle(el);
 
-        expect($(el, ".output-body .status-line")).toBeNull();
-        expect($(el, ".output-body .transcript")!.textContent).toContain("hi");
+        const message = toolbarStatus(el).querySelector<HTMLElement>(".message")!;
+        expect(message.textContent).toContain("a-package-with-a-very-long-name");
+        expect(getComputedStyle(message).textOverflow).toBe("ellipsis");
+        expect(getComputedStyle(message).whiteSpace).toBe("nowrap");
+        expect(message.scrollWidth).toBeGreaterThan(message.clientWidth);
+        expect(actions.getBoundingClientRect().right).toBe(before.right);
+        expect(toolbar.getBoundingClientRect().height).toBe(before.height);
+        expect(toolbar.scrollWidth).toBeLessThanOrEqual(toolbar.clientWidth);
+
+        el.papyros.runner.loadingPackages = [];
+        launch.finish();
+        await vi.waitFor(() => expect(client.workerProxy.runCode).toHaveBeenCalled());
+        await finishRun(el, client);
+    });
+
+    it("keeps the spinner of a running toolbar status fully visible on a narrow toolbar, and only clips the text", async () => {
+        const client = fakeClient();
+        const launch = client.holdLaunch();
+        const el = await mount({ client, label: "A long exercise title that has to shrink on a narrow card" });
+        el.style.width = "240px";
+        await settle(el);
+
+        button(el, "button.run").click();
+        await settle(el);
+
+        const toolbar = $(el, ".toolbar")!;
+        const toolbarBox = toolbar.getBoundingClientRect();
+        const title = $(el, ".title")!.getBoundingClientRect();
+        const actions = $(el, ".actions")!.getBoundingClientRect();
+        const spinner = toolbarSpinner(el)!.getBoundingClientRect();
+        expect(spinner.width).toBe(14);
+        expect(spinner.left).toBeGreaterThanOrEqual(title.right);
+        expect(spinner.right).toBeLessThanOrEqual(actions.left);
+        expect(spinner.right).toBeLessThanOrEqual(toolbarBox.right);
+
+        const message = toolbarStatus(el).querySelector<HTMLElement>(".message")!;
+        expect(message.textContent).toContain("Loading");
+        expect(message.getBoundingClientRect().width).toBeLessThan(message.scrollWidth);
+        expect(getComputedStyle(message).display).not.toBe("none");
+        expect(getComputedStyle(message).visibility).toBe("visible");
+        expect(toolbar.scrollWidth).toBeLessThanOrEqual(toolbar.clientWidth);
+
+        launch.finish();
+        await vi.waitFor(() => expect(client.workerProxy.runCode).toHaveBeenCalled());
         await finishRun(el, client);
     });
 
@@ -1086,6 +1224,25 @@ describe("p-code-playground", () => {
         const next = await clientOf(el);
         await vi.waitFor(() => expect(next.workerProxy.runCode).toHaveBeenCalledTimes(2));
         await finishRun(el, next);
+    });
+
+    it("offers Reset after a run that printed nothing, and Reset returns the run to idle", async () => {
+        const el = await mount({ code: "pass" });
+        const reset = button(el, "button.reset");
+        expect(reset.getAttribute("aria-disabled")).toBe("true");
+
+        const client = await startRun(el);
+        await finishRun(el, client);
+        expect(el.papyros.io.output).toEqual([]);
+        expect(el.papyros.runner.run.status).toBe(RunStatus.Ended);
+        expect($(el, ".output")).toBeNull();
+        expect(reset.hasAttribute("aria-disabled")).toBe(false);
+
+        reset.click();
+        await settle(el);
+
+        expect(el.papyros.runner.run).toEqual({ status: RunStatus.Idle });
+        expect(reset.getAttribute("aria-disabled")).toBe("true");
     });
 
     it("offers Reset after a failed launch, and Reset clears the alert", async () => {

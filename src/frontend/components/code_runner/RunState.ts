@@ -1,6 +1,5 @@
 import { customElement } from "lit/decorators.js";
 import { PapyrosElement } from "../PapyrosElement";
-import { RunState } from "../../state/Runner";
 import { css, CSSResult, html, nothing, PropertyValues, TemplateResult } from "lit";
 import { prefersReducedMotion, ReducedMotionController } from "../motion";
 import "@material/web/progress/circular-progress";
@@ -41,19 +40,16 @@ export class RunStateEl extends PapyrosElement {
     // Always mounted so the aria-live region exists before content changes,
     // otherwise screen readers can miss the first announcement.
     protected override update(changedProperties: PropertyValues): void {
-        this.toggleAttribute("empty", !this.papyros.runner.stateMessage);
+        this.toggleAttribute("empty", !this.papyros.runner.statusMessage);
         super.update(changedProperties);
     }
 
     protected override render(): TemplateResult {
-        const message = this.papyros.runner.stateMessage;
+        const message = this.papyros.runner.statusMessage;
         // The spinner cannot be stilled from outside its shadow root, so it is left out
         // for people who ask for reduced motion. It is hidden from assistive technology
         // either way: the message names the state.
-        const showSpinner =
-            !!message &&
-            ![RunState.Ready, RunState.Error].includes(this.papyros.runner.state) &&
-            !prefersReducedMotion();
+        const showSpinner = !!message && this.papyros.runner.busy && !prefersReducedMotion();
 
         return html`
             <div role="status" aria-live="polite">

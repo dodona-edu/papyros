@@ -1,8 +1,8 @@
 import { cdp } from "vitest/browser";
 import { Papyros } from "../src/frontend/state/Papyros";
-import { RunState } from "../src/frontend/state/Runner";
 import { ProgrammingLanguage } from "../src/ProgrammingLanguage";
 import { InputMode, OutputType } from "../src/frontend/state/InputOutput";
+import { RunStatus } from "../src/frontend/state/Runner";
 
 /**
  * Create and launch a Papyros for the given language. Selecting the language before
@@ -79,7 +79,7 @@ export async function waitForOutput(papyros: Papyros, count: number = 1, timeout
 
 export async function waitForPapyrosReady(papyros: Papyros, timeout = 2000): Promise<void> {
     const start = Date.now();
-    while (papyros.runner.state != RunState.Ready) {
+    while (papyros.runner.busy) {
         if (Date.now() - start > timeout) {
             throw new Error("Timeout waiting for runner to be ready");
         }
@@ -114,9 +114,9 @@ export async function waitForInputReady(papyros: Papyros, timeout = 5000): Promi
 
 export async function waitForRunning(papyros: Papyros, timeout = 60000): Promise<void> {
     const start = Date.now();
-    while (papyros.runner.state !== RunState.Running) {
+    while (papyros.runner.run.status !== RunStatus.Running) {
         if (Date.now() - start > timeout) {
-            throw new Error(`Timeout waiting for runner to run, still ${papyros.runner.state}`);
+            throw new Error(`Timeout waiting for runner to run, still ${papyros.runner.run.status}`);
         }
         await new Promise((r) => setTimeout(r, 10));
     }
@@ -130,6 +130,13 @@ export async function waitForAwaitingInput(papyros: Papyros, timeout: number = 5
         }
         await new Promise((r) => setTimeout(r, 10));
     }
+}
+
+/**
+ * Answer every input request of this instance with the given value, until the returned function is called
+ */
+export function answerInput(papyros: Papyros, value: string): () => void {
+    return papyros.runner.subscribe(() => (papyros.io.awaitingInput ? papyros.io.provideInput(value) : ""), "run");
 }
 
 export async function waitForFiles(papyros: Papyros, count: number = 1, timeout = 10000): Promise<void> {

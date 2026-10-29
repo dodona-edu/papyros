@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { Papyros } from "../../../src/frontend/state/Papyros";
-import { RunState } from "../../../src/frontend/state/Runner";
 import { ProgrammingLanguage } from "../../../src/ProgrammingLanguage";
 import { fakeClient } from "../../fakeClient";
 import type { ButtonLint } from "../../../src/frontend/components/code_runner/ButtonLint";
 import "../../../src/frontend/components/code_runner/ButtonLint";
+import { BackendFailure, BackendStatus } from "../../../src/frontend/state/Runner";
 
 function buttons(element: ButtonLint): HTMLElement[] {
     return Array.from(element.shadowRoot!.querySelectorAll("md-filled-button, md-outlined-button"));
@@ -26,7 +26,7 @@ describe("ButtonLint", () => {
         expect(buttons(element).map((b) => b.textContent!.trim())).toEqual(["Run", "Debug"]);
         expect(buttons(element).every((b) => !b.hasAttribute("disabled"))).toBe(true);
 
-        element.papyros.runner.setState(RunState.Error);
+        element.papyros.runner.backendStatus = { status: BackendStatus.Failed, reason: BackendFailure.Error };
         await element.updateComplete;
         expect(buttons(element).map((b) => b.textContent!.trim())).toEqual(["Run", "Debug"]);
         expect(buttons(element).every((b) => b.hasAttribute("disabled"))).toBe(true);
@@ -49,7 +49,7 @@ describe("ButtonLint", () => {
 
         const launching = papyros.runner.launch();
         await element.updateComplete;
-        expect(papyros.runner.state).toBe(RunState.Loading);
+        expect(papyros.runner.backendStatus).toEqual({ status: BackendStatus.Launching });
         expect(buttons(element).map((b) => b.textContent!.trim())).toEqual(["Run", "Debug"]);
         expect(buttons(element).every((b) => !b.hasAttribute("disabled"))).toBe(true);
 

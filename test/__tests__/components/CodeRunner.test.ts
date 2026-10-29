@@ -12,6 +12,7 @@ import type { EditorTabs } from "../../../src/frontend/components/EditorTabs";
 import type { FileViewer } from "../../../src/frontend/components/FileViewer";
 import type { ButtonLint } from "../../../src/frontend/components/code_runner/ButtonLint";
 import "../../../src/frontend/components/CodeRunner";
+import { BackendStatus } from "../../../src/frontend/state/Runner";
 
 async function mountRunner(hostTab: boolean, code = ""): Promise<CodeRunner> {
     const element = document.createElement("p-code-runner") as CodeRunner;
@@ -69,7 +70,7 @@ describe("CodeRunner", () => {
         await element.updateComplete;
         expect(element.hasAttribute("backend-ready")).toBe(false);
 
-        element.papyros.runner.backendReady = true;
+        element.papyros.runner.backendStatus = { status: BackendStatus.Up };
         await element.updateComplete;
         expect(element.hasAttribute("backend-ready")).toBe(true);
 

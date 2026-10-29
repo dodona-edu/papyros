@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 import { Papyros } from "../../../src/frontend/state/Papyros";
 import { ProgrammingLanguage } from "../../../src/ProgrammingLanguage";
-import { RunState } from "../../../src/frontend/state/Runner";
 import { PapyrosLaunchError, UnsupportedBrowserError } from "../../../src/frontend/state/PapyrosErrors";
 import { PyodideBootError } from "../../../src/sync/errors";
 import { MockBackend } from "../../__mocks__/MockBackend";
 import { fakeClient } from "../../fakeClient";
+import { BackendFailure, BackendStatus } from "../../../src/frontend/state/Runner";
 
 // Fails fast instead of letting a regression hit the suite timeout
 function withTimeout<T>(promise: Promise<T>, ms: number, what: string): Promise<T> {
@@ -56,7 +56,7 @@ describe("Papyros launch failure", () => {
         expect(error).toBeInstanceOf(PapyrosLaunchError);
         expect(error.message).toBe("Error launching the runtime");
         expect((error.cause as Error).message).toBe("worker failed to start");
-        expect(papyros.runner.state).toBe(RunState.Error);
+        expect(papyros.runner.backendStatus).toEqual({ status: BackendStatus.Failed, reason: BackendFailure.Error });
         expect(papyros.runner.backendReady).toBe(false);
         expect(confirm).toHaveBeenCalledOnce();
 
@@ -90,9 +90,12 @@ describe("Papyros launch failure", () => {
         expect(error).not.toBeInstanceOf(PapyrosLaunchError);
         expect((error.cause as Error).message).toBe("RuntimeError: call_indirect to a null table entry");
         expect(confirm).not.toHaveBeenCalled();
-        expect(papyros.runner.state).toBe(RunState.Error);
-        expect(papyros.runner.stateMessage).toBe(papyros.i18n.t("Papyros.unsupported_browser"));
-        expect(papyros.runner.stateMessage).toContain("Python could not start in this browser");
+        expect(papyros.runner.backendStatus).toEqual({
+            status: BackendStatus.Failed,
+            reason: BackendFailure.UnsupportedBrowser,
+        });
+        expect(papyros.runner.statusMessage).toBe(papyros.i18n.t("Papyros.unsupported_browser"));
+        expect(papyros.runner.statusMessage).toContain("Python could not start in this browser");
 
         papyros.dispose();
     });
@@ -118,8 +121,11 @@ describe("Papyros launch failure", () => {
             await vi.waitFor(() => expect(errorHandler).toHaveBeenCalledOnce());
 
             expect(errorHandler.mock.calls[0][0]).toBeInstanceOf(UnsupportedBrowserError);
-            expect(papyros.runner.state).toBe(RunState.Error);
-            expect(papyros.runner.stateMessage).toBe(papyros.i18n.t("Papyros.unsupported_browser"));
+            expect(papyros.runner.backendStatus).toEqual({
+                status: BackendStatus.Failed,
+                reason: BackendFailure.UnsupportedBrowser,
+            });
+            expect(papyros.runner.statusMessage).toBe(papyros.i18n.t("Papyros.unsupported_browser"));
         } finally {
             papyros.dispose();
         }
@@ -144,8 +150,11 @@ describe("Papyros launch failure", () => {
 
             expect(error).toBeInstanceOf(UnsupportedBrowserError);
             expect((error.cause as Error).name).toBe("PyodideBootError");
-            expect(papyros.runner.state).toBe(RunState.Error);
-            expect(papyros.runner.stateMessage).toBe(papyros.i18n.t("Papyros.unsupported_browser"));
+            expect(papyros.runner.backendStatus).toEqual({
+                status: BackendStatus.Failed,
+                reason: BackendFailure.UnsupportedBrowser,
+            });
+            expect(papyros.runner.statusMessage).toBe(papyros.i18n.t("Papyros.unsupported_browser"));
             // The caller owns the rejection, so nothing is reported on its behalf
             expect(errorHandler).not.toHaveBeenCalled();
             await expect(papyros.runner.backend).rejects.toBeInstanceOf(UnsupportedBrowserError);
@@ -179,7 +188,7 @@ describe("Papyros launch failure", () => {
 
         expect(creator).toHaveBeenCalledOnce();
         expect(terminate).toHaveBeenCalledOnce();
-        expect(papyros.runner.state).toBe(RunState.Error);
+        expect(papyros.runner.backendStatus).toEqual({ status: BackendStatus.Failed, reason: BackendFailure.Error });
         expect(papyros.runner.backendReady).toBe(false);
 
         // A longer budget than the failed launch: this one reaches ensureChannel, which may
@@ -187,7 +196,7 @@ describe("Papyros launch failure", () => {
         await withTimeout(papyros.runner.launch(), 10000, "runner.launch() retry");
 
         expect(creator).toHaveBeenCalledTimes(2);
-        expect(papyros.runner.state).toBe(RunState.Ready);
+        expect(papyros.runner.backendStatus).toEqual({ status: BackendStatus.Up });
         expect(papyros.runner.backendReady).toBe(true);
 
         papyros.dispose();
@@ -214,7 +223,10 @@ describe("Papyros launch failure", () => {
 
             expect(errorHandler.mock.calls[0][0]).toBeInstanceOf(PapyrosLaunchError);
             expect(unhandled).not.toHaveBeenCalled();
-            expect(papyros.runner.state).toBe(RunState.Error);
+            expect(papyros.runner.backendStatus).toEqual({
+                status: BackendStatus.Failed,
+                reason: BackendFailure.Error,
+            });
         } finally {
             window.removeEventListener("unhandledrejection", unhandled);
             papyros.dispose();

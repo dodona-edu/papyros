@@ -10,16 +10,67 @@ import { UnsupportedBrowserError } from "./PapyrosErrors";
 import type { Run } from "./PapyrosRuntime";
 import { fileNameFromUrl } from "./Files";
 
-/**
- * Enum representing the possible states while processing code
- */
-export enum RunState {
-    Loading = "loading",
+/** Where the run of an instance is. A run is in progress, from `Starting` to `Stopping`, exactly while it holds the runtime. */
+export enum RunStatus {
+    Idle = "idle",
+    /** Waiting for its files, the backend and package installs, before the worker starts the code */
+    Starting = "starting",
     Running = "running",
-    AwaitingInput = "awaiting_input",
+    AwaitingInput = "awaiting-input",
     Stopping = "stopping",
-    Ready = "ready",
+    /** A run whose code returned ends once runCode settled and its End or Interrupt event arrived */
+    Ended = "ended",
+}
+
+/** How a run ended. */
+export enum RunOutcome {
+    Completed = "completed",
+    Stopped = "stopped",
+    Crashed = "crashed",
+    FilesFailed = "files-failed",
+    LaunchFailed = "launch-failed",
+}
+
+/** Where the backend is. */
+export enum BackendStatus {
+    Down = "down",
+    Launching = "launching",
+    Up = "up",
+    Failed = "failed",
+}
+
+/** Why the backend cannot run code. */
+export enum BackendFailure {
+    UnsupportedBrowser = "unsupported-browser",
+    InsecureContext = "insecure-context",
+    NoServiceWorkerApi = "no-service-worker-api",
+    ServiceWorkerError = "service-worker-error",
     Error = "error",
+}
+
+/** The run of an instance. Times are in milliseconds. */
+export type RunLifecycle =
+    | { status: RunStatus.Idle }
+    | { status: RunStatus.Starting; mode?: RunMode }
+    | { status: RunStatus.Running; mode?: RunMode }
+    | { status: RunStatus.AwaitingInput; mode?: RunMode; prompt: string }
+    | { status: RunStatus.Stopping; mode?: RunMode }
+    /** `mode` is RunMode.Debug only when the debugger was still active at the end */
+    | { status: RunStatus.Ended; outcome: RunOutcome; mode?: RunMode; duration: number };
+
+export type BackendLifecycle =
+    | { status: BackendStatus.Down }
+    | { status: BackendStatus.Launching }
+    | { status: BackendStatus.Up }
+    | { status: BackendStatus.Failed; reason: BackendFailure };
+
+/** How a run ended, and what the runtime needs afterwards. */
+interface RunEnd {
+    outcome: RunOutcome;
+    /** The worker was terminated under the run, so it has to be launched again */
+    terminated?: boolean;
+    /** The run left the runtime unable to run or lint anything */
+    unusable?: boolean;
 }
 
 /** Options for a single run, passed to `Runner.start`. */
@@ -31,8 +82,8 @@ export interface RunOptions {
     editorTab?: EditorTabId;
     /**
      * When given, the run starts from a workspace that holds only these files. Without
-     * them, the workspace is left as is. A promise of them holds the run in its Loading
-     * phase until it settles, and its rejection ends the run before it starts, without
+     * them, the workspace is left as is. A promise of them holds the run in `starting`
+     * until it settles, and its rejection ends the run before it starts, without
      * reporting an error.
      */
     files?: readonly FileEntry[] | Promise<readonly FileEntry[]>;
@@ -81,7 +132,7 @@ function isRuntimeUnusable(error: any): boolean {
 }
 
 /**
- * Helper component to manage and visualize the current RunState
+ * Runs the code of a Papyros instance and tracks its backend and its run lifecycle
  */
 export class Runner extends State {
     /**
@@ -131,28 +182,32 @@ export class Runner extends State {
     @stateProperty
     public backend: Promise<SyncClient<Backend>>;
     /**
+     * Where the backend is: down, launching, up, or failed and why. Runs started before it is up wait for it.
+     */
+    @stateProperty
+    public backendStatus: BackendLifecycle = { status: BackendStatus.Down };
+    /**
+     * The run of this instance: in progress, or how the last one ended
+     */
+    @stateProperty
+    public run: RunLifecycle = { status: RunStatus.Idle };
+    /**
      * Whether the backend has finished loading and can execute code.
      * Runs may be started before this is true: they wait for the backend.
      */
-    @stateProperty
-    public backendReady: boolean = false;
+    public get backendReady(): boolean {
+        return this.backendStatus.status === BackendStatus.Up;
+    }
+    /**
+     * Whether the backend is being launched
+     */
+    public get launching(): boolean {
+        return this.backendStatus.status === BackendStatus.Launching;
+    }
     /**
      * Identifies the most recent launch, so a superseded one cannot report ready
      */
     private launchId: number = 0;
-    /**
-     * Where the run lifecycle is: running, stopping, and so on. Launching the backend
-     * and installing packages do not change it, see `state`.
-     */
-    @stateProperty
-    public phase: RunState = RunState.Ready;
-    @stateProperty
-    private phaseMessage: string = "";
-    /**
-     * Whether the backend is being launched
-     */
-    @stateProperty
-    public launching: boolean = false;
     /**
      * Array of packages that are being installed
      */
@@ -160,12 +215,23 @@ export class Runner extends State {
     public loadingPackages: Array<string> = [];
 
     /**
-     * Current state of the program: Loading while the backend launches or packages are
-     * installed, the phase otherwise
+     * Whether this instance has a run in progress
      */
-    @stateProperty
-    public get state(): RunState {
-        return this.launching || this.loadingPackages.length > 0 ? RunState.Loading : this.phase;
+    public get inProgress(): boolean {
+        const status = this.run.status;
+        return (
+            status === RunStatus.Starting ||
+            status === RunStatus.Running ||
+            status === RunStatus.AwaitingInput ||
+            status === RunStatus.Stopping
+        );
+    }
+
+    /**
+     * Whether something is under way: the backend launches, packages are installed or a run is in progress
+     */
+    public get busy(): boolean {
+        return this.launching || this.loadingPackages.length > 0 || this.inProgress;
     }
 
     /**
@@ -173,27 +239,71 @@ export class Runner extends State {
      * A run started while the backend launches waits for it.
      */
     public get canStart(): boolean {
-        return !this.papyros.runtime.isRunning(this.papyros) && this.state !== RunState.Error;
+        return !this.papyros.runtime.isRunning(this.papyros) && this.backendStatus.status !== BackendStatus.Failed;
     }
 
     /**
-     * An explanatory message about the current state
+     * What the user is told about the backend and the run
      */
     @stateProperty
-    public get stateMessage(): string {
+    public get statusMessage(): string {
         if (this.loadingPackages.length > 0) {
             return this.papyros.i18n.t("Papyros.loading", {
                 // limit amount of package names shown
                 packages: this.loadingPackages.slice(0, 3).join(", "),
             });
         }
-        if (this.launching) {
+        const backend = this.backendStatus;
+        if (backend.status === BackendStatus.Launching) {
             return this.papyros.i18n.t("Papyros.states.loading");
         }
-        return this.phaseMessage;
+        if (backend.status === BackendStatus.Failed) {
+            switch (backend.reason) {
+                case BackendFailure.UnsupportedBrowser:
+                    return this.papyros.i18n.t("Papyros.unsupported_browser");
+                case BackendFailure.InsecureContext:
+                    return this.papyros.i18n.t("Papyros.insecure_context_error");
+                case BackendFailure.NoServiceWorkerApi:
+                    return this.papyros.i18n.t("Papyros.service_worker_unsupported");
+                case BackendFailure.ServiceWorkerError:
+                    return this.papyros.i18n.t("Papyros.service_worker_error");
+                case BackendFailure.Error:
+                    return this.papyros.i18n.t("Papyros.states.error");
+            }
+        }
+        const run = this.run;
+        switch (run.status) {
+            case RunStatus.Idle:
+                return "";
+            case RunStatus.Starting:
+                return this.papyros.i18n.t("Papyros.states.loading");
+            case RunStatus.Running:
+                return this.papyros.i18n.t("Papyros.states.running");
+            case RunStatus.AwaitingInput:
+                return this.papyros.i18n.t("Papyros.states.awaiting_input");
+            case RunStatus.Stopping:
+                return this.papyros.i18n.t("Papyros.states.stopping");
+        }
+        const time = run.duration / 1000;
+        switch (run.outcome) {
+            case RunOutcome.Completed:
+                // While debugging, only the trace is finished: the session itself carries on,
+                // so "executed" would read as if there were nothing left to do.
+                return run.mode === RunMode.Debug
+                    ? this.papyros.i18n.t("Papyros.traced", { time })
+                    : this.papyros.i18n.t("Papyros.finished", { time });
+            case RunOutcome.Stopped:
+                return this.papyros.i18n.t("Papyros.interrupted", { time });
+            case RunOutcome.Crashed:
+                return this.papyros.i18n.t("Papyros.crashed", { time });
+            case RunOutcome.FilesFailed:
+                return "";
+            case RunOutcome.LaunchFailed:
+                return this.papyros.i18n.t("Papyros.states.error");
+        }
     }
     /**
-     * Time at which the setState call occurred
+     * When the run in progress started: when it got the backend, and again when the worker started its code
      */
     @stateProperty
     public runStartTime: number = new Date().getTime();
@@ -305,6 +415,14 @@ export class Runner extends State {
      * hands anything to the worker. Stop ends such a run on the spot.
      */
     private runBeforeWorker: Run | null = null;
+    /**
+     * The run that `run` describes while it is in progress, so only one call ends it
+     */
+    private activeRun: Run | null = null;
+    /**
+     * Settles once the latest run of this instance is done with the worker, before any relaunch
+     */
+    private execution: Promise<unknown> = Promise.resolve();
 
     constructor(papyros: Papyros) {
         super();
@@ -314,11 +432,7 @@ export class Runner extends State {
         this.backend = Promise.reject(new Error("No backend has been launched"));
         this.backend.catch(() => undefined);
 
-        this.papyros.events.subscribe(BackendEventType.Input, () => {
-            if (this.papyros.io.runActive) {
-                this.setState(RunState.AwaitingInput);
-            }
-        });
+        this.papyros.events.subscribe(BackendEventType.Input, (e) => this.onInput(e));
         // The runtime hands Loading events to every instance. Installs from outside a run,
         // such as linting, are only shown when no other instance shares the runtime.
         this.papyros.events.subscribe(BackendEventType.Loading, (e) => {
@@ -328,7 +442,6 @@ export class Runner extends State {
             }
         });
         this.papyros.events.subscribe(BackendEventType.Start, (e) => this.onStart(e));
-        this.papyros.events.subscribe(BackendEventType.End, (e) => this.onEnd(e));
     }
 
     /**
@@ -350,21 +463,24 @@ export class Runner extends State {
     public dispose(): void {
         this.disposed = true;
         this.launchId++;
-        this.backendReady = false;
-        this.launching = false;
+        this.backendStatus = { status: BackendStatus.Down };
     }
 
     /**
-     * Stops the current run and resets the state of the program
-     * Regular and debug output is cleared
+     * Stops any run, including one that is still loading, leaves debug mode and clears the output:
+     * the instance shows what a fresh one shows.
      * @return {Promise<void>} Returns when the program has been reset
      */
     public async reset(): Promise<void> {
-        if (![RunState.Ready, RunState.Loading, RunState.Error].includes(this.phase)) {
+        if (this.inProgress) {
             await this.stop();
         }
 
         this.papyros.debugger.active = false;
+        if (!this.inProgress) {
+            this.run = { status: RunStatus.Idle };
+            this.papyros.io.reset();
+        }
     }
 
     /**
@@ -373,7 +489,7 @@ export class Runner extends State {
      * Resolves once the backend can run code and rejects when it fails to start, with an
      * UnsupportedBrowserError when this browser cannot run the runtime at all. Resolves
      * quietly when the runner is disposed during the launch. Awaiting this waits for the
-     * whole runtime to download. The state is Loading until then. `backend` is
+     * whole runtime to download. `backendStatus` is launching until then. `backend` is
      * assigned before that, so a caller that does not await can already start a run, which
      * waits for the backend.
      */
@@ -383,8 +499,7 @@ export class Runner extends State {
             // would relaunch the worker here and leak what dispose() just released
             return;
         }
-        this.launching = true;
-        this.backendReady = false;
+        this.backendStatus = { status: BackendStatus.Launching };
         const launchId = ++this.launchId;
         const language = this.programmingLanguage;
         const backendLaunched = this.launchBackend(language, launchId);
@@ -397,22 +512,15 @@ export class Runner extends State {
                 return;
             }
             if (launchId === this.launchId) {
-                this.launching = false;
-                this.setState(
-                    RunState.Error,
-                    error instanceof UnsupportedBrowserError
-                        ? this.papyros.i18n.t("Papyros.unsupported_browser")
-                        : undefined,
-                );
+                this.backendStatus = {
+                    status: BackendStatus.Failed,
+                    reason:
+                        error instanceof UnsupportedBrowserError
+                            ? BackendFailure.UnsupportedBrowser
+                            : BackendFailure.Error,
+                };
             }
             throw error;
-        }
-        if (launchId === this.launchId) {
-            this.launching = false;
-            // A retry that succeeds clears the failure of the launch before it
-            if (this.phase === RunState.Error) {
-                this.setState(RunState.Ready);
-            }
         }
     }
 
@@ -473,7 +581,7 @@ export class Runner extends State {
         const backend = await this.papyros.runtime.ready(language);
         if (launchId === this.launchId) {
             this.updateRunModes();
-            this.backendReady = true;
+            this.backendStatus = { status: BackendStatus.Up };
         }
         return backend;
     }
@@ -491,30 +599,52 @@ export class Runner extends State {
         if (!run) {
             return;
         }
+        this.activeRun = run;
+        this.runStartTime = new Date().getTime();
+        this.run = { status: RunStatus.Starting, mode };
+        const execution = this.execute(run, mode, options);
+        this.execution = execution;
+        let end: RunEnd = { outcome: RunOutcome.Crashed };
         try {
-            await this.run(run, mode, options);
+            end = await execution;
         } finally {
-            this.releaseRuntime(run);
+            this.endRun(run, end.outcome);
+        }
+        if (end.unusable) {
+            await this.recoverRuntime();
+        } else if (end.terminated) {
+            await this.launch();
         }
     }
 
-    private releaseRuntime(run: Run): void {
+    /**
+     * End the given run of this instance and release the runtime. Only the first call for a run does anything.
+     */
+    private endRun(run: Run, outcome: RunOutcome): void {
+        if (this.activeRun !== run) {
+            return;
+        }
+        this.activeRun = null;
+        this.runBeforeWorker = null;
         // The matching "loaded" events of an interrupted install never come
         if (this.papyros.runtime.release(run) && this.loadingPackages.length > 0) {
             this.loadingPackages = [];
         }
+        let mode = "mode" in this.run ? this.run.mode : undefined;
+        if (mode === RunMode.Debug && !this.papyros.debugger.active) {
+            // A debug run that took no step left debug mode on its End event
+            mode = RunMode.Run;
+        }
+        this.run = { status: RunStatus.Ended, outcome, mode, duration: new Date().getTime() - this.runStartTime };
+        this.papyros.io.onRunEnd();
+        // A worker that was replaced never reports the end of the stopped run
+        this.papyros.debugger.onRunOver();
     }
 
-    private async run(run: Run, mode: RunMode | undefined, options: RunOptions): Promise<void> {
+    private async execute(run: Run, mode: RunMode | undefined, options: RunOptions): Promise<RunEnd> {
         this.papyros.debugger.active = mode === RunMode.Debug;
-
-        // Setup pre-run
-        this.setState(RunState.Loading);
         this.papyros.io.reset(options.editorTab ?? CODE_TAB);
         this.papyros.debugger.onRunStart();
-        let interrupted = false;
-        let terminated = false;
-        let unusable = false;
         const runtime = this.papyros.runtime;
         this.runBeforeWorker = run;
         let files: readonly FileEntry[] | undefined;
@@ -527,17 +657,15 @@ export class Runner extends State {
         const backend = filesFailed ? undefined : await this.availableBackend();
         if (runtime.currentRun !== run) {
             // Stopped or disposed while it waited
-            return;
+            return { outcome: RunOutcome.Stopped };
         }
         this.runBeforeWorker = null;
         if (filesFailed) {
             // Whoever loads the files reports why they failed
-            this.endBeforeStart(RunState.Ready);
-            return;
+            return { outcome: RunOutcome.FilesFailed };
         }
         if (!backend) {
-            this.endBeforeStart(RunState.Error);
-            return;
+            return { outcome: RunOutcome.LaunchFailed };
         }
         this.runStartTime = new Date().getTime();
         try {
@@ -549,57 +677,63 @@ export class Runner extends State {
             }
             // Disposing this instance while the files were written ends its run, and another
             // instance may be using the worker by now
-            if (this.phase !== RunState.Stopping && runtime.currentRun === run) {
-                await backend.call(
-                    backend.workerProxy.runCode,
-                    this.effectiveCode,
-                    mode,
-                    this.papyros.constants.maxDebugFrames,
-                    run.id,
-                );
+            if (this.run.status !== RunStatus.Stopping && runtime.currentRun === run) {
+                const over = this.runOver(run);
+                // An injected test double has no worker to terminate
+                const terminated: Promise<never> = backend.terminated ?? new Promise(() => undefined);
+                try {
+                    await backend.call(
+                        backend.workerProxy.runCode,
+                        this.effectiveCode,
+                        mode,
+                        this.papyros.constants.maxDebugFrames,
+                        run.id,
+                    );
+                    // The worker's last events travel over the event proxy, and can land after runCode settled
+                    const arrived = await Promise.race([over.arrived, terminated.catch(() => false)]);
+                    if (!arrived) {
+                        return { outcome: RunOutcome.Stopped, terminated: true };
+                    }
+                } finally {
+                    over.unsubscribe();
+                }
             }
         } catch (error: any) {
             if (error.type === "InterruptError") {
                 // Error signaling forceful interrupt
-                interrupted = true;
-                terminated = true;
-            } else {
-                this.papyros.io.logError(error);
-                this.papyros.io.onRunEnd();
-                this.papyros.debugger.onRunEnd();
-                this.onFinished();
-                unusable = isRuntimeUnusable(error);
+                return { outcome: RunOutcome.Stopped, terminated: true };
             }
-        } finally {
-            if (this.phase === RunState.Stopping) {
-                // stop() already closed the input prompt and flushed the debugger
-                interrupted = true;
-            }
-            if (interrupted || terminated) {
-                // A worker that was replaced never reports the end of the stopped run
-                this.papyros.debugger.onRunOver();
-                // Before the relaunch: stop() takes a run still Stopping after 5 s for a deadlock
-                this.setState(
-                    RunState.Ready,
-                    this.papyros.i18n.t("Papyros.interrupted", {
-                        time: (new Date().getTime() - this.runStartTime) / 1000,
-                    }),
-                );
-            }
-            if (unusable) {
-                await this.recoverRuntime();
-            } else if (terminated) {
-                await this.launch();
-            }
+            this.papyros.io.logError(error);
+            return {
+                outcome: this.run.status === RunStatus.Stopping ? RunOutcome.Stopped : RunOutcome.Crashed,
+                unusable: isRuntimeUnusable(error),
+            };
         }
+        return { outcome: this.run.status === RunStatus.Stopping ? RunOutcome.Stopped : RunOutcome.Completed };
     }
 
-    private endBeforeStart(state: RunState): void {
-        // Leaving the debugger active would offer a stop-debug button here
-        this.papyros.debugger.active = false;
-        this.papyros.io.onRunEnd();
-        this.papyros.debugger.onRunEnd();
-        this.setState(state);
+    /**
+     * Resolves to true once the worker sent the last event of the given run: End, or Interrupt
+     * when it stopped. Resolves to false when stop() gave up on the run first.
+     */
+    private runOver(run: Run): { arrived: Promise<boolean>; unsubscribe: () => void } {
+        let settle!: (arrived: boolean) => void;
+        const arrived = new Promise<boolean>((resolve) => (settle = resolve));
+        const unsubscribers = [
+            ...[BackendEventType.End, BackendEventType.Interrupt].map((type) =>
+                this.papyros.events.subscribe(type, (e) => {
+                    if (e.runId === run.id) {
+                        settle(true);
+                    }
+                }),
+            ),
+            this.subscribe(() => {
+                if (this.activeRun !== run) {
+                    settle(false);
+                }
+            }, "run"),
+        ];
+        return { arrived, unsubscribe: () => unsubscribers.forEach((unsubscribe) => unsubscribe()) };
     }
 
     /**
@@ -609,49 +743,42 @@ export class Runner extends State {
     public async stop(): Promise<void> {
         const runtime = this.papyros.runtime;
         const run = this.ownRun();
-        if (!run) {
+        const current = this.run;
+        if (!run || current.status === RunStatus.Idle || current.status === RunStatus.Ended) {
             return;
         }
         if (this.runBeforeWorker === run) {
             // Nothing runs in the worker yet, and the run ignores its files when they arrive
-            this.runBeforeWorker = null;
-            this.endBeforeStart(RunState.Ready);
-            this.releaseRuntime(run);
+            this.endRun(run, RunOutcome.Stopped);
             return;
         }
-        this.setState(RunState.Stopping);
-        this.papyros.io.onRunEnd();
+        this.run = { status: RunStatus.Stopping, mode: current.mode };
         this.papyros.debugger.onRunEnd();
         const backend = await this.availableBackend();
-        if (!backend) {
-            this.setState(RunState.Error);
-            return;
-        }
-        if (runtime.currentRun !== run) {
-            // Another instance may have started a run while the backend was awaited, and that one is not ours to stop
-            if (this.phase === RunState.Stopping) {
-                this.setState(RunState.Ready);
-            }
+        // Without a backend, or once another instance started a run while the backend was
+        // awaited, there is nothing of ours to interrupt: the run ends when it settles
+        if (!backend || runtime.currentRun !== run) {
             return;
         }
         await backend.interrupt();
 
-        const startTime = new Date().getTime();
-        while (this.phase === RunState.Stopping && new Date().getTime() - startTime < 5000) {
-            await new Promise((resolve) => setTimeout(resolve, 100));
-        }
-        if (this.phase === RunState.Stopping) {
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        const deadlocked = await Promise.race([
+            this.execution.then(
+                () => false,
+                () => false,
+            ),
+            new Promise<boolean>((resolve) => (timer = setTimeout(() => resolve(true), 5000))),
+        ]);
+        clearTimeout(timer);
+        if (deadlocked) {
             console.warn("Deadlock while stopping, restarting backend");
             if (runtime.currentRun === run) {
                 // launch() keeps a worker that is already up, so the stuck run would never settle
                 runtime.restartWorker(this.programmingLanguage);
             }
-            this.releaseRuntime(run);
+            this.endRun(run, RunOutcome.Stopped);
             await this.launch();
-            this.setState(
-                RunState.Ready,
-                this.papyros.i18n.t("Papyros.interrupted", { time: (new Date().getTime() - this.runStartTime) / 1000 }),
-            );
         }
     }
 
@@ -660,15 +787,14 @@ export class Runner extends State {
         if (!run) {
             return;
         }
+        if (this.run.status === RunStatus.AwaitingInput) {
+            this.run = { status: RunStatus.Running, mode: this.run.mode };
+        }
         const backend = await this.availableBackend();
         // Input submitted as a run ends has no reader left to receive it, and another
         // run may have started while the backend was awaited
         if (!backend || backend.state === "idle" || this.papyros.runtime.currentRun !== run) {
             return;
-        }
-        // The End event can already have arrived while the run still holds the runtime
-        if (this.phase === RunState.AwaitingInput) {
-            this.setState(RunState.Running);
         }
         await backend.writeMessage(input).catch((error) => {
             // The run can also end while the write waits for the worker to start reading
@@ -761,16 +887,6 @@ export class Runner extends State {
     }
 
     /**
-     * Move the run lifecycle to the given phase, shown to the user once no packages are loading
-     * @param {RunState} state The current phase of the run
-     * @param {string} message Optional message to indicate the phase
-     */
-    public setState(state: RunState, message?: string): void {
-        this.phaseMessage = message || this.papyros.i18n.t(`Papyros.states.${state}`);
-        this.phase = state;
-    }
-
-    /**
      * Callback to handle loading events
      * @param {BackendEvent} e The loading event
      */
@@ -797,34 +913,23 @@ export class Runner extends State {
 
     private onStart(e: BackendEvent): void {
         const startData = parseData(e.data, e.contentType) as string;
-        if (startData.includes("RunCode")) {
+        if (startData.includes("RunCode") && this.run.status === RunStatus.Starting) {
             this.runStartTime = new Date().getTime();
-            this.setState(RunState.Running);
-        }
-    }
-
-    private onEnd(e: BackendEvent): void {
-        const endData = parseData(e.data, e.contentType) as string;
-        if (endData.includes("CodeFinished")) {
-            this.onFinished();
+            this.run = { status: RunStatus.Running, mode: this.run.mode };
         }
     }
 
     /**
-     * The run is over, whether the program completed or raised: the worker
-     * sends an end event either way, error events only carry output
+     * An input request of the run in progress: answered from the batch input when it holds
+     * a line, put to the user otherwise. A stopped run can still send one after its prompt closed.
      */
-    private onFinished(): void {
-        const time = (new Date().getTime() - this.runStartTime) / 1000;
-        // While debugging, only the trace is finished: the session itself carries on,
-        // so "executed" would read as if there were nothing left to do.
-        this.setState(
-            RunState.Ready,
-            this.papyros.debugger.active
-                ? this.papyros.i18n.t("Papyros.traced", { time })
-                : this.papyros.i18n.t("Papyros.finished", { time }),
-        );
+    private onInput(e: BackendEvent): void {
+        if (this.run.status !== RunStatus.Running || this.papyros.io.provideBufferedInput()) {
+            return;
+        }
+        this.run = { status: RunStatus.AwaitingInput, mode: this.run.mode, prompt: String(e.data ?? "") };
     }
+
     private updateRunModes(): void {
         // Launch failures surface through launch(), so only they are swallowed here
         void this.backend

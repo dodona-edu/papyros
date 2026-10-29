@@ -2,9 +2,9 @@ import { describe, it, expect, beforeAll, beforeEach, afterAll, afterEach, vi } 
 import { ProgrammingLanguage } from "../../../src/ProgrammingLanguage";
 import { Papyros } from "../../../src/frontend/state/Papyros";
 import { RunMode } from "../../../src/backend/Backend";
-import { RunState } from "../../../src/frontend/state/Runner";
 import { NonExceptionFrame } from "@dodona/trace-component/dist/trace_types";
 import {
+    answerInput,
     launchPapyros,
     settlePapyros,
     waitForInputReady,
@@ -14,6 +14,7 @@ import {
 } from "../../helpers";
 import { BackendEvent, BackendEventType } from "../../../src/communication/BackendEvent";
 import { fakeClient } from "../../fakeClient";
+import { RunOutcome, RunStatus } from "../../../src/frontend/state/Runner";
 
 // One Pyodide boot for the whole file: the tests share a Python instance. The frame
 // history records a file snapshot per run, so the workspace is wiped between tests.
@@ -57,10 +58,7 @@ print(z)`;
 input("input: ")
 print("world")
 z = 1 + 2`;
-        const unsubscribe = papyros.io.subscribe(
-            () => (papyros.io.awaitingInput ? papyros.io.provideInput("foo") : ""),
-            "awaitingInput",
-        );
+        const unsubscribe = answerInput(papyros, "foo");
         await waitForInputReady(papyros);
         await papyros.runner.start(RunMode.Debug);
         await waitForOutput(papyros);
@@ -141,8 +139,12 @@ for i in range(50):
 
         // The tracer stops at the frame budget on its own, so the run finishes
         // normally rather than being interrupted by the frontend
-        expect(papyros.runner.state).toBe(RunState.Ready);
-        expect(papyros.runner.stateMessage).toMatch(/^Code traced in/);
+        expect(papyros.runner.run).toMatchObject({
+            status: RunStatus.Ended,
+            outcome: RunOutcome.Completed,
+            mode: RunMode.Debug,
+        });
+        expect(papyros.runner.statusMessage).toMatch(/^Code traced in/);
         expect(papyros.debugger.trace.length).toBe(5);
     });
 
@@ -285,7 +287,7 @@ describe("Debugger stopped before its first step", () => {
         await run;
 
         expect(papyros.debugger.active).toBe(false);
-        expect(papyros.runner.state).toBe(RunState.Ready);
+        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Stopped });
         papyros.dispose();
     });
 });

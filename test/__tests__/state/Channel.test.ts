@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { Papyros } from "../../../src/frontend/state/Papyros";
 import { ProgrammingLanguage } from "../../../src/ProgrammingLanguage";
-import { waitForInputReady, waitForOutput, waitForPapyrosReady } from "../../helpers";
+import { answerInput, waitForInputReady, waitForOutput, waitForPapyrosReady } from "../../helpers";
 
 /**
  * The channel and the backend clients are owned by the instance, so a fresh Papyros
@@ -42,10 +42,7 @@ describe("lazy channel setup", () => {
 
         papyros.runner.code = 'console.log("hello", prompt("name?"));';
         await waitForInputReady(papyros);
-        const unsubscribe = papyros.io.subscribe(
-            () => (papyros.io.awaitingInput ? papyros.io.provideInput("channel") : ""),
-            "awaitingInput",
-        );
+        const unsubscribe = answerInput(papyros, "channel");
         await papyros.runner.start();
         await waitForOutput(papyros);
         await waitForPapyrosReady(papyros);

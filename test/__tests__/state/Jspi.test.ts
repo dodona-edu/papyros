@@ -2,8 +2,8 @@ import { describe, expect, it, beforeAll, beforeEach, afterAll } from "vitest";
 import { Papyros } from "../../../src/frontend/state/Papyros";
 import { ProgrammingLanguage } from "../../../src/ProgrammingLanguage";
 import { RunMode } from "../../../src/backend/Backend";
-import { RunState } from "../../../src/frontend/state/Runner";
 import {
+    answerInput,
     launchPapyros,
     settlePapyros,
     waitForAwaitingInput,
@@ -14,13 +14,7 @@ import {
     waitForSleeping,
 } from "../../helpers";
 import { NonExceptionFrame } from "@dodona/trace-component/dist/trace_types";
-
-function answerInput(papyros: Papyros, value: string): () => void {
-    return papyros.io.subscribe(
-        () => (papyros.io.awaitingInput ? papyros.io.provideInput(value) : ""),
-        "awaitingInput",
-    );
-}
+import { RunOutcome, RunStatus } from "../../../src/frontend/state/Runner";
 
 // One Pyodide boot per describe block: the tests share a Python instance
 describe("JSPI input transport", () => {
@@ -76,9 +70,9 @@ describe("JSPI input transport", () => {
         papyros.runner.code = "import time\ntime.sleep(2)";
         await papyros.runner.start();
         await waitForPapyrosReady(papyros);
-        expect(papyros.runner.state).toBe(RunState.Ready);
+        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
         // The sleep is timed in the worker and the run on the main thread, so allow for rounding
-        const seconds = Number(/^Code executed in ([\d.]+) s/.exec(papyros.runner.stateMessage)?.[1]);
+        const seconds = Number(/^Code executed in ([\d.]+) s/.exec(papyros.runner.statusMessage)?.[1]);
         expect(seconds).toBeGreaterThanOrEqual(1.9);
     });
 
@@ -104,7 +98,7 @@ describe("JSPI input transport", () => {
         await papyros.runner.stop();
         await runPromise;
         await waitForPapyrosReady(papyros, 10000);
-        expect(papyros.runner.stateMessage).toMatch(/^Code interrupted after/);
+        expect(papyros.runner.statusMessage).toMatch(/^Code interrupted after/);
         expect(papyros.runner.backend).toBe(backendBefore);
         // Nothing leaks into the program's output, not even Pyodide's own report
         expect(papyros.io.output).toEqual([]);
@@ -127,7 +121,7 @@ describe("JSPI input transport", () => {
         await waitForPapyrosReady(papyros, 10000);
         // Cancelling the timer is the point: waiting it out would take a minute
         expect(Date.now() - stopStart).toBeLessThan(5000);
-        expect(papyros.runner.stateMessage).toMatch(/^Code interrupted after/);
+        expect(papyros.runner.statusMessage).toMatch(/^Code interrupted after/);
         expect(papyros.runner.backend).toBe(backendBefore);
         // Nothing leaks into the program's output, not even Pyodide's own report
         expect(papyros.io.output).toEqual([]);
@@ -152,7 +146,7 @@ describe("JSPI input transport", () => {
             await runPromise;
         }
         await waitForPapyrosReady(papyros, 10000);
-        expect(papyros.runner.stateMessage).toMatch(/^Code interrupted after/);
+        expect(papyros.runner.statusMessage).toMatch(/^Code interrupted after/);
         expect(papyros.runner.backend).not.toBe(backendBefore);
         // Interrupting terminated the worker, and the relaunch is not awaited by start().
         // Drain it, so the test does not finish with a launch still in flight.
@@ -197,7 +191,7 @@ describe("channel input transport", () => {
         await papyros.runner.stop();
         await runPromise;
         await waitForPapyrosReady(papyros, 10000);
-        expect(papyros.runner.stateMessage).toMatch(/^Code interrupted after/);
+        expect(papyros.runner.statusMessage).toMatch(/^Code interrupted after/);
         // The channel answers the reader too, so this survives just like the JSPI path
         expect(papyros.runner.backend).toBe(backendBefore);
         expect(papyros.io.output.every((o) => o.type !== "stderr")).toBe(true);

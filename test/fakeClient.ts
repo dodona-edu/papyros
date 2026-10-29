@@ -1,5 +1,5 @@
 import { vi } from "vitest";
-import { BackendEvent } from "../src/communication/BackendEvent";
+import { BackendEvent, BackendEventType } from "../src/communication/BackendEvent";
 import { RunMode } from "../src/backend/Backend";
 
 export interface HeldLaunch {
@@ -12,7 +12,8 @@ export interface HeldLaunch {
  * decides which events arrive while a run is in progress, and when that run ends.
  *
  * Like the real Backend, emitted events carry the id of the run in progress until
- * its runCode settles, unless they set a runId of their own. Like the real SyncClient,
+ * its runCode settles, unless they set a runId of their own, and a run that returns
+ * sends End last unless it already sent End or Interrupt. Like the real SyncClient,
  * restart() replaces the worker and fails a pending run as interrupted, and restart()
  * and terminate() reject `terminated` of the worker they end.
  */
@@ -25,9 +26,18 @@ export function fakeClient(): any {
         fake.terminated.catch(() => undefined);
     };
     const fake: any = {
-        emit: (e: BackendEvent) => fake.callback({ runId: fake.runId, ...e }),
+        emit: (e: BackendEvent) => {
+            const event = { runId: fake.runId, ...e };
+            if ([BackendEventType.End, BackendEventType.Interrupt].includes(event.type) && event.runId === fake.runId) {
+                fake.over = true;
+            }
+            fake.callback(event);
+        },
         // Ends the pending runCode, as the worker does after sending its End event
         finishRun: () => {
+            if (!fake.over) {
+                fake.emit({ type: BackendEventType.End, data: "CodeFinished", contentType: "text/plain" });
+            }
             fake.runId = undefined;
             fake.resolveRun();
         },
@@ -67,6 +77,7 @@ export function fakeClient(): any {
         lintCode: vi.fn(() => Promise.resolve([])),
         runCode: vi.fn((code: string, mode: RunMode, maxSteps: number, runId: number) => {
             fake.runId = runId;
+            fake.over = false;
             return new Promise<void>((resolve) => (fake.resolveRun = resolve));
         }),
         clearWorkspace: vi.fn(() => Promise.resolve()),

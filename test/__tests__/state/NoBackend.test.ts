@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { Papyros } from "../../../src/frontend/state/Papyros";
 import { ProgrammingLanguage } from "../../../src/ProgrammingLanguage";
-import { RunState } from "../../../src/frontend/state/Runner";
 import { RunMode } from "../../../src/backend/Backend";
+import { BackendFailure, BackendStatus, RunOutcome, RunStatus } from "../../../src/frontend/state/Runner";
 
 // Fails fast instead of letting a regression hit the suite timeout
 function withTimeout<T>(promise: Promise<T>, ms: number, what: string): Promise<T> {
@@ -22,7 +22,8 @@ describe("Runner without a backend", () => {
         await withTimeout(papyros.runner.stop(), 2000, "runner.stop()");
 
         // There is no run to stop, so nothing changes
-        expect(papyros.runner.state).toBe(RunState.Ready);
+        expect(papyros.runner.run).toEqual({ status: RunStatus.Idle });
+        expect(papyros.runner.backendStatus).toEqual({ status: BackendStatus.Down });
     });
 
     it("refuses to start when nothing was launched", async () => {
@@ -31,7 +32,8 @@ describe("Runner without a backend", () => {
 
         await withTimeout(papyros.runner.start(RunMode.Debug), 2000, "runner.start()");
 
-        expect(papyros.runner.state).toBe(RunState.Error);
+        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.LaunchFailed });
+        expect(papyros.runner.statusMessage).toBe("Failed to load");
         expect(papyros.io.output).toEqual([]);
         // An active debugger would put a stop-debug button among the inert controls
         expect(papyros.debugger.active).toBe(false);
@@ -43,7 +45,7 @@ describe("Runner without a backend", () => {
         await withTimeout(papyros.runner.provideFiles({ "data.txt": "1" }, {}), 2000, "runner.provideFiles()");
 
         expect(papyros.runner.loadingPackages).toEqual([]);
-        expect(papyros.runner.state).not.toBe(RunState.Loading);
+        expect(papyros.runner.busy).toBe(false);
     });
 
     it("ignores input and file operations when nothing was launched", async () => {
@@ -78,17 +80,22 @@ describe("Runner without a backend", () => {
                 }) as any,
         );
         await withTimeout(papyros.launch(), 2000, "Papyros.launch()");
-        expect(papyros.runner.state).toBe(RunState.Error);
+        const failed = { status: BackendStatus.Failed, reason: BackendFailure.Error };
+        expect(papyros.runner.backendStatus).toEqual(failed);
 
         await withTimeout(papyros.runner.stop(), 2000, "runner.stop()");
-        expect(papyros.runner.state).toBe(RunState.Error);
+        expect(papyros.runner.backendStatus).toEqual(failed);
+        expect(papyros.runner.run).toEqual({ status: RunStatus.Idle });
 
         await withTimeout(papyros.runner.start(), 2000, "runner.start()");
-        expect(papyros.runner.state).toBe(RunState.Error);
+        expect(papyros.runner.backendStatus).toEqual(failed);
+        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.LaunchFailed });
 
         // Nothing is running, so there is nothing for a reset to stop
         await withTimeout(papyros.runner.reset(), 2000, "runner.reset()");
-        expect(papyros.runner.state).toBe(RunState.Error);
+        expect(papyros.runner.backendStatus).toEqual(failed);
+        expect(papyros.runner.run).toEqual({ status: RunStatus.Idle });
+        expect(papyros.runner.statusMessage).toBe("Failed to load");
     });
 
     it("marks the runner as failed when the input channel cannot be created", async () => {
@@ -101,11 +108,18 @@ describe("Runner without a backend", () => {
         await withTimeout(papyros.launch(), 2000, "Papyros.launch()");
 
         expect(alert).toHaveBeenCalledOnce();
-        expect(papyros.runner.state).toBe(RunState.Error);
-        expect(papyros.runner.stateMessage).toBe(papyros.i18n.t("Papyros.service_worker_error"));
+        expect(papyros.runner.backendStatus).toEqual({
+            status: BackendStatus.Failed,
+            reason: BackendFailure.ServiceWorkerError,
+        });
+        expect(papyros.runner.statusMessage).toBe(papyros.i18n.t("Papyros.service_worker_error"));
         expect(papyros.runner.backendReady).toBe(false);
+        expect(papyros.runner.canStart).toBe(false);
 
         await withTimeout(papyros.runner.stop(), 2000, "runner.stop()");
-        expect(papyros.runner.state).toBe(RunState.Error);
+        expect(papyros.runner.backendStatus).toEqual({
+            status: BackendStatus.Failed,
+            reason: BackendFailure.ServiceWorkerError,
+        });
     });
 });

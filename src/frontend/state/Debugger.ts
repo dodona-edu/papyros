@@ -27,7 +27,6 @@ export class Debugger extends State {
     private pendingFrameStates: FrameState[] = [];
     private lastMaterializedFrame: Frame | undefined = undefined;
     private flushTimer: ReturnType<typeof setTimeout> | undefined = undefined;
-    private runActive: boolean = false;
     @stateProperty
     private frameStates: FrameState[] = [];
     @stateProperty
@@ -100,7 +99,7 @@ export class Debugger extends State {
             if (this.frameStates.length + this.pendingFrameStates.length > this.papyros.constants.maxDebugFrames) {
                 this.flushFrames();
                 void this.papyros.runner.stop();
-            } else if (!this.runActive) {
+            } else if (!this.papyros.runner.inProgress) {
                 // frame delivery is not ordered with respect to the run's
                 // end: stragglers arriving after the run must not wait for
                 // the timer, the trace should be complete as soon as they land
@@ -118,7 +117,6 @@ export class Debugger extends State {
      * Called by the Runner when a run begins
      */
     public onRunStart(): void {
-        this.runActive = true;
         this.reset();
     }
 
@@ -131,17 +129,15 @@ export class Debugger extends State {
     }
 
     /**
-     * Called when a run stops producing frames: directly by the Runner on stop or
-     * failure, and through the bus when the worker reports the run over
+     * Called when a run stops producing frames: by the Runner on stop, and when the run is over
      */
     public onRunEnd(): void {
-        this.runActive = false;
         this.flushFrames();
     }
 
     /**
      * Called when a run is over: through the bus when the worker reports its end, and
-     * by the Runner when it stopped or replaced the worker. A debug run without a
+     * by the Runner when the run ends. A debug run without a
      * single step leaves nothing to step through, so it ends debug mode, and the code
      * bar, the debugger pane and the host all leave debug mode together.
      */

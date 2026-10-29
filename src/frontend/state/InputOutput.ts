@@ -2,7 +2,7 @@ import { State, stateProperty } from "@dodona/lit-state";
 import { BackendEventType } from "../../communication/BackendEvent";
 import { isFileNameAvailable, isValidFileName, parseData } from "../../util/Util";
 import { Papyros } from "./Papyros";
-import { RunState } from "./Runner";
+import { RunStatus } from "./Runner";
 import { ServiceWorkerInputError } from "./PapyrosErrors";
 import { TurtlePatch } from "./TurtleSvg";
 
@@ -97,19 +97,21 @@ export class InputOutput extends State {
     @stateProperty
     outputTabManuallySet: boolean = false;
     @stateProperty
-    prompt: string = "";
-    @stateProperty
-    awaitingInput: boolean = false;
-    @stateProperty
     inputMode: InputMode = InputMode.interactive;
+
     /**
-     * Whether the worker has started the current run and not finished it. An input
-     * request outside that window comes from a stopped run: it can still be in flight
-     * after stop() closed the prompt.
+     * Whether the run waits for the user to answer an input request
      */
-    private _runActive: boolean = false;
-    public get runActive(): boolean {
-        return this._runActive;
+    public get awaitingInput(): boolean {
+        return this.papyros.runner.run.status === RunStatus.AwaitingInput;
+    }
+
+    /**
+     * What the run asks the user while it awaits input
+     */
+    public get prompt(): string {
+        const run = this.papyros.runner.run;
+        return run.status === RunStatus.AwaitingInput ? run.prompt : "";
     }
 
     @stateProperty
@@ -120,10 +122,10 @@ export class InputOutput extends State {
     }
     set inputBuffer(value: string) {
         this._inputBuffer = value;
-        if (this.nextBufferedLine !== undefined && this.inputMode === InputMode.batch && this.awaitingInput) {
-            this.provideInput(this.nextBufferedLine);
+        if (this.awaitingInput) {
+            this.provideBufferedInput();
         }
-        if (!this.papyros.debugger.active && this.papyros.runner.state === RunState.Ready) {
+        if (!this.papyros.debugger.active && !this.papyros.runner.inProgress) {
             this.clearInputs();
         }
     }
@@ -154,36 +156,15 @@ export class InputOutput extends State {
             const data = parseData(e.data, e.contentType);
             this.logError(data);
         });
-        this.papyros.events.subscribe(BackendEventType.Start, (e) => {
-            if ((parseData(e.data, e.contentType) as string).includes("RunCode")) {
-                this._runActive = true;
-            }
-        });
-        this.papyros.events.subscribe(BackendEventType.Input, (e) => {
-            if (!this._runActive) {
-                return;
-            }
-            if (this.nextBufferedLine !== undefined && this.inputMode === InputMode.batch) {
-                this.provideInput(this.nextBufferedLine);
-                return;
-            }
-
-            this.prompt = String(e.data ?? "");
-            this.awaitingInput = true;
-        });
-        this.papyros.events.subscribe(BackendEventType.End, () => this.onRunEnd());
         this.papyros.events.subscribe(BackendEventType.Files, (e) => {
             this.files = parseFileEntries(e.data, e.contentType);
         });
     }
 
     /**
-     * Close the input prompt when a run stops producing events, whether it finished,
-     * failed or was interrupted
+     * Called by the Runner when a run ends, whether it finished, failed or was interrupted
      */
     public onRunEnd(): void {
-        this._runActive = false;
-        this.awaitingInput = false;
         // If the finished run produced no turtle output, drop the (stale) Turtle tab
         // selection so the tab bar hides. A manual selection is preserved.
         if (this.activeOutputTab === TURTLE_TAB && !this.hasTurtleOutput && !this.outputTabManuallySet) {
@@ -242,8 +223,19 @@ export class InputOutput extends State {
     public provideInput(input: string): void {
         this.inputs = [...this.inputs, input];
         void this.papyros.runner.provideInput(input);
-        this.prompt = "";
-        this.awaitingInput = false;
+    }
+
+    /**
+     * Answer an input request with the next line of the batch input, if it holds one
+     * @return {boolean} Whether a line was handed over
+     */
+    public provideBufferedInput(): boolean {
+        const line = this.nextBufferedLine;
+        if (line === undefined || this.inputMode !== InputMode.batch) {
+            return false;
+        }
+        this.provideInput(line);
+        return true;
     }
 
     public removeFile(name: string): void {
@@ -297,12 +289,9 @@ export class InputOutput extends State {
         this.inputs = [];
         this.output = [];
         this.hasTurtleOutput = false;
-        this.prompt = "";
-        this.awaitingInput = false;
-        this._runActive = false;
         this.activeEditorTab = editorTab;
         // activeOutputTab is intentionally preserved across reruns: resetting it would make
         // the tab bar flicker (Turtle → Output → Turtle) as a turtle rerun progresses. It is
-        // pruned back to OUTPUT_TAB on End when no turtle output was produced.
+        // pruned back to OUTPUT_TAB when a run ends without turtle output.
     }
 }
