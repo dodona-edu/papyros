@@ -6,7 +6,7 @@ on:
       - main
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment:
       name: production
       url: https://docs.dodona.be/papyros/
