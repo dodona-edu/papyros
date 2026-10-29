@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Papyros } from "../../../src/frontend/state/Papyros";
-import { RunState } from "../../../src/frontend/state/Runner";
 import { ProgrammingLanguage } from "../../../src/ProgrammingLanguage";
 import { fakeClient } from "../../fakeClient";
 import type { PapyrosElement } from "../../../src/frontend/components/PapyrosElement";
 import "../../../src/frontend/components/app/ProgrammingLanguagePicker";
 import "../../../src/frontend/components/app/ExamplePicker";
+import { BackendStatus } from "../../../src/frontend/state/Runner";
 
 const mounted: HTMLElement[] = [];
 
@@ -37,7 +37,7 @@ describe.each(["p-programming-language-picker", "p-example-picker"])("%s", (tag)
         const element = mount(tag, papyros);
 
         const launching = papyros.runner.launch();
-        expect(papyros.runner.state).toBe(RunState.Loading);
+        expect(papyros.runner.backendStatus).toEqual({ status: BackendStatus.Launching });
         expect(await disabled(element)).toBe(false);
         launch.finish();
         await launching;

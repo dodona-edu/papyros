@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { Papyros } from "../../../src/frontend/state/Papyros";
 import { ProgrammingLanguage } from "../../../src/ProgrammingLanguage";
 import { BackendEventType } from "../../../src/communication/BackendEvent";
-import { waitForInputReady, waitForOutput, waitForPapyrosReady, waitForRunning } from "../../helpers";
+import { answerInput, waitForInputReady, waitForOutput, waitForPapyrosReady, waitForRunning } from "../../helpers";
+import { BackendStatus } from "../../../src/frontend/state/Runner";
 
 async function javascriptPapyros(): Promise<Papyros> {
     const papyros = new Papyros();
@@ -41,14 +42,8 @@ describe("multiple Papyros instances", () => {
         first.runner.code = 'console.log("first", prompt("name?"));';
         second.runner.code = 'console.log("second", prompt("name?"));';
         await waitForInputReady(first);
-        const unsubFirst = first.io.subscribe(
-            () => (first.io.awaitingInput ? first.io.provideInput("one") : ""),
-            "awaitingInput",
-        );
-        const unsubSecond = second.io.subscribe(
-            () => (second.io.awaitingInput ? second.io.provideInput("two") : ""),
-            "awaitingInput",
-        );
+        const unsubFirst = answerInput(first, "one");
+        const unsubSecond = answerInput(second, "two");
         await Promise.all([first.runner.start(), second.runner.start()]);
         await waitForOutput(first);
         await waitForOutput(second);
@@ -86,7 +81,7 @@ describe("multiple Papyros instances", () => {
         papyros.dispose();
         await runPromise;
 
-        expect(papyros.runner.backendReady).toBe(false);
+        expect(papyros.runner.backendStatus).toEqual({ status: BackendStatus.Down });
     }, 180000);
 
     it("keep working after another instance is disposed", async () => {

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Papyros } from "../../../src/frontend/state/Papyros";
-import { RunState } from "../../../src/frontend/state/Runner";
 import { ServiceWorkerRegistrationError, UnsupportedBrowserError } from "../../../src/frontend/state/PapyrosErrors";
+import { BackendFailure, BackendStatus } from "../../../src/frontend/state/Runner";
 
 const serviceWorkerProperty = Object.getOwnPropertyDescriptor(Navigator.prototype, "serviceWorker")!;
 
@@ -48,8 +48,11 @@ describe("browser without the Service Worker API", () => {
         const message = papyros.i18n.t("Papyros.service_worker_unsupported");
         expect(message).toMatch(/Safari/);
         expect(message).toMatch(/private window/);
-        expect(papyros.runner.state).toBe(RunState.Error);
-        expect(papyros.runner.stateMessage).toBe(message);
+        expect(papyros.runner.backendStatus).toEqual({
+            status: BackendStatus.Failed,
+            reason: BackendFailure.NoServiceWorkerApi,
+        });
+        expect(papyros.runner.statusMessage).toBe(message);
         expect(alert).toHaveBeenCalledExactlyOnceWith(message);
         expect(papyros.channel).toBeNull();
     });
@@ -89,8 +92,11 @@ describe("browser without the Service Worker API", () => {
         expect(error.message).toMatch(/secure context/);
         const message = papyros.i18n.t("Papyros.insecure_context_error");
         expect(message).toMatch(/HTTPS/);
-        expect(papyros.runner.state).toBe(RunState.Error);
-        expect(papyros.runner.stateMessage).toBe(message);
+        expect(papyros.runner.backendStatus).toEqual({
+            status: BackendStatus.Failed,
+            reason: BackendFailure.InsecureContext,
+        });
+        expect(papyros.runner.statusMessage).toBe(message);
         expect(alert).toHaveBeenCalledExactlyOnceWith(message);
     });
 
@@ -103,8 +109,11 @@ describe("browser without the Service Worker API", () => {
         expect(errorHandler).toHaveBeenCalledOnce();
         expect(errorHandler.mock.calls[0][0]).toBeInstanceOf(ServiceWorkerRegistrationError);
         const message = papyros.i18n.t("Papyros.service_worker_error");
-        expect(papyros.runner.state).toBe(RunState.Error);
-        expect(papyros.runner.stateMessage).toBe(message);
+        expect(papyros.runner.backendStatus).toEqual({
+            status: BackendStatus.Failed,
+            reason: BackendFailure.ServiceWorkerError,
+        });
+        expect(papyros.runner.statusMessage).toBe(message);
         expect(alert).toHaveBeenCalledExactlyOnceWith(message);
     });
 });

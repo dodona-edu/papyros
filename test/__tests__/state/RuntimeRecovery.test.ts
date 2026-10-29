@@ -2,7 +2,10 @@ import { describe, expect, it, vi } from "vitest";
 import { Papyros } from "../../../src/frontend/state/Papyros";
 import { ProgrammingLanguage } from "../../../src/ProgrammingLanguage";
 import { RunMode } from "../../../src/backend/Backend";
-import { RunState } from "../../../src/frontend/state/Runner";
+import { BackendEvent, BackendEventType } from "../../../src/communication/BackendEvent";
+import { OutputType } from "../../../src/frontend/state/InputOutput";
+import { fakeClient as eventClient } from "../../fakeClient";
+import { RunOutcome, RunStatus } from "../../../src/frontend/state/Runner";
 
 const memoryError = (): Error => Object.assign(new Error("MemoryError"), { type: "PythonError" });
 
@@ -22,11 +25,18 @@ function fakeClient({
 } = {}): any {
     const updateFile = vi.fn(() => Promise.resolve());
     const proxyFor = (lint: () => Promise<any>, run: () => Promise<any>): any => ({
-        launch,
+        launch: (callback: (e: BackendEvent) => void) => {
+            client.callback = callback;
+            return launch();
+        },
         usesJspi: () => Promise.resolve(true),
         runModes: () => Promise.resolve([]),
         lintCode: vi.fn(lint),
-        runCode: vi.fn(run),
+        // Like the worker, a run that returns sends End before runCode settles
+        runCode: vi.fn(async (code: string, mode: RunMode, maxSteps: number, runId: number) => {
+            await run();
+            client.callback({ type: BackendEventType.End, data: "CodeFinished", contentType: "text/plain", runId });
+        }),
         provideFiles: vi.fn(() => Promise.resolve()),
         updateFile,
         clearWorkspace: vi.fn(() => Promise.resolve()),
@@ -96,23 +106,33 @@ describe("recovering from an unusable runtime", () => {
 
         expect(client.restart).toHaveBeenCalledOnce();
         expect(client.updateFile).toHaveBeenCalledWith("data.txt", "hello", false);
-        expect(papyros.io.awaitingInput).toBe(false);
-        expect(papyros.runner.state).toBe(RunState.Ready);
+        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Crashed });
+        expect(papyros.runner.statusMessage).toMatch(/^Code crashed after/);
+        expect(papyros.io.output).toEqual([{ type: OutputType.stderr, content: memoryError() }]);
 
         papyros.dispose();
     });
 
-    it("closes the input prompt of a run the recovery abandons", async () => {
-        const client = fakeClient({ lintCode: () => Promise.reject(memoryError()) });
+    it("ends a run suspended in input that the recovery abandons", async () => {
+        // Fails the pending run as interrupted when its worker is replaced, as SyncClient does
+        const client = eventClient();
+        client.workerProxy.lintCode.mockImplementation(() => Promise.reject(memoryError()));
         const papyros = await launched(client);
+        const running = papyros.runner.start();
+        await vi.waitFor(() => expect(client.workerProxy.runCode).toHaveBeenCalled());
+        client.emit({ type: BackendEventType.Start, data: "RunCode", contentType: "text/plain" });
+        client.emit({ type: BackendEventType.Input, data: "", contentType: "text/plain" });
+        expect(papyros.io.awaitingInput).toBe(true);
+
         // A lint can fail while a run is suspended in input(), and the restart
         // takes that run down with the worker
-        papyros.io.awaitingInput = true;
-
         await papyros.runner.lintSource();
+        await running;
 
         expect(client.restart).toHaveBeenCalledOnce();
         expect(papyros.io.awaitingInput).toBe(false);
+        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Stopped });
+        expect(papyros.runtime.currentRun).toBeNull();
 
         papyros.dispose();
     });

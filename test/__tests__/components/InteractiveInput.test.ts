@@ -4,12 +4,13 @@ import type { InteractiveInput } from "../../../src/frontend/components/input/In
 import type { Input } from "../../../src/frontend/components/Input";
 import "../../../src/frontend/components/input/InteractiveInput";
 import "../../../src/frontend/components/Input";
+import { RunStatus } from "../../../src/frontend/state/Runner";
 
 const mounted: HTMLElement[] = [];
 
 async function mount(): Promise<InteractiveInput> {
     const papyros = new Papyros();
-    papyros.io.awaitingInput = true;
+    papyros.runner.run = { status: RunStatus.AwaitingInput, prompt: "" };
     vi.spyOn(papyros.io, "provideInput").mockImplementation(() => undefined);
     const el = document.createElement("p-interactive-input") as InteractiveInput;
     el.papyros = papyros;

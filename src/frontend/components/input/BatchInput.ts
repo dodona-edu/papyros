@@ -1,7 +1,6 @@
 import { customElement } from "lit/decorators.js";
 import { css, CSSResult, html, TemplateResult } from "lit";
 import "../code_mirror/BatchInputEditor";
-import { RunState } from "../../state/Runner";
 import { PapyrosElement } from "../PapyrosElement";
 
 @customElement("p-batch-input")
@@ -36,7 +35,7 @@ export class BatchInput extends PapyrosElement {
             <p-batch-input-editor
                 .value=${this.papyros.io.inputBuffer}
                 .usedLines=${this.usedLines}
-                .readOnly=${this.papyros.debugger.active && this.papyros.runner.state === RunState.Ready}
+                .readOnly=${this.papyros.debugger.active && !this.papyros.runner.inProgress}
                 .placeholder=${this.placeholder}
                 .translations=${this.papyros.i18n.getTranslations("CodeMirror")}
                 .theme=${this.papyros.constants.CodeMirrorTheme}

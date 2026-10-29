@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { Papyros } from "../../../src/frontend/state/Papyros";
 import { PapyrosRuntime, Run } from "../../../src/frontend/state/PapyrosRuntime";
-import { RunState } from "../../../src/frontend/state/Runner";
 import { ProgrammingLanguage } from "../../../src/ProgrammingLanguage";
 import { RunMode } from "../../../src/backend/Backend";
 import { BackendEvent, BackendEventType } from "../../../src/communication/BackendEvent";
@@ -11,6 +10,7 @@ import { waitForAwaitingInput, waitForOutput, waitForPapyrosReady, waitForRunnin
 import { fakeClient } from "../../fakeClient";
 import { PyodideBootError } from "../../../src/sync/errors";
 import { UnsupportedBrowserError } from "../../../src/frontend/state/PapyrosErrors";
+import { BackendFailure, BackendStatus, RunOutcome, RunStatus } from "../../../src/frontend/state/Runner";
 
 const output = (data: string): BackendEvent => ({ type: BackendEventType.Output, data, contentType: "text/plain" });
 const start: BackendEvent = { type: BackendEventType.Start, data: "RunCode", contentType: "text/plain" };
@@ -52,7 +52,10 @@ describe("Papyros instances sharing a runtime", () => {
         expect(creator).toHaveBeenCalledOnce();
         expect(client.workerProxy.launch).toHaveBeenCalledOnce();
         expect(await a.runner.backend).toBe(await b.runner.backend);
-        expect(a.runner.backendReady && b.runner.backendReady).toBe(true);
+        expect([a.runner.backendStatus, b.runner.backendStatus]).toEqual([
+            { status: BackendStatus.Up },
+            { status: BackendStatus.Up },
+        ]);
         runtime.dispose();
     });
 
@@ -68,7 +71,7 @@ describe("Papyros instances sharing a runtime", () => {
         expect(runtime.currentRun?.owner).toBe(a);
         expect(b.io.output).toEqual([{ type: OutputType.stdout, content: "earlier" }]);
         expect(b.io.activeEditorTab).toBe("notes.txt");
-        expect(b.runner.state).toBe(RunState.Ready);
+        expect(b.runner.run).toEqual({ status: RunStatus.Idle });
         expect(b.debugger.active).toBe(false);
 
         await vi.waitFor(() => expect(client.workerProxy.runCode).toHaveBeenCalled());
@@ -105,8 +108,8 @@ describe("Papyros instances sharing a runtime", () => {
         client.emit(input);
         await b.runner.stop();
         await b.runner.provideInput("from b");
-        expect(a.runner.state).toBe(RunState.AwaitingInput);
-        expect(b.runner.state).toBe(RunState.Ready);
+        expect(a.runner.run.status).toBe(RunStatus.AwaitingInput);
+        expect(b.runner.run).toEqual({ status: RunStatus.Idle });
 
         await a.runner.provideInput("from a");
         client.emit(end);
@@ -123,8 +126,8 @@ describe("Papyros instances sharing a runtime", () => {
 
         expect(client.interrupt).not.toHaveBeenCalled();
         expect(client.writeMessage.mock.calls).toEqual([["from a"]]);
-        expect(b.runner.state).toBe(RunState.AwaitingInput);
-        expect(a.runner.state).toBe(RunState.Ready);
+        expect(b.runner.run.status).toBe(RunStatus.AwaitingInput);
+        expect(a.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
 
         client.emit(end);
         client.finishRun();
@@ -144,7 +147,7 @@ describe("Papyros instances sharing a runtime", () => {
 
         expect(client.restart).toHaveBeenCalledOnce();
         expect(runtime.currentRun).toBeNull();
-        expect(a.runner.state).toBe(RunState.Ready);
+        expect(a.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Stopped });
 
         const next = b.runner.start();
         await vi.waitFor(() => expect(client.workerProxy.runCode).toHaveBeenCalledTimes(2));
@@ -226,7 +229,7 @@ describe("Papyros instances sharing a runtime", () => {
         expect(runIds.length).toBeGreaterThan(0);
         expect(runIds.every((id) => id === undefined)).toBe(true);
         expect(loadingPackages).toEqual([]);
-        expect(a.runner.state).toBe(RunState.AwaitingInput);
+        expect(a.runner.run.status).toBe(RunStatus.AwaitingInput);
         expect(a.io.files).toEqual([]);
 
         await a.runner.provideInput("still waiting");
@@ -265,8 +268,10 @@ describe("Papyros instances sharing a runtime", () => {
         const errorHandler = vi.fn();
         a.setErrorHandler(errorHandler);
         b.setErrorHandler(errorHandler);
-        const phasesOfB: RunState[] = [];
-        b.runner.subscribe(() => phasesOfB.push(b.runner.phase), "phase");
+        const backendStatusesOfB: BackendStatus[] = [];
+        b.runner.subscribe(() => backendStatusesOfB.push(b.runner.backendStatus.status), "backendStatus");
+        const runsOfB: RunStatus[] = [];
+        b.runner.subscribe(() => runsOfB.push(b.runner.run.status), "run");
         client.holdLaunch();
         const launches = Promise.allSettled([a.runner.ensureLaunched(), b.runner.ensureLaunched()]);
         const running = a.runner.start();
@@ -277,8 +282,8 @@ describe("Papyros instances sharing a runtime", () => {
         await running;
         expect(runtime.currentRun).toBeNull();
         expect(client.workerProxy.launch).toHaveBeenCalledTimes(2);
-        expect(b.runner.backendReady).toBe(true);
-        expect(b.runner.state).toBe(RunState.Ready);
+        expect(b.runner.backendStatus).toEqual({ status: BackendStatus.Up });
+        expect(b.runner.run).toEqual({ status: RunStatus.Idle });
 
         await b.runner.ensureLaunched();
         const runningB = b.runner.start();
@@ -286,7 +291,9 @@ describe("Papyros instances sharing a runtime", () => {
         client.finishRun();
         await runningB;
         expect(client.workerProxy.launch).toHaveBeenCalledTimes(2);
-        expect(phasesOfB).not.toContain(RunState.Error);
+        expect(backendStatusesOfB).not.toContain(BackendStatus.Failed);
+        expect(runsOfB).toEqual([RunStatus.Starting, RunStatus.Ended]);
+        expect(b.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
         expect(errorHandler).not.toHaveBeenCalled();
         runtime.dispose();
     });
@@ -311,15 +318,17 @@ describe("Papyros instances sharing a runtime", () => {
         const launches = await Promise.allSettled([a.runner.launch(), b.runner.launch()]);
 
         expect(launches.map((l) => l.status)).toEqual(["rejected", "rejected"]);
-        expect(a.runner.state).toBe(RunState.Error);
-        expect(b.runner.state).toBe(RunState.Error);
+        const failed = { status: BackendStatus.Failed, reason: BackendFailure.Error };
+        expect([a.runner.backendStatus, b.runner.backendStatus]).toEqual([failed, failed]);
 
         await a.runner.launch();
         await b.runner.launch();
         expect(creator).toHaveBeenCalledTimes(2);
         expect(working.workerProxy.launch).toHaveBeenCalledOnce();
-        expect(a.runner.state).toBe(RunState.Ready);
-        expect(b.runner.state).toBe(RunState.Ready);
+        expect([a.runner.backendStatus, b.runner.backendStatus]).toEqual([
+            { status: BackendStatus.Up },
+            { status: BackendStatus.Up },
+        ]);
         runtime.dispose();
     });
 
@@ -346,8 +355,9 @@ describe("Papyros instances sharing a runtime", () => {
         expect(creator).toHaveBeenCalledOnce();
         expect(failing.workerProxy.launch).toHaveBeenCalledOnce();
         const message = a.i18n.t("Papyros.unsupported_browser");
-        expect([a.runner.state, b.runner.state]).toEqual([RunState.Error, RunState.Error]);
-        expect([a.runner.stateMessage, b.runner.stateMessage]).toEqual([message, message]);
+        const failed = { status: BackendStatus.Failed, reason: BackendFailure.UnsupportedBrowser };
+        expect([a.runner.backendStatus, b.runner.backendStatus]).toEqual([failed, failed]);
+        expect([a.runner.statusMessage, b.runner.statusMessage]).toEqual([message, message]);
         runtime.dispose();
     });
 
@@ -366,10 +376,10 @@ describe("Papyros instances sharing a runtime", () => {
         });
 
         expect(seenByB).toHaveBeenCalledOnce();
-        expect(a.runner.state).toBe(RunState.Loading);
         expect(a.runner.loadingPackages).toEqual(["numpy"]);
-        expect(b.runner.state).toBe(RunState.Ready);
+        expect(a.runner.statusMessage).toBe("Loading numpy.");
         expect(b.runner.loadingPackages).toEqual([]);
+        expect(b.runner.busy).toBe(false);
 
         client.emit({
             type: BackendEventType.Loading,
@@ -380,7 +390,7 @@ describe("Papyros instances sharing a runtime", () => {
         client.finishRun();
         await running;
         expect(seenByB).toHaveBeenCalledTimes(2);
-        expect(b.runner.state).toBe(RunState.Ready);
+        expect(b.runner.busy).toBe(false);
         runtime.dispose();
     });
 
@@ -412,8 +422,9 @@ describe("Papyros instances sharing a runtime", () => {
 
         expect(client.interrupt).not.toHaveBeenCalled();
         expect(runtime.currentRun?.owner).toBe(b);
-        expect(b.runner.state).toBe(RunState.Running);
-        expect(a.runner.state).toBe(RunState.Ready);
+        expect(b.runner.run.status).toBe(RunStatus.Running);
+        // a asked to stop before its run settled
+        expect(a.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Stopped });
 
         client.emit(end);
         client.finishRun();
@@ -443,8 +454,8 @@ describe("Papyros instances sharing a runtime", () => {
 
         expect(a.io.output).toEqual([]);
         expect(b.io.output).toEqual([]);
-        expect(a.runner.state).toBe(RunState.Ready);
-        expect(b.runner.state).toBe(RunState.Running);
+        expect(a.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Stopped });
+        expect(b.runner.run.status).toBe(RunStatus.Running);
 
         client.emit(end);
         client.finishRun();
@@ -464,7 +475,7 @@ describe("Papyros instances sharing a runtime", () => {
         client.emit({ ...loading("loading"), runId: undefined });
 
         expect(seenByB).toHaveBeenCalledOnce();
-        expect(a.runner.state).toBe(RunState.Running);
+        expect(a.runner.run.status).toBe(RunStatus.Running);
         expect(a.runner.loadingPackages).toEqual([]);
         expect(b.runner.loadingPackages).toEqual([]);
 
@@ -482,12 +493,12 @@ describe("Papyros instances sharing a runtime", () => {
 
         client.emit({ ...loading("loading"), runId: undefined });
         expect(papyros.runner.loadingPackages).toEqual(["numpy"]);
-        expect(papyros.runner.state).toBe(RunState.Loading);
-        expect(papyros.runner.stateMessage).toContain("numpy");
+        expect(papyros.runner.busy).toBe(true);
+        expect(papyros.runner.statusMessage).toContain("numpy");
 
         client.emit({ ...loading("loaded"), runId: undefined });
         expect(papyros.runner.loadingPackages).toEqual([]);
-        expect(papyros.runner.state).toBe(RunState.Ready);
+        expect(papyros.runner.busy).toBe(false);
         papyros.dispose();
     });
 });
@@ -593,6 +604,7 @@ function modelClient(): any {
         (code: string, mode: RunMode, maxSteps: number, runId: number) =>
             new Promise<void>((resolve) => {
                 fake.runId = runId;
+                fake.over = false;
                 fake.runIds.push(runId);
                 fake.pending = true;
                 fake.begun = false;
@@ -693,14 +705,13 @@ async function explore(seed: number, steps: number): Promise<void> {
             instances.map((p) => {
                 const debug = p.debugger as any;
                 return [
-                    p.runner.state,
-                    p.runner.stateMessage,
+                    p.runner.run,
+                    p.runner.backendStatus,
+                    p.runner.statusMessage,
                     p.runner.loadingPackages,
                     p.io.output.length,
-                    p.io.awaitingInput,
                     p.io.files.length,
                     debug.active,
-                    debug.runActive,
                     debug.activeFrame,
                     debug.fileHistory.length,
                 ];
@@ -824,13 +835,15 @@ async function explore(seed: number, steps: number): Promise<void> {
             problems.push("a disposed instance holds the runtime");
         }
         for (const p of instances) {
+            if (p.runner.inProgress !== runtime.isRunning(p)) {
+                problems.push(
+                    `${names.get(p)} is ${p.runner.run.status} while it ${runtime.isRunning(p) ? "holds" : "does not hold"} the runtime`,
+                );
+            }
             if (runtime.isRunning(p)) {
                 continue;
             }
-            const { state, loadingPackages } = p.runner;
-            if (state === RunState.Running || state === RunState.AwaitingInput) {
-                problems.push(`${names.get(p)} is ${state} without holding the runtime`);
-            }
+            const { loadingPackages } = p.runner;
             if (loadingPackages.length > 0) {
                 problems.push(`${names.get(p)} tracks packages [${loadingPackages}] without holding the runtime`);
             }
@@ -870,11 +883,10 @@ async function explore(seed: number, steps: number): Promise<void> {
             problems.push(`${entry.label} never settled`);
         }
         check();
-        // With every launch settled, Loading would mean a run or launch left it behind
+        // With every launch settled, being busy would mean a run or launch left it behind
         for (const p of instances) {
-            const state = p.runner.state;
-            if (!runtime.isRunning(p) && state !== RunState.Ready && state !== RunState.Error) {
-                problems.push(`${names.get(p)} is left ${state} without a run`);
+            if (!runtime.isRunning(p) && p.runner.busy) {
+                problems.push(`${names.get(p)} is left busy without a run: ${JSON.stringify(p.runner.run)}`);
             }
         }
         if (problems.length > 0) {

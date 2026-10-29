@@ -3,8 +3,8 @@ import { expect, it, describe, beforeAll, beforeEach, afterAll } from "vitest";
 import { ProgrammingLanguage } from "../../../src/ProgrammingLanguage";
 import { FriendlyError, InputMode, OutputType } from "../../../src/frontend/state/InputOutput";
 import { BackendEventType } from "../../../src/communication/BackendEvent";
-import { RunState } from "../../../src/frontend/state/Runner";
 import {
+    answerInput,
     launchPapyros,
     settlePapyros,
     waitForAwaitingInput,
@@ -12,6 +12,7 @@ import {
     waitForOutput,
     waitForPapyrosReady,
 } from "../../helpers";
+import { RunOutcome, RunStatus } from "../../../src/frontend/state/Runner";
 
 function stdout(papyros: Papyros): string {
     return papyros.io.output
@@ -64,10 +65,7 @@ console.log("world!");
         const jsPapyros = await launchPapyros(ProgrammingLanguage.JavaScript);
         jsPapyros.runner.code = `console.log("hello", prompt("input"));`;
         await waitForInputReady(jsPapyros);
-        const unsubscribe = jsPapyros.io.subscribe(
-            () => (jsPapyros.io.awaitingInput ? jsPapyros.io.provideInput("foo") : ""),
-            "awaitingInput",
-        );
+        const unsubscribe = answerInput(jsPapyros, "foo");
         await jsPapyros.runner.start();
         await waitForOutput(jsPapyros);
         expect(jsPapyros.io.output[0].content).toBe("hello foo\n");
@@ -78,10 +76,7 @@ console.log("world!");
     it("can read input in python", async () => {
         papyros.runner.code = `print("hello " + input())`;
         await waitForInputReady(papyros);
-        const unsubscribe = papyros.io.subscribe(
-            () => (papyros.io.awaitingInput ? papyros.io.provideInput("foo") : ""),
-            "awaitingInput",
-        );
+        const unsubscribe = answerInput(papyros, "foo");
         await papyros.runner.start();
         await waitForOutput(papyros);
         expect(papyros.io.output[0].content).toBe("hello foo");
@@ -129,7 +124,7 @@ console.log("world!");
         await jsPapyros.runner.stop();
         await runPromise;
         await expect(jsPapyros.runner.provideInput("late")).resolves.toBeUndefined();
-        expect(jsPapyros.runner.state).toBe(RunState.Ready);
+        expect(jsPapyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Stopped });
         jsPapyros.dispose();
     });
 
@@ -142,7 +137,7 @@ console.log("world!");
         jsPapyros.io.inputBuffer = "stale\n";
         jsPapyros.events.publish({ type: BackendEventType.Input, data: "input", contentType: "text/plain" });
         expect(jsPapyros.io.inputs).toEqual([]);
-        expect(jsPapyros.runner.state).toBe(RunState.Ready);
+        expect(jsPapyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
         jsPapyros.dispose();
     });
 
@@ -163,14 +158,14 @@ print("hello " + input("input1"))
 print("world! " + input("input2"))
 `;
         let inputCount = 0;
-        const unsubscribe = papyros.io.subscribe(() => {
+        const unsubscribe = papyros.runner.subscribe(() => {
             setTimeout(() => {
                 if (papyros.io.awaitingInput) {
                     inputCount++;
                     papyros.io.provideInput("foo" + inputCount);
                 }
             }, 50);
-        });
+        }, "run");
         await waitForInputReady(papyros);
         await papyros.runner.start();
         await waitForOutput(papyros);
@@ -199,10 +194,7 @@ print("world! " + input("input2"))
         papyros.io.inputMode = InputMode.interactive;
         papyros.io.inputBuffer = "";
         papyros.io.reset();
-        const unsubscribe = papyros.io.subscribe(
-            () => (papyros.io.awaitingInput ? papyros.io.provideInput("typed") : ""),
-            "awaitingInput",
-        );
+        const unsubscribe = answerInput(papyros, "typed");
         await papyros.runner.start();
         await waitForPapyrosReady(papyros);
         unsubscribe();

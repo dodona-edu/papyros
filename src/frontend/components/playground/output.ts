@@ -1,12 +1,11 @@
 import { html, nothing, ReactiveController, ReactiveControllerHost, TemplateResult } from "lit";
 import { styleMap } from "lit/directives/style-map.js";
 import { OutputEntry, OutputType } from "../../state/InputOutput";
+import { BackendFailure, BackendStatus, RunOutcome, RunStatus } from "../../state/Runner";
 import type { Papyros } from "../../state/Papyros";
-import { UnsupportedBrowserError } from "../../state/PapyrosErrors";
 import { renderError, renderImage, renderOverflow, shownOutput } from "../output/renderOutput";
-import { HeightTransition, ReducedMotionController } from "../motion";
+import { HeightTransition } from "../motion";
 import { FollowEnd } from "../output/followEnd";
-import { renderStatus } from "./status";
 
 export interface OutputHost extends ReactiveControllerHost {
     readonly papyros: Papyros;
@@ -14,14 +13,12 @@ export interface OutputHost extends ReactiveControllerHost {
 }
 
 /**
- * The output side of a playground: the input row, the output log with its status line,
- * and the error panels. Renders into the host's shadow root.
+ * The output side of a playground: the input row, the output log and the error panels.
+ * Renders into the host's shadow root.
  */
 export class PlaygroundOutput implements ReactiveController {
     private reservedHeight = 0;
     private readonly followEnd: FollowEnd;
-    /** The alert of the latest Run that could not launch the runtime */
-    private launchError: string | undefined = undefined;
     private wasAwaitingInput = false;
     /** The input row holds focus and is about to go */
     private inputLeaving = false;
@@ -50,8 +47,6 @@ export class PlaygroundOutput implements ReactiveController {
         private readonly focusRunStop: () => void,
     ) {
         this.followEnd = new FollowEnd(host, () => this.log);
-        // The status line leaves its spinner out under reduced motion
-        new ReducedMotionController(host);
         host.addController(this);
     }
 
@@ -69,40 +64,27 @@ export class PlaygroundOutput implements ReactiveController {
 
     /** The playground's run is in progress, including the wait for the runtime to load */
     private get busy(): boolean {
-        return this.host.papyros.runtime.isRunning(this.host.papyros);
+        return this.host.papyros.runner.inProgress;
     }
 
     private get awaitingInput(): boolean {
-        return this.busy && this.host.papyros.io.awaitingInput;
+        return this.host.papyros.runner.run.status === RunStatus.AwaitingInput;
     }
 
-    /** The latest Run could not launch the runtime */
-    get launchFailed(): boolean {
-        return this.launchError !== undefined;
-    }
-
-    private setLaunchError(message: string | undefined): void {
-        this.launchError = message;
-        this.host.requestUpdate();
-    }
-
-    onLaunchFailed(error: unknown): void {
-        this.setLaunchError(
-            error instanceof UnsupportedBrowserError
-                ? this.t("Papyros.unsupported_browser")
-                : this.t("Papyros.playground.error"),
-        );
-    }
-
-    /** Clears the output and the alert of a failed launch */
-    reset(): void {
-        this.host.papyros.io.reset();
-        this.setLaunchError(undefined);
+    /** The alert of a Run that could not launch the runtime */
+    private get launchError(): string | undefined {
+        const { run, backendStatus } = this.host.papyros.runner;
+        if (run.status !== RunStatus.Ended || run.outcome !== RunOutcome.LaunchFailed) {
+            return undefined;
+        }
+        return backendStatus.status === BackendStatus.Failed &&
+            backendStatus.reason === BackendFailure.UnsupportedBrowser
+            ? this.t("Papyros.unsupported_browser")
+            : this.t("Papyros.playground.error");
     }
 
     /** Called when Run is clicked, before the run empties the output */
     onRunStart(): void {
-        this.launchError = undefined;
         this.followEnd.restart();
         // Measure the output height before the run empties it, so the panel body can hold its
         // height across the run instead of collapsing and regrowing. Capped at the height that
@@ -129,7 +111,7 @@ export class PlaygroundOutput implements ReactiveController {
             this.host.papyros.io.output.length === 0,
             this.computePanels().errors.length,
             this.busy,
-            this.launchError,
+            this.launchError !== undefined,
             awaitingInput,
         ];
         if (shown.some((value, i) => value !== this.shown[i])) {
@@ -270,9 +252,7 @@ export class PlaygroundOutput implements ReactiveController {
                 @scroll=${this.followEnd.onScroll}
             >
                 <div class="panel-label">${this.t("Papyros.playground.output_panel_label")}</div>
-                <div class="output-body" style=${styleMap(this.bodyReservationStyle(busy))}>
-                    ${outputBlocks.length === 0 && busy ? renderStatus(this.host.papyros.runner.stateMessage) : outputBlocks}
-                </div>
+                <div class="output-body" style=${styleMap(this.bodyReservationStyle(busy))}>${outputBlocks}</div>
             </div>
             ${errors.map((entry) => this.renderError(entry.content))}
             ${this.launchError === undefined ? nothing : this.renderError(this.launchError)}

@@ -30,7 +30,7 @@ function usedKeys(): string[] {
 
 /**
  * Prefixes of keys that are resolved at runtime, either by interpolating into the phrase
- * (`t(`Papyros.states.${state}`)`) or by handing a whole subtree to another component
+ * (`t(`Papyros.run_modes.${mode}`)`) or by handing a whole subtree to another component
  * (`getTranslations("CodeMirror")`). Every key below such a prefix counts as used.
  */
 function usedPrefixes(): string[] {

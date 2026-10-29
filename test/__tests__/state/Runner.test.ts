@@ -1,12 +1,12 @@
 import { describe, expect, it, beforeAll, beforeEach, afterAll } from "vitest";
 import { Papyros } from "../../../src/frontend/state/Papyros";
 import { ProgrammingLanguage } from "../../../src/ProgrammingLanguage";
-import { RunState } from "../../../src/frontend/state/Runner";
 import { RunMode } from "../../../src/backend/Backend";
 import { launchPapyros, settlePapyros, stdoutText, waitForOutput, waitForPapyrosReady } from "../../helpers";
 import { CODE_TAB, FriendlyError, HOST_TAB, OutputType } from "../../../src/frontend/state/InputOutput";
 import { BackendEventType } from "../../../src/communication/BackendEvent";
 import { parseData } from "../../../src/util/Util";
+import { BackendStatus, RunOutcome, RunStatus } from "../../../src/frontend/state/Runner";
 
 type LoadingData = { status: string; modules: string[] };
 
@@ -42,11 +42,11 @@ describe("Runner", () => {
         jsPapyros.runner.code = `const a = 1;
 const b = 7;
 const c = a + b;`;
-        expect(jsPapyros.runner.state).toBe(RunState.Ready);
-        expect(jsPapyros.runner.stateMessage).toBe("");
+        expect(jsPapyros.runner.run).toEqual({ status: RunStatus.Idle });
+        expect(jsPapyros.runner.statusMessage).toBe("");
         await jsPapyros.runner.start();
         await waitForPapyrosReady(jsPapyros);
-        expect(jsPapyros.runner.stateMessage).toMatch(/^Code executed in/);
+        expect(jsPapyros.runner.statusMessage).toMatch(/^Code executed in/);
         jsPapyros.dispose();
     });
 
@@ -66,12 +66,12 @@ const c = a + b;`;
         const jsPapyros = new Papyros();
         jsPapyros.runner.programmingLanguage = ProgrammingLanguage.JavaScript;
 
-        expect(jsPapyros.runner.state).toBe(RunState.Loading);
+        expect(jsPapyros.runner.backendStatus).toEqual({ status: BackendStatus.Launching });
         expect(jsPapyros.runner.backendReady).toBe(false);
 
         await jsPapyros.runner.backend;
         expect(jsPapyros.runner.backendReady).toBe(true);
-        expect(jsPapyros.runner.state).toBe(RunState.Ready);
+        expect(jsPapyros.runner.backendStatus).toEqual({ status: BackendStatus.Up });
         jsPapyros.dispose();
     });
 
@@ -101,7 +101,7 @@ const c = a + b;`;
         await papyros.runner.start();
         await waitForPapyrosReady(papyros);
         await waitForOutput(papyros);
-        expect(papyros.runner.stateMessage).toMatch(/^Code executed in/);
+        expect(papyros.runner.statusMessage).toMatch(/^Code executed in/);
         expect((papyros.io.output[0].content as FriendlyError).traceback).toMatch(/ValueError: test/);
         expect((papyros.io.output[0].content as FriendlyError).where).not.toContain("LOCAL:");
     });
@@ -121,7 +121,7 @@ const c = a + b;`;
         await papyros.runner.start();
         await waitForPapyrosReady(papyros);
         await waitForOutput(papyros);
-        expect(papyros.runner.stateMessage).toMatch(/^Code executed in/);
+        expect(papyros.runner.statusMessage).toMatch(/^Code executed in/);
         expect(papyros.io.output).toHaveLength(1);
         const error = papyros.io.output[0].content as FriendlyError;
         expect(error.name).toBe(name);
@@ -134,7 +134,7 @@ const c = a + b;`;
         await papyros.runner.start();
         await waitForPapyrosReady(papyros);
         await waitForOutput(papyros);
-        expect(papyros.runner.stateMessage).toMatch(/^Code executed in/);
+        expect(papyros.runner.statusMessage).toMatch(/^Code executed in/);
         expect((papyros.io.output[0].content as FriendlyError).traceback).toMatch(/SyntaxError/);
     });
 
@@ -148,7 +148,7 @@ console.log("done");`;
         const runPromise = jsPapyros.runner.start();
         await waitForOutput(jsPapyros, 2);
         // the stderr output is in, the program is still busy
-        expect(jsPapyros.runner.state).toBe(RunState.Running);
+        expect(jsPapyros.runner.run.status).toBe(RunStatus.Running);
         await runPromise;
         await waitForPapyrosReady(jsPapyros);
         expect(jsPapyros.io.output[0].type).toBe(OutputType.stderr);
@@ -164,7 +164,7 @@ print("to stderr", file=sys.stderr)`;
         await papyros.runner.start();
         await waitForPapyrosReady(papyros);
         await waitForOutput(papyros, 2);
-        expect(papyros.runner.stateMessage).toMatch(/^Code executed in/);
+        expect(papyros.runner.statusMessage).toMatch(/^Code executed in/);
         // output streams in chunks, so compare the text per stream
         const text = (type: OutputType): string =>
             papyros.io.output
@@ -181,11 +181,11 @@ print("to stderr", file=sys.stderr)`;
         jsPapyros.runner.code = "while(true) {}";
         const runPromise = jsPapyros.runner.start();
         await new Promise((r) => setTimeout(r, 100));
-        expect(jsPapyros.runner.state).toBe(RunState.Running);
+        expect(jsPapyros.runner.run.status).toBe(RunStatus.Running);
         await jsPapyros.runner.stop();
         await runPromise;
-        expect(jsPapyros.runner.state).toBe(RunState.Ready);
-        expect(jsPapyros.runner.stateMessage).toMatch(/^Code interrupted after /);
+        expect(jsPapyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Stopped });
+        expect(jsPapyros.runner.statusMessage).toMatch(/^Code interrupted after /);
         // The relaunch started by stop() is not awaited by start(); drain it
         await jsPapyros.runner.backend;
         jsPapyros.dispose();
@@ -196,8 +196,8 @@ print("to stderr", file=sys.stderr)`;
         await papyros.runner.start();
         await waitForPapyrosReady(papyros);
         await waitForOutput(papyros);
-        expect(papyros.runner.state).toBe(RunState.Ready);
-        expect(papyros.runner.stateMessage).toMatch(/^Code executed in/);
+        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
+        expect(papyros.runner.statusMessage).toMatch(/^Code executed in/);
         expect(stdoutText(papyros)).toBe("['1', '2', '3']\n");
     });
 
@@ -236,7 +236,7 @@ print("to stderr", file=sys.stderr)`;
         // The editor only re-lints on loaded, so retrying a failed install cannot loop
         expect(loading.statuses()).toContain("failed");
         expect(loading.statuses()).not.toContain("loaded");
-        expect(papyros.runner.stateMessage).toMatch(/^Code executed in/);
+        expect(papyros.runner.statusMessage).toMatch(/^Code executed in/);
         const error = papyros.io.output[0].content as FriendlyError;
         expect(error.name).toBe("ModuleNotFoundError");
         expect(error.traceback).not.toMatch(/During handling/);
@@ -266,7 +266,7 @@ print("to stderr", file=sys.stderr)`;
             second.stop();
         }
         expect(second.events).toEqual([]);
-        expect(papyros.runner.stateMessage).toMatch(/^Code executed in/);
+        expect(papyros.runner.statusMessage).toMatch(/^Code executed in/);
         expect((papyros.io.output[0].content as FriendlyError).name).toBe("ModuleNotFoundError");
     }, 60000);
 
@@ -318,7 +318,7 @@ print("to stderr", file=sys.stderr)`;
         await papyros.runner.start();
         await waitForPapyrosReady(papyros, 60000);
         await waitForOutput(papyros);
-        expect(papyros.runner.stateMessage).toMatch(/^Code executed in/);
+        expect(papyros.runner.statusMessage).toMatch(/^Code executed in/);
         expect((papyros.io.output[0].content as FriendlyError).name).toBe("ModuleNotFoundError");
     }, 60000);
 
@@ -342,8 +342,8 @@ print("to stderr", file=sys.stderr)`;
         papyros.runner.code = "import time\ntime.sleep(2)";
         await papyros.runner.start();
         await waitForPapyrosReady(papyros);
-        expect(papyros.runner.state).toBe(RunState.Ready);
-        expect(papyros.runner.stateMessage).toMatch(/^Code executed in 2/);
+        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
+        expect(papyros.runner.statusMessage).toMatch(/^Code executed in 2/);
     });
 
     it("should be able to load python packages", async () => {
@@ -394,8 +394,8 @@ print
         await papyros.runner.start(RunMode.Doctest);
         await waitForOutput(papyros);
         await waitForPapyrosReady(papyros);
-        expect(papyros.runner.state).toBe(RunState.Ready);
-        expect(papyros.runner.stateMessage).toMatch(/^Code executed in /);
+        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
+        expect(papyros.runner.statusMessage).toMatch(/^Code executed in /);
         expect(papyros.io.output[0].content).toBe("Trying:\n");
         expect(papyros.io.output[1].content).toBe("    1 + 1\n");
         expect(papyros.io.output[2].content).toBe("Expecting:\n");

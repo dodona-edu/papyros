@@ -12,7 +12,8 @@ import { CODE_TAB, HOST_TAB, InputMode } from "./frontend/state/InputOutput";
 import { RunMode, WorkerDiagnostic } from "./backend/Backend";
 import { ProgrammingLanguage } from "./ProgrammingLanguage";
 import { OutputType, FriendlyError, OutputEntry } from "./frontend/state/InputOutput";
-import { RunOptions, RunState } from "./frontend/state/Runner";
+import { BackendFailure, BackendStatus, RunOptions, RunOutcome, RunStatus } from "./frontend/state/Runner";
+import type { BackendLifecycle, RunLifecycle } from "./frontend/state/Runner";
 import {
     PapyrosError,
     PapyrosLaunchError,
@@ -28,7 +29,10 @@ export {
     PapyrosRuntime,
     InputMode,
     RunMode,
-    RunState,
+    RunStatus,
+    RunOutcome,
+    BackendStatus,
+    BackendFailure,
     ProgrammingLanguage,
     OutputType,
     papyros,
@@ -38,4 +42,14 @@ export {
     ServiceWorkerRegistrationError,
     ServiceWorkerInputError,
 };
-export type { FriendlyError, OutputEntry, RunOptions, WorkerDiagnostic, PapyrosOptions, Run, CodePlayground };
+export type {
+    FriendlyError,
+    OutputEntry,
+    RunOptions,
+    WorkerDiagnostic,
+    PapyrosOptions,
+    Run,
+    CodePlayground,
+    RunLifecycle,
+    BackendLifecycle,
+};
