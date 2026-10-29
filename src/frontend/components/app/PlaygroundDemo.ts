@@ -16,6 +16,14 @@ interface Scenario {
 
 const SCENARIOS: Scenario[] = [
     {
+        title: "Reset",
+        description:
+            "Reset shows up once there is something to undo. Edit the code or run it, then press Reset to get the original back.",
+        code: `for i in range(3):
+    print("Hello", i)
+`,
+    },
+    {
         title: "Read a data file",
         description: "The file is listed in the tab above the code. Run the code to print it.",
         files: "playground/grades.txt",

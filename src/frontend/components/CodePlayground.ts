@@ -71,17 +71,18 @@ export class CodePlayground extends PapyrosElement {
         return run !== null && run.owner !== this.papyros;
     }
 
-    /**
-     * Whether Reset has something to undo: edited code, or anything shown below the editor
-     */
-    private get canReset(): boolean {
+    /** Whether Reset has something to undo: edited code, or anything shown below the editor */
+    private get hasChanges(): boolean {
         return (
-            !this.isActive &&
-            (this.papyros.runner.code !== this.code ||
-                this.papyros.io.output.length > 0 ||
-                this.output.launchFailed ||
-                this.dataFiles.failed)
+            this.papyros.runner.code !== this.code ||
+            this.papyros.io.output.length > 0 ||
+            this.output.launchFailed ||
+            this.dataFiles.failed
         );
+    }
+
+    private get canReset(): boolean {
+        return !this.isActive && this.hasChanges;
     }
 
     private get titleText(): string {
@@ -125,8 +126,8 @@ export class CodePlayground extends PapyrosElement {
         if (!this.canReset) {
             return;
         }
-        // Reset has nothing left to undo afterwards; hand focus to the run/stop button, but
-        // only when Reset was the one holding it.
+        // Reset disappears afterwards; hand focus to the run/stop button, but only when Reset
+        // was the one holding it.
         if (this.shadowRoot?.activeElement === e.currentTarget) {
             void this.updateComplete.then(() => this.focusRunStop());
         }
@@ -158,15 +159,19 @@ export class CodePlayground extends PapyrosElement {
                 <div class="toolbar">
                     ${this.titleText ? html`<span class="title" id="title">${this.titleText}</span>` : nothing}
                     <div class="actions">
-                        <button
-                            class="text-button reset"
-                            aria-disabled=${this.canReset ? nothing : "true"}
-                            title=${this.t("Papyros.playground.reset_hint")}
-                            @click=${this.reset}
-                        >
-                            <span class="icon" aria-hidden="true">${icons.restore}</span>
-                            ${this.t("Papyros.playground.reset")}
-                        </button>
+                        ${
+                            this.hasChanges
+                                ? html`<button
+                                      class="text-button reset"
+                                      aria-disabled=${this.canReset ? nothing : "true"}
+                                      title=${this.t("Papyros.playground.reset_hint")}
+                                      @click=${this.reset}
+                                  >
+                                      <span class="icon" aria-hidden="true">${icons.restore}</span>
+                                      ${this.t("Papyros.playground.reset")}
+                                  </button>`
+                                : nothing
+                        }
                         <button
                             ${ref(this.runStopButton)}
                             class="pill ${active ? "stop" : "run"}"

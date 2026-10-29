@@ -108,6 +108,11 @@ function button(el: CodePlayground, selector: string = "button.pill"): HTMLButto
     return $<HTMLButtonElement>(el, selector)!;
 }
 
+async function edit(el: CodePlayground, code: string): Promise<void> {
+    editorOf(el)!.dispatchEvent(new CustomEvent("change", { detail: code }));
+    await el.updateComplete;
+}
+
 function clientOf(el: CodePlayground): Promise<any> {
     return el.papyros.runner.backend;
 }
@@ -270,7 +275,7 @@ describe("p-code-playground", () => {
         await expect(el.papyros.runner.ensureLaunched()).resolves.toBeUndefined();
     });
 
-    it("shows its code with Reset disabled after re-insertion gives it a fresh instance", async () => {
+    it("shows its code without Reset after re-insertion gives it a fresh instance", async () => {
         const el = await mount({ ownPapyros: true, code: "print(7)" });
         el.remove();
         await Promise.resolve();
@@ -280,17 +285,17 @@ describe("p-code-playground", () => {
 
         expect(el.papyros.runner.code).toBe("print(7)");
         await vi.waitFor(() => expect(editorOf(el)!.value).toBe("print(7)"));
-        expect(button(el, "button.reset").getAttribute("aria-disabled")).toBe("true");
+        expect($(el, "button.reset")).toBeNull();
     });
 
-    it("shows its code with Reset disabled on an instance the host assigns later", async () => {
+    it("shows its code without Reset on an instance the host assigns later", async () => {
         const el = await mount({ code: "print(7)" });
         el.papyros = new Papyros({ runtime: sharedRuntime(fakeClient()) });
         await settle(el);
 
         expect(el.papyros.runner.code).toBe("print(7)");
         await vi.waitFor(() => expect(editorOf(el)!.value).toBe("print(7)"));
-        expect(button(el, "button.reset").getAttribute("aria-disabled")).toBe("true");
+        expect($(el, "button.reset")).toBeNull();
     });
 
     it("disposes its own instance when the host assigns one, and preloads only the host's", async () => {
@@ -567,7 +572,7 @@ describe("p-code-playground", () => {
         expect(pill.textContent).toContain("Run");
     });
 
-    it("hands focus to the run button when Reset disables itself", async () => {
+    it("hands focus to the run button when Reset removes itself", async () => {
         const el = await mount();
         editorOf(el)!.dispatchEvent(new CustomEvent("change", { detail: "edited" }));
         await el.updateComplete;
@@ -577,7 +582,7 @@ describe("p-code-playground", () => {
         reset.click();
         await el.updateComplete;
 
-        expect(reset.getAttribute("aria-disabled")).toBe("true");
+        expect($(el, "button.reset")).toBeNull();
         expect(el.shadowRoot!.activeElement).toBe(button(el));
     });
 
@@ -1021,13 +1026,41 @@ describe("p-code-playground", () => {
 
     it("shows a labelled reset button with an icon hidden from assistive technology", async () => {
         const el = await mount();
+        await edit(el, "edited");
         const reset = button(el, "button.reset");
 
         expect(reset.textContent).toContain("Reset");
         expect(reset.querySelector(".icon[aria-hidden='true'] svg")).not.toBeNull();
         expect(reset.title).toBe("Restore the original code and clear the output");
         expect(reset.disabled).toBe(false);
-        expect(reset.getAttribute("aria-disabled")).toBe("true");
+        expect(reset.hasAttribute("aria-disabled")).toBe(false);
+    });
+
+    it("shows no Reset on a fresh playground", async () => {
+        const el = await mount();
+
+        expect($(el, "button.reset")).toBeNull();
+    });
+
+    it("shows Reset once the code is edited, and removes it when the code is edited back", async () => {
+        const el = await mount({ code: "print(1)" });
+
+        await edit(el, "print(2)");
+        expect($(el, "button.reset")).not.toBeNull();
+
+        await edit(el, "print(1)");
+        expect($(el, "button.reset")).toBeNull();
+    });
+
+    it("keeps Reset visible but disabled while edited code runs", async () => {
+        const el = await mount({ code: "print(1)" });
+        await edit(el, "print(2)");
+        const client = await startRun(el);
+
+        expect(button(el, "button.reset").getAttribute("aria-disabled")).toBe("true");
+
+        await finishRun(el, client);
+        expect(button(el, "button.reset").hasAttribute("aria-disabled")).toBe(false);
     });
 
     it("resets to the original code and clears the output", async () => {
@@ -1045,6 +1078,7 @@ describe("p-code-playground", () => {
         expect(editor.value).toBe("print(1)");
         expect(el.papyros.io.output).toEqual([]);
         expect($(el, ".output")).toBeNull();
+        expect($(el, "button.reset")).toBeNull();
 
         const client = await startRun(el);
         expect(client.workerProxy.runCode).toHaveBeenCalledWith(
@@ -1071,13 +1105,13 @@ describe("p-code-playground", () => {
         expect(el.papyros.io.output).toBe(shown);
 
         await finishRun(el, client);
-        expect(reset.hasAttribute("aria-disabled")).toBe(false);
+        expect(button(el, "button.reset").hasAttribute("aria-disabled")).toBe(false);
 
-        reset.click();
+        button(el, "button.reset").click();
         await settle(el);
         expect(el.papyros.io.output).toEqual([]);
         expect($(el, ".output")).toBeNull();
-        expect(reset.getAttribute("aria-disabled")).toBe("true");
+        expect($(el, "button.reset")).toBeNull();
 
         // Nothing is left to hold the height of on the next run
         button(el, "button.run").click();
@@ -1102,7 +1136,7 @@ describe("p-code-playground", () => {
         reset.click();
         await settle(el);
         expect($(el, ".error")).toBeNull();
-        expect(reset.getAttribute("aria-disabled")).toBe("true");
+        expect($(el, "button.reset")).toBeNull();
     });
 
     it("runs the edited code", async () => {
@@ -1122,6 +1156,7 @@ describe("p-code-playground", () => {
 
     it("translates its chrome", async () => {
         const el = await mount();
+        await edit(el, "edited");
         const run = button(el, "button.run");
         expect(run.textContent).toContain("Run");
         expect(run.querySelector(".icon[aria-hidden='true'] svg")).not.toBeNull();
@@ -1349,7 +1384,7 @@ describe("p-code-playground files", () => {
         expect(el.papyros.io.output).toEqual([]);
         expect(pill.textContent).toContain("Stop");
         expect(pill.hasAttribute("aria-disabled")).toBe(false);
-        expect(button(el, "button.reset").getAttribute("aria-disabled")).toBe("true");
+        expect($(el, "button.reset")).toBeNull();
         await settle(other);
         expect(button(other, "button.run").getAttribute("aria-disabled")).toBe("true");
 
@@ -1417,7 +1452,7 @@ describe("p-code-playground files", () => {
         reset.click();
         await settle(el);
         expect($(el, ".file-error")).toBeNull();
-        expect(reset.getAttribute("aria-disabled")).toBe("true");
+        expect($(el, "button.reset")).toBeNull();
     });
 
     it("keeps previewing the other files when one fails to load", async () => {
