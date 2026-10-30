@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { Papyros } from "../../../src/frontend/state/Papyros";
 import { PapyrosRuntime, Run } from "../../../src/frontend/state/PapyrosRuntime";
 import { ProgrammingLanguage } from "../../../src/ProgrammingLanguage";
@@ -20,6 +20,10 @@ const loading = (status: string, modules: string[] = ["numpy"]): BackendEvent =>
     type: BackendEventType.Loading,
     data: { modules, status },
     contentType: "application/json",
+});
+
+afterEach(() => {
+    vi.useRealTimers();
 });
 
 async function sharing(creator: () => any): Promise<{ runtime: PapyrosRuntime; a: Papyros; b: Papyros }> {
@@ -159,6 +163,38 @@ describe("Papyros instances sharing a runtime", () => {
         await next;
         runtime.dispose();
     }, 20000);
+
+    it("let the other instance run once a run whose End event never arrived ran out of grace", async () => {
+        // How long a run whose code returned waits for its End event, as Runner sets it
+        const grace = 2000;
+        const client = fakeClient();
+        const { runtime, a, b } = await sharing(() => client);
+
+        const running = a.runner.start();
+        await vi.waitFor(() => expect(client.workerProxy.runCode).toHaveBeenCalled());
+        client.emit(start);
+        vi.useFakeTimers();
+        client.runId = undefined;
+        client.resolveRun();
+        await vi.advanceTimersByTimeAsync(grace - 1);
+        await b.runner.start();
+        expect(runtime.currentRun?.owner).toBe(a);
+        expect(b.runner.run).toEqual({ status: RunStatus.Idle });
+
+        await vi.advanceTimersByTimeAsync(1);
+        await running;
+        expect(a.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
+        expect(runtime.currentRun).toBeNull();
+        vi.useRealTimers();
+
+        const next = b.runner.start();
+        expect(runtime.currentRun?.owner).toBe(b);
+        await vi.waitFor(() => expect(client.workerProxy.runCode).toHaveBeenCalledTimes(2));
+        client.finishRun();
+        await next;
+        expect(b.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
+        runtime.dispose();
+    });
 
     it("let the other instance run after a real run was stopped", async () => {
         const createBackend = vi.spyOn(BackendManager, "createBackend");

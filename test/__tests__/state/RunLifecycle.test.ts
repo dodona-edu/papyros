@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { Papyros } from "../../../src/frontend/state/Papyros";
 import {
     BackendFailure,
@@ -44,6 +44,21 @@ async function launched(client: any): Promise<Papyros> {
     await papyros.runner.launch();
     return papyros;
 }
+
+/** How long a run whose code returned waits for its End event, as Runner sets it */
+const grace = 2000;
+
+/** Settle runCode the way a slow event proxy shows it: before the events the worker sent last */
+function settleBeforeEvents(client: any): number {
+    const runId = client.runId;
+    client.runId = undefined;
+    client.resolveRun();
+    return runId;
+}
+
+afterEach(() => {
+    vi.useRealTimers();
+});
 
 describe("Runner launch", () => {
     it("is launching until the backend is up, and up after", async () => {
@@ -480,14 +495,6 @@ describe("the outcome of a run", () => {
 });
 
 describe("a run whose last events arrive after runCode settled", () => {
-    /** Settle runCode the way a slow event proxy shows it: before the events the worker sent last */
-    function settleBeforeEvents(client: any): number {
-        const runId = client.runId;
-        client.runId = undefined;
-        client.resolveRun();
-        return runId;
-    }
-
     it("stays running until its End event, and ends with all of its output", async () => {
         const client = fakeClient();
         const papyros = await launched(client);
@@ -574,6 +581,52 @@ describe("a run whose last events arrive after runCode settled", () => {
         expect(client.workerProxy.launch).toHaveBeenCalledTimes(2);
         papyros.dispose();
     });
+
+    it("ends as completed when its End event does not arrive within the grace, and reports it", async () => {
+        const client = fakeClient();
+        const papyros = await launched(client);
+
+        const running = papyros.runner.start();
+        await vi.waitFor(() => expect(client.workerProxy.runCode).toHaveBeenCalled());
+        client.emit(start);
+        vi.useFakeTimers();
+        settleBeforeEvents(client);
+        await vi.advanceTimersByTimeAsync(grace - 1);
+        expect(papyros.runner.run.status).toBe(RunStatus.Running);
+        expect(papyros.runner.inProgress).toBe(true);
+        expect(papyros.runtime.isRunning(papyros)).toBe(true);
+        expect(papyros.errorHandler).not.toHaveBeenCalled();
+
+        await vi.advanceTimersByTimeAsync(1);
+        await running;
+        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
+        expect(papyros.runtime.currentRun).toBeNull();
+        expect(papyros.errorHandler).toHaveBeenCalledOnce();
+        expect(papyros.errorHandler).toHaveBeenCalledWith(
+            expect.objectContaining({ message: expect.stringMatching(/did not report the end of the run/) }),
+        );
+        // The worker is not replaced
+        expect(client.workerProxy.launch).toHaveBeenCalledOnce();
+        papyros.dispose();
+    });
+
+    it("reports nothing and leaves no timer behind when its End event arrives within the grace", async () => {
+        const client = fakeClient();
+        const papyros = await launched(client);
+
+        const running = papyros.runner.start();
+        await vi.waitFor(() => expect(client.workerProxy.runCode).toHaveBeenCalled());
+        client.emit(start);
+        vi.useFakeTimers();
+        const runId = settleBeforeEvents(client);
+        await vi.advanceTimersByTimeAsync(grace - 1);
+        client.emit({ ...end, runId });
+        await running;
+        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
+        expect(vi.getTimerCount()).toBe(0);
+        expect(papyros.errorHandler).not.toHaveBeenCalled();
+        papyros.dispose();
+    });
 });
 
 describe("ending a run", () => {
@@ -638,6 +691,30 @@ describe("ending a run", () => {
         expect(ends.debugger).toHaveBeenCalledOnce();
         papyros.dispose();
     }, 20000);
+
+    it("happens once when the End event arrives after the grace ran out, with the output before it", async () => {
+        const client = fakeClient();
+        const papyros = await launched(client);
+        const ends = countEnds(papyros);
+
+        const running = papyros.runner.start();
+        await vi.waitFor(() => expect(client.workerProxy.runCode).toHaveBeenCalled());
+        client.emit(start);
+        vi.useFakeTimers();
+        const runId = settleBeforeEvents(client);
+        await vi.advanceTimersByTimeAsync(grace);
+        await running;
+        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
+        expect(ends.debugger).toHaveBeenCalledOnce();
+
+        client.emit({ ...output, runId });
+        client.emit({ ...end, runId });
+        expect(papyros.io.output).toEqual([{ type: OutputType.stdout, content: "hello" }]);
+        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
+        expect(ends.ended()).toBe(1);
+        expect(ends.io).toHaveBeenCalledOnce();
+        papyros.dispose();
+    });
 
     it("ignores an input request that arrives after stop", async () => {
         const client = fakeClient();
