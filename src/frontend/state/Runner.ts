@@ -193,7 +193,7 @@ export class Runner extends State {
      * The run of this instance: in progress, or how the last one ended
      */
     @stateProperty
-    public run: RunLifecycle = { status: RunStatus.Idle };
+    public lifecycle: RunLifecycle = { status: RunStatus.Idle };
     /**
      * Whether the backend has finished loading and can execute code.
      * Runs may be started before this is true: they wait for the backend.
@@ -221,7 +221,7 @@ export class Runner extends State {
      * Whether this instance has a run in progress
      */
     public get inProgress(): boolean {
-        const status = this.run.status;
+        const status = this.lifecycle.status;
         return (
             status === RunStatus.Starting ||
             status === RunStatus.Running ||
@@ -274,8 +274,8 @@ export class Runner extends State {
                     return this.papyros.i18n.t("Papyros.states.error");
             }
         }
-        const run = this.run;
-        switch (run.status) {
+        const lifecycle = this.lifecycle;
+        switch (lifecycle.status) {
             case RunStatus.Idle:
                 return "";
             case RunStatus.Starting:
@@ -287,12 +287,12 @@ export class Runner extends State {
             case RunStatus.Stopping:
                 return this.papyros.i18n.t("Papyros.states.stopping");
         }
-        const time = run.duration / 1000;
-        switch (run.outcome) {
+        const time = lifecycle.duration / 1000;
+        switch (lifecycle.outcome) {
             case RunOutcome.Completed:
                 // While debugging, only the trace is finished: the session itself carries on,
                 // so "executed" would read as if there were nothing left to do.
-                return run.mode === RunMode.Debug
+                return lifecycle.mode === RunMode.Debug
                     ? this.papyros.i18n.t("Papyros.traced", { time })
                     : this.papyros.i18n.t("Papyros.finished", { time });
             case RunOutcome.Stopped:
@@ -419,7 +419,7 @@ export class Runner extends State {
      */
     private runBeforeWorker: Run | null = null;
     /**
-     * The run that `run` describes while it is in progress, so only one call ends it
+     * The run that `lifecycle` describes while it is in progress, so only one call ends it
      */
     private activeRun: Run | null = null;
     /**
@@ -481,7 +481,7 @@ export class Runner extends State {
 
         this.papyros.debugger.active = false;
         if (!this.inProgress) {
-            this.run = { status: RunStatus.Idle };
+            this.lifecycle = { status: RunStatus.Idle };
             this.papyros.io.reset();
         }
     }
@@ -604,7 +604,7 @@ export class Runner extends State {
         }
         this.activeRun = run;
         this.runStartTime = new Date().getTime();
-        this.run = { status: RunStatus.Starting, mode };
+        this.lifecycle = { status: RunStatus.Starting, mode };
         const execution = this.execute(run, mode, options);
         this.execution = execution;
         let end: RunEnd = { outcome: RunOutcome.Crashed };
@@ -633,12 +633,12 @@ export class Runner extends State {
         if (this.papyros.runtime.release(run) && this.loadingPackages.length > 0) {
             this.loadingPackages = [];
         }
-        let mode = "mode" in this.run ? this.run.mode : undefined;
+        let mode = "mode" in this.lifecycle ? this.lifecycle.mode : undefined;
         if (mode === RunMode.Debug && !this.papyros.debugger.active) {
             // A debug run that took no step left debug mode on its End event
             mode = RunMode.Run;
         }
-        this.run = { status: RunStatus.Ended, outcome, mode, duration: new Date().getTime() - this.runStartTime };
+        this.lifecycle = { status: RunStatus.Ended, outcome, mode, duration: new Date().getTime() - this.runStartTime };
         this.papyros.io.onRunEnd();
         // A worker that was replaced never reports the end of the stopped run
         this.papyros.debugger.onRunOver();
@@ -680,7 +680,7 @@ export class Runner extends State {
             }
             // Disposing this instance while the files were written ends its run, and another
             // instance may be using the worker by now
-            if (this.run.status !== RunStatus.Stopping && runtime.currentRun === run) {
+            if (this.lifecycle.status !== RunStatus.Stopping && runtime.currentRun === run) {
                 const over = this.runOver(run);
                 // An injected test double has no worker to terminate
                 const terminated: Promise<never> = backend.terminated ?? new Promise(() => undefined);
@@ -720,11 +720,11 @@ export class Runner extends State {
             }
             this.papyros.io.logError(error);
             return {
-                outcome: this.run.status === RunStatus.Stopping ? RunOutcome.Stopped : RunOutcome.Crashed,
+                outcome: this.lifecycle.status === RunStatus.Stopping ? RunOutcome.Stopped : RunOutcome.Crashed,
                 unusable: isRuntimeUnusable(error),
             };
         }
-        return { outcome: this.run.status === RunStatus.Stopping ? RunOutcome.Stopped : RunOutcome.Completed };
+        return { outcome: this.lifecycle.status === RunStatus.Stopping ? RunOutcome.Stopped : RunOutcome.Completed };
     }
 
     /**
@@ -746,7 +746,7 @@ export class Runner extends State {
                 if (this.activeRun !== run) {
                     settle(false);
                 }
-            }, "run"),
+            }, "lifecycle"),
         ];
         return { arrived, unsubscribe: () => unsubscribers.forEach((unsubscribe) => unsubscribe()) };
     }
@@ -758,7 +758,7 @@ export class Runner extends State {
     public async stop(): Promise<void> {
         const runtime = this.papyros.runtime;
         const run = this.ownRun();
-        const current = this.run;
+        const current = this.lifecycle;
         if (!run || current.status === RunStatus.Idle || current.status === RunStatus.Ended) {
             return;
         }
@@ -767,7 +767,7 @@ export class Runner extends State {
             this.endRun(run, RunOutcome.Stopped);
             return;
         }
-        this.run = { status: RunStatus.Stopping, mode: current.mode };
+        this.lifecycle = { status: RunStatus.Stopping, mode: current.mode };
         this.papyros.debugger.onRunEnd();
         const backend = await this.availableBackend();
         // Without a backend, or once another instance started a run while the backend was
@@ -802,8 +802,8 @@ export class Runner extends State {
         if (!run) {
             return;
         }
-        if (this.run.status === RunStatus.AwaitingInput) {
-            this.run = { status: RunStatus.Running, mode: this.run.mode };
+        if (this.lifecycle.status === RunStatus.AwaitingInput) {
+            this.lifecycle = { status: RunStatus.Running, mode: this.lifecycle.mode };
         }
         const backend = await this.availableBackend();
         // Input submitted as a run ends has no reader left to receive it, and another
@@ -928,9 +928,9 @@ export class Runner extends State {
 
     private onStart(e: BackendEvent): void {
         const startData = parseData(e.data, e.contentType) as string;
-        if (startData.includes("RunCode") && this.run.status === RunStatus.Starting) {
+        if (startData.includes("RunCode") && this.lifecycle.status === RunStatus.Starting) {
             this.runStartTime = new Date().getTime();
-            this.run = { status: RunStatus.Running, mode: this.run.mode };
+            this.lifecycle = { status: RunStatus.Running, mode: this.lifecycle.mode };
         }
     }
 
@@ -939,10 +939,10 @@ export class Runner extends State {
      * a line, put to the user otherwise. A stopped run can still send one after its prompt closed.
      */
     private onInput(e: BackendEvent): void {
-        if (this.run.status !== RunStatus.Running || this.papyros.io.provideBufferedInput()) {
+        if (this.lifecycle.status !== RunStatus.Running || this.papyros.io.provideBufferedInput()) {
             return;
         }
-        this.run = { status: RunStatus.AwaitingInput, mode: this.run.mode, prompt: String(e.data ?? "") };
+        this.lifecycle = { status: RunStatus.AwaitingInput, mode: this.lifecycle.mode, prompt: String(e.data ?? "") };
     }
 
     private updateRunModes(): void {

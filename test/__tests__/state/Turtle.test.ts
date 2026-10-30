@@ -45,7 +45,7 @@ turtle.done()`;
         await papyros.runner.start();
         await waitForPapyrosReady(papyros);
         await waitForOutput(papyros);
-        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
+        expect(papyros.runner.lifecycle).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
         expect(turtlePatches(papyros).length).toBeGreaterThan(0);
         const svg = turtleSvg(papyros);
         expect(svg).toContain("<svg");

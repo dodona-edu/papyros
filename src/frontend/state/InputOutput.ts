@@ -103,15 +103,15 @@ export class InputOutput extends State {
      * Whether the run waits for the user to answer an input request
      */
     public get awaitingInput(): boolean {
-        return this.papyros.runner.run.status === RunStatus.AwaitingInput;
+        return this.papyros.runner.lifecycle.status === RunStatus.AwaitingInput;
     }
 
     /**
      * What the run asks the user while it awaits input
      */
     public get prompt(): string {
-        const run = this.papyros.runner.run;
-        return run.status === RunStatus.AwaitingInput ? run.prompt : "";
+        const lifecycle = this.papyros.runner.lifecycle;
+        return lifecycle.status === RunStatus.AwaitingInput ? lifecycle.prompt : "";
     }
 
     @stateProperty

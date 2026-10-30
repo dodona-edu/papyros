@@ -106,7 +106,7 @@ describe("recovering from an unusable runtime", () => {
 
         expect(client.restart).toHaveBeenCalledOnce();
         expect(client.updateFile).toHaveBeenCalledWith("data.txt", "hello", false);
-        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Crashed });
+        expect(papyros.runner.lifecycle).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Crashed });
         expect(papyros.runner.statusMessage).toMatch(/^Code crashed after/);
         expect(papyros.io.output).toEqual([{ type: OutputType.stderr, content: memoryError() }]);
 
@@ -131,7 +131,7 @@ describe("recovering from an unusable runtime", () => {
 
         expect(client.restart).toHaveBeenCalledOnce();
         expect(papyros.io.awaitingInput).toBe(false);
-        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Stopped });
+        expect(papyros.runner.lifecycle).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Stopped });
         expect(papyros.runtime.currentRun).toBeNull();
 
         papyros.dispose();

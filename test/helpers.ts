@@ -114,9 +114,9 @@ export async function waitForInputReady(papyros: Papyros, timeout = 5000): Promi
 
 export async function waitForRunning(papyros: Papyros, timeout = 60000): Promise<void> {
     const start = Date.now();
-    while (papyros.runner.run.status !== RunStatus.Running) {
+    while (papyros.runner.lifecycle.status !== RunStatus.Running) {
         if (Date.now() - start > timeout) {
-            throw new Error(`Timeout waiting for runner to run, still ${papyros.runner.run.status}`);
+            throw new Error(`Timeout waiting for runner to run, still ${papyros.runner.lifecycle.status}`);
         }
         await new Promise((r) => setTimeout(r, 10));
     }
@@ -136,7 +136,10 @@ export async function waitForAwaitingInput(papyros: Papyros, timeout: number = 5
  * Answer every input request of this instance with the given value, until the returned function is called
  */
 export function answerInput(papyros: Papyros, value: string): () => void {
-    return papyros.runner.subscribe(() => (papyros.io.awaitingInput ? papyros.io.provideInput(value) : ""), "run");
+    return papyros.runner.subscribe(
+        () => (papyros.io.awaitingInput ? papyros.io.provideInput(value) : ""),
+        "lifecycle",
+    );
 }
 
 export async function waitForFiles(papyros: Papyros, count: number = 1, timeout = 10000): Promise<void> {

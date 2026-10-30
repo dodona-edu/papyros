@@ -22,7 +22,7 @@ describe("Runner without a backend", () => {
         await withTimeout(papyros.runner.stop(), 2000, "runner.stop()");
 
         // There is no run to stop, so nothing changes
-        expect(papyros.runner.run).toEqual({ status: RunStatus.Idle });
+        expect(papyros.runner.lifecycle).toEqual({ status: RunStatus.Idle });
         expect(papyros.runner.backendStatus).toEqual({ status: BackendStatus.Down });
     });
 
@@ -32,7 +32,7 @@ describe("Runner without a backend", () => {
 
         await withTimeout(papyros.runner.start(RunMode.Debug), 2000, "runner.start()");
 
-        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.LaunchFailed });
+        expect(papyros.runner.lifecycle).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.LaunchFailed });
         expect(papyros.runner.statusMessage).toBe("Failed to load");
         expect(papyros.io.output).toEqual([]);
         // An active debugger would put a stop-debug button among the inert controls
@@ -85,16 +85,16 @@ describe("Runner without a backend", () => {
 
         await withTimeout(papyros.runner.stop(), 2000, "runner.stop()");
         expect(papyros.runner.backendStatus).toEqual(failed);
-        expect(papyros.runner.run).toEqual({ status: RunStatus.Idle });
+        expect(papyros.runner.lifecycle).toEqual({ status: RunStatus.Idle });
 
         await withTimeout(papyros.runner.start(), 2000, "runner.start()");
         expect(papyros.runner.backendStatus).toEqual(failed);
-        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.LaunchFailed });
+        expect(papyros.runner.lifecycle).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.LaunchFailed });
 
         // Nothing is running, so there is nothing for a reset to stop
         await withTimeout(papyros.runner.reset(), 2000, "runner.reset()");
         expect(papyros.runner.backendStatus).toEqual(failed);
-        expect(papyros.runner.run).toEqual({ status: RunStatus.Idle });
+        expect(papyros.runner.lifecycle).toEqual({ status: RunStatus.Idle });
         expect(papyros.runner.statusMessage).toBe("Failed to load");
     });
 

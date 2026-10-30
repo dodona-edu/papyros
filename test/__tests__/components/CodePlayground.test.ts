@@ -627,7 +627,7 @@ describe("p-code-playground", () => {
 
         el.papyros.io.provideInput("Alice");
         await settle(el);
-        expect(el.papyros.runner.run.status).toBe(RunStatus.Running);
+        expect(el.papyros.runner.lifecycle.status).toBe(RunStatus.Running);
         expect($(el, ".input-row")).toBeNull();
 
         await finishRun(el, client);
@@ -647,7 +647,7 @@ describe("p-code-playground", () => {
         const described = el.shadowRoot!.getElementById(input.getAttribute("aria-describedby")!)!;
         expect(described.textContent).toContain("Name: ");
 
-        el.papyros.runner.run = { status: RunStatus.AwaitingInput, prompt: "" };
+        el.papyros.runner.lifecycle = { status: RunStatus.AwaitingInput, prompt: "" };
         await settle(el);
         expect($<HTMLInputElement>(el, ".input-row input")!.hasAttribute("aria-describedby")).toBe(false);
         await finishRun(el, client);
@@ -1234,14 +1234,14 @@ describe("p-code-playground", () => {
         const client = await startRun(el);
         await finishRun(el, client);
         expect(el.papyros.io.output).toEqual([]);
-        expect(el.papyros.runner.run.status).toBe(RunStatus.Ended);
+        expect(el.papyros.runner.lifecycle.status).toBe(RunStatus.Ended);
         expect($(el, ".output")).toBeNull();
         expect(reset.hasAttribute("aria-disabled")).toBe(false);
 
         reset.click();
         await settle(el);
 
-        expect(el.papyros.runner.run).toEqual({ status: RunStatus.Idle });
+        expect(el.papyros.runner.lifecycle).toEqual({ status: RunStatus.Idle });
         expect(reset.getAttribute("aria-disabled")).toBe("true");
     });
 

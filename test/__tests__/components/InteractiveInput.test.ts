@@ -10,7 +10,7 @@ const mounted: HTMLElement[] = [];
 
 async function mount(): Promise<InteractiveInput> {
     const papyros = new Papyros();
-    papyros.runner.run = { status: RunStatus.AwaitingInput, prompt: "" };
+    papyros.runner.lifecycle = { status: RunStatus.AwaitingInput, prompt: "" };
     vi.spyOn(papyros.io, "provideInput").mockImplementation(() => undefined);
     const el = document.createElement("p-interactive-input") as InteractiveInput;
     el.papyros = papyros;

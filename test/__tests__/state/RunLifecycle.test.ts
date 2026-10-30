@@ -116,12 +116,12 @@ describe("Runner launch", () => {
         await launching;
         await vi.waitFor(() => expect(client.workerProxy.runCode).toHaveBeenCalledOnce());
         // The run, not the launch, decides when it ends
-        expect(papyros.runner.run).toEqual({ status: RunStatus.Starting, mode: undefined });
+        expect(papyros.runner.lifecycle).toEqual({ status: RunStatus.Starting, mode: undefined });
 
         client.finishRun();
         await running;
         expect(papyros.runtime.isRunning(papyros)).toBe(false);
-        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
+        expect(papyros.runner.lifecycle).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
         papyros.dispose();
     });
 
@@ -135,7 +135,7 @@ describe("Runner launch", () => {
         const relaunch = client.holdLaunch();
         papyros.runtime.restartWorker(ProgrammingLanguage.Python);
         await vi.waitFor(() => expect(client.workerProxy.launch).toHaveBeenCalledTimes(2));
-        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Stopped });
+        expect(papyros.runner.lifecycle).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Stopped });
         expect(papyros.runtime.isRunning(papyros)).toBe(false);
         expect(papyros.runner.backendStatus).toEqual({ status: BackendStatus.Launching });
         expect(papyros.runner.statusMessage).toBe("Loading");
@@ -160,7 +160,7 @@ describe("Runner launch", () => {
         await papyros.runner.stop();
         // Replacing the worker again would abandon the launch the run is waiting for
         expect(client.restart).toHaveBeenCalledOnce();
-        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Stopped });
+        expect(papyros.runner.lifecycle).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Stopped });
         expect(papyros.runner.backendStatus).toEqual({ status: BackendStatus.Launching });
 
         relaunch.finish();
@@ -236,7 +236,7 @@ describe("starting a run from given files", () => {
         await Promise.all([running, stopping]);
 
         expect(client.workerProxy.runCode).not.toHaveBeenCalled();
-        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Stopped });
+        expect(papyros.runner.lifecycle).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Stopped });
 
         papyros.dispose();
     });
@@ -250,7 +250,7 @@ describe("starting a run from given files", () => {
         const running = papyros.runner.start(RunMode.Run, { files: loading });
         await Promise.resolve();
         expect(papyros.runtime.currentRun?.owner).toBe(papyros);
-        expect(papyros.runner.run.status).toBe(RunStatus.Starting);
+        expect(papyros.runner.lifecycle.status).toBe(RunStatus.Starting);
         expect(client.workerProxy.clearWorkspace).not.toHaveBeenCalled();
 
         resolveFiles(files);
@@ -271,7 +271,7 @@ describe("starting a run from given files", () => {
         expect(client.workerProxy.clearWorkspace).not.toHaveBeenCalled();
         expect(client.workerProxy.runCode).not.toHaveBeenCalled();
         expect(papyros.io.output).toEqual([]);
-        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.FilesFailed });
+        expect(papyros.runner.lifecycle).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.FilesFailed });
         expect(papyros.runner.statusMessage).toBe("");
         expect(papyros.runtime.currentRun).toBeNull();
 
@@ -290,7 +290,7 @@ describe("starting a run from given files", () => {
         await Promise.all([running, stopping]);
 
         expect(client.workerProxy.runCode).not.toHaveBeenCalled();
-        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Stopped });
+        expect(papyros.runner.lifecycle).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Stopped });
 
         papyros.dispose();
     });
@@ -305,7 +305,7 @@ describe("starting a run from given files", () => {
         expect(client.interrupt).not.toHaveBeenCalled();
         expect(client.restart).not.toHaveBeenCalled();
         expect(papyros.runtime.currentRun).toBeNull();
-        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Stopped });
+        expect(papyros.runner.lifecycle).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Stopped });
 
         const running = papyros.runner.start();
         await vi.waitFor(() => expect(client.workerProxy.runCode).toHaveBeenCalledOnce());
@@ -322,7 +322,7 @@ describe("starting a run from given files", () => {
         await papyros.runner.reset();
 
         expect(papyros.runtime.currentRun).toBeNull();
-        expect(papyros.runner.run).toEqual({ status: RunStatus.Idle });
+        expect(papyros.runner.lifecycle).toEqual({ status: RunStatus.Idle });
 
         const running = papyros.runner.start();
         await vi.waitFor(() => expect(client.workerProxy.runCode).toHaveBeenCalledOnce());
@@ -347,7 +347,7 @@ describe("starting a run from given files", () => {
         expect(client.workerProxy.clearWorkspace).not.toHaveBeenCalled();
         expect(client.workerProxy.updateFile).not.toHaveBeenCalled();
         expect(papyros.runtime.isRunning(papyros)).toBe(true);
-        expect(papyros.runner.run.status).toBe(RunStatus.Starting);
+        expect(papyros.runner.lifecycle.status).toBe(RunStatus.Starting);
 
         client.finishRun();
         await running;
@@ -364,7 +364,7 @@ describe("starting a run from given files", () => {
 
         expect(client.workerProxy.runCode).not.toHaveBeenCalled();
         expect(papyros.io.output).toEqual([{ type: OutputType.stderr, content: error }]);
-        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Crashed });
+        expect(papyros.runner.lifecycle).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Crashed });
         expect(papyros.runner.statusMessage).toMatch(/^Code crashed after/);
 
         papyros.dispose();
@@ -377,19 +377,19 @@ describe("the outcome of a run", () => {
         const papyros = await launched(client);
 
         const running = papyros.runner.start(RunMode.Run);
-        expect(papyros.runner.run).toEqual({ status: RunStatus.Starting, mode: RunMode.Run });
+        expect(papyros.runner.lifecycle).toEqual({ status: RunStatus.Starting, mode: RunMode.Run });
         expect(papyros.runner.inProgress).toBe(true);
         await vi.waitFor(() => expect(client.workerProxy.runCode).toHaveBeenCalled());
         client.emit(start);
-        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Running, mode: RunMode.Run });
+        expect(papyros.runner.lifecycle).toMatchObject({ status: RunStatus.Running, mode: RunMode.Run });
         expect(papyros.runner.statusMessage).toBe("Running");
         client.emit(end);
         // The End event alone does not end the run: runCode has to settle too
-        expect(papyros.runner.run.status).toBe(RunStatus.Running);
+        expect(papyros.runner.lifecycle.status).toBe(RunStatus.Running);
         client.finishRun();
         await running;
 
-        expect(papyros.runner.run).toMatchObject({
+        expect(papyros.runner.lifecycle).toMatchObject({
             status: RunStatus.Ended,
             outcome: RunOutcome.Completed,
             mode: RunMode.Run,
@@ -412,7 +412,7 @@ describe("the outcome of a run", () => {
         await running;
 
         expect(papyros.debugger.active).toBe(true);
-        expect(papyros.runner.run).toMatchObject({
+        expect(papyros.runner.lifecycle).toMatchObject({
             status: RunStatus.Ended,
             outcome: RunOutcome.Completed,
             mode: RunMode.Debug,
@@ -433,7 +433,7 @@ describe("the outcome of a run", () => {
         await running;
 
         expect(papyros.debugger.active).toBe(false);
-        expect(papyros.runner.run).toMatchObject({
+        expect(papyros.runner.lifecycle).toMatchObject({
             status: RunStatus.Ended,
             outcome: RunOutcome.Completed,
             mode: RunMode.Run,
@@ -452,7 +452,7 @@ describe("the outcome of a run", () => {
         client.emit(start);
         await papyros.runner.stop();
 
-        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Stopped });
+        expect(papyros.runner.lifecycle).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Stopped });
         expect(papyros.runner.statusMessage).toMatch(/^Code interrupted after [\d.]+ s$/);
         await running;
         papyros.dispose();
@@ -466,7 +466,7 @@ describe("the outcome of a run", () => {
 
         await papyros.runner.start();
 
-        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Crashed });
+        expect(papyros.runner.lifecycle).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Crashed });
         expect(papyros.runner.statusMessage).toMatch(/^Code crashed after [\d.]+ s$/);
         expect(papyros.io.output).toEqual([{ type: OutputType.stderr, content: error }]);
         papyros.dispose();
@@ -478,7 +478,7 @@ describe("the outcome of a run", () => {
 
         await papyros.runner.start(RunMode.Run, { files: Promise.reject(new Error("HTTP 404")) });
 
-        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.FilesFailed });
+        expect(papyros.runner.lifecycle).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.FilesFailed });
         expect(papyros.runner.statusMessage).toBe("");
         papyros.dispose();
     });
@@ -488,7 +488,7 @@ describe("the outcome of a run", () => {
 
         await papyros.runner.start();
 
-        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.LaunchFailed });
+        expect(papyros.runner.lifecycle).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.LaunchFailed });
         expect(papyros.runner.statusMessage).toBe("Failed to load");
         expect(papyros.runtime.currentRun).toBeNull();
     });
@@ -500,17 +500,17 @@ describe("a run whose last events arrive after runCode settled", () => {
         const papyros = await launched(client);
         let outputWhenEnded: unknown[] | undefined;
         papyros.runner.subscribe(() => {
-            if (papyros.runner.run.status === RunStatus.Ended) {
+            if (papyros.runner.lifecycle.status === RunStatus.Ended) {
                 outputWhenEnded ??= papyros.io.output;
             }
-        }, "run");
+        }, "lifecycle");
 
         const running = papyros.runner.start();
         await vi.waitFor(() => expect(client.workerProxy.runCode).toHaveBeenCalled());
         client.emit(start);
         const runId = settleBeforeEvents(client);
         await new Promise((resolve) => setTimeout(resolve, 0));
-        expect(papyros.runner.run.status).toBe(RunStatus.Running);
+        expect(papyros.runner.lifecycle.status).toBe(RunStatus.Running);
         expect(papyros.runner.inProgress).toBe(true);
         expect(papyros.runtime.isRunning(papyros)).toBe(true);
 
@@ -518,7 +518,7 @@ describe("a run whose last events arrive after runCode settled", () => {
         client.emit({ ...end, runId });
         await running;
 
-        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
+        expect(papyros.runner.lifecycle).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
         expect(outputWhenEnded).toEqual([{ type: OutputType.stdout, content: "hello" }]);
         papyros.dispose();
     });
@@ -539,7 +539,7 @@ describe("a run whose last events arrive after runCode settled", () => {
 
         expect(papyros.debugger.active).toBe(true);
         expect(papyros.debugger.trace.map((f) => f.line)).toEqual([1, 2]);
-        expect(papyros.runner.run).toMatchObject({
+        expect(papyros.runner.lifecycle).toMatchObject({
             status: RunStatus.Ended,
             outcome: RunOutcome.Completed,
             mode: RunMode.Debug,
@@ -559,7 +559,7 @@ describe("a run whose last events arrive after runCode settled", () => {
         client.resolveRun();
         await running;
 
-        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
+        expect(papyros.runner.lifecycle).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
         papyros.dispose();
     });
 
@@ -575,7 +575,7 @@ describe("a run whose last events arrive after runCode settled", () => {
         papyros.runtime.restartWorker(ProgrammingLanguage.Python);
         await running;
 
-        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Stopped });
+        expect(papyros.runner.lifecycle).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Stopped });
         expect(papyros.runtime.currentRun).toBeNull();
         // The run relaunched the replaced worker
         expect(client.workerProxy.launch).toHaveBeenCalledTimes(2);
@@ -592,14 +592,14 @@ describe("a run whose last events arrive after runCode settled", () => {
         vi.useFakeTimers();
         settleBeforeEvents(client);
         await vi.advanceTimersByTimeAsync(grace - 1);
-        expect(papyros.runner.run.status).toBe(RunStatus.Running);
+        expect(papyros.runner.lifecycle.status).toBe(RunStatus.Running);
         expect(papyros.runner.inProgress).toBe(true);
         expect(papyros.runtime.isRunning(papyros)).toBe(true);
         expect(papyros.errorHandler).not.toHaveBeenCalled();
 
         await vi.advanceTimersByTimeAsync(1);
         await running;
-        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
+        expect(papyros.runner.lifecycle).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
         expect(papyros.runtime.currentRun).toBeNull();
         expect(papyros.errorHandler).toHaveBeenCalledOnce();
         expect(papyros.errorHandler).toHaveBeenCalledWith(
@@ -622,7 +622,7 @@ describe("a run whose last events arrive after runCode settled", () => {
         await vi.advanceTimersByTimeAsync(grace - 1);
         client.emit({ ...end, runId });
         await running;
-        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
+        expect(papyros.runner.lifecycle).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
         expect(vi.getTimerCount()).toBe(0);
         expect(papyros.errorHandler).not.toHaveBeenCalled();
         papyros.dispose();
@@ -633,13 +633,13 @@ describe("ending a run", () => {
     /** Counts the moves of the run into `ended`, and the calls that tell io and the debugger about them */
     function countEnds(papyros: Papyros): { ended: () => number; io: any; debugger: any } {
         let ended = 0;
-        let previous = papyros.runner.run;
+        let previous = papyros.runner.lifecycle;
         papyros.runner.subscribe(() => {
-            if (papyros.runner.run !== previous && papyros.runner.run.status === RunStatus.Ended) {
+            if (papyros.runner.lifecycle !== previous && papyros.runner.lifecycle.status === RunStatus.Ended) {
                 ended++;
             }
-            previous = papyros.runner.run;
-        }, "run");
+            previous = papyros.runner.lifecycle;
+        }, "lifecycle");
         return {
             ended: () => ended,
             io: vi.spyOn(papyros.io, "onRunEnd"),
@@ -678,14 +678,14 @@ describe("ending a run", () => {
         client.emit(start);
         await papyros.runner.stop();
         expect(client.restart).toHaveBeenCalledOnce();
-        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Stopped });
+        expect(papyros.runner.lifecycle).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Stopped });
         expect(papyros.runtime.currentRun).toBeNull();
 
         // The events of a replaced worker never arrive
         client.runId = undefined;
         client.resolveRun();
         await running;
-        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Stopped });
+        expect(papyros.runner.lifecycle).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Stopped });
         expect(ends.ended()).toBe(1);
         expect(ends.io).toHaveBeenCalledOnce();
         expect(ends.debugger).toHaveBeenCalledOnce();
@@ -704,13 +704,13 @@ describe("ending a run", () => {
         const runId = settleBeforeEvents(client);
         await vi.advanceTimersByTimeAsync(grace);
         await running;
-        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
+        expect(papyros.runner.lifecycle).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
         expect(ends.debugger).toHaveBeenCalledOnce();
 
         client.emit({ ...output, runId });
         client.emit({ ...end, runId });
         expect(papyros.io.output).toEqual([{ type: OutputType.stdout, content: "hello" }]);
-        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
+        expect(papyros.runner.lifecycle).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
         expect(ends.ended()).toBe(1);
         expect(ends.io).toHaveBeenCalledOnce();
         papyros.dispose();
@@ -729,15 +729,15 @@ describe("ending a run", () => {
         await vi.waitFor(() => expect(client.workerProxy.runCode).toHaveBeenCalled());
         client.emit(start);
         const stopping = papyros.runner.stop();
-        expect(papyros.runner.run.status).toBe(RunStatus.Stopping);
+        expect(papyros.runner.lifecycle.status).toBe(RunStatus.Stopping);
         client.emit(input);
 
-        expect(papyros.runner.run.status).toBe(RunStatus.Stopping);
+        expect(papyros.runner.lifecycle.status).toBe(RunStatus.Stopping);
         expect(papyros.io.awaitingInput).toBe(false);
         await vi.waitFor(() => expect(client.interrupt).toHaveBeenCalled());
         interrupted();
         await Promise.all([stopping, running]);
-        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Stopped });
+        expect(papyros.runner.lifecycle).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Stopped });
         papyros.dispose();
     });
 
@@ -749,13 +749,13 @@ describe("ending a run", () => {
         await vi.waitFor(() => expect(client.workerProxy.runCode).toHaveBeenCalled());
         client.emit(start);
         client.emit(input);
-        expect(papyros.runner.run).toMatchObject({ status: RunStatus.AwaitingInput, prompt: "name?" });
+        expect(papyros.runner.lifecycle).toMatchObject({ status: RunStatus.AwaitingInput, prompt: "name?" });
         expect(papyros.io.awaitingInput).toBe(true);
         expect(papyros.io.prompt).toBe("name?");
         expect(papyros.runner.statusMessage).toBe("Awaiting input");
 
         papyros.io.provideInput("Ada");
-        expect(papyros.runner.run.status).toBe(RunStatus.Running);
+        expect(papyros.runner.lifecycle.status).toBe(RunStatus.Running);
         expect(papyros.io.prompt).toBe("");
         await vi.waitFor(() => expect(client.writeMessage).toHaveBeenCalledWith("Ada"));
 
@@ -778,7 +778,7 @@ describe("ending a run", () => {
 
         await papyros.runner.reset();
 
-        expect(papyros.runner.run).toEqual({ status: RunStatus.Idle });
+        expect(papyros.runner.lifecycle).toEqual({ status: RunStatus.Idle });
         expect(papyros.runner.statusMessage).toBe("");
         expect(papyros.io.output).toEqual([]);
         papyros.dispose();
@@ -815,7 +815,7 @@ describe("the status message", () => {
     it.each(cases)("describes %s", (_, backend, run, packages, message) => {
         const papyros = new Papyros();
         papyros.runner.backendStatus = backend;
-        papyros.runner.run = run;
+        papyros.runner.lifecycle = run;
         papyros.runner.loadingPackages = packages;
 
         expect(papyros.runner.statusMessage).toBe(message);

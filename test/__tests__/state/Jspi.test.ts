@@ -70,7 +70,7 @@ describe("JSPI input transport", () => {
         papyros.runner.code = "import time\ntime.sleep(2)";
         await papyros.runner.start();
         await waitForPapyrosReady(papyros);
-        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
+        expect(papyros.runner.lifecycle).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
         // The sleep is timed in the worker and the run on the main thread, so allow for rounding
         const seconds = Number(/^Code executed in ([\d.]+) s/.exec(papyros.runner.statusMessage)?.[1]);
         expect(seconds).toBeGreaterThanOrEqual(1.9);

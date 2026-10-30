@@ -83,7 +83,7 @@ export class CodePlayground extends PapyrosElement {
         return (
             !this.isActive &&
             (this.papyros.runner.code !== this.code ||
-                this.papyros.runner.run.status !== RunStatus.Idle ||
+                this.papyros.runner.lifecycle.status !== RunStatus.Idle ||
                 this.dataFiles.failed)
         );
     }
