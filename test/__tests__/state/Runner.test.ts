@@ -42,7 +42,7 @@ describe("Runner", () => {
         jsPapyros.runner.code = `const a = 1;
 const b = 7;
 const c = a + b;`;
-        expect(jsPapyros.runner.run).toEqual({ status: RunStatus.Idle });
+        expect(jsPapyros.runner.lifecycle).toEqual({ status: RunStatus.Idle });
         expect(jsPapyros.runner.statusMessage).toBe("");
         await jsPapyros.runner.start();
         await waitForPapyrosReady(jsPapyros);
@@ -148,7 +148,7 @@ console.log("done");`;
         const runPromise = jsPapyros.runner.start();
         await waitForOutput(jsPapyros, 2);
         // the stderr output is in, the program is still busy
-        expect(jsPapyros.runner.run.status).toBe(RunStatus.Running);
+        expect(jsPapyros.runner.lifecycle.status).toBe(RunStatus.Running);
         await runPromise;
         await waitForPapyrosReady(jsPapyros);
         expect(jsPapyros.io.output[0].type).toBe(OutputType.stderr);
@@ -181,10 +181,10 @@ print("to stderr", file=sys.stderr)`;
         jsPapyros.runner.code = "while(true) {}";
         const runPromise = jsPapyros.runner.start();
         await new Promise((r) => setTimeout(r, 100));
-        expect(jsPapyros.runner.run.status).toBe(RunStatus.Running);
+        expect(jsPapyros.runner.lifecycle.status).toBe(RunStatus.Running);
         await jsPapyros.runner.stop();
         await runPromise;
-        expect(jsPapyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Stopped });
+        expect(jsPapyros.runner.lifecycle).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Stopped });
         expect(jsPapyros.runner.statusMessage).toMatch(/^Code interrupted after /);
         // The relaunch started by stop() is not awaited by start(); drain it
         await jsPapyros.runner.backend;
@@ -196,7 +196,7 @@ print("to stderr", file=sys.stderr)`;
         await papyros.runner.start();
         await waitForPapyrosReady(papyros);
         await waitForOutput(papyros);
-        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
+        expect(papyros.runner.lifecycle).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
         expect(papyros.runner.statusMessage).toMatch(/^Code executed in/);
         expect(stdoutText(papyros)).toBe("['1', '2', '3']\n");
     });
@@ -342,7 +342,7 @@ print("to stderr", file=sys.stderr)`;
         papyros.runner.code = "import time\ntime.sleep(2)";
         await papyros.runner.start();
         await waitForPapyrosReady(papyros);
-        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
+        expect(papyros.runner.lifecycle).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
         expect(papyros.runner.statusMessage).toMatch(/^Code executed in 2/);
     });
 
@@ -394,7 +394,7 @@ print
         await papyros.runner.start(RunMode.Doctest);
         await waitForOutput(papyros);
         await waitForPapyrosReady(papyros);
-        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
+        expect(papyros.runner.lifecycle).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
         expect(papyros.runner.statusMessage).toMatch(/^Code executed in /);
         expect(papyros.io.output[0].content).toBe("Trying:\n");
         expect(papyros.io.output[1].content).toBe("    1 + 1\n");

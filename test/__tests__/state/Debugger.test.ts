@@ -139,7 +139,7 @@ for i in range(50):
 
         // The tracer stops at the frame budget on its own, so the run finishes
         // normally rather than being interrupted by the frontend
-        expect(papyros.runner.run).toMatchObject({
+        expect(papyros.runner.lifecycle).toMatchObject({
             status: RunStatus.Ended,
             outcome: RunOutcome.Completed,
             mode: RunMode.Debug,
@@ -287,7 +287,7 @@ describe("Debugger stopped before its first step", () => {
         await run;
 
         expect(papyros.debugger.active).toBe(false);
-        expect(papyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Stopped });
+        expect(papyros.runner.lifecycle).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Stopped });
         papyros.dispose();
     });
 });

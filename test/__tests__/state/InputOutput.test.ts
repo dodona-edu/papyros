@@ -124,7 +124,7 @@ console.log("world!");
         await jsPapyros.runner.stop();
         await runPromise;
         await expect(jsPapyros.runner.provideInput("late")).resolves.toBeUndefined();
-        expect(jsPapyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Stopped });
+        expect(jsPapyros.runner.lifecycle).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Stopped });
         jsPapyros.dispose();
     });
 
@@ -137,7 +137,7 @@ console.log("world!");
         jsPapyros.io.inputBuffer = "stale\n";
         jsPapyros.events.publish({ type: BackendEventType.Input, data: "input", contentType: "text/plain" });
         expect(jsPapyros.io.inputs).toEqual([]);
-        expect(jsPapyros.runner.run).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
+        expect(jsPapyros.runner.lifecycle).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
         jsPapyros.dispose();
     });
 
@@ -165,7 +165,7 @@ print("world! " + input("input2"))
                     papyros.io.provideInput("foo" + inputCount);
                 }
             }, 50);
-        }, "run");
+        }, "lifecycle");
         await waitForInputReady(papyros);
         await papyros.runner.start();
         await waitForOutput(papyros);

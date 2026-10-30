@@ -68,13 +68,13 @@ export class PlaygroundOutput implements ReactiveController {
     }
 
     private get awaitingInput(): boolean {
-        return this.host.papyros.runner.run.status === RunStatus.AwaitingInput;
+        return this.host.papyros.runner.lifecycle.status === RunStatus.AwaitingInput;
     }
 
     /** The alert of a Run that could not launch the runtime */
     private get launchError(): string | undefined {
-        const { run, backendStatus } = this.host.papyros.runner;
-        if (run.status !== RunStatus.Ended || run.outcome !== RunOutcome.LaunchFailed) {
+        const { lifecycle, backendStatus } = this.host.papyros.runner;
+        if (lifecycle.status !== RunStatus.Ended || lifecycle.outcome !== RunOutcome.LaunchFailed) {
             return undefined;
         }
         return backendStatus.status === BackendStatus.Failed &&

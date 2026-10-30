@@ -15,7 +15,7 @@ async function mount(run: RunLifecycle): Promise<RunStateEl> {
     element = document.createElement("p-run-state") as RunStateEl;
     element.papyros = new Papyros();
     document.body.append(element);
-    element.papyros.runner.run = run;
+    element.papyros.runner.lifecycle = run;
     await element.updateComplete;
     return element;
 }

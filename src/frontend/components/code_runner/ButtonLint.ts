@@ -9,7 +9,7 @@ import "@material/web/iconbutton/filled-icon-button";
 import "@material/web/iconbutton/outlined-icon-button";
 
 /**
- * Which button set is currently rendered. Distinct from the run status (`runner.run`):
+ * Which button set is currently rendered. Distinct from the run status (`runner.lifecycle`):
  * several statuses (e.g. Starting, Running) all render the same single Stop button.
  */
 type ButtonSet = "run" | "stop" | "stop-debugging";
