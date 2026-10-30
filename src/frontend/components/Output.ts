@@ -6,7 +6,15 @@ import { paneLabelStyles, placeholderStyles, tabBarStyles, tabButtonStyles } fro
 import { nextTabIndex } from "./tabs";
 import { TurtlePatch, TurtleSvgBuilder } from "../state/TurtleSvg";
 import { HeightTransition } from "./motion";
-import { outputStyles, renderEntry, renderOverflow, shownOutput } from "./output/renderOutput";
+import {
+    outputStyles,
+    renderEntry,
+    renderNoOutput,
+    renderNoOutputStatus,
+    renderOverflow,
+    runFinishedWithoutOutput,
+    shownOutput,
+} from "./output/renderOutput";
 import { FollowEnd } from "./output/followEnd";
 
 const OUTPUT_TABS: OutputTab[] = [OUTPUT_TAB, TURTLE_TAB];
@@ -223,6 +231,7 @@ export class Output extends PapyrosElement {
         const activeTab = this.papyros.io.activeOutputTab;
         const { shown, truncated } = shownOutput(this.papyros.io.output, this.maxOutputLength);
         const rendered = this.renderOutputs(shown);
+        const noOutput = runFinishedWithoutOutput(this.papyros);
         const showPlaceholder = activeTab === OUTPUT_TAB && rendered.length === 0;
         const showTurtlePlaceholder = activeTab === TURTLE_TAB && rendered.length === 0;
         const showOverflow = activeTab === OUTPUT_TAB && truncated && !this.papyros.debugger.active;
@@ -247,7 +256,13 @@ export class Output extends PapyrosElement {
                 ${
                     activeTab === OUTPUT_TAB
                         ? html`
-                              ${showPlaceholder ? html`<pre class="place-holder">${placeholder}</pre>` : nothing}
+                              ${
+                                  showPlaceholder
+                                      ? noOutput
+                                          ? renderNoOutput(this.papyros)
+                                          : html`<pre class="place-holder">${placeholder}</pre>`
+                                      : nothing
+                              }
                               <!-- Screen readers only announce changes to a live region that is already in the page. -->
                               <pre role="log" aria-live="polite" aria-relevant="additions text">${rendered}</pre>
                           `
@@ -256,6 +271,7 @@ export class Output extends PapyrosElement {
                           : rendered
                 }
                 ${showOverflow ? renderOverflow(this.papyros, this.maxOutputLength) : html``}
+                ${renderNoOutputStatus(this.papyros, noOutput)}
             </div>
         `;
     }

@@ -14,7 +14,7 @@ import type { CodeEditor } from "../../../src/frontend/components/code_mirror/Co
 import "../../../src/frontend/components/CodePlayground";
 import { fakeClient } from "../../fakeClient";
 import { emulateReducedMotion } from "../../helpers";
-import { RunStatus } from "../../../src/frontend/state/Runner";
+import { RunOutcome, RunStatus } from "../../../src/frontend/state/Runner";
 
 const start: BackendEvent = { type: BackendEventType.Start, data: "RunCode", contentType: "text/plain" };
 const end: BackendEvent = { type: BackendEventType.End, data: "CodeFinished", contentType: "text/plain" };
@@ -1235,13 +1235,14 @@ describe("p-code-playground", () => {
         await finishRun(el, client);
         expect(el.papyros.io.output).toEqual([]);
         expect(el.papyros.runner.lifecycle.status).toBe(RunStatus.Ended);
-        expect($(el, ".output")).toBeNull();
+        expect($(el, ".output .no-output")).not.toBeNull();
         expect(reset.hasAttribute("aria-disabled")).toBe(false);
 
         reset.click();
         await settle(el);
 
         expect(el.papyros.runner.lifecycle).toEqual({ status: RunStatus.Idle });
+        expect($(el, ".output")).toBeNull();
         expect(reset.getAttribute("aria-disabled")).toBe("true");
     });
 
@@ -1714,4 +1715,212 @@ describe("p-code-playground files", () => {
             timeout: 120000,
         });
     }, 180000);
+});
+
+describe("p-code-playground without output", () => {
+    const noOutput = "No output";
+    const status = "Program finished without output";
+
+    function placeholder(el: CodePlayground): HTMLElement | null {
+        return $(el, ".output .no-output");
+    }
+
+    function statusRegion(el: CodePlayground): HTMLElement | null {
+        return $(el, ".panels [role=status]");
+    }
+
+    it("shows a muted placeholder in the output panel after a run that printed nothing", async () => {
+        const el = await mount();
+        const client = await startRun(el);
+        await finishRun(el, client);
+
+        expect(el.papyros.runner.lifecycle).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
+        expect($(el, ".output .panel-label")!.textContent).toContain("Output");
+        expect(placeholder(el)!.textContent).toBe(noOutput);
+        // The monospace font is the output body's, which the placeholder takes the place of
+        expect($(el, ".output-body")).toBeNull();
+        const style = getComputedStyle(placeholder(el)!);
+        expect(style.fontStyle).toBe("italic");
+        expect(style.fontFamily).not.toMatch(/monospace|menlo|consolas/i);
+        expect(style.userSelect).toBe("none");
+    });
+
+    it("shows no output panel before the first run", async () => {
+        const el = await mount();
+
+        expect($(el, ".output")).toBeNull();
+        expect(placeholder(el)).toBeNull();
+        expect(statusRegion(el)!.textContent).toBe("");
+    });
+
+    it("shows no placeholder while the run runs or waits for input", async () => {
+        const el = await mount();
+        const client = await startRun(el);
+        expect(placeholder(el)).toBeNull();
+        expect(statusRegion(el)!.textContent).toBe("");
+
+        await awaitInput(el, client);
+        expect(el.papyros.runner.lifecycle.status).toBe(RunStatus.AwaitingInput);
+        expect(placeholder(el)).toBeNull();
+        expect(statusRegion(el)!.textContent).toBe("");
+        await finishRun(el, client);
+    });
+
+    it("removes the placeholder as soon as the next run starts", async () => {
+        const el = await mount();
+        await finishRun(el, await startRun(el));
+        expect(placeholder(el)).not.toBeNull();
+
+        const next = await startRun(el);
+        expect(placeholder(el)).toBeNull();
+        expect($(el, ".output-body")).not.toBeNull();
+        expect(statusRegion(el)!.textContent).toBe("");
+
+        await finishRun(el, next);
+        expect(placeholder(el)).not.toBeNull();
+    });
+
+    it("shows no placeholder when the run printed something", async () => {
+        const el = await mount();
+        const client = await startRun(el);
+
+        client.emit(output("hi\n"));
+        await finishRun(el, client);
+
+        expect(placeholder(el)).toBeNull();
+        expect($(el, ".output-body .transcript")!.textContent).toContain("hi");
+        expect(statusRegion(el)!.textContent).toBe("");
+    });
+
+    it("shows no placeholder when the run raised an error", async () => {
+        const el = await mount();
+        const client = await startRun(el);
+
+        client.emit({ type: BackendEventType.Error, data: "boom", contentType: "text/plain" });
+        await finishRun(el, client);
+
+        expect(el.papyros.runner.lifecycle).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Completed });
+        expect($(el, ".error")).not.toBeNull();
+        expect(placeholder(el)).toBeNull();
+        expect(statusRegion(el)!.textContent).toBe("");
+    });
+
+    it("shows no placeholder after a stopped run", async () => {
+        const el = await mount();
+        const client = await startRun(el);
+
+        button(el, "button.stop").click();
+        await vi.waitFor(() => expect(client.interrupt).toHaveBeenCalledTimes(1));
+        client.finishRun();
+        await vi.waitFor(() => expect(el.papyros.runtime.currentRun).toBeNull());
+        await settle(el);
+
+        expect(el.papyros.runner.lifecycle).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Stopped });
+        expect(placeholder(el)).toBeNull();
+        expect($(el, ".output")).toBeNull();
+        expect(statusRegion(el)!.textContent).toBe("");
+    });
+
+    it("shows no placeholder after a crashed run", async () => {
+        const client = fakeClient();
+        client.workerProxy.runCode.mockImplementationOnce(() => Promise.reject(new Error("DataCloneError")));
+        const el = await mount({ client });
+        el.papyros.setErrorHandler(() => undefined);
+
+        button(el, "button.run").click();
+        await vi.waitFor(() =>
+            expect(el.papyros.runner.lifecycle).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.Crashed }),
+        );
+        await settle(el);
+
+        expect(placeholder(el)).toBeNull();
+        expect(statusRegion(el)!.textContent).toBe("");
+    });
+
+    it("shows no placeholder next to the alert of a failed launch", async () => {
+        const el = await mount({ client: failingClient() });
+        el.papyros.setErrorHandler(() => undefined);
+
+        button(el, "button.run").click();
+        await vi.waitFor(() => expect($(el, ".error")).not.toBeNull());
+        await settle(el);
+
+        expect(el.papyros.runner.lifecycle).toMatchObject({
+            status: RunStatus.Ended,
+            outcome: RunOutcome.LaunchFailed,
+        });
+        expect(placeholder(el)).toBeNull();
+        expect(statusRegion(el)!.textContent).toBe("");
+    });
+
+    it("shows no placeholder next to the alert of a file that failed to load", async () => {
+        stubFiles({ "no-output-gone.txt": () => new Response("Not found", { status: 404 }) });
+        const el = await mount({ files: "no-output-gone.txt" });
+
+        button(el, "button.run").click();
+        await vi.waitFor(() => expect($(el, ".file-error")).not.toBeNull());
+        await settle(el);
+
+        expect(el.papyros.runner.lifecycle).toMatchObject({ status: RunStatus.Ended, outcome: RunOutcome.FilesFailed });
+        expect(placeholder(el)).toBeNull();
+        expect(statusRegion(el)!.textContent).toBe("");
+    });
+
+    it("shows no placeholder while debugging", async () => {
+        const el = await mount();
+        await finishRun(el, await startRun(el));
+        expect(placeholder(el)).not.toBeNull();
+
+        el.papyros.debugger.active = true;
+        await settle(el);
+
+        expect(placeholder(el)).toBeNull();
+        expect(statusRegion(el)!.textContent).toBe("");
+    });
+
+    it("closes the placeholder with Reset, which animates the panels", async () => {
+        const el = await mount();
+        await finishRun(el, await startRun(el));
+        await finishAnimations(el);
+        const panels = $(el, ".panels")!;
+        expect(panels.getBoundingClientRect().height).toBeGreaterThan(0);
+
+        const reset = button(el, "button.reset");
+        expect(reset.hasAttribute("aria-disabled")).toBe(false);
+        reset.click();
+        await el.updateComplete;
+
+        expect(placeholder(el)).toBeNull();
+        await vi.waitFor(() => expect(panels.getAnimations()).toHaveLength(1));
+        await finishAnimations(el);
+        expect(el.papyros.runner.lifecycle.status).toBe(RunStatus.Idle);
+        expect(panels.getBoundingClientRect().height).toBe(0);
+    });
+
+    it("leaves the placeholder and its announcement out of the selected text", async () => {
+        const el = await mount();
+        await finishRun(el, await startRun(el));
+        expect(statusRegion(el)!.textContent).toBe(status);
+
+        const selection = getSelection()!;
+        selection.selectAllChildren($(el, ".panels")!);
+
+        expect(selection.toString()).not.toContain(noOutput);
+        expect(selection.toString()).not.toContain(status);
+        selection.removeAllRanges();
+    });
+
+    it("announces the empty run as a status, apart from the output log", async () => {
+        const el = await mount();
+        const region = statusRegion(el)!;
+        expect(region.textContent).toBe("");
+
+        await finishRun(el, await startRun(el));
+
+        // The region that was already in the page, so assistive technology announces the change
+        expect(statusRegion(el)).toBe(region);
+        expect(region.textContent).toBe(status);
+        expect($(el, "[role=log]")!.contains(region)).toBe(false);
+        expect(placeholder(el)!.getAttribute("aria-hidden")).toBe("true");
+    });
 });

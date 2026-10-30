@@ -3,7 +3,15 @@ import { styleMap } from "lit/directives/style-map.js";
 import { OutputEntry, OutputType } from "../../state/InputOutput";
 import { BackendFailure, BackendStatus, RunOutcome, RunStatus } from "../../state/Runner";
 import type { Papyros } from "../../state/Papyros";
-import { renderError, renderImage, renderOverflow, shownOutput } from "../output/renderOutput";
+import {
+    renderError,
+    renderImage,
+    renderNoOutput,
+    renderNoOutputStatus,
+    renderOverflow,
+    runFinishedWithoutOutput,
+    shownOutput,
+} from "../output/renderOutput";
 import { HeightTransition } from "../motion";
 import { FollowEnd } from "../output/followEnd";
 
@@ -111,6 +119,7 @@ export class PlaygroundOutput implements ReactiveController {
             this.host.papyros.io.output.length === 0,
             this.computePanels().errors.length,
             this.busy,
+            runFinishedWithoutOutput(this.host.papyros),
             this.launchError !== undefined,
             awaitingInput,
         ];
@@ -229,6 +238,7 @@ export class PlaygroundOutput implements ReactiveController {
     renderPanels(): TemplateResult {
         return html`<div class="panels">
             ${this.awaitingInput ? this.renderInput() : nothing} ${this.renderOutput()}
+            ${renderNoOutputStatus(this.host.papyros, runFinishedWithoutOutput(this.host.papyros))}
         </div>`;
     }
 
@@ -236,7 +246,8 @@ export class PlaygroundOutput implements ReactiveController {
         const busy = this.busy;
         // The panel stays mounted for the whole run so the card doesn't collapse when the
         // run briefly empties the output on start; only the body content changes.
-        if (this.host.papyros.io.output.length === 0 && !busy) {
+        const noOutput = runFinishedWithoutOutput(this.host.papyros);
+        if (this.host.papyros.io.output.length === 0 && !busy && !noOutput) {
             return this.launchError === undefined ? nothing : this.renderError(this.launchError);
         }
 
@@ -252,7 +263,13 @@ export class PlaygroundOutput implements ReactiveController {
                 @scroll=${this.followEnd.onScroll}
             >
                 <div class="panel-label">${this.t("Papyros.playground.output_panel_label")}</div>
-                <div class="output-body" style=${styleMap(this.bodyReservationStyle(busy))}>${outputBlocks}</div>
+                ${
+                    noOutput
+                        ? renderNoOutput(this.host.papyros)
+                        : html`<div class="output-body" style=${styleMap(this.bodyReservationStyle(busy))}>
+                              ${outputBlocks}
+                          </div>`
+                }
             </div>
             ${errors.map((entry) => this.renderError(entry.content))}
             ${this.launchError === undefined ? nothing : this.renderError(this.launchError)}

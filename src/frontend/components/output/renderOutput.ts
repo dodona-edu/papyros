@@ -1,6 +1,7 @@
 import { css, html, TemplateResult } from "lit";
 import { DEFAULT_IMAGE_CONTENT_TYPE, FriendlyError, OutputEntry, OutputType } from "../../state/InputOutput";
 import type { Papyros } from "../../state/Papyros";
+import { RunOutcome, RunStatus } from "../../state/Runner";
 import { visuallyHiddenStyles } from "../shared-styles";
 import "../FriendlyError";
 
@@ -30,6 +31,18 @@ export const outputStyles = css`
         font-weight: 700;
         white-space: pre-wrap;
         overflow-wrap: break-word;
+    }
+
+    .no-output {
+        margin: 0;
+        color: color-mix(in srgb, var(--md-sys-color-on-surface-variant), var(--md-sys-color-outline));
+        font-size: 0.8125rem;
+        font-style: italic;
+        user-select: none;
+    }
+
+    .no-output-status {
+        user-select: none;
     }
 `;
 
@@ -84,6 +97,36 @@ export function renderEntry(entry: OutputEntry, papyros: Papyros): TemplateResul
         return html`<span class="error">${renderError(entry.content, papyros)}</span>`;
     }
     return html``;
+}
+
+/**
+ * Whether the latest run completed without printing anything, so the output shows a placeholder
+ */
+export function runFinishedWithoutOutput(papyros: Papyros): boolean {
+    const { lifecycle } = papyros.runner;
+    return (
+        lifecycle.status === RunStatus.Ended &&
+        lifecycle.outcome === RunOutcome.Completed &&
+        papyros.io.output.length === 0 &&
+        !papyros.debugger.active
+    );
+}
+
+/**
+ * The visible placeholder of a run that finished without output; the status region announces it
+ */
+export function renderNoOutput(papyros: Papyros): TemplateResult {
+    return html`<p class="no-output" aria-hidden="true">${papyros.i18n.t("Papyros.no_output")}</p>`;
+}
+
+/**
+ * Announces a run that finished without output. Keep it mounted and empty otherwise: screen readers
+ * skip a status region that is inserted already filled. Place it outside the output's live region.
+ */
+export function renderNoOutputStatus(papyros: Papyros, shown: boolean): TemplateResult {
+    return html`<span class="visually-hidden no-output-status" role="status"
+        >${shown ? papyros.i18n.t("Papyros.no_output_status") : ""}</span
+    >`;
 }
 
 /**
