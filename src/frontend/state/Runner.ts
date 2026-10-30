@@ -126,6 +126,9 @@ const UNUSABLE_RUNTIME_SIGNATURES = [
     "pyodide already exited",
 ];
 
+/** How long a run whose code returned waits for the worker's End or Interrupt event before it ends anyway */
+const RUN_END_GRACE_MS = 2000;
+
 function isRuntimeUnusable(error: any): boolean {
     const description = `${error?.type ?? ""} ${error?.message ?? error ?? ""}`.toLowerCase();
     return UNUSABLE_RUNTIME_SIGNATURES.some((signature) => description.includes(signature));
@@ -690,8 +693,20 @@ export class Runner extends State {
                         run.id,
                     );
                     // The worker's last events travel over the event proxy, and can land after runCode settled
-                    const arrived = await Promise.race([over.arrived, terminated.catch(() => false)]);
-                    if (!arrived) {
+                    let grace: ReturnType<typeof setTimeout> | undefined;
+                    const arrived = await Promise.race([
+                        over.arrived,
+                        terminated.catch(() => false),
+                        new Promise<undefined>(
+                            (resolve) => (grace = setTimeout(() => resolve(undefined), RUN_END_GRACE_MS)),
+                        ),
+                    ]);
+                    clearTimeout(grace);
+                    if (arrived === undefined) {
+                        this.papyros.errorHandler(
+                            new Error(`The worker did not report the end of the run within ${RUN_END_GRACE_MS} ms`),
+                        );
+                    } else if (!arrived) {
                         return { outcome: RunOutcome.Stopped, terminated: true };
                     }
                 } finally {
