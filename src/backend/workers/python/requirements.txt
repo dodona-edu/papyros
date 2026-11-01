@@ -2,7 +2,7 @@ python-runner==0.6.1
 friendly_traceback==0.7.61
 pylint==4.1.3
 platformdirs<4.15
-tomli==2.4.1
+tomli==2.5.0
 typing-extensions==4.16.0
 dodona-json-tracer==1.1.0
 svg-turtle==1.2.0
