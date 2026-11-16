@@ -47,12 +47,27 @@ export const outputStyles = css`
 `;
 
 /**
- * The entries up to `max`, and whether there were more. Entries past the cut are neither
- * rendered nor walked on every render.
+ * The entries up to `max` printed entries, and whether there were more. Turtle patches do not
+ * count and are never cut, so a drawing finishes after a long printout.
  */
 export function shownOutput(entries: OutputEntry[], max: number): { shown: OutputEntry[]; truncated: boolean } {
-    const truncated = entries.length > max;
-    return { shown: truncated ? entries.slice(0, max) : entries, truncated };
+    if (entries.length <= max) {
+        return { shown: entries, truncated: false };
+    }
+    const shown: OutputEntry[] = [];
+    let printed = 0;
+    let truncated = false;
+    for (const entry of entries) {
+        if (entry.type !== OutputType.turtle) {
+            if (printed === max) {
+                truncated = true;
+                continue;
+            }
+            printed++;
+        }
+        shown.push(entry);
+    }
+    return { shown, truncated };
 }
 
 export function renderImage(entry: OutputEntry, papyros: Papyros): TemplateResult {

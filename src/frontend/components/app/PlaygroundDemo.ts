@@ -95,6 +95,57 @@ print(os.path.getsize('dodona.png'), 'bytes')
 `,
     },
     {
+        title: "A turtle drawing",
+        description: "The drawing shows below the code. Run it again: the canvas clears and redraws in place.",
+        label: "Spiral",
+        code: `import turtle
+
+pen = turtle.Turtle()
+pen.speed(0)
+pen.width(2)
+colors = ["#e63946", "#f4a261", "#e9c46a", "#2a9d8f", "#457b9d", "#6d597a"]
+for step in range(90):
+    pen.pencolor(colors[step % len(colors)])
+    pen.forward(step * 2)
+    pen.left(59)
+`,
+    },
+    {
+        title: "Drawing, printing and input",
+        description: "Text output and the drawing each get a panel of their own.",
+        code: `import turtle
+
+sides = int(input("How many sides? "))
+for _ in range(sides):
+    turtle.forward(300 / sides)
+    turtle.left(360 / sides)
+print(f"Drew a shape with {sides} sides")
+`,
+    },
+    {
+        title: "A drawing that builds up",
+        description: "The canvas updates whenever the program sleeps. A wide canvas scales down to fit.",
+        code: `import time
+import turtle
+
+turtle.setup(800, 300)
+turtle.bgcolor("midnightblue")
+turtle.pencolor("gold")
+turtle.penup()
+turtle.goto(-360, 0)
+turtle.pendown()
+for star in range(8):
+    for _ in range(5):
+        turtle.forward(60)
+        turtle.right(144)
+    turtle.penup()
+    turtle.forward(90)
+    turtle.pendown()
+    time.sleep(0.3)
+turtle.hideturtle()
+`,
+    },
+    {
         title: "A long-running loop",
         description: "Run it, then try Stop. While it runs, the Run buttons of the other blocks are disabled.",
         label: "Stop me",

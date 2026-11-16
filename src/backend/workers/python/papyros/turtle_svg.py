@@ -85,6 +85,7 @@ class TurtleSvgStream:
     ``clear``         drop all fragments held so far (the canvas was reset)
     ``open``/``close``  the document surrounding the fragments; sent whenever
                       the canvas size or background changes, so in practice once
+    ``size``          ``[width, height]`` of the canvas, sent along with ``open``
     ``set``           ``[[item index, svg fragment], ...]`` for changed items
     ``order``         all item indices in painting order, when that order changed
 
@@ -113,6 +114,7 @@ class TurtleSvgStream:
             patch["clear"] = True
         if frame_changed:
             patch["open"], patch["close"] = self._document_frame()
+            patch["size"] = [self._canvas.winfo_width(), self._canvas.winfo_height()]
 
         changed = []
         for index in sorted(dirty):

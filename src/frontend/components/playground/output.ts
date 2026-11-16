@@ -3,6 +3,7 @@ import { styleMap } from "lit/directives/style-map.js";
 import { OutputEntry, OutputType } from "../../state/InputOutput";
 import { BackendFailure, BackendStatus, RunOutcome, RunStatus } from "../../state/Runner";
 import type { Papyros } from "../../state/Papyros";
+import type { TurtlePatch } from "../../state/TurtleSvg";
 import {
     renderError,
     renderImage,
@@ -14,18 +15,43 @@ import {
 } from "../output/renderOutput";
 import { HeightTransition } from "../motion";
 import { FollowEnd } from "../output/followEnd";
+import { renderTurtleImage, TurtleDrawing, TurtleImage } from "../output/turtle";
 
 export interface OutputHost extends ReactiveControllerHost {
     readonly papyros: Papyros;
     readonly renderRoot: HTMLElement | DocumentFragment;
 }
 
+/** The output of the run, sorted into panels */
+interface Panels {
+    source: OutputEntry[];
+    logBlocks: (TemplateResult | typeof nothing)[];
+    errors: OutputEntry[];
+    drawing: TurtleImage | undefined;
+}
+
+/** What the panels show besides the input row and the launch error */
+interface View extends Panels {
+    log: boolean;
+    noOutput: boolean;
+    /** The run's drawing or, until a run in progress draws, the blank canvas of the previous run */
+    canvas: TurtleImage | undefined;
+}
+
+/** What the previous run showed when this one started */
+interface PreviousRun {
+    log: boolean;
+    /** The height of the log's body, which the log keeps at least while the run is in progress */
+    reservedHeight: number;
+    /** Kept in place, blank, while the run is in progress */
+    canvas: TurtleImage | undefined;
+}
+
 /**
- * The output side of a playground: the input row, the output log and the error panels.
- * Renders into the host's shadow root.
+ * The output side of a playground: the input row, the output log, the turtle drawing and the
+ * error panels. Renders into the host's shadow root.
  */
 export class PlaygroundOutput implements ReactiveController {
-    private reservedHeight = 0;
     private readonly followEnd: FollowEnd;
     private wasAwaitingInput = false;
     /** The input row holds focus and is about to go */
@@ -39,11 +65,10 @@ export class PlaygroundOutput implements ReactiveController {
 
     // Keyed on `outputs` array identity: papyros hands out a fresh array on every change
     // and never mutates it in place.
-    private panelsCache?: {
-        source: OutputEntry[];
-        outputBlocks: (TemplateResult | typeof nothing)[];
-        errors: OutputEntry[];
-    };
+    private panelsCache?: Panels;
+
+    private readonly turtle = new TurtleDrawing();
+    private previousRun: PreviousRun = { log: false, reservedHeight: 0, canvas: undefined };
 
     /**
      * @param {OutputHost} host The playground
@@ -94,14 +119,20 @@ export class PlaygroundOutput implements ReactiveController {
     /** Called when Run is clicked, before the run empties the output */
     onRunStart(): void {
         this.followEnd.restart();
-        // Measure the output height before the run empties it, so the panel body can hold its
-        // height across the run instead of collapsing and regrowing. Capped at the height that
-        // fits in the log: a reservation that makes the log scrollable would have the log follow
-        // its empty end, below the new output.
+        // Measured before the run empties the output, so the panels can hold their height across
+        // the run instead of collapsing and regrowing. The reserved height is capped at what fits
+        // in the log: a reservation that makes the log scrollable would have the log follow its
+        // empty end, below the new output.
         const log = this.log;
         const body = this.host.renderRoot.querySelector<HTMLElement>(".output-body");
-        this.reservedHeight =
-            log && body ? Math.min(body.offsetHeight, log.clientHeight - (log.scrollHeight - body.offsetHeight)) : 0;
+        this.previousRun = {
+            log: log !== null,
+            reservedHeight:
+                log && body
+                    ? Math.min(body.offsetHeight, log.clientHeight - (log.scrollHeight - body.offsetHeight))
+                    : 0,
+            canvas: this.computePanels().drawing && this.turtle.blank(),
+        };
         this.host.requestUpdate();
     }
 
@@ -115,11 +146,13 @@ export class PlaygroundOutput implements ReactiveController {
 
         // Only what opens or closes a panel animates: streamed output grows the log at once,
         // instead of being clipped to the height of an animation that restarts on every chunk.
+        const view = this.view();
         const shown = [
-            this.host.papyros.io.output.length === 0,
-            this.computePanels().errors.length,
+            view.log,
+            view.canvas && `${view.canvas.width}x${view.canvas.height}`,
+            view.errors.length,
             this.busy,
-            runFinishedWithoutOutput(this.host.papyros),
+            view.noOutput,
             this.launchError !== undefined,
             awaitingInput,
         ];
@@ -188,71 +221,75 @@ export class PlaygroundOutput implements ReactiveController {
     private bodyReservationStyle(busy: boolean): Record<string, string> {
         // A floor for the whole run, so the body never collapses before it regrows. The panels
         // animate down to the natural height once it is lifted.
-        return busy ? { "--reserved-height": `${this.reservedHeight}px` } : {};
+        return busy ? { "--reserved-height": `${this.previousRun.reservedHeight}px` } : {};
     }
 
-    private computePanels(): { outputBlocks: (TemplateResult | typeof nothing)[]; errors: OutputEntry[] } {
+    private computePanels(): Panels {
         const papyros = this.host.papyros;
         const outputs = papyros.io.output;
         if (this.panelsCache?.source === outputs) {
             return this.panelsCache;
         }
 
-        const outputBlocks: (TemplateResult | typeof nothing)[] = [];
+        const logBlocks: (TemplateResult | typeof nothing)[] = [];
         const errors: OutputEntry[] = [];
+        const patches: TurtlePatch[] = [];
         // One text node per chunk, so a new chunk adds a node instead of replacing all the text
         let text: string[] = [];
         const flushText = (): void => {
             if (text.length > 0) {
-                outputBlocks.push(html`<pre class="transcript">${text}</pre>`);
+                logBlocks.push(html`<pre class="transcript">${text}</pre>`);
                 text = [];
             }
         };
 
-        // Caps rendered entries like p-output does; the rest is not walked on every render.
         const maxLength = papyros.constants.maxOutputLength;
-        const { shown: entries, truncated } = shownOutput(outputs, maxLength);
-
-        for (const entry of entries) {
-            if (entry.type === OutputType.stderr) {
+        const { shown, truncated } = shownOutput(outputs, maxLength);
+        for (const entry of shown) {
+            if (entry.type === OutputType.turtle) {
+                patches.push(entry.content as TurtlePatch);
+            } else if (entry.type === OutputType.stderr) {
                 errors.push(entry);
             } else if (entry.type === OutputType.stdout && typeof entry.content === "string") {
                 text.push(entry.content);
             } else if (entry.type === OutputType.img) {
                 flushText();
-                outputBlocks.push(renderImage(entry, papyros));
+                logBlocks.push(renderImage(entry, papyros));
             }
-            // Turtle output is not shown in playgrounds
         }
         flushText();
 
         if (truncated) {
-            outputBlocks.push(renderOverflow(papyros, maxLength));
+            logBlocks.push(renderOverflow(papyros, maxLength));
         }
 
-        const result = { source: outputs, outputBlocks, errors };
+        const result = { source: outputs, logBlocks, errors, drawing: this.turtle.update(patches) };
         this.panelsCache = result;
         return result;
     }
 
+    private view(): View {
+        const panels = this.computePanels();
+        const busy = this.busy;
+        const noOutput = runFinishedWithoutOutput(this.host.papyros);
+        const canvas = panels.drawing ?? (busy ? this.previousRun.canvas : undefined);
+        const log = panels.logBlocks.length > 0 || noOutput || (busy && (canvas === undefined || this.previousRun.log));
+        return { ...panels, log, noOutput, canvas };
+    }
+
     renderPanels(): TemplateResult {
+        const view = this.view();
+        const launchError = this.launchError;
         return html`<div class="panels">
-            ${this.awaitingInput ? this.renderInput() : nothing} ${this.renderOutput()}
-            ${renderNoOutputStatus(this.host.papyros, runFinishedWithoutOutput(this.host.papyros))}
+            ${this.awaitingInput ? this.renderInput() : nothing} ${view.log ? this.renderLog(view) : nothing}
+            ${view.canvas ? this.renderDrawing(view.canvas) : nothing}
+            ${view.errors.map((entry) => this.renderError(entry.content))}
+            ${launchError === undefined ? nothing : this.renderError(launchError)}
+            ${renderNoOutputStatus(this.host.papyros, view.noOutput)}
         </div>`;
     }
 
-    private renderOutput(): TemplateResult | typeof nothing {
-        const busy = this.busy;
-        // The panel stays mounted for the whole run so the card doesn't collapse when the
-        // run briefly empties the output on start; only the body content changes.
-        const noOutput = runFinishedWithoutOutput(this.host.papyros);
-        if (this.host.papyros.io.output.length === 0 && !busy && !noOutput) {
-            return this.launchError === undefined ? nothing : this.renderError(this.launchError);
-        }
-
-        const { outputBlocks, errors } = this.computePanels();
-
+    private renderLog(view: View): TemplateResult {
         return html`
             <div
                 class="output"
@@ -264,15 +301,22 @@ export class PlaygroundOutput implements ReactiveController {
             >
                 <div class="panel-label">${this.t("Papyros.playground.output_panel_label")}</div>
                 ${
-                    noOutput
+                    view.noOutput
                         ? renderNoOutput(this.host.papyros)
-                        : html`<div class="output-body" style=${styleMap(this.bodyReservationStyle(busy))}>
-                              ${outputBlocks}
+                        : html`<div class="output-body" style=${styleMap(this.bodyReservationStyle(this.busy))}>
+                              ${view.logBlocks}
                           </div>`
                 }
             </div>
-            ${errors.map((entry) => this.renderError(entry.content))}
-            ${this.launchError === undefined ? nothing : this.renderError(this.launchError)}
+        `;
+    }
+
+    private renderDrawing(drawing: TurtleImage): TemplateResult {
+        return html`
+            <div class="drawing">
+                <div class="panel-label">${this.t("Papyros.playground.drawing_panel_label")}</div>
+                <div class="easel">${renderTurtleImage(drawing, this.t("Papyros.turtle_alt"))}</div>
+            </div>
         `;
     }
 

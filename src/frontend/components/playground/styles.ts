@@ -110,10 +110,11 @@ export const cardStyles = css`
     }
 `;
 
-/** The input row, the output log and the error panels */
+/** The input row, the output log, the drawing and the error panels */
 export const outputPanelStyles = css`
     .input-row,
     .output,
+    .drawing,
     .error {
         padding: 14px 16px;
         border-top: 1px solid var(--md-sys-color-outline-variant);
@@ -168,11 +169,15 @@ export const outputPanelStyles = css`
         color: var(--md-sys-color-on-surface);
     }
 
+    .output,
+    .drawing {
+        background: var(--md-sys-color-surface-container-high);
+        color: var(--md-sys-color-on-surface);
+    }
+
     .output {
         max-height: 300px;
         overflow: auto;
-        background: var(--md-sys-color-surface-container-high);
-        color: var(--md-sys-color-on-surface);
     }
 
     /* --reserved-height holds the height of the previous output during a run */
@@ -192,6 +197,25 @@ export const outputPanelStyles = css`
     .error {
         background: var(--md-sys-color-error-container);
         color: var(--md-sys-color-on-error-container);
+    }
+
+    .easel {
+        display: flex;
+        justify-content: center;
+        padding: 4px 0 6px;
+    }
+
+    /* The canvas at its own size, scaled down to the card's width and 400px of height. Sized
+       from the canvas size, so it takes its place before the image decodes. */
+    .easel img.turtle {
+        display: block;
+        width: min(100%, calc(var(--turtle-width) * 1px), calc(400px * var(--turtle-width) / var(--turtle-height)));
+        height: auto;
+        aspect-ratio: var(--turtle-width) / var(--turtle-height);
+        border-radius: 4px;
+        box-shadow:
+            0 1px 2px rgb(0, 0, 0, 0.08),
+            0 3px 8px rgb(0, 0, 0, 0.07);
     }
 `;
 
