@@ -458,10 +458,10 @@
   dependencies:
     undici-types "~8.9.0"
 
-"@types/serviceworker@^0.0.203":
-  version "0.0.203"
-  resolved "https://registry.yarnpkg.com/@types/serviceworker/-/serviceworker-0.0.203.tgz#71a8066a9f3c6e8a581ed3d5fb0a2d7bcb4cbbfb"
-  integrity sha512-7AOQ77H9pWdHeYnS8iucDm4RJmSNMDuFOX+UYZ9W1WAHHyy2dO9ni/CYQboz/IMr/wDucxSMT1ed90bT++75KA==
+"@types/serviceworker@^0.0.209":
+  version "0.0.209"
+  resolved "https://registry.yarnpkg.com/@types/serviceworker/-/serviceworker-0.0.209.tgz#7d785fbb4e81298c51db2bdd2b9e97fbe3d47147"
+  integrity sha512-763XJijHfAF6hOuR+0HiBdzLogVOfqsClzXDoA4UuN8f2G91qLSh3uDn9Cvuhoim5hNe3E3nGaA3jQfjnW7x5Q==
 
 "@types/trusted-types@^2.0.2":
   version "2.0.7"
