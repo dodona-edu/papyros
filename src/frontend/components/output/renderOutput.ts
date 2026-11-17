@@ -47,27 +47,27 @@ export const outputStyles = css`
 `;
 
 /**
- * The entries up to `max` printed entries, and whether there were more. Turtle patches do not
- * count and are never cut, so a drawing finishes after a long printout.
+ * The entries up to `max` printed entries, and the printed entries past them. Turtle patches do
+ * not count and are never cut, so a drawing finishes after a long printout.
  */
-export function shownOutput(entries: OutputEntry[], max: number): { shown: OutputEntry[]; truncated: boolean } {
+export function shownOutput(entries: OutputEntry[], max: number): { shown: OutputEntry[]; hidden: OutputEntry[] } {
     if (entries.length <= max) {
-        return { shown: entries, truncated: false };
+        return { shown: entries, hidden: [] };
     }
     const shown: OutputEntry[] = [];
+    const hidden: OutputEntry[] = [];
     let printed = 0;
-    let truncated = false;
     for (const entry of entries) {
-        if (entry.type !== OutputType.turtle) {
-            if (printed === max) {
-                truncated = true;
-                continue;
-            }
+        if (entry.type === OutputType.turtle) {
+            shown.push(entry);
+        } else if (printed < max) {
             printed++;
+            shown.push(entry);
+        } else {
+            hidden.push(entry);
         }
-        shown.push(entry);
     }
-    return { shown, truncated };
+    return { shown, hidden };
 }
 
 export function renderImage(entry: OutputEntry, papyros: Papyros): TemplateResult {
@@ -183,9 +183,9 @@ export function outputAsText(entries: OutputEntry[]): string {
 }
 
 /**
- * Notice that the output past `shownLength` entries is not shown, with a link to download it
+ * Notice that the `hidden` entries are not shown, with a link to download them
  */
-export function renderOverflow(papyros: Papyros, shownLength: number): TemplateResult {
+export function renderOverflow(papyros: Papyros, hidden: OutputEntry[]): TemplateResult {
     // The file is only built on click: output keeps growing during a run, and a blob URL made
     // on every render would never be released.
     const download = (e: Event): void => {
@@ -193,7 +193,7 @@ export function renderOverflow(papyros: Papyros, shownLength: number): TemplateR
         if (link.href.startsWith("blob:")) {
             URL.revokeObjectURL(link.href);
         }
-        const blob = new Blob([outputAsText(papyros.io.output.slice(shownLength))], { type: "text/plain" });
+        const blob = new Blob([outputAsText(hidden)], { type: "text/plain" });
         link.href = URL.createObjectURL(blob);
     };
     return html`<p class="overflow">

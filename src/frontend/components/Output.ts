@@ -219,12 +219,12 @@ export class Output extends PapyrosElement {
     protected override render(): TemplateResult {
         const activeTab = this.papyros.io.activeOutputTab;
         const { entries, max } = this.outputWindow;
-        const { shown, truncated } = shownOutput(entries, max);
+        const { shown, hidden } = shownOutput(entries, max);
         const rendered = this.renderOutputs(shown);
         const noOutput = runFinishedWithoutOutput(this.papyros);
         const showPlaceholder = activeTab === OUTPUT_TAB && rendered.length === 0;
         const showTurtlePlaceholder = activeTab === TURTLE_TAB && rendered.length === 0;
-        const showOverflow = activeTab === OUTPUT_TAB && truncated;
+        const showOverflow = activeTab === OUTPUT_TAB && hidden.length > 0;
         const showTabs = this.showTurtleTab;
         const placeholder = this.papyros.debugger.active
             ? this.t("Papyros.debug_output_placeholder")
@@ -260,7 +260,7 @@ export class Output extends PapyrosElement {
                           ? html`<div class="turtle-placeholder"></div>`
                           : rendered
                 }
-                ${showOverflow ? renderOverflow(this.papyros, max) : html``}
+                ${showOverflow ? renderOverflow(this.papyros, hidden) : html``}
                 ${renderNoOutputStatus(this.papyros, noOutput)}
             </div>
         `;

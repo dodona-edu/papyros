@@ -244,7 +244,7 @@ export class PlaygroundOutput implements ReactiveController {
         };
 
         const maxLength = papyros.constants.maxOutputLength;
-        const { shown, truncated } = shownOutput(outputs, maxLength);
+        const { shown, hidden } = shownOutput(outputs, maxLength);
         for (const entry of shown) {
             if (entry.type === OutputType.turtle) {
                 patches.push(entry.content as TurtlePatch);
@@ -259,8 +259,8 @@ export class PlaygroundOutput implements ReactiveController {
         }
         flushText();
 
-        if (truncated) {
-            logBlocks.push(renderOverflow(papyros, maxLength));
+        if (hidden.length > 0) {
+            logBlocks.push(renderOverflow(papyros, hidden));
         }
 
         const result = { source: outputs, logBlocks, errors, drawing: this.turtle.update(patches) };
