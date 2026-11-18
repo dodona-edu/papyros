@@ -48,7 +48,7 @@ class TurtleImportHook:
             canvas = TrackedCanvas(400, 400)
             self.svg_stream = TurtleSvgStream(canvas)
             screen = SvgTurtle._Screen(canvas)
-            screen.cv.config(bg="")
+            screen.cv.config(bg="white")
 
             class PapyrosTurtle(SvgTurtle):
                 def __init__(self):

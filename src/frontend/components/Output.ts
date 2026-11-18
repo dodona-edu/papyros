@@ -4,7 +4,7 @@ import { OutputEntry, OutputTab, OutputType, OUTPUT_TAB, TURTLE_TAB } from "../s
 import { PapyrosElement } from "./PapyrosElement";
 import { paneLabelStyles, placeholderStyles, tabBarStyles, tabButtonStyles } from "./shared-styles";
 import { nextTabIndex } from "./tabs";
-import { TurtlePatch, TurtleSvgBuilder } from "../state/TurtleSvg";
+import { TurtlePatch } from "../state/TurtleSvg";
 import { HeightTransition } from "./motion";
 import {
     outputStyles,
@@ -16,6 +16,7 @@ import {
     shownOutput,
 } from "./output/renderOutput";
 import { FollowEnd } from "./output/followEnd";
+import { renderTurtleImage, TurtleDrawing, turtleStyles } from "./output/turtle";
 
 const OUTPUT_TABS: OutputTab[] = [OUTPUT_TAB, TURTLE_TAB];
 
@@ -78,14 +79,15 @@ export class Output extends PapyrosElement {
             .turtle-placeholder {
                 max-width: 100cqw;
                 max-height: 100cqh;
-                box-sizing: border-box;
-                background-color: var(--md-sys-color-surface);
-                border: 1px solid var(--md-sys-color-outline-variant);
             }
 
+            /* The blank canvas of Python's turtle */
             .turtle-placeholder {
                 width: 400px;
                 height: 400px;
+                box-sizing: border-box;
+                background-color: white;
+                border: 1px solid var(--md-sys-color-outline-variant);
             }
 
             pre {
@@ -107,6 +109,7 @@ export class Output extends PapyrosElement {
 
             ${tabButtonStyles}
             ${outputStyles}
+            ${turtleStyles}
         `;
     }
 
@@ -114,8 +117,8 @@ export class Output extends PapyrosElement {
     private heightTransition = new HeightTransition(this);
     private renderedTab: OutputTab | undefined = undefined;
 
-    /** Replays the turtle patches; kept across renders so following a run stays incremental. */
-    private turtleSvg = new TurtleSvgBuilder();
+    /** Kept across renders so following a run stays incremental. */
+    private turtleDrawing = new TurtleDrawing();
 
     private followEnd = new FollowEnd(this, () => this.renderRoot.querySelector<HTMLElement>(".content"));
 
@@ -147,35 +150,21 @@ export class Output extends PapyrosElement {
         void this.heightTransition.play();
     }
 
-    private get maxOutputLength(): number {
-        if (this.papyros.debugger.active && this.papyros.debugger.debugOutputs !== undefined) {
-            return this.papyros.debugger.debugOutputs;
-        }
-
-        return this.papyros.constants.maxOutputLength;
-    }
-
-    private turtleSvgSource: string | undefined = undefined;
-    private turtleSvgUrl = "";
-
-    private turtleUrl(svg: string): string {
-        if (svg !== this.turtleSvgSource) {
-            this.turtleSvgSource = svg;
-            this.turtleSvgUrl = `data:image/svg+xml,${encodeURIComponent(svg)}`;
-        }
-        return this.turtleSvgUrl;
+    /** While stepping, the output up to the current step, uncapped; otherwise all of it, capped */
+    private get outputWindow(): { entries: OutputEntry[]; max: number } {
+        const { active, debugOutputs } = this.papyros.debugger;
+        const output = this.papyros.io.output;
+        return active && debugOutputs !== undefined
+            ? { entries: output.slice(0, debugOutputs), max: Infinity }
+            : { entries: output, max: this.papyros.constants.maxOutputLength };
     }
 
     private renderOutputs(outputs: OutputEntry[]): TemplateResult[] {
         if (this.papyros.io.activeOutputTab === TURTLE_TAB) {
-            // Replay every patch within outputs (which is sliced by the debugger's
-            // current step via maxOutputLength) — so stepping the debugger shows the
-            // drawing build up.
+            // outputs ends at the debugger's current step, so stepping shows the drawing build up
             const patches = outputs.filter((o) => o.type === OutputType.turtle).map((o) => o.content as TurtlePatch);
-            const svg = this.turtleSvg.build(patches);
-            return svg === undefined
-                ? []
-                : [html`<img class="turtle" src=${this.turtleUrl(svg)} alt=${this.t("Papyros.turtle_alt")} />`];
+            const image = this.turtleDrawing.update(patches);
+            return image === undefined ? [] : [renderTurtleImage(image, this.t("Papyros.turtle_alt"))];
         }
         return outputs.filter((o) => o.type !== OutputType.turtle).map((o) => renderEntry(o, this.papyros));
     }
@@ -229,12 +218,13 @@ export class Output extends PapyrosElement {
 
     protected override render(): TemplateResult {
         const activeTab = this.papyros.io.activeOutputTab;
-        const { shown, truncated } = shownOutput(this.papyros.io.output, this.maxOutputLength);
+        const { entries, max } = this.outputWindow;
+        const { shown, hidden } = shownOutput(entries, max);
         const rendered = this.renderOutputs(shown);
         const noOutput = runFinishedWithoutOutput(this.papyros);
         const showPlaceholder = activeTab === OUTPUT_TAB && rendered.length === 0;
         const showTurtlePlaceholder = activeTab === TURTLE_TAB && rendered.length === 0;
-        const showOverflow = activeTab === OUTPUT_TAB && truncated && !this.papyros.debugger.active;
+        const showOverflow = activeTab === OUTPUT_TAB && hidden.length > 0;
         const showTabs = this.showTurtleTab;
         const placeholder = this.papyros.debugger.active
             ? this.t("Papyros.debug_output_placeholder")
@@ -270,7 +260,7 @@ export class Output extends PapyrosElement {
                           ? html`<div class="turtle-placeholder"></div>`
                           : rendered
                 }
-                ${showOverflow ? renderOverflow(this.papyros, this.maxOutputLength) : html``}
+                ${showOverflow ? renderOverflow(this.papyros, hidden) : html``}
                 ${renderNoOutputStatus(this.papyros, noOutput)}
             </div>
         `;

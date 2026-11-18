@@ -15,6 +15,7 @@ import "../../../src/frontend/components/CodePlayground";
 import { fakeClient } from "../../fakeClient";
 import { emulateReducedMotion } from "../../helpers";
 import { RunOutcome, RunStatus } from "../../../src/frontend/state/Runner";
+import type { TurtlePatch } from "../../../src/frontend/state/TurtleSvg";
 
 const start: BackendEvent = { type: BackendEventType.Start, data: "RunCode", contentType: "text/plain" };
 const end: BackendEvent = { type: BackendEventType.End, data: "CodeFinished", contentType: "text/plain" };
@@ -1922,5 +1923,206 @@ describe("p-code-playground without output", () => {
         expect(region.textContent).toBe(status);
         expect($(el, "[role=log]")!.contains(region)).toBe(false);
         expect(placeholder(el)!.getAttribute("aria-hidden")).toBe("true");
+    });
+});
+
+describe("p-code-playground turtle", () => {
+    const canvas = (width = 400, height = 400): string =>
+        `<svg height="${height}" width="${width}" xmlns="http://www.w3.org/2000/svg"><defs />`;
+    const draw = (id: string, width = 400, height = 400): TurtlePatch => ({
+        open: canvas(width, height),
+        close: "</svg>",
+        size: [width, height],
+        set: [[0, `<polyline id="${id}" />`]],
+    });
+    const turtleEntry = (patch: TurtlePatch): OutputEntry => ({ type: OutputType.turtle, content: patch });
+    const turtleEvent = (patch: TurtlePatch): BackendEvent => ({
+        type: BackendEventType.Turtle,
+        data: JSON.stringify(patch),
+        contentType: "text/json",
+    });
+
+    function drawing(el: CodePlayground): HTMLImageElement | null {
+        return $<HTMLImageElement>(el, ".drawing img.turtle");
+    }
+
+    function drawnSvg(el: CodePlayground): string {
+        return decodeURIComponent(drawing(el)!.src.replace("data:image/svg+xml,", ""));
+    }
+
+    it("shows a drawing in a labelled panel of its own, without an empty output log", async () => {
+        const el = await mount();
+        await setOutputs(el, [turtleEntry(draw("star"))]);
+
+        expect($(el, ".drawing .panel-label")!.textContent).toBe("Drawing");
+        expect(drawing(el)!.alt).toBe("Turtle drawing");
+        expect(drawnSvg(el)).toContain('id="star"');
+        expect($(el, ".output")).toBeNull();
+    });
+
+    it("shows the log above the drawing when the run also prints, and keeps the drawing out of the live log", async () => {
+        const el = await mount();
+        await setOutputs(el, [{ type: OutputType.stdout, content: "drawing\n" }, turtleEntry(draw("star"))]);
+
+        const log = $(el, ".output")!;
+        const panel = $(el, ".drawing")!;
+        expect(log.querySelector(".transcript")!.textContent).toBe("drawing\n");
+        expect(log.compareDocumentPosition(panel) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        expect(log.contains(panel)).toBe(false);
+    });
+
+    it("shows the drawing of every patch so far", async () => {
+        const el = await mount();
+        await setOutputs(el, [turtleEntry(draw("first")), turtleEntry({ set: [[1, '<polyline id="second" />']] })]);
+
+        expect(drawnSvg(el)).toContain('id="first"');
+        expect(drawnSvg(el)).toContain('id="second"');
+    });
+
+    it("updates the drawing as a run draws", async () => {
+        const el = await mount();
+        const client = await startRun(el);
+
+        client.emit(turtleEvent(draw("first")));
+        await settle(el);
+        expect(drawnSvg(el)).toContain('id="first"');
+
+        client.emit(turtleEvent({ set: [[1, '<polyline id="second" />']] }));
+        await finishRun(el, client);
+        expect(drawnSvg(el)).toContain('id="second"');
+    });
+
+    it("shows the canvas at its own size, scaled down to fit the card", async () => {
+        const el = await mount();
+        await setOutputs(el, [turtleEntry(draw("square"))]);
+        expect(drawing(el)!.getBoundingClientRect().width).toBeCloseTo(400, 0);
+        expect(drawing(el)!.getBoundingClientRect().height).toBeCloseTo(400, 0);
+
+        await setOutputs(el, [turtleEntry(draw("wide", 800, 300))]);
+        const easel = $(el, ".easel")!.getBoundingClientRect();
+        const { width, height } = drawing(el)!.getBoundingClientRect();
+        expect(width).toBeCloseTo(easel.width, 0);
+        expect(height).toBeCloseTo((width * 300) / 800, 0);
+    });
+
+    it("caps the canvas at 400px of height", async () => {
+        const el = await mount();
+        await setOutputs(el, [turtleEntry(draw("tall", 300, 800))]);
+
+        const { width, height } = drawing(el)!.getBoundingClientRect();
+        expect(height).toBeCloseTo(400, 0);
+        expect(width).toBeCloseTo(150, 0);
+    });
+
+    it("keeps the canvas as a blank sheet when a block runs again, until the run draws", async () => {
+        const el = await mount();
+        await setOutputs(el, [turtleEntry(draw("old", 800, 300))]);
+
+        const client = await startRun(el);
+        expect(el.papyros.io.output).toEqual([]);
+        expect(drawnSvg(el)).toContain(canvas(800, 300));
+        expect(drawnSvg(el)).not.toContain('id="old"');
+        expect($(el, ".output")).toBeNull();
+
+        client.emit(turtleEvent(draw("new")));
+        await finishRun(el, client);
+        expect(drawnSvg(el)).toContain('id="new"');
+    });
+
+    it("drops the canvas when the next run does not draw", async () => {
+        const el = await mount();
+        await setOutputs(el, [turtleEntry(draw("old"))]);
+
+        const client = await startRun(el);
+        client.emit(output("no drawing\n"));
+        await finishRun(el, client);
+
+        expect($(el, ".drawing")).toBeNull();
+        expect($(el, ".output .transcript")!.textContent).toBe("no drawing\n");
+    });
+
+    it("keeps the log open across a run of a block that printed and drew", async () => {
+        const el = await mount();
+        await setOutputs(el, [{ type: OutputType.stdout, content: "hi\n" }, turtleEntry(draw("old"))]);
+
+        const client = await startRun(el);
+        expect($(el, ".output")).not.toBeNull();
+        expect($(el, ".drawing")).not.toBeNull();
+        await finishRun(el, client);
+    });
+
+    it("opens the log during the first run, and closes it when the run only drew", async () => {
+        const el = await mount();
+        const client = await startRun(el);
+        expect($(el, ".output")).not.toBeNull();
+
+        client.emit(turtleEvent(draw("star")));
+        await finishRun(el, client);
+        expect($(el, ".output")).toBeNull();
+        expect(drawing(el)).not.toBeNull();
+        expect($(el, ".no-output")).toBeNull();
+    });
+
+    it("does not count turtle patches toward the output cap", async () => {
+        const el = await mount();
+        el.papyros.constants.maxOutputLength = 2;
+        await setOutputs(el, [
+            turtleEntry(draw("first")),
+            turtleEntry({ set: [[1, "<g />"]] }),
+            { type: OutputType.stdout, content: "one\n" },
+            { type: OutputType.stdout, content: "two\n" },
+        ]);
+
+        expect($(el, ".output .transcript")!.textContent).toBe("one\ntwo\n");
+        expect($(el, ".output .overflow")).toBeNull();
+    });
+
+    it("keeps drawing past the output cap", async () => {
+        const el = await mount();
+        el.papyros.constants.maxOutputLength = 2;
+        await setOutputs(el, [
+            { type: OutputType.stdout, content: "one\n" },
+            { type: OutputType.stdout, content: "two\n" },
+            { type: OutputType.stdout, content: "three\n" },
+            turtleEntry(draw("late")),
+        ]);
+
+        expect($(el, ".output .overflow")).not.toBeNull();
+        expect(drawnSvg(el)).toContain('id="late"');
+    });
+
+    it("clears the drawing with Reset", async () => {
+        const el = await mount();
+        const client = await startRun(el);
+        client.emit(turtleEvent(draw("star")));
+        await finishRun(el, client);
+        expect(drawing(el)).not.toBeNull();
+
+        button(el, "button.reset").click();
+        await settle(el);
+
+        expect($(el, ".drawing")).toBeNull();
+    });
+
+    it("animates the panels as the drawing opens", async () => {
+        const el = await mount();
+        const client = await startRun(el);
+        await finishAnimations(el);
+        const panels = $(el, ".panels")!;
+
+        client.emit(turtleEvent(draw("star")));
+        await settle(el);
+        await vi.waitFor(() => expect(panels.getAnimations()).toHaveLength(1));
+        await finishAnimations(el);
+        await finishRun(el, client);
+    });
+
+    it("translates the drawing panel", async () => {
+        const el = await mount();
+        el.papyros.i18n.locale = "nl";
+        await setOutputs(el, [turtleEntry(draw("star"))]);
+
+        expect($(el, ".drawing .panel-label")!.textContent).toBe("Tekening");
+        expect(drawing(el)!.alt).toBe("Turtle-tekening");
     });
 });

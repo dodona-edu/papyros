@@ -140,6 +140,7 @@ export const ENGLISH_TRANSLATION = {
         },
         playground: {
             config_error_title: "Configuration error",
+            drawing_panel_label: "Drawing",
             duplicate_file_name: 'Files in a code playground need different names (got "%{name}" more than once).',
             error: "Python failed to load. Try again, or reload the page.",
             file_load_failed: "The file %{name} failed to load. Try again, or reload the page.",
@@ -314,6 +315,7 @@ export const DUTCH_TRANSLATION = {
         },
         playground: {
             config_error_title: "Configuratiefout",
+            drawing_panel_label: "Tekening",
             duplicate_file_name:
                 'Bestanden in een code playground moeten elk een andere naam hebben (kreeg "%{name}" meer dan één keer).',
             error: "Python kon niet laden. Probeer opnieuw of herlaad de pagina.",

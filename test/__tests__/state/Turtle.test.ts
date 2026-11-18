@@ -89,6 +89,32 @@ turtle.done()`;
         expect(svg).toMatch(/height="400"/);
     });
 
+    it("sends the canvas size along with the document", async () => {
+        papyros.runner.code = `import turtle
+turtle.setup(800, 400)
+turtle.forward(100)
+turtle.done()`;
+        await papyros.runner.start();
+        await waitForPapyrosReady(papyros);
+        await waitForOutput(papyros);
+        const frames = turtlePatches(papyros).filter((p) => p.open !== undefined);
+        expect(frames.length).toBeGreaterThan(0);
+        expect(frames.every((p) => p.size !== undefined)).toBe(true);
+        expect(frames[frames.length - 1].size).toEqual([800, 400]);
+    });
+
+    it("draws on a white canvas, like Python's turtle", async () => {
+        papyros.runner.code = `import turtle
+print(turtle.bgcolor())
+turtle.forward(50)
+turtle.done()`;
+        await papyros.runner.start();
+        await waitForPapyrosReady(papyros);
+        await waitForOutput(papyros);
+        expect(papyros.io.output.find((o) => o.type === OutputType.stdout)?.content).toBe("white\n");
+        expect(turtleSvg(papyros)).toMatch(/<rect fill="white"/);
+    });
+
     it("treats fractional setup() values as fractions of a 1000px reference", async () => {
         // setup(0.5, 0.25) should resolve to 500x250, mirroring stdlib turtle's
         // "fraction of the screen" semantics rather than collapsing to int(0.x) == 0.

@@ -11,10 +11,11 @@ import { cardStyles, configErrorStyles, fileStyles, outputPanelStyles } from "./
 import { renderToolbarStatus, statusStyles } from "./playground/status";
 import { ReducedMotionController } from "./motion";
 import { outputStyles } from "./output/renderOutput";
+import { turtleStyles } from "./output/turtle";
 import "./code_runner/Code";
 
 /**
- * An inline, runnable Python code block with its own output and input.
+ * An inline, runnable Python code block with its own output, input and turtle drawing.
  *
  * Every playground needs its own Papyros instance. Without a `.papyros`, a playground gets
  * one on a runtime shared by every such playground. Instances that share a PapyrosRuntime
@@ -25,7 +26,7 @@ import "./code_runner/Code";
 @customElement("p-code-playground")
 export class CodePlayground extends PapyrosElement {
     static get styles(): CSSResultGroup {
-        return [cardStyles, fileStyles, outputPanelStyles, statusStyles, configErrorStyles, outputStyles];
+        return [cardStyles, fileStyles, outputPanelStyles, statusStyles, configErrorStyles, outputStyles, turtleStyles];
     }
 
     /**

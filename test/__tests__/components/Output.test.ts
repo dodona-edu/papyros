@@ -66,6 +66,22 @@ describe("Output", () => {
         expect(tabs.map((tab) => tab.textContent!.trim())).toEqual(["Text", "Turtle"]);
     });
 
+    it("draws on the Turtle tab after more printed lines than it shows", async () => {
+        await mount();
+        element.papyros.constants.maxOutputLength = 2;
+        element.papyros.io.output = lines(3);
+        element.papyros.io.logTurtle({
+            open: '<svg height="400" width="400" xmlns="http://www.w3.org/2000/svg">',
+            close: "</svg>",
+            size: [400, 400],
+            set: [[0, '<polyline id="late" />']],
+        });
+        await element.updateComplete;
+
+        const img = element.shadowRoot!.querySelector<HTMLImageElement>("img.turtle")!;
+        expect(decodeURIComponent(img.src)).toContain('id="late"');
+    });
+
     it("grows up to its maximum height and then follows the newest line", async () => {
         await mount();
         const oneLine = element.getBoundingClientRect().height;

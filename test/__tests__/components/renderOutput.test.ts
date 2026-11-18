@@ -7,6 +7,7 @@ import {
     renderEntry,
     renderError,
     renderOverflow,
+    shownOutput,
 } from "../../../src/frontend/components/output/renderOutput";
 import type { Output } from "../../../src/frontend/components/Output";
 import "../../../src/frontend/components/Output";
@@ -106,16 +107,32 @@ describe("renderError", () => {
     });
 });
 
+describe("shownOutput", () => {
+    it("cuts the printed entries past the cap and keeps every turtle patch", () => {
+        const turtle = { type: OutputType.turtle, content: { set: [] } };
+        const late = { type: OutputType.turtle, content: { set: [] } };
+        const one = { type: OutputType.stdout, content: "one\n" };
+        const two = { type: OutputType.stdout, content: "two\n" };
+        const three = { type: OutputType.stdout, content: "three\n" };
+
+        expect(shownOutput([turtle, one, two, three, late], 2)).toEqual({
+            shown: [turtle, one, two, late],
+            hidden: [three],
+        });
+    });
+});
+
 describe("renderOverflow", () => {
     it("downloads the output that is not shown", async () => {
         const papyros = new Papyros();
-        papyros.io.output = [
-            { type: OutputType.stdout, content: "shown\n" },
-            { type: OutputType.stdout, content: "hidden\n" },
-            { type: OutputType.stderr, content: "oops" },
-        ];
         const el = container();
-        render(renderOverflow(papyros, 1), el);
+        render(
+            renderOverflow(papyros, [
+                { type: OutputType.stdout, content: "hidden\n" },
+                { type: OutputType.stderr, content: "oops" },
+            ]),
+            el,
+        );
 
         expect(el.textContent).toContain("Output truncated. No more results will be shown.");
         const link = el.querySelector<HTMLAnchorElement>("a[download]")!;

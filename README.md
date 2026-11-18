@@ -221,6 +221,9 @@ render(
 );
 ```
 
+A program that uses `turtle` shows its drawing in a panel below the output, at the canvas's
+own size, scaled down to fit.
+
 `code` is the code the playground starts with. Reset restores it and clears the output.
 `label` replaces the "Try it yourself" title, and an empty label hides it. Every run starts
 from an empty workspace. A playground's editor cancels the Escape keydowns it acts on, like
